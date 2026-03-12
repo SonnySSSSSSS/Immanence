@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo, useRef } from "react";
 import { BreathingRing } from "../BreathingRing.jsx";
 import { useStillnessIntervalSessionState } from "./useStillnessIntervalSessionState.js";
+import { STILLNESS_INTENSITY_META } from "../../data/stillnessIntensityMeta.js";
 
 function triggerTransitionCue(audioContextRef) {
   if (typeof navigator !== "undefined" && typeof navigator.vibrate === "function") {
@@ -38,11 +39,7 @@ function triggerTransitionCue(audioContextRef) {
   }
 }
 
-const INTENSITY_COPY = {
-  light: "Conversation focus",
-  medium: "Remember a spoken list",
-  heavy: "Hear a whisper",
-};
+// Intensity copy sourced from src/data/stillnessIntensityMeta.js (single source of truth).
 
 export function StillnessRingSession({
   isRunning,
@@ -134,7 +131,7 @@ export function StillnessRingSession({
     totalRemainingSec,
     nextSegmentLabel: nextSegmentType === "focus" ? "FOCUS" : "REST",
     intensity,
-    intensityCopy: INTENSITY_COPY[intensity] || INTENSITY_COPY.medium,
+    intensityCopy: (STILLNESS_INTENSITY_META[intensity] || STILLNESS_INTENSITY_META.medium).copy,
     ringMode,
     isPaused,
   }), [

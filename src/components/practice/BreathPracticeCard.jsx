@@ -4,6 +4,7 @@ import { TrajectoryCard } from "../TrajectoryCard.jsx";
 import BreathWaveform from "../BreathWaveform.jsx";
 import { TraditionalBreathRatios } from "../PracticeSection/TraditionalBreathRatios.jsx";
 import { PracticeMenuHeader } from "./PracticeMenuHeader.jsx";
+import { STILLNESS_INTENSITY_META } from "../../data/stillnessIntensityMeta.js";
 
 function BreathPracticeCard({
   practiceId,
@@ -41,16 +42,10 @@ function BreathPracticeCard({
   const restSec = Number(stillnessConfig?.restSec) || 15;
   const stillnessPreDelaySec = Number(stillnessConfig?.preDelaySec) || 0;
   const stillnessIntensity = String(stillnessConfig?.focusIntensity || "medium").toLowerCase();
-  const stillnessIntensityLabel = stillnessIntensity === "heavy"
-    ? "Heavy"
-    : stillnessIntensity === "light"
-      ? "Light"
-      : "Medium";
-  const stillnessPrompt = stillnessIntensity === "light"
-    ? "Hold the kind of focus you would use in a normal conversation."
-    : stillnessIntensity === "heavy"
-      ? "Hold the focus you would use to catch a whisper."
-      : "Hold the focus you would use to remember a spoken list.";
+  // Label and prompt text sourced from src/data/stillnessIntensityMeta.js (single source of truth).
+  const stillnessIntensityMeta = STILLNESS_INTENSITY_META[stillnessIntensity] || STILLNESS_INTENSITY_META.medium;
+  const stillnessIntensityLabel = stillnessIntensityMeta.label;
+  const stillnessPrompt = stillnessIntensityMeta.prompt;
 
   // Determine tutorial ID based on current submode
   const tutorialId = breathSubmode === 'stillness' ? 'practice:stillness' : 'practice:breath';
