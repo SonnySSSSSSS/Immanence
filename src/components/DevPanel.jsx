@@ -94,7 +94,6 @@ import DestructiveButton from './devpanel/ui/DestructiveButton.jsx';
 import useDevPanelGate from './devpanel/hooks/useDevPanelGate.js';
 import AvatarCompositeSection from './devpanel/sections/AvatarCompositeSection.jsx';
 import UnifiedInspectorSection from './devpanel/sections/UnifiedInspectorSection.jsx';
-import { BloomRingLab } from './dev/BloomRingLab.jsx';
 import { getDevPanelProdGate } from '../lib/devPanelGate.js';
 
 // Eager import: avoids transient dynamic-import failures in local dev.
@@ -203,8 +202,7 @@ export function DevPanel({
         playground: false,
         curriculum: false,
         tracking: false,
-        data: false,
-        bloomRingLab: false
+        data: false
     });
 
     // Armed state for destructive actions
@@ -1475,23 +1473,6 @@ export function DevPanel({
                         </div>
                     </Section>
 
-                    {/* ═══════════════════════════════════════════════════════════════ */}
-                    {/* BREATHING RING LAB (Code-Split, Lazy-Loaded) */}
-                    {/* ═══════════════════════════════════════════════════════════════ */}
-                    <Section
-                        title="🔵 Breathing Ring Lab (Phase 1)"
-                        expanded={expandedSections.bloomRingLab}
-                        onToggle={() => toggleSection('bloomRingLab')}
-                        isLight={isLight}
-                    >
-                        <Suspense fallback={
-                            <div className="text-xs text-white/40 py-2">
-                                Loading lab...
-                            </div>
-                        }>
-                            <BloomRingLab isLight={isLight} />
-                        </Suspense>
-                    </Section>
 
                     {/* ═══════════════════════════════════════════════════════════════ */}
                     {/* DESIGN & DIAGNOSTIC SECTION */}

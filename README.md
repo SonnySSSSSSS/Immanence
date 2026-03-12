@@ -131,7 +131,6 @@ Immanence OS includes a full developer panel (`Ctrl+Shift+D`) used as internal d
 - **Tracking Hub** — Live state inspection for all tracking stores
 - **Reporting Diagnostics** — Dashboard tile queries, metric previews, policy testing
 - **UI Playground** — Component isolation, card styling tuner, navigation button FX tuner
-- **Breathing Ring Lab** — Phase-accurate breath ring prototyping
 - **Tutorial Tools** — Tutorial state reset and step-through
 - **Data Management** — Export, import, and reset all localStorage state
 - **Design & Diagnostic** — Inspector overlays, layout debugging

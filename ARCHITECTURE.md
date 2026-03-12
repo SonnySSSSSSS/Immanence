@@ -180,7 +180,7 @@ Treat avatar stage as session-derived unless a component explicitly reads anothe
 ## Where To Change X
 
 - Avatar visuals: [src/components/avatarV3](src/components/avatarV3), [src/state/avatarV3Store.js](src/state/avatarV3Store.js), [src/config/avatarStageAssets.js](src/config/avatarStageAssets.js), and [src/state/devPanelStore.js](src/state/devPanelStore.js)
-- Breath rings and benchmarks: [src/components/BreathingRing.jsx](src/components/BreathingRing.jsx), [src/components/BenchmarkBreathworkUI.jsx](src/components/BenchmarkBreathworkUI.jsx), and [src/state/devPanelStore.js](src/state/devPanelStore.js)
+- Breath rings and benchmarks: [src/components/PracticeSection.jsx](src/components/PracticeSection.jsx), [src/components/practice/useBreathSessionState.js](src/components/practice/useBreathSessionState.js), [src/components/BreathingRing.jsx](src/components/BreathingRing.jsx), and [src/components/BenchmarkBreathworkUI.jsx](src/components/BenchmarkBreathworkUI.jsx)
 - Curriculum and path contracts: [src/state/curriculumStore.js](src/state/curriculumStore.js), [src/data/programRegistry.js](src/data/programRegistry.js), [src/utils/pathContract.js](src/utils/pathContract.js), and [src/services/infographics/curriculumRail.js](src/services/infographics/curriculumRail.js)
 - Persisted user-state behavior: start in [src/state](src/state), then check [src/state/offlineFirstUserStateKeys.js](src/state/offlineFirstUserStateKeys.js)
 - Reporting and dashboard projections: [src/reporting](src/reporting) and [src/components/dashboard](src/components/dashboard)

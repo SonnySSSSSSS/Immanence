@@ -275,7 +275,6 @@ Each section is independently collapsible and maintains its own expanded state:
 | Tracking Hub | Live view of tracking store contents |
 | Reporting Layer | Dashboard tile query execution, metric preview |
 | Tutorial Tools | Tutorial state reset, step-by-step walkthrough |
-| Breathing Ring Lab | Phase-accurate breath ring prototyping |
 | Design & Diagnostic | Inspector overlays, layout grid visualization |
 | Data Management | Full localStorage export, import, and reset |
 
