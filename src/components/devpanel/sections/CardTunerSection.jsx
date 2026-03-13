@@ -22,12 +22,8 @@ function CardTunerSection({
   devtoolsEnabled,
   legacyPickersEnabled,
   cardState,
-  handleStopPickFlow,
-  handleStartPickFlow,
   cardApplyToAll,
   setCardApplyToAll,
-  handleTogglePeek,
-  handleConfirmPickFlow,
   activeDraft,
   selectedDisabled,
   onChangeCardSetting,
@@ -40,7 +36,6 @@ function CardTunerSection({
   stopUniversalPickCaptureImmediate,
   setUniversalPickMode,
   setPickMode,
-  setPeekMode,
   practiceButtonApplyToAll,
   setPracticeButtonApplyToAll,
   practiceButtonSelectedKey,
@@ -64,22 +59,9 @@ function CardTunerSection({
       ) : (
         <>
           <div className="text-[10px] text-white/50 mb-2">
-            Pick a <span className="font-mono">data-card="true"</span> target and tune vars live.
+            Pick a <span className="font-mono">data-card="true"</span> target via the Inspector above and tune vars live.
           </div>
-          {!legacyPickersEnabled && (
-            <div className="text-[10px] text-white/45 mb-2">
-              Legacy pick controls hidden. Use <span className="font-mono">Inspector (NEW)</span> to pick targets.
-            </div>
-          )}
-          <div className={`grid ${legacyPickersEnabled ? 'grid-cols-2' : 'grid-cols-1'} gap-2 mb-3`}>
-            {legacyPickersEnabled && (
-              <button
-                onClick={() => (cardState.pickMode ? handleStopPickFlow() : handleStartPickFlow())}
-                className={`px-3 py-2 rounded-lg text-xs border transition-all ${cardState.pickMode ? 'bg-amber-500/25 text-amber-200 border-amber-400/60' : 'bg-white/5 text-white/70 border-white/15'}`}
-              >
-                {cardState.pickMode ? 'Stop Picking' : 'Pick Card'}
-              </button>
-            )}
+          <div className="grid grid-cols-1 gap-2 mb-3">
             <button
               onClick={() => setCardApplyToAll(v => !v)}
               className={`px-3 py-2 rounded-lg text-xs border transition-all ${cardApplyToAll ? 'bg-cyan-500/25 text-cyan-200 border-cyan-400/60' : 'bg-white/5 text-white/70 border-white/15'}`}
@@ -87,31 +69,8 @@ function CardTunerSection({
               {cardApplyToAll ? 'Apply to all: ON' : 'Apply to all: OFF'}
             </button>
           </div>
-          {legacyPickersEnabled && (
-            <div className="grid grid-cols-2 gap-2 mb-3">
-              <button
-                onClick={handleTogglePeek}
-                className="rounded-lg px-3 py-2 text-xs bg-white/5 border border-white/15 text-white/70 hover:bg-white/10 transition-all"
-              >
-                Peek UI
-              </button>
-              <button
-                onClick={handleConfirmPickFlow}
-                disabled={!cardState.pickMode}
-                className={`rounded-lg px-3 py-2 text-xs transition-all ${cardState.pickMode
-                  ? 'bg-amber-500/20 border border-amber-400/50 text-amber-200'
-                  : 'bg-white/5 border border-white/10 text-white/35 cursor-not-allowed'
-                  }`}
-              >
-                Confirm Pick
-              </button>
-            </div>
-          )}
           <div className="mb-3 text-[11px] text-white/70 font-mono bg-white/5 border border-white/10 rounded-lg px-3 py-2">
             Selected: {cardState.hasSelected ? (cardState.selectedCardId || cardState.selectedLabel || 'card') : 'none'}
-          </div>
-          <div className="text-[10px] text-white/50 mb-3">
-            Quick peek shortcut: <span className="font-mono text-white/80">Ctrl+Alt+Shift+K</span>
           </div>
 
           <div className="space-y-2 mb-3">
@@ -154,7 +113,6 @@ function CardTunerSection({
                       stopUniversalPickCaptureImmediate();
                       setUniversalPickMode(false);
                       setPickMode(false);
-                      setPeekMode(false);
                     }
                     return next;
                   })}

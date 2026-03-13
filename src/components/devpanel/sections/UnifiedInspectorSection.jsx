@@ -61,10 +61,6 @@ function UnifiedInspectorSection({
   onChangeCardSetting,
   cardTunerExpanded,
   onToggleCardTuner,
-  handleStopPickFlow,
-  handleStartPickFlow,
-  handleTogglePeek,
-  handleConfirmPickFlow,
   cardElectricBorderEnabled,
   setCardElectricBorderEnabled,
   practiceButtonFxEnabled,
@@ -74,7 +70,6 @@ function UnifiedInspectorSection({
   stopUniversalPickCaptureImmediate,
   setUniversalPickMode,
   setPickMode,
-  setPeekMode,
   practiceButtonApplyToAll,
   setPracticeButtonApplyToAll,
   practiceButtonSelectedKey,
@@ -108,7 +103,7 @@ function UnifiedInspectorSection({
         ) : (
           <>
             <div className="text-[10px] text-white/50 mb-2">
-              Universal picker (parity phase): controls + plates + cards. Conflict rule: only one global capture listener active.
+              Universal picker: controls + plates + cards. Conflict rule: only one global capture listener active.
             </div>
 
             <div className="grid grid-cols-3 gap-2 mb-2">
@@ -226,12 +221,8 @@ function UnifiedInspectorSection({
           devtoolsEnabled={devtoolsEnabled}
           legacyPickersEnabled={legacyPickersEnabled}
           cardState={cardState}
-          handleStopPickFlow={handleStopPickFlow}
-          handleStartPickFlow={handleStartPickFlow}
           cardApplyToAll={cardApplyToAll}
           setCardApplyToAll={setCardApplyToAll}
-          handleTogglePeek={handleTogglePeek}
-          handleConfirmPickFlow={handleConfirmPickFlow}
           activeDraft={activeDraft}
           selectedDisabled={selectedDisabled}
           onChangeCardSetting={onChangeCardSetting}
@@ -244,7 +235,6 @@ function UnifiedInspectorSection({
           stopUniversalPickCaptureImmediate={stopUniversalPickCaptureImmediate}
           setUniversalPickMode={setUniversalPickMode}
           setPickMode={setPickMode}
-          setPeekMode={setPeekMode}
           practiceButtonApplyToAll={practiceButtonApplyToAll}
           setPracticeButtonApplyToAll={setPracticeButtonApplyToAll}
           practiceButtonSelectedKey={practiceButtonSelectedKey}
