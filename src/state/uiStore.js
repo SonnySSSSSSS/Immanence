@@ -117,5 +117,4 @@ export const useUiStore = create((set, get) => ({
         return current || null;
     },
     
-    // Can extend with other UI state as needed
 }));

@@ -144,8 +144,10 @@ function HomeHub({ onSelectSection, activeSection = null, currentStage, previewP
     setShowCurriculumHubState(false);
   }, []);
   const handleOpenCurriculumSetup = React.useCallback(() => {
-    openCurriculumHub({ beginSetup: true });
-  }, [openCurriculumHub]);
+    setActiveCurriculumId?.('ritual-initiation-14-v2');
+    setCurriculumSetupError(null);
+    setShowCurriculumOnboarding(true);
+  }, [setActiveCurriculumId]);
   const handleCurriculumSetupComplete = React.useCallback(() => {
     const result = useNavigationStore.getState().beginPathForCurriculum(activeCurriculumId || 'ritual-initiation-14-v2');
     if (result?.ok === false) {
@@ -313,6 +315,7 @@ function HomeHub({ onSelectSection, activeSection = null, currentStage, previewP
       setShowTrackingHub(true);
     }
   }, [trackerLaunchContext]);
+
 
   const activeLauncher = launcherContext
     ? getProgramLauncher(launcherContext.programId || activeCurriculumId, launcherContext.leg?.launcherId)
@@ -994,23 +997,24 @@ function HomeHub({ onSelectSection, activeSection = null, currentStage, previewP
                         isInModal
                         onBeginSetup={() => {
                           setCurriculumSetupError(null);
+                          setShowCurriculumHubState(false);
                           setShowCurriculumOnboarding(true);
                         }}
                       />
                     </div>
                   </div>
                 </div>
-                {showCurriculumOnboarding && (
-                  <CurriculumOnboarding
-                    onDismiss={() => {
-                      setShowCurriculumOnboarding(false);
-                    }}
-                    onComplete={handleCurriculumSetupComplete}
-                  />
-                )}
               </div>
             );
           })(),
+          document.body
+        )}
+
+        {showCurriculumOnboarding && createPortal(
+          <CurriculumOnboarding
+            onDismiss={() => setShowCurriculumOnboarding(false)}
+            onComplete={handleCurriculumSetupComplete}
+          />,
           document.body
         )}
 

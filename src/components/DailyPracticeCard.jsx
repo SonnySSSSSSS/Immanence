@@ -741,6 +741,18 @@ export function DailyPracticeCard({ onStartPractice, onViewCurriculum, onNavigat
     }, [times, activePath?.startedAt, displayDayKey]);
     const [missedLegWarning, setMissedLegWarning] = useState(null);
     const [_isPending, startTransition] = useTransition();
+    const setupArtworkCandidates = useMemo(() => {
+        const baseUrl = import.meta.env.BASE_URL || '/';
+        const normalizedBaseUrl = baseUrl.endsWith('/') ? baseUrl : `${baseUrl}/`;
+        return [
+            `${normalizedBaseUrl}enter temple.webp`,
+            `${normalizedBaseUrl}enter%20temple.webp`,
+        ];
+    }, []);
+    const [setupArtworkAttempt, setSetupArtworkAttempt] = useState(0);
+    const setupArtworkSrc = setupArtworkAttempt < setupArtworkCandidates.length
+        ? setupArtworkCandidates[setupArtworkAttempt]
+        : null;
 
     const theme = useTheme();
     const primaryHex = theme?.accent?.primary || '#4ade80';
@@ -1140,18 +1152,27 @@ export function DailyPracticeCard({ onStartPractice, onViewCurriculum, onNavigat
                                             </button>
                                         </div>
 
-                                        <div className="mt-6 w-full">
-                                            <img
-                                                src={`${import.meta.env.BASE_URL}enter%20temple.webp`}
-                                                alt="Enter temple"
-                                                style={{
-                                                    width: '100%',
-                                                    maxHeight: '180px',
-                                                    objectFit: 'contain',
-                                                    opacity: isLight ? 0.82 : 0.72,
-                                                }}
-                                            />
-                                        </div>
+                                        {setupArtworkSrc && (
+                                            <div className="mt-6 w-full">
+                                                <img
+                                                    src={setupArtworkSrc}
+                                                    alt="Temple entrance illustration"
+                                                    onError={() => {
+                                                        setSetupArtworkAttempt(currentAttempt => (
+                                                            currentAttempt < setupArtworkCandidates.length
+                                                                ? currentAttempt + 1
+                                                                : currentAttempt
+                                                        ));
+                                                    }}
+                                                    style={{
+                                                        width: '100%',
+                                                        maxHeight: '180px',
+                                                        objectFit: 'contain',
+                                                        opacity: isLight ? 0.82 : 0.72,
+                                                    }}
+                                                />
+                                            </div>
+                                        )}
                                     </div>
                                 ) : missState.broken ? (
                                     <div className="text-center">

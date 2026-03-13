@@ -24,6 +24,14 @@ import { RITUAL_INITIATION_14_V2 } from '../data/ritualInitiation14v2.js';
 import { getLocalDateKey } from '../utils/dateUtils.js';
 import { computeScheduleAnchorStartAt, normalizeAndSortTimeSlots } from '../utils/scheduleUtils.js';
 import { useBreathBenchmarkStore } from '../state/breathBenchmarkStore.js';
+import { InstructionVideoModal } from './InstructionVideoModal.jsx';
+import { BreathBenchmark } from './BreathBenchmark.jsx';
+import { useVideoStore } from '../state/videoStore.js';
+
+const ONBOARDING_VIDEOS = Object.freeze({
+    1: { id: 'initiation-tutorial-1', title: 'The Mechanics of Meaning', videoUrl: '/videos/The_Mechanics_of_Meaning.mp4' },
+    2: { id: 'initiation-tutorial-2', title: 'Music: A Transmission of Consciousness', videoUrl: '/videos/Music__A_Transmission_of_Consciousness.mp4' },
+});
 
 const DAY_LABELS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 
@@ -40,7 +48,7 @@ const formatTimeLabel = (timeValue) => {
 // STEP COMPONENTS
 // ═══════════════════════════════════════════════════════════════════════════
 
-function StepWelcome({ onNext, isLight }) {
+function StepWelcome({ onNext, isLight, onOpenVideo, video1Watched }) {
     return (
         <div className="space-y-8 text-center" style={{ animation: 'fadeIn 400ms ease-out' }}>
             <div className="space-y-6">
@@ -69,6 +77,34 @@ function StepWelcome({ onNext, isLight }) {
                     The rule is simple: show up for the sessions you commit to.
                 </p>
 
+                <div className="text-left space-y-1 px-4">
+                    <p className="text-[12px] uppercase tracking-widest mb-2" style={{ color: isLight ? 'rgba(60, 50, 40, 0.5)' : 'rgba(253,251,245,0.45)' }}>
+                        What this trains
+                    </p>
+                    {[
+                        'Feel your body more clearly',
+                        'Keep your attention steady',
+                        'Notice tension before it controls you',
+                    ].map((item) => (
+                        <p key={item} className="text-[14px]" style={{ color: isLight ? 'rgba(60, 50, 40, 0.75)' : 'rgba(253,251,245,0.75)' }}>
+                            · {item}
+                        </p>
+                    ))}
+                </div>
+
+                <button
+                    onClick={() => onOpenVideo(1)}
+                    className="inline-flex items-center gap-2 px-4 py-2 rounded-full text-[13px] transition-opacity hover:opacity-90"
+                    style={{
+                        background: isLight ? 'rgba(180, 120, 40, 0.1)' : 'rgba(250, 208, 120, 0.1)',
+                        border: isLight ? '1px solid rgba(180, 120, 40, 0.3)' : '1px solid rgba(250, 208, 120, 0.3)',
+                        color: isLight ? 'rgba(140, 90, 20, 0.9)' : 'var(--accent-color)',
+                    }}
+                >
+                    {video1Watched && <span style={{ color: 'var(--accent-color)' }}>✓ </span>}
+                    ▶ The Mechanics of Meaning
+                </button>
+
                 <p className="text-[15px] leading-relaxed" style={{ color: isLight ? 'rgba(60, 50, 40, 0.6)' : 'rgba(253,251,245,0.6)' }}>
                     Continue when ready.
                 </p>
@@ -81,7 +117,7 @@ function StepWelcome({ onNext, isLight }) {
     );
 }
 
-function StepPracticeExplain({ onNext, onBack, isLight }) {
+function StepPracticeExplain({ onNext, onBack, isLight, onOpenVideo, video2Watched }) {
     return (
         <div className="space-y-8 text-center" style={{ animation: 'fadeIn 400ms ease-out' }}>
             <div className="space-y-6">
@@ -129,6 +165,53 @@ function StepPracticeExplain({ onNext, onBack, isLight }) {
                 <p className="text-[14px] leading-relaxed italic" style={{ color: isLight ? 'rgba(60, 50, 40, 0.6)' : 'rgba(253,251,245,0.6)' }}>
                     Outside schedule sessions are still logged, but they are not credited.
                 </p>
+
+                <div className="text-left space-y-3 px-2">
+                    <div>
+                        <p className="text-[13px] font-medium" style={{ color: isLight ? 'rgba(60, 50, 40, 0.85)' : 'rgba(253,251,245,0.85)' }}>
+                            Morning · 10 min
+                        </p>
+                        <p className="text-[13px]" style={{ color: isLight ? 'rgba(60, 50, 40, 0.65)' : 'rgba(253,251,245,0.65)' }}>
+                            · Resonance breathing
+                        </p>
+                    </div>
+                    <div>
+                        <p className="text-[13px] font-medium" style={{ color: isLight ? 'rgba(60, 50, 40, 0.85)' : 'rgba(253,251,245,0.85)' }}>
+                            Evening Circuit · 14 min
+                        </p>
+                        <p className="text-[13px]" style={{ color: isLight ? 'rgba(60, 50, 40, 0.65)' : 'rgba(253,251,245,0.65)' }}>
+                            · 7 min stillness meditation
+                        </p>
+                        <p className="text-[13px]" style={{ color: isLight ? 'rgba(60, 50, 40, 0.65)' : 'rgba(253,251,245,0.65)' }}>
+                            · 7 min body scan
+                        </p>
+                    </div>
+                </div>
+
+                <div className="text-left space-y-1 px-2">
+                    <p className="text-[12px] uppercase tracking-widest" style={{ color: isLight ? 'rgba(60, 50, 40, 0.5)' : 'rgba(253,251,245,0.45)' }}>
+                        Each day, notice
+                    </p>
+                    <p className="text-[13px]" style={{ color: isLight ? 'rgba(60, 50, 40, 0.7)' : 'rgba(253,251,245,0.7)' }}>
+                        · Where tension shows up in your body
+                    </p>
+                    <p className="text-[13px]" style={{ color: isLight ? 'rgba(60, 50, 40, 0.7)' : 'rgba(253,251,245,0.7)' }}>
+                        · How steady your attention stays
+                    </p>
+                </div>
+
+                <button
+                    onClick={() => onOpenVideo(2)}
+                    className="inline-flex items-center gap-2 px-4 py-2 rounded-full text-[13px] transition-opacity hover:opacity-90"
+                    style={{
+                        background: isLight ? 'rgba(180, 120, 40, 0.1)' : 'rgba(250, 208, 120, 0.1)',
+                        border: isLight ? '1px solid rgba(180, 120, 40, 0.3)' : '1px solid rgba(250, 208, 120, 0.3)',
+                        color: isLight ? 'rgba(140, 90, 20, 0.9)' : 'var(--accent-color)',
+                    }}
+                >
+                    {video2Watched && <span style={{ color: 'var(--accent-color)' }}>✓ </span>}
+                    ▶ Music: A Transmission of Consciousness
+                </button>
             </div>
 
             <div className="flex gap-4 justify-center">
@@ -298,7 +381,30 @@ function StepTimeSelection({ onNext, onBack, selectedTimes, setSelectedTimes, is
     );
 }
 
-function StepBenchmarkExplain({ onNext, onBack, isLight }) {
+function StepBenchmark({ onNext, onBack, isLight, benchmarkResolved, onBenchmarkResolved }) {
+    const lastBenchmark = useBreathBenchmarkStore(s => s.lastBenchmark);
+    const canReuseLastBenchmark = useBreathBenchmarkStore(s => s.canReuseLastBenchmark);
+    const [showBenchmark, setShowBenchmark] = useState(false);
+    const [resolvedVia, setResolvedVia] = useState(null); // 'fresh' | 'reuse'
+
+    const hasLastBenchmark = Boolean(lastBenchmark?.measuredAt);
+    const canReuse = hasLastBenchmark && canReuseLastBenchmark(14);
+
+    const lastBenchmarkDate = hasLastBenchmark
+        ? new Date(lastBenchmark.measuredAt).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })
+        : null;
+
+    const handleUsePrevious = () => {
+        setResolvedVia('reuse');
+        onBenchmarkResolved();
+    };
+
+    const handleBenchmarkSave = () => {
+        setShowBenchmark(false);
+        setResolvedVia('fresh');
+        onBenchmarkResolved();
+    };
+
     return (
         <div className="space-y-6 text-center" style={{ animation: 'fadeIn 400ms ease-out' }}>
             <h2
@@ -308,34 +414,72 @@ function StepBenchmarkExplain({ onNext, onBack, isLight }) {
                     color: 'var(--accent-color)',
                 }}
             >
-                Benchmark Rule
+                Breath Benchmark
             </h2>
 
             <p className="text-[14px] leading-relaxed" style={{ color: isLight ? 'rgba(60, 50, 40, 0.75)' : 'rgba(253,251,245,0.75)' }}>
-                Day 1 morning: you run a breath benchmark and store a baseline.
-            </p>
-
-            <p className="text-[14px] leading-relaxed" style={{ color: isLight ? 'rgba(60, 50, 40, 0.75)' : 'rgba(253,251,245,0.75)' }}>
-                Day 14 morning: you repeat it and view the comparison.
+                Establish the baseline you will expand. Day 14 repeats it so you can compare your change directly.
             </p>
 
             <p className="text-[13px] leading-relaxed italic" style={{ color: isLight ? 'rgba(60, 50, 40, 0.65)' : 'rgba(253,251,245,0.65)' }}>
-                This is informational. Contract credit still depends on completing your scheduled legs.
+                Contract credit depends on completing scheduled legs — not benchmark results.
             </p>
+
+            {benchmarkResolved ? (
+                <p className="text-[14px] font-medium" style={{ color: 'var(--accent-color)' }}>
+                    ✓ {resolvedVia === 'reuse' ? 'Using previous benchmark' : 'Benchmark recorded'}
+                </p>
+            ) : (
+                <div className="flex flex-col items-center gap-3">
+                    {canReuse && (
+                        <button
+                            onClick={handleUsePrevious}
+                            className="inline-flex flex-col items-center gap-1 px-5 py-3 rounded-2xl text-[13px] transition-opacity hover:opacity-90"
+                            style={{
+                                background: isLight ? 'rgba(180, 120, 40, 0.08)' : 'rgba(250, 208, 120, 0.08)',
+                                border: isLight ? '1px solid rgba(180, 120, 40, 0.25)' : '1px solid rgba(250, 208, 120, 0.25)',
+                                color: isLight ? 'rgba(140, 90, 20, 0.9)' : 'var(--accent-color)',
+                            }}
+                        >
+                            <span>Use Previous Benchmark</span>
+                            <span style={{ fontSize: '11px', opacity: 0.7 }}>recorded {lastBenchmarkDate}</span>
+                        </button>
+                    )}
+                    <PillButton
+                        onClick={() => setShowBenchmark(true)}
+                        variant="secondary"
+                        size="md"
+                    >
+                        {hasLastBenchmark ? 'Restart Benchmark' : 'Start Benchmark'}
+                    </PillButton>
+                </div>
+            )}
 
             <div className="flex gap-4 justify-center pt-2">
                 <PillButton onClick={onBack} variant="secondary" size="md">
                     Back
                 </PillButton>
-                <PillButton onClick={onNext} variant="primary" size="md">
+                <PillButton onClick={onNext} variant="primary" size="md" disabled={!benchmarkResolved}>
                     Continue
                 </PillButton>
             </div>
+
+            {!benchmarkResolved && (
+                <p className="text-[12px]" style={{ color: isLight ? 'rgba(140, 80, 40, 0.7)' : 'rgba(255, 170, 140, 0.8)' }}>
+                    {canReuse ? 'Use your previous benchmark or run a new one.' : 'Run the benchmark to continue.'}
+                </p>
+            )}
+
+            <BreathBenchmark
+                isOpen={showBenchmark}
+                onClose={() => setShowBenchmark(false)}
+                onSave={handleBenchmarkSave}
+            />
         </div>
     );
 }
 
-function StepConfirm({ onComplete, onBack, selectedTimes, selectedDays, isLight, benchmarkComplete }) {
+function StepConfirm({ onComplete, onBack, selectedTimes, selectedDays, isLight, benchmarkResolved }) {
     const now = new Date();
     const firstSlotTime = selectedTimes?.[0] || null;
     const startAt = firstSlotTime ? computeScheduleAnchorStartAt({ now, firstSlotTime }) : null;
@@ -369,7 +513,7 @@ function StepConfirm({ onComplete, onBack, selectedTimes, selectedDays, isLight,
                 <p className="text-[12px]" style={{ color: isLight ? 'rgba(140, 80, 40, 0.75)' : 'rgba(255, 170, 140, 0.85)' }}>
                     Outside these days/times is logged but not credited.
                 </p>
-                {!benchmarkComplete && (
+                {!benchmarkResolved && (
                     <p className="text-[12px]" style={{ color: isLight ? 'rgba(180, 80, 40, 0.85)' : 'rgba(255, 180, 120, 0.95)' }}>
                         Complete the breathing benchmark first.
                     </p>
@@ -390,7 +534,7 @@ function StepConfirm({ onComplete, onBack, selectedTimes, selectedDays, isLight,
                     onClick={onComplete}
                     variant="primary"
                     size="lg"
-                    disabled={!benchmarkComplete}
+                    disabled={!benchmarkResolved}
                     style={{
                         fontFamily: 'var(--font-display)',
                         fontWeight: 600,
@@ -410,10 +554,26 @@ function StepConfirm({ onComplete, onBack, selectedTimes, selectedDays, isLight,
 
 export function CurriculumOnboarding({ onDismiss, onComplete }) {
     const [step, setStep] = useState(1);
-    
+    const [video1Watched, setVideo1Watched] = useState(false);
+    const [video2Watched, setVideo2Watched] = useState(false);
+    const [activeVideo, setActiveVideo] = useState(null); // 1 | 2 | null
+    const [benchmarkResolved, setBenchmarkResolved] = useState(false);
+
     const colorScheme = useDisplayModeStore(s => s.colorScheme);
     const isLight = colorScheme === 'light';
-    const benchmarkComplete = useBreathBenchmarkStore(s => s.hasBenchmark());
+
+    const handleOpenVideo = (videoIndex) => setActiveVideo(videoIndex);
+
+    const handleCloseVideo = () => {
+        if (activeVideo) {
+            const vid = ONBOARDING_VIDEOS[activeVideo];
+            if (vid && useVideoStore.getState().byId[vid.id]?.completed) {
+                if (activeVideo === 1) setVideo1Watched(true);
+                if (activeVideo === 2) setVideo2Watched(true);
+            }
+        }
+        setActiveVideo(null);
+    };
     
     const {
         completeOnboarding,
@@ -440,7 +600,7 @@ export function CurriculumOnboarding({ onDismiss, onComplete }) {
     };
 
     const handleComplete = () => {
-        if (selectedTimes.length !== 2 || selectedDays.length !== 6 || !benchmarkComplete) {
+        if (selectedTimes.length !== 2 || selectedDays.length !== 6 || !benchmarkResolved) {
             return;
         }
         completeOnboarding(selectedTimes, [], selectedDays);
@@ -454,7 +614,7 @@ export function CurriculumOnboarding({ onDismiss, onComplete }) {
 
     return (
         <div
-            className="fixed inset-0 z-[100] flex items-center justify-center backdrop-blur-lg"
+            className="fixed inset-0 z-[10000] flex items-center justify-center backdrop-blur-lg"
             style={{ 
                 background: isLight ? 'rgba(245, 240, 235, 0.95)' : 'rgba(0, 0, 0, 0.95)',
                 animation: 'fadeIn 600ms ease-out',
@@ -502,20 +662,27 @@ export function CurriculumOnboarding({ onDismiss, onComplete }) {
                 {/* Step content */}
                 <div className="relative z-10">
                     {step === 1 && (
-                        <StepWelcome onNext={() => setStep(2)} isLight={isLight} />
+                        <StepWelcome
+                            onNext={() => setStep(2)}
+                            isLight={isLight}
+                            onOpenVideo={handleOpenVideo}
+                            video1Watched={video1Watched}
+                        />
                     )}
                     {step === 2 && (
-                        <StepPracticeExplain 
-                            onNext={() => setStep(3)} 
-                            onBack={() => setStep(1)} 
-                            isLight={isLight} 
+                        <StepPracticeExplain
+                            onNext={() => setStep(3)}
+                            onBack={() => setStep(1)}
+                            isLight={isLight}
+                            onOpenVideo={handleOpenVideo}
+                            video2Watched={video2Watched}
                         />
                     )}
                     {step === 3 && (
-                        <StepCurriculumOverview 
-                            onNext={() => setStep(4)} 
-                            onBack={() => setStep(2)} 
-                            isLight={isLight} 
+                        <StepCurriculumOverview
+                            onNext={() => setStep(4)}
+                            onBack={() => setStep(2)}
+                            isLight={isLight}
                         />
                     )}
                     {step === 4 && (
@@ -528,29 +695,31 @@ export function CurriculumOnboarding({ onDismiss, onComplete }) {
                         />
                     )}
                     {step === 5 && (
-                        <StepTimeSelection 
-                            onNext={() => setStep(6)} 
-                            onBack={() => setStep(4)} 
+                        <StepTimeSelection
+                            onNext={() => setStep(6)}
+                            onBack={() => setStep(4)}
                             selectedTimes={selectedTimes}
                             setSelectedTimes={handleSelectedTimesChange}
-                            isLight={isLight} 
-                        />
-                    )}
-                    {step === 6 && (
-                        <StepBenchmarkExplain
-                            onNext={() => setStep(7)}
-                            onBack={() => setStep(5)}
                             isLight={isLight}
                         />
                     )}
+                    {step === 6 && (
+                        <StepBenchmark
+                            onNext={() => setStep(7)}
+                            onBack={() => setStep(5)}
+                            isLight={isLight}
+                            benchmarkResolved={benchmarkResolved}
+                            onBenchmarkResolved={() => setBenchmarkResolved(true)}
+                        />
+                    )}
                     {step === 7 && (
-                        <StepConfirm 
-                            onComplete={handleComplete} 
-                            onBack={() => setStep(6)} 
+                        <StepConfirm
+                            onComplete={handleComplete}
+                            onBack={() => setStep(6)}
                             selectedTimes={selectedTimes}
                             selectedDays={selectedDays}
-                            benchmarkComplete={benchmarkComplete}
-                            isLight={isLight} 
+                            benchmarkResolved={benchmarkResolved}
+                            isLight={isLight}
                         />
                     )}
                 </div>
@@ -577,6 +746,16 @@ export function CurriculumOnboarding({ onDismiss, onComplete }) {
                     border-radius: 3px;
                 }
             `}</style>
+
+            {activeVideo && ONBOARDING_VIDEOS[activeVideo] && (
+                <InstructionVideoModal
+                    isOpen={true}
+                    videoId={ONBOARDING_VIDEOS[activeVideo].id}
+                    title={ONBOARDING_VIDEOS[activeVideo].title}
+                    videoUrl={ONBOARDING_VIDEOS[activeVideo].videoUrl}
+                    onClose={handleCloseVideo}
+                />
+            )}
         </div>
     );
 }

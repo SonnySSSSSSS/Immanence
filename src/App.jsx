@@ -110,6 +110,7 @@ function App({ playgroundMode = false, playgroundBottomLayer = true }) {
   const userMode = useUserModeStore((s) => s.userMode);
   const hasChosenUserMode = useUserModeStore((s) => s.hasChosenUserMode);
   const setUserMode = useUserModeStore((s) => s.setUserMode);
+  const setActiveUserModeUserId = useUserModeStore((s) => s.setActiveUserId);
   const practiceLaunchContext = useUiStore((s) => s.practiceLaunchContext);
   const onboardingComplete = useCurriculumStore((s) => s.onboardingComplete);
   const practiceTimeSlots = useCurriculumStore((s) => s.practiceTimeSlots);
@@ -192,6 +193,27 @@ function App({ playgroundMode = false, playgroundBottomLayer = true }) {
     window.addEventListener('keydown', onKeyDown);
     return () => window.removeEventListener('keydown', onKeyDown);
   }, [devPanelGateEnabled, isDev]);
+
+  useEffect(() => {
+    const currentIsHub = activeSection === null;
+    const decision = !hasChosenUserMode ? 'chooser' : ((currentIsHub || playgroundMode) ? 'hub' : 'section');
+    const snapshot = {
+      authUserId: authUser?.id ?? null,
+      authUserEmail: authUser?.email ?? null,
+      appAuthLoadingFlag: 'none-in-App',
+      hasChosenUserMode,
+      userMode,
+      decision,
+      activeSection,
+      isHub: currentIsHub,
+      playgroundMode,
+      timestamp: new Date().toISOString(),
+    };
+    console.log('[PROBE:user-mode-resolve]', snapshot);
+    if (typeof window !== 'undefined') {
+      window.__IMMANENCE_USER_MODE_RESOLVE_PROBE__ = snapshot;
+    }
+  }, [activeSection, authUser?.email, authUser?.id, hasChosenUserMode, playgroundMode, userMode]);
 
   const handleClosePhotic = useCallback(() => {
     setIsPhoticOpen(false);
@@ -623,6 +645,7 @@ function App({ playgroundMode = false, playgroundBottomLayer = true }) {
 
   const handleAuthChange = useCallback((event, session) => {
     if (event === "SIGNED_OUT") {
+      setActiveUserModeUserId(null);
       setAuthUser(null);
       stopUserStateSync();
       setShowSettings(false);
@@ -631,18 +654,20 @@ function App({ playgroundMode = false, playgroundBottomLayer = true }) {
     }
 
     if (event === "USER_UPDATED" && session) {
+      setActiveUserModeUserId(session?.user?.id ?? null);
       setAuthUser(session?.user ?? null);
       return;
     }
 
     if ((event === "SIGNED_IN" || event === "INITIAL_SESSION") && session) {
+      setActiveUserModeUserId(session?.user?.id ?? null);
       setAuthUser(session?.user ?? null);
       stopUserStateSync();
       startUserStateSync(session);
       setShowSettings(false);
       setActiveSection(null);
     }
-  }, [startUserStateSync, stopUserStateSync]);
+  }, [setActiveUserModeUserId, startUserStateSync, stopUserStateSync]);
   // PROBE:OFFLINE_FIRST_USER_STATE_SYNC:END
 
   return (
@@ -903,22 +928,229 @@ function App({ playgroundMode = false, playgroundBottomLayer = true }) {
               inert={isMinimized ? "" : undefined}
             >
               {!hasChosenUserMode ? (
-                <div className="w-full h-full flex items-center justify-center">
-                  <div className="flex flex-col items-center gap-3">
-                    <button
-                      type="button"
-                      onClick={() => setUserMode('student')}
-                      className="px-4 py-2 rounded border border-white/20"
+                <div className="w-full min-h-full flex items-center justify-center px-4 py-4 sm:px-6 sm:py-8">
+                  <div
+                    className="w-full max-w-4xl overflow-hidden rounded-[28px] border"
+                    style={{
+                      background: isLight
+                        ? 'linear-gradient(180deg, rgba(248,242,233,0.96) 0%, rgba(236,228,216,0.94) 100%)'
+                        : 'linear-gradient(180deg, rgba(8,12,20,0.94) 0%, rgba(6,8,15,0.98) 100%)',
+                      borderColor: isLight ? 'rgba(124, 104, 78, 0.20)' : 'rgba(255,255,255,0.10)',
+                      boxShadow: isLight
+                        ? '0 22px 70px rgba(65, 50, 30, 0.16)'
+                        : '0 28px 90px rgba(0,0,0,0.42)',
+                    }}
+                  >
+                    <div
+                      className="relative overflow-hidden px-4 pb-4 pt-4 sm:px-8 sm:pb-8 sm:pt-7"
+                      style={{
+                        background: isLight
+                          ? 'linear-gradient(180deg, rgba(255,255,255,0.18) 0%, rgba(255,255,255,0) 100%)'
+                          : 'linear-gradient(180deg, rgba(255,255,255,0.04) 0%, rgba(255,255,255,0) 100%)',
+                      }}
                     >
-                      Student
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => setUserMode('explorer')}
-                      className="px-4 py-2 rounded border border-white/20"
-                    >
-                      Explorer
-                    </button>
+                      <div
+                        aria-hidden="true"
+                        className="relative mb-3 overflow-hidden rounded-[18px] border sm:mb-8 sm:rounded-[22px]"
+                        style={{
+                          height: 'clamp(68px, 12vw, 220px)',
+                          borderColor: isLight ? 'rgba(124, 104, 78, 0.16)' : 'rgba(255,255,255,0.08)',
+                          background: isLight
+                            ? 'linear-gradient(135deg, rgba(233,223,205,0.92) 0%, rgba(216,205,184,0.76) 42%, rgba(193,206,191,0.58) 100%)'
+                            : 'linear-gradient(135deg, rgba(10,18,31,0.98) 0%, rgba(17,34,54,0.9) 45%, rgba(38,58,48,0.74) 100%)',
+                        }}
+                      >
+                        <div
+                          className="absolute inset-0"
+                          style={{
+                            background: isLight
+                              ? 'radial-gradient(circle at 50% 42%, rgba(255,247,220,0.92) 0%, rgba(255,240,196,0.34) 20%, rgba(255,255,255,0) 48%)'
+                              : 'radial-gradient(circle at 50% 42%, rgba(244,219,149,0.32) 0%, rgba(122,198,255,0.14) 24%, rgba(0,0,0,0) 54%)',
+                          }}
+                        />
+                        <div
+                          className="absolute left-1/2 top-1/2 rounded-full hidden sm:block"
+                          style={{
+                            width: 'clamp(132px, 22vw, 188px)',
+                            height: 'clamp(132px, 22vw, 188px)',
+                            transform: 'translate(-50%, -50%)',
+                            border: isLight
+                              ? '1px solid rgba(120, 96, 62, 0.20)'
+                              : '1px solid rgba(255,255,255,0.12)',
+                            boxShadow: isLight
+                              ? '0 0 0 14px rgba(255,255,255,0.14), inset 0 0 24px rgba(255,255,255,0.28)'
+                              : '0 0 0 14px rgba(255,255,255,0.04), inset 0 0 28px rgba(255,255,255,0.08)',
+                          }}
+                        />
+                        <div
+                          className="absolute left-1/2 top-1/2 rounded-full hidden sm:block"
+                          style={{
+                            width: 'clamp(78px, 13vw, 116px)',
+                            height: 'clamp(78px, 13vw, 116px)',
+                            transform: 'translate(-50%, -50%)',
+                            border: isLight
+                              ? '1px solid rgba(120, 96, 62, 0.24)'
+                              : '1px solid rgba(255,255,255,0.16)',
+                            background: isLight
+                              ? 'radial-gradient(circle, rgba(255,252,244,0.94) 0%, rgba(252,240,213,0.34) 54%, rgba(255,255,255,0) 100%)'
+                              : 'radial-gradient(circle, rgba(255,240,204,0.18) 0%, rgba(255,255,255,0.06) 56%, rgba(255,255,255,0) 100%)',
+                          }}
+                        />
+                        <div
+                          className="absolute inset-x-0 bottom-0 h-20"
+                          style={{
+                            background: isLight
+                              ? 'linear-gradient(180deg, rgba(255,255,255,0) 0%, rgba(243,234,222,0.78) 100%)'
+                              : 'linear-gradient(180deg, rgba(3,7,12,0) 0%, rgba(3,7,12,0.82) 100%)',
+                          }}
+                        />
+                      </div>
+
+                      <div className="mx-auto max-w-3xl text-center">
+                        <div
+                          className="type-label mb-1 uppercase tracking-[0.14em] sm:mb-3 sm:tracking-[0.22em]"
+                          style={{ color: isLight ? 'rgba(90,77,60,0.62)' : 'rgba(255,255,255,0.54)' }}
+                        >
+                          IMMANENCE OS
+                        </div>
+                        <h1
+                          className="mb-1 text-2xl font-semibold leading-[1.05] sm:mb-3 sm:text-4xl sm:leading-tight"
+                          style={{ color: isLight ? '#3D3425' : 'rgba(255,255,255,0.96)' }}
+                        >
+                          Choose how you want to enter
+                        </h1>
+                        <p
+                          className="mx-auto mb-3 max-w-2xl text-sm leading-[1.35] sm:mb-8 sm:text-base sm:leading-6"
+                          style={{ color: isLight ? 'rgba(61,52,37,0.76)' : 'rgba(255,255,255,0.74)' }}
+                        >
+                          Student mode guides you through the curriculum with fewer choices. Explorer mode opens the full system from the start.
+                        </p>
+                      </div>
+
+                      <div className="grid grid-cols-1 gap-3 md:grid-cols-2 md:gap-4">
+                        <section
+                          className="rounded-[20px] border p-4 sm:rounded-[24px] sm:p-6"
+                          style={{
+                            borderColor: isLight ? 'rgba(124, 101, 66, 0.20)' : 'rgba(255,255,255,0.10)',
+                            background: isLight
+                              ? 'linear-gradient(180deg, rgba(255,252,247,0.92) 0%, rgba(247,240,230,0.86) 100%)'
+                              : 'linear-gradient(180deg, rgba(19,24,33,0.94) 0%, rgba(13,17,25,0.96) 100%)',
+                            boxShadow: isLight
+                              ? 'inset 0 1px 0 rgba(255,255,255,0.56)'
+                              : 'inset 0 1px 0 rgba(255,255,255,0.04)',
+                          }}
+                        >
+                          <div className="mb-3 sm:mb-5">
+                            <div
+                              className="mb-1 text-[11px] font-medium uppercase tracking-[0.14em] sm:mb-2 sm:text-xs sm:tracking-[0.18em]"
+                              style={{ color: isLight ? 'rgba(112,86,50,0.68)' : 'rgba(214,194,145,0.76)' }}
+                            >
+                              Guided practice
+                            </div>
+                            <h2
+                              className="text-xl font-semibold sm:text-2xl"
+                              style={{ color: isLight ? '#3D3425' : 'rgba(255,255,255,0.96)' }}
+                            >
+                              Student
+                            </h2>
+                          </div>
+                          <ul
+                            className="mb-4 space-y-2 text-sm leading-5 sm:mb-6 sm:space-y-3 sm:leading-6"
+                            style={{ color: isLight ? 'rgba(61,52,37,0.76)' : 'rgba(255,255,255,0.76)' }}
+                          >
+                            <li className="flex items-start gap-3">
+                              <span aria-hidden="true" className="mt-1.5 h-2 w-2 rounded-full" style={{ background: isLight ? '#8B6A3F' : '#D9B76D' }} />
+                              <span>Start with curriculum flow</span>
+                            </li>
+                            <li className="flex items-start gap-3">
+                              <span aria-hidden="true" className="mt-1.5 h-2 w-2 rounded-full" style={{ background: isLight ? '#8B6A3F' : '#D9B76D' }} />
+                              <span>Fewer sections until setup</span>
+                            </li>
+                            <li className="flex items-start gap-3">
+                              <span aria-hidden="true" className="mt-1.5 h-2 w-2 rounded-full" style={{ background: isLight ? '#8B6A3F' : '#D9B76D' }} />
+                              <span>Best for structured progression</span>
+                            </li>
+                          </ul>
+                          <button
+                            type="button"
+                            onClick={() => setUserMode('student')}
+                            className="w-full rounded-full px-4 py-2.5 text-sm font-semibold transition-transform duration-150 hover:scale-[1.01] active:scale-[0.99] sm:py-3"
+                            style={{
+                              background: isLight
+                                ? 'linear-gradient(135deg, #8A9B8C 0%, #708C81 100%)'
+                                : 'linear-gradient(135deg, rgba(128,162,146,0.96) 0%, rgba(91,124,113,0.96) 100%)',
+                              color: '#F8F5EF',
+                              boxShadow: isLight
+                                ? '0 12px 28px rgba(112,140,129,0.24)'
+                                : '0 12px 28px rgba(62,100,88,0.32)',
+                            }}
+                          >
+                            Enter as Student
+                          </button>
+                        </section>
+
+                        <section
+                          className="rounded-[20px] border p-4 sm:rounded-[24px] sm:p-6"
+                          style={{
+                            borderColor: isLight ? 'rgba(82,109,126,0.24)' : 'rgba(122,198,255,0.18)',
+                            background: isLight
+                              ? 'linear-gradient(180deg, rgba(248,252,255,0.94) 0%, rgba(236,244,249,0.90) 100%)'
+                              : 'linear-gradient(180deg, rgba(14,22,38,0.96) 0%, rgba(10,16,28,0.98) 100%)',
+                            boxShadow: isLight
+                              ? 'inset 0 1px 0 rgba(255,255,255,0.68)'
+                              : 'inset 0 1px 0 rgba(255,255,255,0.05)',
+                          }}
+                        >
+                          <div className="mb-3 sm:mb-5">
+                            <div
+                              className="mb-1 text-[11px] font-medium uppercase tracking-[0.14em] sm:mb-2 sm:text-xs sm:tracking-[0.18em]"
+                              style={{ color: isLight ? 'rgba(72,101,125,0.72)' : 'rgba(143,204,255,0.78)' }}
+                            >
+                              Full access
+                            </div>
+                            <h2
+                              className="text-xl font-semibold sm:text-2xl"
+                              style={{ color: isLight ? '#243647' : 'rgba(255,255,255,0.96)' }}
+                            >
+                              Explorer
+                            </h2>
+                          </div>
+                          <ul
+                            className="mb-4 space-y-2 text-sm leading-5 sm:mb-6 sm:space-y-3 sm:leading-6"
+                            style={{ color: isLight ? 'rgba(48,66,83,0.80)' : 'rgba(255,255,255,0.78)' }}
+                          >
+                            <li className="flex items-start gap-3">
+                              <span aria-hidden="true" className="mt-1.5 h-2 w-2 rounded-full" style={{ background: isLight ? '#557E9A' : '#79BFFF' }} />
+                              <span>Full section access immediately</span>
+                            </li>
+                            <li className="flex items-start gap-3">
+                              <span aria-hidden="true" className="mt-1.5 h-2 w-2 rounded-full" style={{ background: isLight ? '#557E9A' : '#79BFFF' }} />
+                              <span>Move freely across the app</span>
+                            </li>
+                            <li className="flex items-start gap-3">
+                              <span aria-hidden="true" className="mt-1.5 h-2 w-2 rounded-full" style={{ background: isLight ? '#557E9A' : '#79BFFF' }} />
+                              <span>Best for self-directed use</span>
+                            </li>
+                          </ul>
+                          <button
+                            type="button"
+                            onClick={() => setUserMode('explorer')}
+                            className="w-full rounded-full px-4 py-2.5 text-sm font-semibold transition-transform duration-150 hover:scale-[1.01] active:scale-[0.99] sm:py-3"
+                            style={{
+                              background: isLight
+                                ? 'linear-gradient(135deg, #5D819A 0%, #3C627B 100%)'
+                                : 'linear-gradient(135deg, rgba(99,156,198,0.98) 0%, rgba(58,100,133,0.98) 100%)',
+                              color: '#F8FAFC',
+                              boxShadow: isLight
+                                ? '0 12px 28px rgba(70,110,138,0.24)'
+                                : '0 12px 28px rgba(39,76,108,0.32)',
+                            }}
+                          >
+                            Enter as Explorer
+                          </button>
+                        </section>
+                      </div>
+                    </div>
                   </div>
                 </div>
               ) : (isHub || playgroundMode) ? (

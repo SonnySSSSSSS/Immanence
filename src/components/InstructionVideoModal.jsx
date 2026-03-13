@@ -1,6 +1,23 @@
-import React from 'react';
+import React, { useRef, useEffect } from 'react';
+import { useVideoStore } from '../state/videoStore.js';
 
-export function InstructionVideoModal({ isOpen, title, videoUrl, onClose }) {
+export function InstructionVideoModal({ isOpen, videoId, title, videoUrl, onClose }) {
+    const videoRef = useRef(null);
+    const updateProgress = useVideoStore(s => s.updateProgress);
+    const markCompleted = useVideoStore(s => s.markCompleted);
+    const lastProgressUpdateRef = useRef(0);
+
+    useEffect(() => {
+        if (!isOpen) return;
+        lastProgressUpdateRef.current = 0;
+        const video = videoRef.current;
+        if (!video) return;
+        const playPromise = video.play?.();
+        if (playPromise && typeof playPromise.catch === 'function') {
+            playPromise.catch(() => {});
+        }
+    }, [isOpen, videoUrl]);
+
     if (!isOpen || !videoUrl) return null;
 
     return (
@@ -53,9 +70,23 @@ export function InstructionVideoModal({ isOpen, title, videoUrl, onClose }) {
 
                 <div className="p-4">
                     <video
+                        ref={videoRef}
                         controls
+                        autoPlay
                         playsInline
                         preload="metadata"
+                        onTimeUpdate={() => {
+                            const video = videoRef.current;
+                            if (!video || !videoId || !video.duration) return;
+                            const now = Date.now();
+                            if (now - lastProgressUpdateRef.current < 2000) return;
+                            lastProgressUpdateRef.current = now;
+                            const progress = video.currentTime / video.duration;
+                            updateProgress(videoId, progress, video.currentTime);
+                        }}
+                        onEnded={() => {
+                            if (videoId) markCompleted(videoId);
+                        }}
                         style={{
                             width: '100%',
                             display: 'block',

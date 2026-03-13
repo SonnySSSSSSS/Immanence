@@ -15,6 +15,7 @@ import { getPathById } from '../data/navigationData.js';
 import { AvatarV3 } from './avatarV3/AvatarV3.jsx';
 import { useAvatarV3State } from '../state/avatarV3Store.js';
 import { usePathStore } from '../state/pathStore.js';
+import { CurriculumOnboarding } from './CurriculumOnboarding.jsx';
 
 const normalizeInitiationPathIdentity = (pathId) => (pathId === 'initiation-2' ? 'initiation' : pathId);
 
@@ -37,8 +38,19 @@ export function NavigationSection({ currentStage, previewPath, onNavigate, isPra
   const [overlayPathId, setOverlayPathId] = useState(null);
   const overlayPath = overlayPathId ? getPathById(overlayPathId) : null;
 
+  // Local state for initiation onboarding — rendered directly here when HomeHub is not mounted
+  const [showInitiationOnboarding, setShowInitiationOnboarding] = useState(false);
+
   // Handler for when user clicks a path card in the grid
   const handlePathSelected = (pathId) => {
+    const normalizedId = normalizeInitiationPathIdentity(pathId);
+    const normalizedActiveId = normalizeInitiationPathIdentity(activePath?.activePathId ?? null);
+    // Initiation path when not currently active: open canonical onboarding directly in this section.
+    // Active initiation path falls through to show progress overlay as normal.
+    if (normalizedId === 'initiation' && normalizedActiveId !== 'initiation') {
+      setShowInitiationOnboarding(true);
+      return;
+    }
     setOverlayPathId(pathId);
   };
 
@@ -299,6 +311,18 @@ export function NavigationSection({ currentStage, previewPath, onNavigate, isPra
         currentView={showCodex ? 'compass' : 'paths'}
         onSelectView={(view) => setShowCodex(view === 'compass')}
       />
+
+      {/* Initiation onboarding — opened locally when HomeHub is not mounted */}
+      {showInitiationOnboarding && createPortal(
+        <CurriculumOnboarding
+          onDismiss={() => setShowInitiationOnboarding(false)}
+          onComplete={() => {
+            useNavigationStore.getState().beginPathForCurriculum('ritual-initiation-14-v2');
+            setShowInitiationOnboarding(false);
+          }}
+        />,
+        document.body
+      )}
     </div>
   );
 }
