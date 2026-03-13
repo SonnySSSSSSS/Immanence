@@ -18,7 +18,7 @@ import { SideNavigation } from "./SideNavigation.jsx";
 import { noiseOverlayStyle, sheenOverlayStyle } from "../styles/cardMaterial.js";
 import { useProgressStore } from "../state/progressStore.js";
 import { useLunarStore } from "../state/lunarStore.js";
-import { STAGES } from "../state/stageConfig.js";
+import { STAGES, STAGE_THRESHOLDS } from "../state/stageConfig.js";
 import { useDisplayModeStore } from "../state/displayModeStore.js";
 import { useUserModeStore } from "../state/userModeStore.js";
 import { calculateGradientAngle, getAvatarCenter, getDynamicGoldGradient } from "../utils/dynamicLighting.js";
@@ -85,7 +85,7 @@ const HOME_HUB_SIDE_PANEL_ASSET_URLS = Object.freeze({
 function HomeHub({ onSelectSection, activeSection = null, currentStage, previewPath, isPracticing = false, lockToHub = false, debugShadowScan = false }) {
   // Real data from stores
   const { getStreakInfo, getDomainStats, getWeeklyPattern } = useProgressStore();
-  const { getCurrentStage, getDaysUntilNextStage } = useLunarStore();
+  const { getCurrentStage, getDaysUntilNextStage, getEffectiveDays, getDaysUntilNextStageEffective, getDecayInfo } = useLunarStore();
   const { stage: avatarStage, modeWeights, lastStageChange, lastModeChange, lastSessionComplete } = useAvatarV3State();
   const colorScheme = useDisplayModeStore(s => s.colorScheme);
   const userMode = useUserModeStore((s) => s.userMode);
@@ -217,13 +217,22 @@ function HomeHub({ onSelectSection, activeSection = null, currentStage, previewP
   const avgAccuracy = breathStats.avgAccuracy || 0;
   const daysUntilNext = getDaysUntilNextStage() || 0;
   const lunarStage = getCurrentStage();
-  const progressToNextStage = daysUntilNext > 0
-    ? (STAGES[lunarStage]?.duration - daysUntilNext) / STAGES[lunarStage]?.duration
-    : 0;
+  void daysUntilNext;
 
+  // Effective (decay-adjusted) stage counter
+  const effectiveDaysTotal = getEffectiveDays();
+  const effectiveStageKey = lunarStage;
+  const daysUntilNextEffective = getDaysUntilNextStageEffective() ?? 0;
+  const nextStageName = STAGES[effectiveStageKey]?.next
+    ? (STAGES[STAGES[effectiveStageKey].next]?.displayName ?? '—')
+    : 'Ceiling';
+  const stageDuration = STAGES[effectiveStageKey]?.duration ?? 90;
+  const stageThreshold = STAGE_THRESHOLDS[effectiveStageKey] ?? 0;
+  const daysInStage = Math.max(0, effectiveDaysTotal - stageThreshold);
+  const stageProgressPct = Math.min(100, Math.round((daysInStage / stageDuration) * 100));
+  const decayInfo = getDecayInfo();
 
   void avgAccuracy;
-  void progressToNextStage;
 
   const handleStartPractice = (leg, context = {}) => {
     if (lockToHub) return;
@@ -376,10 +385,6 @@ function HomeHub({ onSelectSection, activeSection = null, currentStage, previewP
     ...sidePanelMetricValueBaseStyle,
     fontSize: '18px',
   };
-  const sidePanelRingValueStyle = {
-    ...sidePanelMetricValueBaseStyle,
-    fontSize: '10px',
-  };
   const sidePanelMetricLabelStyle = {
     color: isLight ? 'rgba(100, 80, 60, 0.52)' : 'rgba(255, 255, 255, 0.40)',
     fontSize: '10px',
@@ -432,14 +437,6 @@ function HomeHub({ onSelectSection, activeSection = null, currentStage, previewP
     alignItems: 'stretch',
     gap: `calc(${U} * 0.28)`,
     transition: 'max-height 260ms ease, opacity 220ms ease',
-  };
-  const sidePanelTileStatsRowStyle = {
-    width: '100%',
-    display: 'grid',
-    gridTemplateColumns: '1fr 1fr',
-    gap: `calc(${U} * 0.18)`,
-    alignItems: 'start',
-    flexShrink: 0,
   };
   const sidePanelTileMetricCellStyle = {
     ...sidePanelMetricCellStyle,
@@ -495,60 +492,6 @@ function HomeHub({ onSelectSection, activeSection = null, currentStage, previewP
     flexShrink: 0,
   };
 
-  // Render helper: donut ring for rate metrics (completion/on-time)
-  const renderRateRing = (value, isLight, options = {}) => {
-    const size = options.size ?? 48;
-    const strokeWidth = options.strokeWidth ?? 3.5;
-    const darkTrackAlpha = options.darkTrackAlpha ?? 0.16;
-    const lightTrackAlpha = options.lightTrackAlpha ?? 0.26;
-    const darkFillAlpha = options.darkFillAlpha ?? 0.9;
-    const lightFillAlpha = options.lightFillAlpha ?? 0.88;
-    const r = 14;
-    const circumference = 2 * Math.PI * r;
-    const progress = value === null ? 0 : Math.max(0, Math.min(value / 100, 1));
-    const dashLength = progress * circumference;
-
-    const ringColor = isLight
-      ? `rgba(100, 80, 60, ${lightTrackAlpha})`
-      : `rgba(255, 255, 255, ${darkTrackAlpha})`;
-    const fillColor = isLight
-      ? (value === null ? ringColor : `rgba(100, 80, 60, ${lightFillAlpha})`)
-      : (value === null ? ringColor : `rgba(76, 175, 80, ${darkFillAlpha})`);
-    const displayValue = value === null || value === undefined ? '—' : `${Math.round(value)}%`;
-    return (
-      <div style={{ position: 'relative', width: size, height: size, flexShrink: 0 }}>
-        <svg width={size} height={size} viewBox="0 0 44 44" style={{ overflow: 'visible', display: 'block' }}>
-          <circle cx="22" cy="22" r={r} fill="none" stroke={ringColor} strokeWidth={strokeWidth} />
-          {value !== null && (
-            <circle
-              cx="22" cy="22" r={r}
-              fill="none"
-              stroke={fillColor}
-              strokeWidth={strokeWidth}
-              strokeDasharray={`${dashLength} ${circumference}`}
-              strokeLinecap="round"
-              transform="rotate(-90 22 22)"
-            />
-          )}
-        </svg>
-        <div
-          style={{
-            position: 'absolute',
-            inset: 0,
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            pointerEvents: 'none',
-            ...sidePanelRingValueStyle,
-            transform: 'translateY(1px)',
-            textShadow: '-1px 0 0 rgba(0,0,0,0.22), 1px 0 0 rgba(0,0,0,0.22), 0 -1px 0 rgba(0,0,0,0.18), 0 1px 0 rgba(0,0,0,0.18), 0 1px 2px rgba(0,0,0,0.24)',
-          }}
-        >
-          {displayValue}
-        </div>
-      </div>
-    );
-  };
 
   return (
     <div className="w-full flex flex-col items-center relative overflow-visible">
@@ -719,36 +662,90 @@ function HomeHub({ onSelectSection, activeSection = null, currentStage, previewP
                   ...sidePanelTileContentBaseStyle,
                   maxHeight: rightRolled ? sidePanelTileRolledMaxHeight : sidePanelTileExpandedMaxHeight,
                   opacity: rightRolled ? 0.86 : 1,
+                  gap: `calc(${U} * 0.18)`,
                 }}
               >
-                <div style={sidePanelTileStatsRowStyle}>
-                  <div style={{ ...sidePanelTileMetricCellStyle, gap: '1px' }}>
-                    {renderRateRing(hubTiles?.completion_rate, isLight, {
-                      size: 28,
-                      strokeWidth: 3,
-                      darkTrackAlpha: 0.16,
-                      lightTrackAlpha: 0.26,
-                      darkFillAlpha: 0.9,
-                      lightFillAlpha: 0.88,
-                    })}
-                    <div className="type-label" style={{ ...sidePanelTileLabelStyle, fontSize: '7px', whiteSpace: 'nowrap', textShadow: '0 1px 3px rgba(0,0,0,0.9)' }}>
-                      Complete
-                    </div>
-                  </div>
-                  <div style={{ ...sidePanelTileMetricCellStyle, gap: '1px' }}>
-                    {renderRateRing(hubTiles?.on_time_rate, isLight, {
-                      size: 28,
-                      strokeWidth: 3,
-                      darkTrackAlpha: 0.16,
-                      lightTrackAlpha: 0.26,
-                      darkFillAlpha: 0.9,
-                      lightFillAlpha: 0.88,
-                    })}
-                    <div className="type-label" style={{ ...sidePanelTileLabelStyle, fontSize: '7px', whiteSpace: 'nowrap', textShadow: '0 1px 3px rgba(0,0,0,0.9)' }}>
-                      On-Time
-                    </div>
+                {/* Next stage label */}
+                <div className="type-label" style={{
+                  ...sidePanelTileLabelStyle,
+                  fontSize: '8px',
+                  whiteSpace: 'nowrap',
+                  textShadow: '0 1px 4px rgba(0,0,0,0.95)',
+                  textAlign: 'center',
+                  letterSpacing: '0.10em',
+                }}>
+                  → {nextStageName}
+                </div>
+
+                {/* Days remaining — large number */}
+                <div style={{ textAlign: 'center', lineHeight: 1 }}>
+                  <span className="type-metric" style={{
+                    ...sidePanelTileValueStyle,
+                    fontSize: '26px',
+                    fontWeight: 700,
+                    textShadow: '0 1px 8px rgba(0,0,0,0.75)',
+                  }}>
+                    {daysUntilNextEffective}
+                  </span>
+                </div>
+
+                {/* "days remaining" label */}
+                <div className="type-label" style={{
+                  ...sidePanelTileLabelStyle,
+                  fontSize: '8px',
+                  textAlign: 'center',
+                  textShadow: '0 1px 4px rgba(0,0,0,0.95)',
+                }}>
+                  days remaining
+                </div>
+
+                {/* Progress bar within stage */}
+                <div style={{ width: '100%', padding: '0 2px', boxSizing: 'border-box' }}>
+                  <div style={{
+                    width: '100%',
+                    height: '3px',
+                    borderRadius: '2px',
+                    background: isLight ? 'rgba(100,80,60,0.18)' : 'rgba(255,255,255,0.12)',
+                  }}>
+                    <div style={{
+                      height: '100%',
+                      width: `${stageProgressPct}%`,
+                      borderRadius: '2px',
+                      background: 'linear-gradient(90deg, var(--accent-color), var(--accent-70))',
+                      boxShadow: '0 0 4px var(--accent-30)',
+                      transition: 'width 600ms ease',
+                    }} />
                   </div>
                 </div>
+
+                {/* Decay rate — hover for full info */}
+                <div
+                  className="type-label"
+                  title={[
+                    `Decay: −${decayInfo.decayPerMissedDay.toFixed(2)} effective days per missed day`,
+                    `Accumulated loss: ${decayInfo.decayAccumulated} days`,
+                    decayInfo.isRecovering
+                      ? `Recovering: −${decayInfo.recoveryRate}/day (${decayInfo.consecutiveDays} day streak)`
+                      : `Streak ${decayInfo.consecutiveDays}/7 days for recovery bonus`,
+                  ].join('\n')}
+                  style={{
+                    textAlign: 'center',
+                    fontSize: '7px',
+                    lineHeight: 1,
+                    letterSpacing: '0.06em',
+                    color: decayInfo.isRecovering
+                      ? 'rgba(76,175,80,0.85)'
+                      : (isLight ? 'rgba(100,80,60,0.65)' : 'rgba(255,255,255,0.55)'),
+                    cursor: 'default',
+                    textShadow: '0 1px 3px rgba(0,0,0,0.75)',
+                  }}
+                >
+                  {decayInfo.isRecovering
+                    ? `+${decayInfo.recoveryRate}/day recovery`
+                    : `−${decayInfo.decayPerMissedDay.toFixed(2)}/miss`}
+                </div>
+
+                {/* Report button */}
                 <button
                   type="button"
                   onClick={(e) => { e.stopPropagation(); openArchive(ARCHIVE_TABS.REPORTS); }}
