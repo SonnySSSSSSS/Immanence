@@ -56,6 +56,56 @@ async function chooseUserMode(page: Page, mode: 'Student' | 'Explorer'): Promise
   await getUserModeButton(page, mode).click();
 }
 
+async function dismissNamePromptIfPresent(page: Page): Promise<void> {
+  const namePromptDismiss = page.getByRole('button', { name: 'Not now', exact: true });
+  if (await namePromptDismiss.isVisible({ timeout: 3000 }).catch(() => false)) {
+    await namePromptDismiss.click();
+  }
+}
+
+async function forceAuthenticatedUserMode(page: Page, mode: 'student' | 'explorer'): Promise<void> {
+  await page.evaluate(async (nextMode: 'student' | 'explorer') => {
+    const [{ supabase }, { useUserModeStore }] = await Promise.all([
+      import('/src/lib/supabaseClient.js'),
+      import('/src/state/userModeStore.js'),
+    ]);
+    const { data } = await supabase.auth.getSession();
+    const userId = data?.session?.user?.id ?? null;
+    if (!userId) return;
+    const store = useUserModeStore.getState();
+    store.setActiveUserId(userId);
+    store.setUserMode(nextMode);
+  }, mode);
+}
+
+async function waitForAuthenticatedUserId(page: Page): Promise<void> {
+  await expect
+    .poll(async () => page.evaluate(async () => {
+      const { supabase } = await import('/src/lib/supabaseClient.js');
+      const { data } = await supabase.auth.getSession();
+      return data?.session?.user?.id ?? null;
+    }), {
+      message: 'Expected a real authenticated user session',
+    })
+    .not.toBeNull();
+}
+
+async function ensureExplorerHubLanding(page: Page): Promise<void> {
+  await dismissNamePromptIfPresent(page);
+  await waitForAuthenticatedUserId(page);
+
+  await forceAuthenticatedUserMode(page, 'explorer');
+  await page.reload();
+  await page.waitForLoadState('domcontentloaded');
+  await dismissNamePromptIfPresent(page);
+
+  if (await getUserModeButton(page, 'Explorer').isVisible().catch(() => false)) {
+    await chooseUserMode(page, 'Explorer');
+  }
+
+  await expectHubVisible(page);
+}
+
 async function startFromCleanState(page: Page, userMode: 'student' | 'explorer' = 'explorer'): Promise<void> {
   await gotoAppRoot(page);
   await page.evaluate(([smokeUserId, mode]) => {
@@ -478,13 +528,7 @@ test('TEST 7 — Real beta sign-in, session restore, and sign-out', async ({ pag
   await page.getByRole('button', { name: 'Sign in', exact: true }).click();
 
   // Dismiss name-prompt if shown for accounts without a stored display name
-  const namePromptDismiss = page.getByRole('button', { name: 'Not now', exact: true });
-  if (await namePromptDismiss.isVisible({ timeout: 3000 }).catch(() => false)) {
-    await namePromptDismiss.click();
-  }
-
-  // Hub must appear — proves real signInWithPassword succeeded
-  await expectHubVisible(page);
+  await ensureExplorerHubLanding(page);
 
   // --- 3. Verify the stored session is a real Supabase token (not smoke placeholder) ---
   const userId = await page.evaluate(async () => {
@@ -501,12 +545,7 @@ test('TEST 7 — Real beta sign-in, session restore, and sign-out', async ({ pag
   await page.waitForLoadState('domcontentloaded');
 
   // Dismiss name-prompt again if it re-appears after reload
-  if (await namePromptDismiss.isVisible({ timeout: 3000 }).catch(() => false)) {
-    await namePromptDismiss.click();
-  }
-
-  // Hub still visible — proves getSession() restored the real JWT from localStorage
-  await expectHubVisible(page);
+  await ensureExplorerHubLanding(page);
 
   // --- 5. user_documents: read-only auth guard check ---
   // offlineFirstUserStateSync.tick() will reach DB only when userId is non-null.
@@ -593,11 +632,7 @@ test('TEST 8 — user_documents write-path and anon isolation under real RLS', a
   await page.getByPlaceholder('Password').fill(password);
   await page.getByRole('button', { name: 'Sign in', exact: true }).click();
 
-  const namePromptDismiss = page.getByRole('button', { name: 'Not now', exact: true });
-  if (await namePromptDismiss.isVisible({ timeout: 3000 }).catch(() => false)) {
-    await namePromptDismiss.click();
-  }
-  await expectHubVisible(page);
+  await ensureExplorerHubLanding(page);
 
   // --- 2. Write probe: upsert a smoke-specific doc_key ---
   // Row schema matches offlineFirstUserStateSync.pushOutbox(). Using a test-only doc_key
@@ -721,9 +756,7 @@ test('TEST 9 — Cross-user isolation: Account B cannot access Account A data', 
     await pageA.getByPlaceholder('Email').fill(emailA);
     await pageA.getByPlaceholder('Password').fill(passwordA);
     await pageA.getByRole('button', { name: 'Sign in', exact: true }).click();
-    const dismissA = pageA.getByRole('button', { name: 'Not now', exact: true });
-    if (await dismissA.isVisible({ timeout: 3000 }).catch(() => false)) await dismissA.click();
-    await expectHubVisible(pageA);
+    await ensureExplorerHubLanding(pageA);
 
     const aSetup = await pageA.evaluate(async () => {
       // @ts-ignore — runtime browser import; TypeScript cannot resolve Vite src paths from Node
@@ -752,9 +785,7 @@ test('TEST 9 — Cross-user isolation: Account B cannot access Account A data', 
     await pageB.getByPlaceholder('Email').fill(emailB);
     await pageB.getByPlaceholder('Password').fill(passwordB);
     await pageB.getByRole('button', { name: 'Sign in', exact: true }).click();
-    const dismissB = pageB.getByRole('button', { name: 'Not now', exact: true });
-    if (await dismissB.isVisible({ timeout: 3000 }).catch(() => false)) await dismissB.click();
-    await expectHubVisible(pageB);
+    await ensureExplorerHubLanding(pageB);
 
     // --- 3. B mounts four attacks against A's row ---
     const bAttack = await pageB.evaluate(async (targetUserId: string) => {
@@ -880,11 +911,7 @@ test('TEST 10 — Forced token refresh: session identity survives refreshSession
   await page.getByPlaceholder('Password').fill(password);
   await page.getByRole('button', { name: 'Sign in', exact: true }).click();
 
-  const namePromptDismiss = page.getByRole('button', { name: 'Not now', exact: true });
-  if (await namePromptDismiss.isVisible({ timeout: 3000 }).catch(() => false)) {
-    await namePromptDismiss.click();
-  }
-  await expectHubVisible(page);
+  await ensureExplorerHubLanding(page);
 
   // --- 2. Capture userId before refresh, then force refresh ---
   const refreshResult = await page.evaluate(async () => {
