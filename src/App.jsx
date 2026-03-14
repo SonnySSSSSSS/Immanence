@@ -458,6 +458,7 @@ function App({ playgroundMode = false, playgroundBottomLayer = true }) {
   // }, [curriculumOnboardingComplete, isCurriculumComplete]);
 
 
+  // v3.27.269 - fix(precision-rail): constrain legend popup to rail width with 2-column layout
   // v3.27.268 - fix(dedup): remove duplicate restart/abandon buttons from active path state component
   // v3.27.267 - fix(legibility): add dark background container with white text for path actions
   // v3.27.266 - fix(legibility): boost text contrast for path buttons and labels; add text shadows
@@ -903,7 +904,7 @@ function App({ playgroundMode = false, playgroundBottomLayer = true }) {
                         }}
                         style={{ background: 'transparent' }}
                       >
-                        v3.27.268
+                        v3.27.269
                       </button>
                     </div>
                   </div>
