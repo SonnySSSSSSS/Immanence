@@ -194,7 +194,7 @@ export function NavigationSection({ currentStage, previewPath, onNavigate, isPra
                 textShadow: !isLight ? '0 1px 2px rgba(0,0,0,0.8)' : undefined,
               }}
             >
-              Path actions
+              Active path actions
             </div>
             <PathLifecycleActions compact />
           </div>

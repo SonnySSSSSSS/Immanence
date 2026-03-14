@@ -172,8 +172,8 @@ export function PathSelectionGrid({ onPathSelected, selectedPathId }) {
                             {/* Active indicator */}
                             {isActive && (
                                 <div className="absolute top-2 right-2 z-10 flex items-center gap-1">
-                                    <span style={{ fontFamily: 'var(--font-display)', fontSize: '7px', fontWeight: 600, letterSpacing: '0.1em', color: 'var(--accent-color)', textTransform: 'uppercase' }}>Active</span>
-                                    <div className="w-2.5 h-2.5 rounded-full bg-[var(--accent-color)] shadow-[0_0_8px_var(--accent-60)]" />
+                                    <span style={{ fontFamily: 'var(--font-display)', fontSize: '7px', fontWeight: 600, letterSpacing: '0.1em', color: entry.isProgram ? 'rgba(253,251,245,0.4)' : 'var(--accent-color)', textTransform: 'uppercase' }}>{entry.isProgram ? 'Ongoing' : 'Active'}</span>
+                                    <div className="w-2.5 h-2.5 rounded-full" style={{ background: entry.isProgram ? 'rgba(253,251,245,0.25)' : 'var(--accent-color)', boxShadow: entry.isProgram ? 'none' : '0 0 8px var(--accent-60)' }} />
                                 </div>
                             )}
 

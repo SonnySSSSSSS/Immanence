@@ -1,7 +1,4 @@
 // src/components/PathOverviewPanel.jsx
-// NOTE: The 5-step initiation acceptance flow was removed.
-// Initiation path setup now routes directly to CurriculumOnboarding.
-// See: src/components/CurriculumOnboarding.jsx
 import React, { useEffect, useRef, useState } from 'react';
 import { useNavigationStore } from '../state/navigationStore.js';
 import { useCurriculumStore } from '../state/curriculumStore.js';
@@ -16,6 +13,17 @@ import { getPathContract, validatePathActivationSelections } from '../utils/path
 import { InstructionVideoModal } from './InstructionVideoModal.jsx';
 import { getResumableNavigationPathId } from '../state/curriculumStore.js';
 
+const ACCEPTANCE_STEP_VIDEO_MAP = Object.freeze({
+    1: {
+        title: 'The Mechanics of Meaning',
+        videoUrl: '/videos/The_Mechanics_of_Meaning.mp4',
+    },
+    2: {
+        title: 'Music: A Transmission of Consciousness',
+        videoUrl: '/videos/Music__A_Transmission_of_Consciousness.mp4',
+    },
+});
+const ACCEPTANCE_PATH_ID = 'initiation';
 const normalizeInitiationPathIdentity = (pathId) => (pathId === 'initiation-2' ? 'initiation' : pathId);
 
 export function PathOverviewPanel({ path, onBegin, onClose, onNavigate }) {
@@ -36,9 +44,12 @@ export function PathOverviewPanel({ path, onBegin, onClose, onNavigate }) {
     const resumablePathId = useCurriculumStore(getResumableNavigationPathId);
     const [expandedWeeks, setExpandedWeeks] = useState([]);
     const [scheduleError, setScheduleError] = useState(null);
+    const [daysError, setDaysError] = useState(null);
     const [benchmarkError, setBenchmarkError] = useState(null);
     const [showBenchmark, setShowBenchmark] = useState(false);
+    const [currentStep, setCurrentStep] = useState(1);
     const [activeInstructionVideo, setActiveInstructionVideo] = useState(null);
+    const lastAutoOpenedVideoKeyRef = useRef(null);
     const lastBenchmark = useBreathBenchmarkStore(s => s.lastBenchmark);
     const completeAttemptBenchmark = useBreathBenchmarkStore(s => s.completeAttemptBenchmark);
     const canReuseLastBenchmark = useBreathBenchmarkStore(s => s.canReuseLastBenchmark);
@@ -54,12 +65,23 @@ export function PathOverviewPanel({ path, onBegin, onClose, onNavigate }) {
     const canReuseForAttempt = Boolean(attemptRunId && canReuseLastBenchmark(14));
 
     if (!path || path.placeholder) return null;
+    const isInitiationPath = path.id === ACCEPTANCE_PATH_ID;
+    const isAcceptancePath = path.id === ACCEPTANCE_PATH_ID;
     const normalizedViewedPathId = normalizeInitiationPathIdentity(path.id);
     const normalizedActivePathId = normalizeInitiationPathIdentity(activePath?.activePathId ?? null);
     const normalizedResumablePathId = normalizeInitiationPathIdentity(resumablePathId);
     const isViewedPathActive = normalizedViewedPathId === normalizedActivePathId;
     const isViewedPathResumable = normalizedViewedPathId === normalizedResumablePathId;
     const contract = getPathContract(path);
+    const orderedDayOptions = [
+        { value: 1, label: 'Mon' },
+        { value: 2, label: 'Tue' },
+        { value: 3, label: 'Wed' },
+        { value: 4, label: 'Thu' },
+        { value: 5, label: 'Fri' },
+        { value: 6, label: 'Sat' },
+        { value: 0, label: 'Sun' },
+    ];
     const selectedDays = (() => {
         const fromGetter = getSelectedDaysOfWeekDraft?.();
         const base = Array.isArray(fromGetter) ? fromGetter : selectedDaysOfWeekDraft;
@@ -68,6 +90,18 @@ export function PathOverviewPanel({ path, onBegin, onClose, onNavigate }) {
             : [];
         return [...new Set(normalized)].sort((a, b) => a - b);
     })();
+    const toggleSelectedDay = (dayValue) => {
+        const isSelected = selectedDays.includes(dayValue);
+        if (isSelected) {
+            setSelectedDaysOfWeekDraft(selectedDays.filter((d) => d !== dayValue));
+            return;
+        }
+        const maxDays = contract.practiceDaysPerWeek ?? 7;
+        if (selectedDays.length >= maxDays) {
+            return;
+        }
+        setSelectedDaysOfWeekDraft([...selectedDays, dayValue].sort((a, b) => a - b));
+    };
 
     const toggleWeek = (weekNumber) => {
         setExpandedWeeks(prev =>
@@ -80,13 +114,30 @@ export function PathOverviewPanel({ path, onBegin, onClose, onNavigate }) {
     const scheduleTimes = (practiceTimeSlots || []).filter(Boolean);
     const scheduleConstraint = getScheduleConstraintForPath(path.id);
     const scheduleValidation = validateSelectedTimes(scheduleTimes, scheduleConstraint);
+    const requiredDays = contract.practiceDaysPerWeek;
+    const daysValidation = isInitiationPath && Number.isInteger(requiredDays)
+        ? {
+            ok: selectedDays.length === requiredDays,
+            error: selectedDays.length !== requiredDays
+                ? `Select exactly ${requiredDays} active practice days. One rest day is required.`
+                : null,
+        }
+        : { ok: true, error: null };
     const benchmarkValidation = path.showBreathBenchmark
         ? {
             ok: attemptBenchmarkDone,
             error: attemptBenchmarkDone ? null : 'Complete the breathing benchmark first.',
         }
         : { ok: true, error: null };
-    const canBeginPath = scheduleValidation.ok && benchmarkValidation.ok;
+    const canBeginPath = scheduleValidation.ok && daysValidation.ok && benchmarkValidation.ok;
+    const totalSteps = 5;
+    const canAdvanceStep3 = daysValidation.ok && scheduleValidation.ok;
+    const canAdvanceStep4 = benchmarkValidation.ok;
+    const canAdvanceCurrentStep = currentStep === 3
+        ? canAdvanceStep3
+        : currentStep === 4
+            ? canAdvanceStep4
+            : true;
     const scheduleInstruction = scheduleConstraint?.requiredCount === 2 && scheduleConstraint?.maxCount === 2
         ? 'Select exactly 2 time slots for practice (morning and evening).'
         : 'Choose at least one time to begin this path.';
@@ -132,6 +183,11 @@ export function PathOverviewPanel({ path, onBegin, onClose, onNavigate }) {
             selectedDaysOfWeek: selectedDays,
             selectedTimes: scheduleTimes,
         });
+        if (!daysValidation.ok) {
+            setDaysError(daysValidation.error);
+        } else {
+            setDaysError(null);
+        }
         if (!validation.ok) {
             setScheduleError(validation.error);
             return;
@@ -140,11 +196,15 @@ export function PathOverviewPanel({ path, onBegin, onClose, onNavigate }) {
             setBenchmarkError(benchmarkValidation.error);
             return;
         }
+        if (!daysValidation.ok) {
+            return;
+        }
         if (!activationValidation.ok) {
             setScheduleError(activationValidation.error);
             return;
         }
         setScheduleError(null);
+        setDaysError(null);
         setBenchmarkError(null);
         if (onBegin) {
             const result = onBegin(path.id);
@@ -221,6 +281,23 @@ export function PathOverviewPanel({ path, onBegin, onClose, onNavigate }) {
         return null;
     };
 
+    useEffect(() => {
+        const targetVideo = isAcceptancePath ? ACCEPTANCE_STEP_VIDEO_MAP[currentStep] ?? null : null;
+        const targetKey = targetVideo ? `${path.id}:${currentStep}` : null;
+
+        if (!targetKey) {
+            lastAutoOpenedVideoKeyRef.current = null;
+            return;
+        }
+
+        if (lastAutoOpenedVideoKeyRef.current === targetKey) {
+            return;
+        }
+
+        lastAutoOpenedVideoKeyRef.current = targetKey;
+        setActiveInstructionVideo(targetVideo);
+    }, [currentStep, isAcceptancePath, path.id]);
+
     const ensureViewedPathLoaded = () => {
         if (isViewedPathActive) return true;
         if (!isViewedPathResumable) return false;
@@ -249,7 +326,6 @@ export function PathOverviewPanel({ path, onBegin, onClose, onNavigate }) {
             />
             <InstructionVideoModal
                 isOpen={Boolean(activeInstructionVideo)}
-                videoId={activeInstructionVideo?.id}
                 title={activeInstructionVideo?.title}
                 videoUrl={activeInstructionVideo?.videoUrl}
                 onClose={() => setActiveInstructionVideo(null)}
@@ -278,8 +354,34 @@ export function PathOverviewPanel({ path, onBegin, onClose, onNavigate }) {
             >
                 ✕
             </button>
+            {isInitiationPath && (
+                <div className="mb-6">
+                    <div className="text-[11px] uppercase tracking-[0.16em] mb-3" style={{ color: goldLabelColor }}>
+                        Step {currentStep} of {totalSteps}
+                    </div>
+                    <div className="flex items-center gap-2">
+                        {Array.from({ length: totalSteps }).map((_, idx) => {
+                            const stepNumber = idx + 1;
+                            const isCompleteOrCurrent = stepNumber <= currentStep;
+                            return (
+                                <div
+                                    key={stepNumber}
+                                    className="h-1.5 flex-1 rounded-full transition-colors"
+                                    style={{
+                                        background: isCompleteOrCurrent
+                                            ? 'var(--accent-color)'
+                                            : isLight ? 'rgba(180, 140, 90, 0.2)' : 'rgba(250, 208, 120, 0.12)',
+                                    }}
+                                />
+                            );
+                        })}
+                    </div>
+                </div>
+            )}
+
             {/* Header */}
-            <div className="border-b border-[var(--accent-15)] pb-4">
+            {(!isInitiationPath || currentStep === 1) && (
+                <div className="border-b border-[var(--accent-15)] pb-4">
                 <div className="mb-8 pr-12">
                     <h2
                         className="text-3xl font-bold mb-2"
@@ -300,6 +402,27 @@ export function PathOverviewPanel({ path, onBegin, onClose, onNavigate }) {
                             : `${path.duration} WEEK INITIATION`}
                     </p>
                 </div>
+                {isInitiationPath && (
+                    <div
+                        className="rounded-2xl p-4 mb-6 border"
+                        style={{
+                            background: isLight ? 'rgba(180, 140, 90, 0.06)' : 'rgba(250, 208, 120, 0.03)',
+                            borderColor: isLight ? 'rgba(180, 140, 90, 0.12)' : 'rgba(250, 208, 120, 0.1)',
+                        }}
+                    >
+                        <div
+                            className="text-[12px] uppercase tracking-[0.16em] mb-2"
+                            style={{ color: isLight ? 'rgba(140, 100, 40, 0.7)' : 'var(--accent-50)' }}
+                        >
+                            What this trains:
+                        </div>
+                        <ul className="space-y-1 text-sm" style={{ color: isLight ? 'rgba(60, 52, 37, 0.85)' : 'rgba(253,251,245,0.88)' }}>
+                            <li>• Feel your body more clearly</li>
+                            <li>• Keep your attention steady</li>
+                            <li>• Notice tension before it controls you</li>
+                        </ul>
+                    </div>
+                )}
                 <div
                     className="rounded-2xl p-6 mb-8 border"
                     style={{
@@ -318,10 +441,39 @@ export function PathOverviewPanel({ path, onBegin, onClose, onNavigate }) {
                         "{path.description}"
                     </p>
                 </div>
-            </div>
+                </div>
+            )}
+
+            {isInitiationPath && currentStep === 2 && (
+                <div className="mb-8">
+                    <h3
+                        className="text-base font-bold mb-3 tracking-wide"
+                        style={{
+                            fontFamily: 'var(--font-display)',
+                            color: goldLabelColor,
+                        }}
+                    >
+                        Daily Protocol
+                    </h3>
+                    <div
+                        className="rounded-xl p-4 border"
+                        style={{
+                            background: isLight ? 'rgba(180, 140, 90, 0.06)' : 'rgba(250, 208, 120, 0.03)',
+                            borderColor: isLight ? 'rgba(180, 140, 90, 0.14)' : 'rgba(250, 208, 120, 0.1)',
+                            color: isLight ? 'rgba(60, 52, 37, 0.85)' : 'rgba(253,251,245,0.88)',
+                        }}
+                    >
+                        <div className="font-semibold mb-1">Morning (10 min)</div>
+                        <div className="mb-3">• Resonance breathing</div>
+                        <div className="font-semibold mb-1">Evening Circuit (14 min)</div>
+                        <div>• 7 min stillness meditation</div>
+                        <div>• 7 min body scan</div>
+                    </div>
+                </div>
+            )}
 
             {/* Wisdom Section */}
-            {path.chapters.length > 0 && (
+            {!isInitiationPath && path.chapters.length > 0 && (
                 <div>
                     <h3
                         className="text-base font-bold text-[var(--accent-color)] mb-2 tracking-wide"
@@ -353,7 +505,7 @@ export function PathOverviewPanel({ path, onBegin, onClose, onNavigate }) {
             )}
 
             {/* Application Section */}
-            {path.applicationItems.length > 0 && (
+            {!isInitiationPath && path.applicationItems.length > 0 && (
                 <div>
                     <h3
                         className="text-base font-bold text-[var(--accent-color)] mb-2 tracking-wide"
@@ -373,7 +525,7 @@ export function PathOverviewPanel({ path, onBegin, onClose, onNavigate }) {
             )}
 
             {/* Weekly Breakdown */}
-            {path.weeks.length > 0 && (
+            {!isInitiationPath && path.weeks.length > 0 && (
                 <div className="mb-8">
                     <h3
                         className="text-base font-bold mb-4 flex items-center gap-2"
@@ -520,7 +672,70 @@ export function PathOverviewPanel({ path, onBegin, onClose, onNavigate }) {
                 </div>
             )}
 
-            {path.showBreathBenchmark && (
+            {isInitiationPath && currentStep === 2 && (
+                <div className="mb-8">
+                    <div className="text-[10px] uppercase tracking-[0.18em] mb-2" style={{ color: goldLabelColor }}>
+                        Tracking Focus
+                    </div>
+                    <div
+                        className="rounded-xl p-4 border text-sm"
+                        style={{
+                            background: isLight ? 'rgba(180, 140, 90, 0.06)' : 'rgba(250, 208, 120, 0.03)',
+                            borderColor: isLight ? 'rgba(180, 140, 90, 0.14)' : 'rgba(250, 208, 120, 0.1)',
+                            color: isLight ? 'rgba(60, 52, 37, 0.85)' : 'rgba(253,251,245,0.88)',
+                        }}
+                    >
+                        <div className="mb-1">Each day, notice:</div>
+                        <div>• Where tension shows up in your body</div>
+                        <div>• How steady your attention stays</div>
+                    </div>
+                </div>
+            )}
+
+            {isInitiationPath && currentStep === 3 && (
+                <div className="border-t pt-8" style={{ borderColor: isLight ? 'rgba(180, 140, 90, 0.15)' : 'rgba(250, 208, 120, 0.1)' }}>
+                    <div className="text-[10px] uppercase tracking-[0.18em] mb-2 text-center" style={{ color: goldLabelColor }}>
+                        Step 1: Select Active Days
+                    </div>
+                    <div className="text-sm font-semibold mb-3 text-center" style={{ fontFamily: 'var(--font-display)', color: isLight ? 'rgba(180, 120, 40, 0.9)' : 'var(--accent-color)' }}>
+                        Select {requiredDays ?? 6} active practice days. One rest day is required.
+                    </div>
+                    <div className="grid grid-cols-4 sm:grid-cols-7 gap-2">
+                        {orderedDayOptions.map((day) => {
+                            const isSelected = selectedDays.includes(day.value);
+                            return (
+                                <button
+                                    key={day.value}
+                                    type="button"
+                                    onClick={() => toggleSelectedDay(day.value)}
+                                    className="inline-flex items-center justify-center px-3 py-2 rounded-lg text-sm font-medium transition-all"
+                                    style={{
+                                        background: isSelected
+                                            ? 'var(--accent-color)'
+                                            : isLight ? 'rgba(0,0,0,0.04)' : 'rgba(255,255,255,0.08)',
+                                        color: isSelected
+                                            ? (isLight ? '#fff' : '#050508')
+                                            : isLight ? 'rgba(60, 50, 40, 0.85)' : 'rgba(253,251,245,0.85)',
+                                        border: `1px solid ${isSelected ? 'var(--accent-color)' : 'transparent'}`,
+                                    }}
+                                >
+                                    {day.label}
+                                </button>
+                            );
+                        })}
+                    </div>
+                    <div className="mt-3 text-[13px]" style={{ color: daysValidation.ok ? 'var(--accent-color)' : (isLight ? 'rgba(140, 80, 40, 0.8)' : 'rgba(255, 170, 140, 0.85)') }}>
+                        {selectedDays.length}/7 selected
+                    </div>
+                    {(daysError || daysValidation.error) && (
+                        <div className="mt-2 text-[11px]" style={{ color: isLight ? 'rgba(180, 80, 40, 0.9)' : 'rgba(255, 180, 120, 0.9)' }}>
+                            {daysError || daysValidation.error}
+                        </div>
+                    )}
+                </div>
+            )}
+
+            {path.showBreathBenchmark && (!isInitiationPath || currentStep === 4) && (
                 <div className="mb-8">
                     <div className="text-[10px] uppercase tracking-[0.18em] mb-2" style={{ color: goldLabelColor }}>
                         Step 1: Benchmark
@@ -589,9 +804,10 @@ export function PathOverviewPanel({ path, onBegin, onClose, onNavigate }) {
             )}
 
             {/* Practice Times */}
-            <div className="border-t pt-8" style={{ borderColor: isLight ? 'rgba(180, 140, 90, 0.15)' : 'rgba(250, 208, 120, 0.1)' }}>
+            {(!isInitiationPath || currentStep === 3) && (
+                <div className="border-t pt-8" style={{ borderColor: isLight ? 'rgba(180, 140, 90, 0.15)' : 'rgba(250, 208, 120, 0.1)' }}>
                 <div className="text-[10px] uppercase tracking-[0.18em] mb-2" style={{ color: goldLabelColor }}>
-                    Step 2: Select Time Slots
+                    {isInitiationPath ? 'Step 2: Select Time Slots' : 'Step 2: Select Time Slots'}
                 </div>
                 <div className="text-sm font-semibold mb-3" style={{ fontFamily: 'var(--font-display)', color: isLight ? 'rgba(180, 120, 40, 0.9)' : 'var(--accent-color)' }}>
                     Select your practice times
@@ -617,19 +833,23 @@ export function PathOverviewPanel({ path, onBegin, onClose, onNavigate }) {
                         {scheduleValidation.error}
                     </div>
                 )}
-            </div>
+                </div>
+            )}
 
             {/* Ornamental Divider */}
-            <div className="flex items-center justify-center py-2">
+            {(!isInitiationPath || currentStep === 5) && (
+                <div className="flex items-center justify-center py-2">
                 <div className="flex items-center gap-4 text-[var(--accent-30)]">
                     <div className="w-24 h-[1px] bg-gradient-to-r from-transparent to-[var(--accent-30)]" />
                     <div style={{ fontSize: '10px' }}>◆</div>
                     <div className="w-24 h-[1px] bg-gradient-to-l from-transparent to-[var(--accent-30)]" />
                 </div>
-            </div>
+                </div>
+            )}
 
             {/* BEGIN Button */}
-            <div className="border-t pt-8" style={{ borderColor: isLight ? 'rgba(180, 140, 90, 0.15)' : 'rgba(250, 208, 120, 0.1)' }}>
+            {(!isInitiationPath || currentStep === 5) && (
+                <div className="border-t pt-8" style={{ borderColor: isLight ? 'rgba(180, 140, 90, 0.15)' : 'rgba(250, 208, 120, 0.1)' }}>
                 <div className="text-[10px] uppercase tracking-[0.18em] mb-3" style={{ color: goldLabelColor }}>
                     Step 3: Click Begin this path
                 </div>
@@ -660,7 +880,52 @@ export function PathOverviewPanel({ path, onBegin, onClose, onNavigate }) {
                 >
                     This will become your active focus for the next {contract.totalDays ?? (path.duration * 7)} days.
                 </p>
-            </div>
+                </div>
+            )}
+
+            {isInitiationPath && (
+                <div className="border-t pt-6 mt-6 flex items-center justify-between" style={{ borderColor: isLight ? 'rgba(180, 140, 90, 0.15)' : 'rgba(250, 208, 120, 0.1)' }}>
+                    {currentStep > 1 ? (
+                        <button
+                            type="button"
+                            onClick={() => setCurrentStep(prev => Math.max(1, prev - 1))}
+                            className="rounded-full px-4 py-2 text-[10px] uppercase"
+                            style={{
+                                fontFamily: "var(--font-display)",
+                                fontWeight: 600,
+                                letterSpacing: "var(--tracking-mythic)",
+                                background: "transparent",
+                                border: "1px solid var(--accent-20)",
+                                color: "var(--text-muted)",
+                            }}
+                        >
+                            Back
+                        </button>
+                    ) : (
+                        <div />
+                    )}
+                    {currentStep < totalSteps ? (
+                        <button
+                            type="button"
+                            onClick={() => setCurrentStep(prev => Math.min(totalSteps, prev + 1))}
+                            disabled={!canAdvanceCurrentStep}
+                            className={`rounded-full px-4 py-2 text-[10px] uppercase ${!canAdvanceCurrentStep ? 'opacity-40 cursor-not-allowed' : ''}`}
+                            style={{
+                                fontFamily: "var(--font-display)",
+                                fontWeight: 600,
+                                letterSpacing: "var(--tracking-mythic)",
+                                background: "transparent",
+                                border: "1px solid var(--accent-20)",
+                                color: "var(--text-muted)",
+                            }}
+                        >
+                            Next
+                        </button>
+                    ) : (
+                        <div />
+                    )}
+                </div>
+            )}
             <style>{`
                 @keyframes benchmarkRadiate {
                     0%, 100% {
