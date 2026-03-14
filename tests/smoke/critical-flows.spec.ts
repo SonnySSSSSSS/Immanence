@@ -8,6 +8,7 @@ const HUB_BUTTONS = ['Practice', 'Wisdom', 'Application', 'Navigation'] as const
 // expires_at is in the future. We inject a structurally-valid fake session with
 // expires_at in year 2286 so AuthGate renders children instead of the sign-in form.
 const SUPABASE_STORAGE_KEY = 'sb-snyozqiselfxfifpavmj-auth-token';
+const SMOKE_USER_ID = '00000000-0000-0000-0000-000000000001';
 const SMOKE_FAKE_JWT = [
   'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9', // {"alg":"HS256","typ":"JWT"}
   'eyJleHAiOjk5OTk5OTk5OTl9',              // {"exp":9999999999}
@@ -16,7 +17,7 @@ const SMOKE_FAKE_JWT = [
 
 async function injectSmokeSession(page: Page): Promise<void> {
   await page.evaluate(
-    ([key, token]) => {
+    ([key, token, smokeUserId]) => {
       const session = {
         access_token: token,
         token_type: 'bearer',
@@ -24,7 +25,7 @@ async function injectSmokeSession(page: Page): Promise<void> {
         expires_at: 9999999999,
         refresh_token: 'smoke-refresh-token',
         user: {
-          id: '00000000-0000-0000-0000-000000000001',
+          id: smokeUserId,
           aud: 'authenticated',
           role: 'authenticated',
           email: 'smoke@test.example',
@@ -36,7 +37,7 @@ async function injectSmokeSession(page: Page): Promise<void> {
       };
       window.localStorage.setItem(key, JSON.stringify(session));
     },
-    [SUPABASE_STORAGE_KEY, SMOKE_FAKE_JWT] as const,
+    [SUPABASE_STORAGE_KEY, SMOKE_FAKE_JWT, SMOKE_USER_ID] as const,
   );
 }
 
@@ -45,9 +46,19 @@ async function gotoAppRoot(page: Page): Promise<void> {
   await page.waitForLoadState('domcontentloaded');
 }
 
-async function startFromCleanState(page: Page): Promise<void> {
+function getUserModeButton(page: Page, mode: 'Student' | 'Explorer') {
+  return page.getByRole('button', { name: new RegExp(mode, 'i') });
+}
+
+async function chooseUserMode(page: Page, mode: 'Student' | 'Explorer'): Promise<void> {
+  await expect(getUserModeButton(page, 'Student')).toBeVisible();
+  await expect(getUserModeButton(page, 'Explorer')).toBeVisible();
+  await getUserModeButton(page, mode).click();
+}
+
+async function startFromCleanState(page: Page, userMode: 'student' | 'explorer' = 'explorer'): Promise<void> {
   await gotoAppRoot(page);
-  await page.evaluate(() => {
+  await page.evaluate(([smokeUserId, mode]) => {
     window.localStorage.clear();
     window.sessionStorage.clear();
     const measuredAt = Date.now();
@@ -62,8 +73,12 @@ async function startFromCleanState(page: Page): Promise<void> {
     window.localStorage.setItem(
       'immanence-user-mode',
       JSON.stringify({
-        state: { userMode: 'explorer', hasChosenUserMode: true },
-        version: 0,
+        state: {
+          modeByUserId: {
+            [smokeUserId]: mode,
+          },
+        },
+        version: 2,
       })
     );
     window.localStorage.setItem(
@@ -86,10 +101,17 @@ async function startFromCleanState(page: Page): Promise<void> {
         version: 3,
       })
     );
-  });
+  }, [SMOKE_USER_ID, userMode] as const);
   await injectSmokeSession(page);
   await page.reload();
   await page.waitForLoadState('domcontentloaded');
+
+  const studentChooser = getUserModeButton(page, 'Student');
+  await studentChooser.waitFor({ state: 'visible', timeout: 1500 }).catch(() => {});
+  const chooserVisible = await studentChooser.isVisible().catch(() => false);
+  if (chooserVisible) {
+    await chooseUserMode(page, userMode === 'student' ? 'Student' : 'Explorer');
+  }
 }
 
 async function areHubButtonsVisible(page: Page): Promise<boolean> {
@@ -124,7 +146,7 @@ async function openNavigationFromHub(page: Page): Promise<void> {
   await expect(page.getByTestId('navigation-selector-button')).toBeVisible();
 }
 
-async function openInitiationPathOverlay(page: Page): Promise<void> {
+async function openInitiationPathOnboarding(page: Page): Promise<void> {
   await openNavigationFromHub(page);
 
   await page.getByTestId('navigation-selector-button').click();
@@ -136,51 +158,70 @@ async function openInitiationPathOverlay(page: Page): Promise<void> {
   await expect(page.getByTestId('path-grid-root')).toBeVisible();
 
   await page.getByTestId('path-card-initiation').click();
-  await expect(page.getByTestId('path-overview-overlay')).toBeVisible();
-  // Advance through wizard steps 1 and 2 (no prerequisites)
-  const wizardPanel = page.getByTestId('path-overview-panel');
-  await wizardPanel.getByRole('button', { name: 'Next', exact: true }).click();
-  await wizardPanel.getByRole('button', { name: 'Next', exact: true }).click();
-  await expect(page.getByText('Step 2: Select Time Slots', { exact: true })).toBeVisible();
-  await page.evaluate(async () => {
-    const navMod = await import('/src/state/navigationStore.js');
-    const benchmarkMod = await import('/src/state/breathBenchmarkStore.js');
-    const navState = navMod.useNavigationStore.getState();
-    const runId = navState?.pendingAttemptRunId;
-    const pathId = navState?.pendingAttemptPathId;
-    if (!runId || !pathId) return;
-    benchmarkMod.useBreathBenchmarkStore.getState().completeAttemptBenchmark({
-      runId,
-      source: 'fresh',
-      results: {
-        inhale: 4,
-        hold1: 4,
-        exhale: 4,
-        hold2: 4,
-        measuredAt: Date.now(),
-      },
-    });
-  });
+  await expect(page.getByRole('button', { name: 'Continue', exact: true })).toBeVisible();
+  // Advance to time selection: welcome -> contract terms -> 14-day arc -> practice days
+  await page.getByRole('button', { name: 'Continue', exact: true }).click();
+  await page.getByRole('button', { name: 'Continue', exact: true }).click();
+  await page.getByRole('button', { name: 'Continue', exact: true }).click();
+  await page.getByRole('button', { name: 'Continue', exact: true }).click();
+  await expect(getTimeSlotInputs(page).first()).toBeVisible();
 }
 
 function getTimeSlotInputs(page: Page) {
-  return page
-    .getByTestId('path-overview-panel')
-    .locator('input[type="time"]');
+  return page.locator('input[type="time"]');
+}
+
+function getCurrentLocalSlot(): string {
+  const now = new Date();
+  return `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
+}
+
+function getRelativeLocalSlot(offsetMinutes: number): string {
+  const now = new Date(Date.now() + (offsetMinutes * 60 * 1000));
+  return `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
+}
+
+async function installAcceleratedSecondIntervals(page: Page): Promise<void> {
+  await page.addInitScript(() => {
+    const realSetInterval = window.setInterval.bind(window);
+    window.setInterval = ((fn: TimerHandler, ms?: number, ...args: any[]) => (
+      realSetInterval(fn, ms === 1000 ? 10 : ms, ...args)
+    )) as typeof window.setInterval;
+  });
 }
 
 async function beginInitiationPathWithTwoSlots(page: Page): Promise<void> {
-  await openInitiationPathOverlay(page);
+  await openInitiationPathOnboarding(page);
   const slotInputs = getTimeSlotInputs(page);
   await expect(slotInputs.first()).toBeVisible();
   await slotInputs.nth(0).fill('08:00');
   await slotInputs.nth(1).fill('20:00');
-  // Advance wizard: step 3 → 4 (slots valid) → 5 (benchmark already satisfied)
-  const wizardPanel = page.getByTestId('path-overview-panel');
-  await wizardPanel.getByRole('button', { name: 'Next', exact: true }).click();
-  await wizardPanel.getByRole('button', { name: 'Next', exact: true }).click();
-  await page.getByTestId('begin-path-button').click();
+  await page.getByRole('button', { name: 'Continue', exact: true }).click();
+  await page.getByRole('button', { name: /Use Previous Benchmark/i }).click();
+  await page.getByRole('button', { name: 'Continue', exact: true }).click();
+  await page.getByRole('button', { name: /Begin Contract/i }).click();
   await expect(page.getByTestId('active-path-root')).toBeVisible();
+}
+
+async function openStudentInitiationSetup(page: Page): Promise<void> {
+  await startFromCleanState(page, 'student');
+  await expect(page.getByRole('button', { name: /Start Setup/i })).toBeVisible();
+  await page.getByRole('button', { name: /Start Setup/i }).click();
+  for (let i = 0; i < 4; i += 1) {
+    await page.getByRole('button', { name: 'Continue', exact: true }).click();
+  }
+  await expect(getTimeSlotInputs(page).first()).toBeVisible();
+}
+
+async function beginStudentInitiationContract(page: Page, firstSlot: string, secondSlot = '20:00'): Promise<void> {
+  await openStudentInitiationSetup(page);
+  const slotInputs = getTimeSlotInputs(page);
+  await slotInputs.nth(0).fill(firstSlot);
+  await slotInputs.nth(1).fill(secondSlot);
+  await page.getByRole('button', { name: 'Continue', exact: true }).click();
+  await page.getByRole('button', { name: /Use Previous Benchmark/i }).click();
+  await page.getByRole('button', { name: 'Continue', exact: true }).click();
+  await page.getByRole('button', { name: /Begin Contract/i }).click();
 }
 
 test('TEST 1 — Boot → HomeHub renders (Flow #1)', async ({ page }) => {
@@ -188,8 +229,27 @@ test('TEST 1 — Boot → HomeHub renders (Flow #1)', async ({ page }) => {
   await gotoAppRoot(page);
   await expect(page.getByPlaceholder('Email')).toBeVisible();
 
-  // With session injected HomeHub renders
-  await startFromCleanState(page);
+  // With session injected, chooser renders first and can unlock student mode
+  await gotoAppRoot(page);
+  await page.evaluate(() => {
+    window.localStorage.clear();
+    window.sessionStorage.clear();
+  });
+  await injectSmokeSession(page);
+  await page.reload();
+  await page.waitForLoadState('domcontentloaded');
+  await expect(getUserModeButton(page, 'Student')).toBeVisible();
+  await expect(getUserModeButton(page, 'Explorer')).toBeVisible();
+
+  await chooseUserMode(page, 'Student');
+  await expect(page.getByText('START SETUP', { exact: false }).first()).toBeVisible();
+
+  const persistedMode = await page.evaluate(() => window.localStorage.getItem('immanence-user-mode'));
+  expect(persistedMode).toContain(SMOKE_USER_ID);
+  expect(persistedMode).toContain('student');
+
+  // With chooser satisfied, hub renders
+  await startFromCleanState(page, 'explorer');
   await expectHubVisible(page);
 });
 
@@ -209,25 +269,129 @@ test('TEST 2 — Hub → Section navigation works (Flow #2)', async ({ page }) =
 
 test('TEST 3 — Navigation selector modal + Initiation slot enforcement (Flows #3 + #4)', async ({ page }) => {
   await startFromCleanState(page);
-  await openInitiationPathOverlay(page);
+  await openInitiationPathOnboarding(page);
 
   const slotInputs = getTimeSlotInputs(page);
   await expect(slotInputs.first()).toBeVisible();
-  await slotInputs.nth(0).fill('08:00');
+  const immediateStartSlot = getCurrentLocalSlot();
+  await slotInputs.nth(0).fill(immediateStartSlot);
 
-  // With only 1 slot filled, wizard Next (step 3 → 4) must be disabled (slot enforcement)
-  const wizardPanel = page.getByTestId('path-overview-panel');
-  await expect(wizardPanel.getByRole('button', { name: 'Next', exact: true })).toBeDisabled();
+  // With only 1 slot filled, onboarding Continue must be disabled (slot enforcement)
+  await expect(page.getByRole('button', { name: 'Continue', exact: true })).toBeDisabled();
 
   await slotInputs.nth(1).fill('20:00');
-  // Advance wizard: step 3 → 4 (slots valid) → 5 (benchmark already satisfied)
-  await wizardPanel.getByRole('button', { name: 'Next', exact: true }).click();
-  await wizardPanel.getByRole('button', { name: 'Next', exact: true }).click();
-  await page.getByTestId('begin-path-button').click();
+  await page.getByRole('button', { name: 'Continue', exact: true }).click();
+  await page.getByRole('button', { name: /Use Previous Benchmark/i }).click();
+  await page.getByRole('button', { name: 'Continue', exact: true }).click();
+  await page.getByRole('button', { name: /Begin Contract/i }).click();
   await expect(page.getByTestId('active-path-root')).toBeVisible();
+
+  const dayOneAnchorSnapshot = await page.evaluate(() => {
+    const raw = window.localStorage.getItem('immanenceOS.navigationState');
+    const parsed = raw ? JSON.parse(raw) : null;
+    const startedAt = parsed?.state?.activePath?.startedAt ?? null;
+    const startedAtDate = startedAt ? new Date(startedAt) : null;
+    const today = new Date();
+    const toKey = (d: Date | null) => d
+      ? `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
+      : null;
+    return {
+      startedAt,
+      startedAtLocalDateKey: toKey(startedAtDate),
+      todayLocalDateKey: toKey(today),
+    };
+  });
+
+  expect(dayOneAnchorSnapshot.startedAt).toBeTruthy();
+  expect(dayOneAnchorSnapshot.startedAtLocalDateKey).toBe(dayOneAnchorSnapshot.todayLocalDateKey);
 });
 
-// TEST 5 — Sign-out cycle via real supabase.auth.signOut() (beta auth behavior)
+test('TEST 4 — Student prestart contract shows Day 0 before first slot opens', async ({ page }) => {
+  const alreadyMissedSlot = getRelativeLocalSlot(-120);
+  await beginStudentInitiationContract(page, alreadyMissedSlot);
+
+  const prestartSnapshot = await page.evaluate(async () => {
+    const nav = await import('/src/state/navigationStore.js');
+    const raw = window.localStorage.getItem('immanenceOS.navigationState');
+    const parsed = raw ? JSON.parse(raw) : null;
+    const startedAt = parsed?.state?.activePath?.startedAt ?? null;
+    const startedAtDate = startedAt ? new Date(startedAt) : null;
+    const today = new Date();
+    const toKey = (d: Date | null) => d
+      ? `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
+      : null;
+    return {
+      startedAt,
+      startedAtLocalDateKey: toKey(startedAtDate),
+      todayLocalDateKey: toKey(today),
+      metrics: nav.useNavigationStore.getState().computeProgressMetrics(),
+      bodyText: document.body.innerText,
+    };
+  });
+
+  expect(prestartSnapshot.startedAt).toBeTruthy();
+  expect(prestartSnapshot.startedAtLocalDateKey).not.toBe(prestartSnapshot.todayLocalDateKey);
+  expect(prestartSnapshot.metrics?.dayIndex).toBe(0);
+  expect(prestartSnapshot.bodyText).toContain('0');
+  expect(prestartSnapshot.bodyText).toContain('NOT YET');
+});
+
+test('TEST 5 — Student Day 1 launch completes and persists slot completion', async ({ page }) => {
+  await installAcceleratedSecondIntervals(page);
+  const actionableSlot = getRelativeLocalSlot(3);
+  await beginStudentInitiationContract(page, actionableSlot);
+
+  await page.getByRole('button', { name: 'Start', exact: true }).click();
+  await expect(page.getByRole('button', { name: 'Home', exact: true })).toBeVisible();
+  await expect(page.getByText('GUIDANCE AUDIO', { exact: false })).toBeVisible();
+  await expect(page.getByText('SESSION COMPLETE', { exact: false })).toBeVisible({ timeout: 30_000 });
+
+  const persistedCompletionState = await page.evaluate(() => {
+    const progressRaw = window.localStorage.getItem('immanenceOS.progress');
+    const progressParsed = progressRaw ? JSON.parse(progressRaw) : null;
+    const sessions = progressParsed?.state?.sessionsV2 ?? [];
+    const navigationRaw = window.localStorage.getItem('immanenceOS.navigationState');
+    const navigationParsed = navigationRaw ? JSON.parse(navigationRaw) : null;
+    return {
+      session: sessions[0] ?? null,
+      activePathProgress: navigationParsed?.state?.activePath?.progress ?? null,
+    };
+  });
+
+  expect(persistedCompletionState.session).toBeTruthy();
+  expect(persistedCompletionState.session.pathContext.slotIndex).toBe(0);
+  expect(persistedCompletionState.session.pathContext.slotTime).toBe(actionableSlot);
+  expect(persistedCompletionState.session.completion).toBe('completed');
+  expect(persistedCompletionState.activePathProgress).toBeTruthy();
+  expect(persistedCompletionState.activePathProgress.sessionsCompleted).toBeGreaterThanOrEqual(1);
+  expect(persistedCompletionState.activePathProgress.totalMinutes).toBeGreaterThanOrEqual(1);
+  expect(persistedCompletionState.activePathProgress.lastSessionAt).toBeTruthy();
+  expect(persistedCompletionState.activePathProgress.daysPracticed).toBe(0);
+  expect(persistedCompletionState.activePathProgress.streakCurrent).toBe(0);
+  expect(persistedCompletionState.activePathProgress.streakBest).toBe(0);
+
+  await page.getByRole('button', { name: /Completed|See You Tomorrow/i }).click();
+  await page.getByRole('button', { name: 'Home', exact: true }).click();
+  await expect(page.getByText('Done', { exact: true })).toBeVisible();
+
+  await page.reload();
+  await page.waitForLoadState('domcontentloaded');
+  await expect(page.getByText('Done', { exact: true })).toBeVisible();
+
+  const reloadedPathProgress = await page.evaluate(() => {
+    const navigationRaw = window.localStorage.getItem('immanenceOS.navigationState');
+    const navigationParsed = navigationRaw ? JSON.parse(navigationRaw) : null;
+    return navigationParsed?.state?.activePath?.progress ?? null;
+  });
+
+  expect(reloadedPathProgress).toBeTruthy();
+  expect(reloadedPathProgress.sessionsCompleted).toBeGreaterThanOrEqual(1);
+  expect(reloadedPathProgress.totalMinutes).toBeGreaterThanOrEqual(1);
+  expect(reloadedPathProgress.lastSessionAt).toBeTruthy();
+  expect(reloadedPathProgress.daysPracticed).toBe(0);
+});
+
+// TEST 6 — Sign-out cycle via real supabase.auth.signOut() (beta auth behavior)
 //
 // Why this tests real auth behavior:
 //   - Calls the real supabase.auth.signOut() method (not a mock or localStorage clear)
@@ -240,7 +404,7 @@ test('TEST 3 — Navigation selector modal + Initiation slot enforcement (Flows 
 //     treated as a 401/403 and _removeSession() would not run (see auth-js _signOut impl)
 //   - Route intercept returns 204 so auth-js proceeds to _removeSession() normally
 //   - All post-network code (local session clear, SIGNED_OUT event, UI teardown) runs real
-test('TEST 5 — Sign-out returns to auth gate (beta auth cycle)', async ({ page }) => {
+test('TEST 6 — Sign-out returns to auth gate (beta auth cycle)', async ({ page }) => {
   // Intercept the Supabase logout API so CORS doesn't prevent _removeSession() from running
   await page.route('**/auth/v1/logout', route => route.fulfill({ status: 204, body: '' }));
 
@@ -258,7 +422,7 @@ test('TEST 5 — Sign-out returns to auth gate (beta auth cycle)', async ({ page
   await expect(page.getByPlaceholder('Email')).toBeVisible();
 });
 
-// TEST 6 — Real beta auth: signInWithPassword, session restore on reload, and sign-out
+// TEST 7 — Real beta auth: signInWithPassword, session restore on reload, and sign-out
 //
 // Prerequisites:
 //   Set BETA_TEST_EMAIL and BETA_TEST_PASSWORD in the environment before running:
@@ -278,7 +442,7 @@ test('TEST 5 — Sign-out returns to auth gate (beta auth cycle)', async ({ page
 //   - user_documents upsert (write path) under RLS — not attempted to avoid uncontrolled writes
 //   - email confirmation redirect flows
 //   - cross-user RLS isolation
-test('TEST 6 — Real beta sign-in, session restore, and sign-out', async ({ page }) => {
+test('TEST 7 — Real beta sign-in, session restore, and sign-out', async ({ page }) => {
   const email = process.env.BETA_TEST_EMAIL ?? '';
   const password = process.env.BETA_TEST_PASSWORD ?? '';
 
@@ -384,7 +548,7 @@ test('TEST 6 — Real beta sign-in, session restore, and sign-out', async ({ pag
   await expect(page.getByPlaceholder('Email')).toBeVisible();
 });
 
-// TEST 7 — user_documents write-path and anon-read isolation under real RLS
+// TEST 8 — user_documents write-path and anon-read isolation under real RLS
 //
 // What this proves (when credentials are supplied):
 //   a) Authenticated upsert to user_documents succeeds (owner can write under RLS)
@@ -403,7 +567,7 @@ test('TEST 6 — Real beta sign-in, session restore, and sign-out', async ({ pag
 // Write probe uses doc_key 'smoke_rls_probe_v1' — distinct from the app's
 // 'progress_bundle_v1'. The app's sync ignores any doc_key it does not recognize,
 // so this probe row is inert and does not affect real user state.
-test('TEST 7 — user_documents write-path and anon isolation under real RLS', async ({ page }) => {
+test('TEST 8 — user_documents write-path and anon isolation under real RLS', async ({ page }) => {
   const email = process.env.BETA_TEST_EMAIL ?? '';
   const password = process.env.BETA_TEST_PASSWORD ?? '';
 
@@ -477,7 +641,7 @@ test('TEST 7 — user_documents write-path and anon isolation under real RLS', a
   const deleteWorked = !cleanupResult.hasError;
   if (!deleteWorked) {
     // eslint-disable-next-line no-console
-    console.warn('[TEST 7] probe cleanup failed — no DELETE policy?', cleanupResult.errorMessage);
+    console.warn('[TEST 8] probe cleanup failed — no DELETE policy?', cleanupResult.errorMessage);
   }
 
   // --- 4. Anon isolation: sign out client in-place, then SELECT ---
@@ -512,7 +676,7 @@ test('TEST 7 — user_documents write-path and anon isolation under real RLS', a
   });
 });
 
-// TEST 8 — Cross-user isolation: Account B cannot read, update, delete, or forge Account A data
+// TEST 9 — Cross-user isolation: Account B cannot read, update, delete, or forge Account A data
 //
 // Prerequisites (second test account required):
 //   BETA_TEST_EMAIL_B=... BETA_TEST_PASSWORD_B=... (plus A credentials from TEST 6/7)
@@ -525,7 +689,7 @@ test('TEST 7 — user_documents write-path and anon isolation under real RLS', a
 //
 // Probe uses doc_key 'smoke_crossuser_probe_v1' — cleaned up by Account A after the test.
 // Two separate browser contexts used for full localStorage/session isolation.
-test('TEST 8 — Cross-user isolation: Account B cannot access Account A data', async ({ browser }) => {
+test('TEST 9 — Cross-user isolation: Account B cannot access Account A data', async ({ browser }) => {
   const emailA = process.env.BETA_TEST_EMAIL ?? '';
   const passwordA = process.env.BETA_TEST_PASSWORD ?? '';
   const emailB = process.env.BETA_TEST_EMAIL_B ?? '';
@@ -672,7 +836,7 @@ test('TEST 8 — Cross-user isolation: Account B cannot access Account A data', 
   }
 });
 
-// TEST 9 — Forced token refresh: session identity survives refreshSession()
+// TEST 10 — Forced token refresh: session identity survives refreshSession()
 //
 // Why this matters:
 //   Supabase access tokens expire after ~1 hour. The client auto-refreshes via a background
@@ -690,7 +854,7 @@ test('TEST 8 — Cross-user isolation: Account B cannot access Account A data', 
 //   - Token refresh behavior under network failure or mid-session outage
 //   - Whether the re-stored access_token is identical or different from before
 //     (either outcome is acceptable; we care about session continuity, not token stability)
-test('TEST 9 — Forced token refresh: session identity survives refreshSession()', async ({ page }) => {
+test('TEST 10 — Forced token refresh: session identity survives refreshSession()', async ({ page }) => {
   const email = process.env.BETA_TEST_EMAIL ?? '';
   const password = process.env.BETA_TEST_PASSWORD ?? '';
 
@@ -761,7 +925,7 @@ test('TEST 9 — Forced token refresh: session identity survives refreshSession(
   await expect(page.getByPlaceholder('Email')).toBeVisible();
 });
 
-test('TEST 4 — Reload persists active path and no overlays auto-open (Flow #8)', async ({ page }) => {
+test('TEST 11 — Reload persists active path and no overlays auto-open (Flow #8)', async ({ page }) => {
   await startFromCleanState(page);
   await beginInitiationPathWithTwoSlots(page);
 
@@ -775,8 +939,8 @@ test('TEST 4 — Reload persists active path and no overlays auto-open (Flow #8)
   }
 
   await expect(page.getByTestId('active-path-root')).toBeVisible();
-  await expect(page.getByTestId('path-overview-overlay')).toBeHidden();
   await expect(page.getByTestId('navigation-selection-modal')).toBeHidden();
+  await expect(page.getByRole('button', { name: 'I already understand', exact: true })).toBeHidden();
 
   const homeButtonVisible = await page.getByRole('button', { name: 'Home', exact: true }).isVisible().catch(() => false);
   if (homeButtonVisible) {

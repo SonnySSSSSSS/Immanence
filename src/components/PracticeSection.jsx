@@ -1822,6 +1822,8 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
         runId: activePathContextRef.current?.runId || null,
         dayIndex: activePathContextRef.current?.dayIndex || null,
         weekIndex: activePathContextRef.current?.weekIndex || null,
+        slotIndex: activePathContextRef.current?.slotIndex ?? null,
+        slotTime: activePathContextRef.current?.slotTime ?? null,
         forceScheduleMatched: getForceScheduleMatchedPayload(),
       });
     } catch (e) {
@@ -2044,6 +2046,8 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
         runId: activePathContextRef.current?.runId || null,
         dayIndex: activePathContextRef.current?.dayIndex || null,
         weekIndex: activePathContextRef.current?.weekIndex || null,
+        slotIndex: activePathContextRef.current?.slotIndex ?? null,
+        slotTime: activePathContextRef.current?.slotTime ?? null,
         forceScheduleMatched: getForceScheduleMatchedPayload(),
       });
     } catch (e) {

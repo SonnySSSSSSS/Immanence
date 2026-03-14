@@ -739,6 +739,65 @@ export const useNavigationStore = create(
             },
 
             /**
+             * Recompute the persisted active-path progress snapshot from canonical completed sessions.
+             * This keeps navigationState aligned with sessionsV2 without increment-only drift.
+             */
+            syncActivePathProgressFromSessions: () => {
+                const state = get();
+                if (!state.activePath) return null;
+
+                const activePath = state.activePath;
+                const progressState = useProgressStore.getState();
+                const sessionsV2 = progressState?.sessionsV2 || [];
+                const isSessionInActiveRun = createPathRunSessionFilter({
+                    runId: activePath.runId || null,
+                    activePathId: activePath.activePathId || null,
+                    startedAt: activePath.startedAt || null,
+                });
+                const completedRunSessions = sessionsV2.filter((session) => (
+                    session?.completion === 'completed' && isSessionInActiveRun(session)
+                ));
+                const metrics = state.computeProgressMetrics();
+                const lastSessionAt = completedRunSessions.reduce((latest, session) => {
+                    const candidate = session?.endedAt || session?.startedAt || null;
+                    if (!candidate) return latest;
+                    if (!latest) return candidate;
+                    return new Date(candidate).getTime() > new Date(latest).getTime() ? candidate : latest;
+                }, null);
+                const totalMinutes = completedRunSessions.reduce((sum, session) => {
+                    const durationSec = Number(session?.durationSec);
+                    if (!Number.isFinite(durationSec) || durationSec <= 0) return sum;
+                    return sum + (durationSec / 60);
+                }, 0);
+                const nextProgress = {
+                    sessionsCompleted: completedRunSessions.length,
+                    totalMinutes: Math.round(totalMinutes * 10) / 10,
+                    daysPracticed: Number.isFinite(metrics?.daysPracticed) ? metrics.daysPracticed : 0,
+                    streakCurrent: Number.isFinite(metrics?.streakCurrent) ? metrics.streakCurrent : 0,
+                    streakBest: Number.isFinite(metrics?.streakBest) ? metrics.streakBest : 0,
+                    lastSessionAt,
+                };
+                const prevProgress = activePath.progress || {};
+                const unchanged =
+                    prevProgress.sessionsCompleted === nextProgress.sessionsCompleted
+                    && prevProgress.totalMinutes === nextProgress.totalMinutes
+                    && prevProgress.daysPracticed === nextProgress.daysPracticed
+                    && prevProgress.streakCurrent === nextProgress.streakCurrent
+                    && prevProgress.streakBest === nextProgress.streakBest
+                    && prevProgress.lastSessionAt === nextProgress.lastSessionAt;
+                if (unchanged) return nextProgress;
+
+                set({
+                    activePath: {
+                        ...activePath,
+                        progress: nextProgress,
+                    },
+                });
+
+                return nextProgress;
+            },
+
+            /**
              * Compute progress metrics for the active path
              * Returns: { durationDays, dayIndex, timePct, expectedSessionsSoFar, completedSessionsSoFar, adherencePct }
              */

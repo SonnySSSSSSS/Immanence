@@ -6,6 +6,7 @@ import { RITUAL_INITIATION_14_V2 } from '../src/data/ritualInitiation14v2.js';
 import { MATCH_POLICY } from '../src/data/curriculumMatching.js';
 import { getPathContract, validatePathActivationSelections } from '../src/utils/pathContract.js';
 import { getScheduleConstraintForPath, validateSelectedTimes } from '../src/utils/scheduleSelectionConstraints.js';
+import { computeScheduleAnchorStartAt } from '../src/utils/scheduleUtils.js';
 import { computeContractObligationSummary } from '../src/services/infographics/contractObligations.js';
 
 test('selecting 3 time slots fails strict 2-slot constraint', () => {
@@ -71,4 +72,18 @@ test('obligation generator throws when required legs exceed maxLegsPerDay', () =
       progressStoreState: { vacation: { active: false }, sessionsV2: [] },
     });
   }, /exceed maxLegsPerDay/i);
+});
+
+test('schedule anchor stays on today when the first slot has not expired', () => {
+  const now = new Date(2026, 2, 14, 10, 34, 0, 0); // 2026-03-14 10:34 local
+  const startAt = computeScheduleAnchorStartAt({
+    now,
+    firstSlotTime: '11:03',
+  });
+
+  assert.equal(startAt.getFullYear(), 2026);
+  assert.equal(startAt.getMonth(), 2);
+  assert.equal(startAt.getDate(), 14);
+  assert.equal(startAt.getHours(), 11);
+  assert.equal(startAt.getMinutes(), 3);
 });

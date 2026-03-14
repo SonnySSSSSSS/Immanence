@@ -109,6 +109,7 @@ function App({ playgroundMode = false, playgroundBottomLayer = true }) {
   const setOverridePath = useDevOverrideStore((s) => s.setAvatarPath);
   const userMode = useUserModeStore((s) => s.userMode);
   const hasChosenUserMode = useUserModeStore((s) => s.hasChosenUserMode);
+  const modeByUserId = useUserModeStore((s) => s.modeByUserId);
   const setUserMode = useUserModeStore((s) => s.setUserMode);
   const setActiveUserModeUserId = useUserModeStore((s) => s.setActiveUserId);
   const practiceLaunchContext = useUiStore((s) => s.practiceLaunchContext);
@@ -645,8 +646,8 @@ function App({ playgroundMode = false, playgroundBottomLayer = true }) {
 
   const handleAuthChange = useCallback((event, session) => {
     if (event === "SIGNED_OUT") {
-      setActiveUserModeUserId(null);
       setAuthUser(null);
+      setActiveUserModeUserId(null);
       stopUserStateSync();
       setShowSettings(false);
       setActiveSection(null);
@@ -654,20 +655,24 @@ function App({ playgroundMode = false, playgroundBottomLayer = true }) {
     }
 
     if (event === "USER_UPDATED" && session) {
-      setActiveUserModeUserId(session?.user?.id ?? null);
       setAuthUser(session?.user ?? null);
+      setActiveUserModeUserId(session?.user?.id ?? null);
       return;
     }
 
     if ((event === "SIGNED_IN" || event === "INITIAL_SESSION") && session) {
-      setActiveUserModeUserId(session?.user?.id ?? null);
       setAuthUser(session?.user ?? null);
+      setActiveUserModeUserId(session?.user?.id ?? null);
       stopUserStateSync();
       startUserStateSync(session);
       setShowSettings(false);
       setActiveSection(null);
     }
   }, [setActiveUserModeUserId, startUserStateSync, stopUserStateSync]);
+
+  useEffect(() => {
+    setActiveUserModeUserId(authUser?.id ?? null);
+  }, [authUser?.id, modeByUserId, setActiveUserModeUserId]);
   // PROBE:OFFLINE_FIRST_USER_STATE_SYNC:END
 
   return (

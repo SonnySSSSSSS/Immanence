@@ -87,9 +87,18 @@ export function computeScheduleAnchorStartAt({
   const todayAtFirst = localDateTimeFromDateKeyAndTime(todayKey, firstSlotTime);
   if (!todayAtFirst) return new Date(now);
 
-  void lateWindowMin;
+  const startWindowState = getStartWindowState({
+    now,
+    scheduledAt: todayAtFirst,
+    lateWindowMin,
+  });
 
-  // Always anchor to the next calendar day so activation day behaves as Day 0.
+  // If today's first slot has not yet expired, Day 1 should remain anchored to today.
+  // This keeps the first scheduled practice actionable in the same onboarding session.
+  if (!startWindowState.expired) {
+    return todayAtFirst;
+  }
+
   const tomorrowKey = addDaysToDateKey(todayKey, 1);
   return localDateTimeFromDateKeyAndTime(tomorrowKey, firstSlotTime) ?? new Date(now);
 }

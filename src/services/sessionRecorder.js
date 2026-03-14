@@ -50,22 +50,46 @@ const resolveStartedAt = ({ startedAt, endedAt, durationSec }) => {
     return new Date(endMs - (durationSec * 1000)).toISOString();
 };
 
-const buildPathContext = ({ activePath, activePathId, endedAt }) => {
+const buildPathContext = ({ activePath, activePathId, endedAt, slotIndex = null, slotTime = null }) => {
+    const normalizedSlotIndex = Number.isFinite(Number(slotIndex)) ? Number(slotIndex) : null;
+    const normalizedSlotTime = typeof slotTime === 'string' ? slotTime.substring(0, 5) : null;
+
     if (!activePathId && !activePath) {
-        return { activePathId: null, runId: null, dayIndex: null, weekIndex: null };
+        return {
+            activePathId: null,
+            runId: null,
+            dayIndex: null,
+            weekIndex: null,
+            slotIndex: normalizedSlotIndex,
+            slotTime: normalizedSlotTime,
+        };
     }
 
     const resolvedActivePathId = activePathId || activePath?.activePathId || null;
     const resolvedRunId = activePath?.runId || null;
     const pathStart = activePath?.startedAt || null;
     if (!pathStart || !endedAt) {
-        return { activePathId: resolvedActivePathId, runId: resolvedRunId, dayIndex: null, weekIndex: null };
+        return {
+            activePathId: resolvedActivePathId,
+            runId: resolvedRunId,
+            dayIndex: null,
+            weekIndex: null,
+            slotIndex: normalizedSlotIndex,
+            slotTime: normalizedSlotTime,
+        };
     }
 
     const startMs = new Date(pathStart).getTime();
     const endMs = new Date(endedAt).getTime();
     if (Number.isNaN(startMs) || Number.isNaN(endMs)) {
-        return { activePathId: resolvedActivePathId, runId: resolvedRunId, dayIndex: null, weekIndex: null };
+        return {
+            activePathId: resolvedActivePathId,
+            runId: resolvedRunId,
+            dayIndex: null,
+            weekIndex: null,
+            slotIndex: normalizedSlotIndex,
+            slotTime: normalizedSlotTime,
+        };
     }
 
     const dayIndex = Math.floor((endMs - startMs) / (24 * 60 * 60 * 1000)) + 1;
@@ -75,6 +99,8 @@ const buildPathContext = ({ activePath, activePathId, endedAt }) => {
         runId: resolvedRunId,
         dayIndex: dayIndex > 0 ? dayIndex : null,
         weekIndex,
+        slotIndex: normalizedSlotIndex,
+        slotTime: normalizedSlotTime,
     };
 };
 
@@ -341,6 +367,8 @@ export function recordPracticeSession(payload = {}, options = {}) {
         runId = null,
         dayIndex = null,
         weekIndex = null,
+        slotIndex = null,
+        slotTime = null,
         startedAt = null,
         endedAt = null,
         durationSec = null,
@@ -392,6 +420,8 @@ export function recordPracticeSession(payload = {}, options = {}) {
         activePath,
         activePathId,
         endedAt: normalizedEndedAt,
+        slotIndex,
+        slotTime,
     });
     const resolvedRunId = runId || normalizedPathContext.runId || null;
     const resolvedActivePathId = activePathId || normalizedPathContext.activePathId || null;
@@ -411,6 +441,8 @@ export function recordPracticeSession(payload = {}, options = {}) {
             activePathId: resolvedActivePathId,
             dayIndex: dayIndex ?? normalizedPathContext.dayIndex,
             weekIndex: resolvedWeekIndex,
+            slotIndex: slotIndex ?? normalizedPathContext.slotIndex,
+            slotTime: slotTime ?? normalizedPathContext.slotTime,
         },
         // Phase 7: deterministic scheduleMatched snapshot (computed at record time)
         scheduleMatched: normalizedStartedAt ? computeScheduleMatchedSnapshot({
@@ -452,6 +484,8 @@ export function recordPracticeSession(payload = {}, options = {}) {
                     activePathId: activePathId || null,
                     dayIndex: dayIndex ?? null,
                     weekIndex: weekIndex ?? null,
+                    slotIndex: slotIndex ?? null,
+                    slotTime: slotTime ?? null,
                 },
                 persistedPathContext: normalizedSession.pathContext,
                 sessionId: normalizedSession.id,
@@ -459,6 +493,7 @@ export function recordPracticeSession(payload = {}, options = {}) {
         }
 
         useProgressStore.getState().recordSessionV2(normalizedSession);
+        useNavigationStore.getState().syncActivePathProgressFromSessions?.();
 
         try {
             const normalizedMinutes = typeof duration === 'number'

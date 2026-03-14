@@ -76,7 +76,7 @@ function getWeekForDay(path, dayIndex) {
  * Vertical meter for left-pane progression
  * Two stacked meters (Completion + Path) live in the wallpaper strip.
  */
-function VerticalMeter({ label, valueText, progressRatio, isLight, progressBarColor, isHighlighted = false }) {
+function VerticalMeter({ label, valueText, progressRatio, isLight, progressBarColor, isHighlighted = false, testId = null }) {
     const ratio = Math.max(0, Math.min(1, Number.isFinite(progressRatio) ? progressRatio : 0));
 
     const meterBackground = isLight ? 'rgba(250, 246, 238, 0.06)' : 'rgba(10, 12, 16, 0.22)';
@@ -103,6 +103,7 @@ function VerticalMeter({ label, valueText, progressRatio, isLight, progressBarCo
                         ? '0 2px 8px rgba(0, 0, 0, 0.06)'
                         : '0 4px 12px rgba(0, 0, 0, 0.2)',
                 }}
+                data-testid={testId || undefined}
                 aria-label={`${label}: ${valueText}`}
             >
                 <div
@@ -636,7 +637,9 @@ export function DailyPracticeCard({ onStartPractice, onViewCurriculum, onNavigat
         return getProgramDay(programId, scheduledDayIndex);
     }, [activePathObj?.tracking?.curriculumId, scheduledDayIndex]);
 
-    const pathDayIndexDisplay = metrics?.dayIndex ?? 1;
+    const pathDayIndexDisplay = Number.isFinite(Number(metrics?.dayIndex))
+        ? Number(metrics.dayIndex)
+        : 1;
 
     const pathDayProgressRatio = metrics.durationDays > 0 ? pathDayIndexDisplay / metrics.durationDays : 0;
     const missState = useMemo(() => computeMissState(), [computeMissState]);
@@ -784,6 +787,7 @@ export function DailyPracticeCard({ onStartPractice, onViewCurriculum, onNavigat
     const onboardingComplete = onboardingCompleteProp ?? storeOnboardingComplete;
     const practiceTimeSlots = practiceTimeSlotsProp ?? storePracticeTimeSlots;
     const progressSnapshot = getProgress();
+    const practiceLaunchContext = useUiStore(s => s.practiceLaunchContext);
     const {
         completed: curriculumCompletedCount,
         total: curriculumTotalCount,
@@ -870,8 +874,8 @@ export function DailyPracticeCard({ onStartPractice, onViewCurriculum, onNavigat
         }
         // PROBE:daily-benchmark-launch:END
 
+        pendingPracticeNavigationRef.current = launchPayload;
         useUiStore.getState().setPracticeLaunchContext(launchPayload);
-        onNavigate?.('practice');
     }, [
         activePath?.runId,
         activePath?.activePathId,
@@ -881,6 +885,13 @@ export function DailyPracticeCard({ onStartPractice, onViewCurriculum, onNavigat
         benchmark,
         onNavigate,
     ]);
+
+    useEffect(() => {
+        if (!pendingPracticeNavigationRef.current) return;
+        if (practiceLaunchContext !== pendingPracticeNavigationRef.current) return;
+        pendingPracticeNavigationRef.current = null;
+        onNavigate?.('practice');
+    }, [practiceLaunchContext, onNavigate]);
 
     useEffect(() => {
         if (!import.meta.env.DEV) return;
@@ -928,6 +939,7 @@ export function DailyPracticeCard({ onStartPractice, onViewCurriculum, onNavigat
     // DEV keyboard shortcut — must be above all early returns; deps supplied via ref
     const _devKeyRef = useRef(null);
     const _devDepsRef = useRef({ legs: [], dayNumber: 1, isLegTooEarly: () => false, isLegExpired: () => false });
+    const pendingPracticeNavigationRef = useRef(null);
     useEffect(() => {
         if (!import.meta.env.DEV) return;
         if (hasActivePath) return;
@@ -1079,6 +1091,7 @@ export function DailyPracticeCard({ onStartPractice, onViewCurriculum, onNavigat
                                                     isLight={isLight}
                                                     progressBarColor={progressBarColor}
                                                     isHighlighted={pathDayProgressRatio >= 1}
+                                                    testId="daily-practice-day-meter"
                                                 />
                                             </div>
                                         )}
@@ -1476,7 +1489,7 @@ export function DailyPracticeCard({ onStartPractice, onViewCurriculum, onNavigat
         return 14;
     })();
 
-    const dayIndexDisplay = activePathObj ? (metrics?.dayIndex || 1) : (hasStartedCurriculum ? dayNumber : 0);
+    const dayIndexDisplay = activePathObj ? pathDayIndexDisplay : (hasStartedCurriculum ? dayNumber : 0);
     const dayProgressRatio = (() => {
         const n = Number(dayIndexDisplay);
         const d = Number(totalDaysDisplay);
@@ -1961,6 +1974,7 @@ export function DailyPracticeCard({ onStartPractice, onViewCurriculum, onNavigat
                                           isLight={isLight}
                                           progressBarColor={progressBarColor}
                                           isHighlighted={dayProgressRatio >= 1}
+                                          testId="daily-practice-day-meter"
                                       />
                                 </div>
                             </div>
