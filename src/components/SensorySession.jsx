@@ -22,6 +22,8 @@ export function SensorySession({
     duration, // in minutes
     onStop,
     onTimeUpdate,
+    pendingFinish = false,
+    onPendingBoundaryComplete,
     scanType,
     emotionMode,
     emotionPromptMode,
@@ -37,7 +39,7 @@ export function SensorySession({
     const [stepIndex, setStepIndex] = useState(0);
     const [stepRemainingSec, setStepRemainingSec] = useState(0);
     const [sessionRemainingSec, setSessionRemainingSec] = useState(duration * 60);
-    const [sessionComplete, setSessionComplete] = useState(false);
+    const [completionReason, setCompletionReason] = useState(null);
 
     // Timer Refs
     const startTimeRef = useRef(performance.now());
@@ -95,13 +97,6 @@ export function SensorySession({
         intervalRef2.current = setInterval(() => {
             setSessionRemainingSec((sessPrev) => {
                 const newSessionRemaining = Math.max(0, sessPrev - 1);
-
-                // Check if session time has reached 0 (auto-complete)
-                if (newSessionRemaining === 0) {
-                    setSessionComplete(true);
-                    return 0;
-                }
-
                 return newSessionRemaining;
             });
 
@@ -111,15 +106,21 @@ export function SensorySession({
                 // When step completes
                 if (newStepRemaining === 0) {
                     const nextStepIdx = stepIndex + 1;
+                    const reachedLastStep = nextStepIdx >= numSteps;
 
-                    if (nextStepIdx < numSteps) {
+                    if (pendingFinish) {
+                        setCompletionReason('pending-boundary');
+                        return 0;
+                    }
+
+                    if (!reachedLastStep) {
                         // Move to next step
                         setStepIndex(nextStepIdx);
                         setDevPromptIndex(nextStepIdx);
                         return stepDurations[nextStepIdx] || 1;
                     } else {
                         // Session complete - signal via state, not direct callback
-                        setSessionComplete(true);
+                        setCompletionReason('session-end');
                         return 0;
                     }
                 }
@@ -133,16 +134,25 @@ export function SensorySession({
                 clearInterval(intervalRef2.current);
             }
         };
-    }, [duration, allPrompts, sensoryType, onStop, stepIndex, stepRemainingSec]);
+    }, [duration, allPrompts, pendingFinish, sensoryType, stepIndex, stepRemainingSec]);
 
     // Handle session completion (fire onStop once, outside of render)
     // Pass { completed: true } to signal natural completion vs manual stop
     useEffect(() => {
-        if (sessionComplete && !onStopCalledRef.current && onStop) {
-            onStopCalledRef.current = true;
-            onStop({ completed: true });
+        if (!completionReason || onStopCalledRef.current) return;
+
+        onStopCalledRef.current = true;
+        if (completionReason === 'pending-boundary') {
+            onPendingBoundaryComplete?.({
+                stepIndex,
+                sensoryType,
+                boundary: 'step-end',
+            });
+            return;
         }
-    }, [sessionComplete, onStop]);
+
+        onStop?.({ completed: true });
+    }, [completionReason, onPendingBoundaryComplete, onStop, sensoryType, stepIndex]);
 
     // Update prompts (Standard Sensory only)
     useEffect(() => {
@@ -175,7 +185,7 @@ export function SensorySession({
         setStepIndex(0);
         setStepRemainingSec(0);
         setSessionRemainingSec(duration * 60);
-        setSessionComplete(false);
+        setCompletionReason(null);
         onStopCalledRef.current = false;
         setElapsedSeconds(0);
         startTimeRef.current = performance.now();

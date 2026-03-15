@@ -249,6 +249,8 @@ function PersistentBreathRingCanvas({
   normalizedPresetNumber = null,
 }) {
   const canvasElRef = useRef(null);
+  const contextListenersRef = useRef(null);
+  const [sceneFallbackReason, setSceneFallbackReason] = useState(null);
 
   // Mark canvas for intentional teardown BEFORE R3F's useEffect cleanup
   // calls gl.dispose() → loseContext().  useLayoutEffect cleanups run
@@ -258,143 +260,156 @@ function PersistentBreathRingCanvas({
       if (canvasElRef.current) {
         canvasElRef.current.dataset.intentionalTeardown = '1';
       }
+
+      const listeners = contextListenersRef.current;
+      if (!listeners) return;
+      listeners.canvas.removeEventListener('webglcontextlost', listeners.onLost);
+      listeners.canvas.removeEventListener('webglcontextrestored', listeners.onRestored);
+      contextListenersRef.current = null;
     };
   }, []);
 
-  return (
-    // PROBE:OOM_DPR_CAP:START
-    <>
-      <Canvas
-        style={{ width: '100%', height: '100%', minWidth: '1px', minHeight: '1px', display: 'block', ...style }}
-        frameloop={frameloopProp !== undefined ? frameloopProp : (isFrameActive ? 'always' : 'never')}
-        dpr={import.meta.env.PROD ? 1 : [1, BREATH_RING_MAX_DPR]}
-        camera={{ fov: 12, position: [0, 0, 10], near: 0.1, far: 50 }}
-        gl={{
-          antialias: true,
-          alpha: true,
-          stencil: true,
-          powerPreference: 'high-performance',
-          preserveDrawingBuffer: false,
+  const fallbackOverlay = (
+    <div
+      role="status"
+      aria-live="polite"
+      style={{
+        position: 'absolute',
+        inset: 0,
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        pointerEvents: 'none',
+        background: 'radial-gradient(circle at 50% 50%, rgba(6,10,18,0.78) 0%, rgba(2,2,7,0.92) 70%)',
+      }}
+    >
+      <div
+        style={{
+          padding: '14px 18px',
+          borderRadius: '18px',
+          border: '1px solid rgba(255,255,255,0.14)',
+          background: 'rgba(0,0,0,0.46)',
+          color: 'rgba(245,245,245,0.82)',
+          textAlign: 'center',
+          letterSpacing: '0.12em',
+          textTransform: 'uppercase',
+          fontFamily: 'var(--font-display)',
+          fontSize: '0.78rem',
+          boxShadow: '0 12px 36px rgba(0,0,0,0.35)',
         }}
-        onCreated={({ gl }) => {
-          gl.setPixelRatio(import.meta.env.PROD ? 1 : Math.min(window.devicePixelRatio, BREATH_RING_MAX_DPR));
-          gl.setClearColor(0x000000, 0);
-          gl.outputColorSpace = THREE.SRGBColorSpace;
-          gl.toneMapping = THREE.NoToneMapping;
+      >
+        3D Visual Degraded
+      </div>
+    </div>
+  );
 
-          const canvas = gl.domElement;
-          canvasElRef.current = canvas;
+  return (
+    <>
+      {sceneFallbackReason ? fallbackOverlay : (
+        <Canvas
+          style={{ width: '100%', height: '100%', minWidth: '1px', minHeight: '1px', display: 'block', ...style }}
+          frameloop={frameloopProp !== undefined ? frameloopProp : (isFrameActive ? 'always' : 'never')}
+          dpr={import.meta.env.PROD ? 1 : [1, BREATH_RING_MAX_DPR]}
+          camera={{ fov: 12, position: [0, 0, 10], near: 0.1, far: 50 }}
+          gl={{
+            antialias: true,
+            alpha: true,
+            stencil: true,
+            powerPreference: 'high-performance',
+            preserveDrawingBuffer: false,
+          }}
+          onCreated={({ gl }) => {
+            gl.setPixelRatio(import.meta.env.PROD ? 1 : Math.min(window.devicePixelRatio, BREATH_RING_MAX_DPR));
+            gl.setClearColor(0x000000, 0);
+            gl.outputColorSpace = THREE.SRGBColorSpace;
+            gl.toneMapping = THREE.NoToneMapping;
 
-          if (!canvas.__immanenceWebglContextLostListenerAdded) {
-            gl.domElement.addEventListener(
-              'webglcontextlost',
-              (e) => {
-                if (gl.domElement.dataset?.intentionalTeardown === '1') {
-                  e.preventDefault();
-                }
-              },
-              false
-            );
-            canvas.__immanenceWebglContextLostListenerAdded = true;
-          }
+            const canvas = gl.domElement;
+            canvasElRef.current = canvas;
+            const originalDispose = gl.dispose?.bind(gl);
 
-          // ----------------------------------------------------------
-          // FIX: Intercept WEBGL_lose_context.loseContext() so that
-          // Three.js's dispose() cannot trigger a webglcontextlost
-          // event during intentional teardown (session end).
-          //
-          // Why this works:
-          //   Three.js WebGLRenderer.dispose() calls:
-          //     extensions.get('WEBGL_lose_context').loseContext()
-          //   which dispatches webglcontextlost synchronously.
-          //   Three.js registers its own listener in the constructor
-          //   (before onCreated), so a capturing listener added here
-          //   cannot fire before Three's — they share the same element
-          //   and Three registered first.
-          //
-          //   By making loseContext() a no-op when teardown is flagged,
-          //   the event never fires, Three never logs "Context Lost",
-          //   and Probe6 never records a CONTEXT_EVENT.
-          //
-          //   The raw GL context is garbage-collected when the canvas
-          //   node is removed from DOM — no resource leak.
-          // ----------------------------------------------------------
-          try {
-            const rawGl =
-              gl.getContext?.() ||
-              gl.domElement?.getContext?.('webgl2') ||
-              gl.domElement?.getContext?.('webgl');
-            const ext = rawGl?.getExtension?.('WEBGL_lose_context');
-            if (ext && !ext.__immanencePatched) {
-              const originalLoseContext = ext.loseContext?.bind(ext);
-
-              ext.loseContext = () => {
-                const canvasEl = canvasElRef.current || gl.domElement;
-                if (canvasEl?.dataset?.intentionalTeardown === '1') {
+            if (originalDispose && !gl.__immanenceDisposePatched) {
+              gl.dispose = () => {
+                const isLostContext = canvas.dataset?.webglContextLost === '1';
+                if (isLostContext) {
                   if (import.meta.env.DEV) {
-                    console.info('[BreathingRing] suppressed loseContext() call (intentional teardown)');
+                    console.info('[BreathingRing] skipped renderer.dispose() after context loss');
                   }
                   return;
                 }
-                originalLoseContext?.();
+                originalDispose();
               };
-
-              ext.__immanencePatched = true;
+              gl.__immanenceDisposePatched = true;
             }
-          } catch (e) {
-            // Non-fatal — if patching fails, context loss will still
-            // log but the app will function normally.
+
+            const onLost = (e) => {
+              if (canvas.dataset?.intentionalTeardown === '1') {
+                e.preventDefault();
+                return;
+              }
+
+              canvas.dataset.webglContextLost = '1';
+              setSceneFallbackReason('context-lost');
+            };
+            const onRestored = () => {
+              delete canvas.dataset.webglContextLost;
+              if (import.meta.env.DEV) {
+                console.info('[BreathingRing] webgl context restored after safe fallback');
+              }
+            };
+            canvas.addEventListener('webglcontextlost', onLost, false);
+            canvas.addEventListener('webglcontextrestored', onRestored, false);
+            contextListenersRef.current = { canvas, onLost, onRestored };
+
+            try {
+              const rawGl =
+                gl.getContext?.() ||
+                gl.domElement?.getContext?.('webgl2') ||
+                gl.domElement?.getContext?.('webgl');
+              const ext = rawGl?.getExtension?.('WEBGL_lose_context');
+              if (ext && !ext.__immanencePatched) {
+                const originalLoseContext = ext.loseContext?.bind(ext);
+
+                ext.loseContext = () => {
+                  const canvasEl = canvasElRef.current || gl.domElement;
+                  if (canvasEl?.dataset?.intentionalTeardown === '1') {
+                    if (import.meta.env.DEV) {
+                      console.info('[BreathingRing] suppressed loseContext() call (intentional teardown)');
+                    }
+                    return;
+                  }
+                  originalLoseContext?.();
+                };
+
+                ext.__immanencePatched = true;
+              }
+            } catch (e) {
+              if (import.meta.env.DEV) {
+                console.warn('[BreathingRing] failed to patch WEBGL_lose_context', e);
+              }
+            }
+
             if (import.meta.env.DEV) {
-              console.warn('[BreathingRing] failed to patch WEBGL_lose_context', e);
+              const appliedDpr = Number(gl.getPixelRatio?.() || 1).toFixed(2);
+              console.info(`[BreathingRing] canvas mount dpr=${appliedDpr} cap=${BREATH_RING_MAX_DPR.toFixed(2)}`);
             }
-          }
-
-          if (import.meta.env.DEV) {
-            const appliedDpr = Number(gl.getPixelRatio?.() || 1).toFixed(2);
-            console.info(`[BreathingRing] canvas mount dpr=${appliedDpr} cap=${BREATH_RING_MAX_DPR.toFixed(2)}`);
-          }
-        }}
-      >
-        <RingSceneRouter
-          rndRingMode={rndRingMode}
-          productionParams={productionParams}
-          liveAccentColor={liveAccentColor}
-          breathDriver={breathDriver}
-          isFrameActive={isFrameActive}
-          displayNumber={displayNumber}
-          presetVariant={presetVariant}
-          activePresetRaw={activePresetRaw}
-          activePresetLabel={activePresetLabel}
-          normalizedPresetNumber={normalizedPresetNumber}
-        />
-      </Canvas>
-
-      {import.meta.env.PROD && (
-        <div
-          aria-hidden="true"
-          style={{
-            position: 'fixed',
-            top: 12,
-            right: 12,
-            zIndex: 2147483647,
-            pointerEvents: 'none',
-            padding: '10px 12px',
-            borderRadius: 999,
-            background: 'rgba(255, 0, 0, 0.95)',
-            color: '#fff',
-            fontFamily:
-              'ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace',
-            fontSize: 14,
-            fontWeight: 800,
-            letterSpacing: '0.02em',
-            boxShadow: '0 10px 30px rgba(0,0,0,0.45)',
           }}
         >
-          OOM_PROBE_DPR_CAP=1.0
-        </div>
+          <RingSceneRouter
+            rndRingMode={rndRingMode}
+            productionParams={productionParams}
+            liveAccentColor={liveAccentColor}
+            breathDriver={breathDriver}
+            isFrameActive={isFrameActive}
+            displayNumber={displayNumber}
+            presetVariant={presetVariant}
+            activePresetRaw={activePresetRaw}
+            activePresetLabel={activePresetLabel}
+            normalizedPresetNumber={normalizedPresetNumber}
+          />
+        </Canvas>
       )}
     </>
-    // PROBE:OOM_DPR_CAP:END
   );
 }
 

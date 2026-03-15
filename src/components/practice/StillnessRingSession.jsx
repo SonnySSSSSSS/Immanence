@@ -48,10 +48,11 @@ export function StillnessRingSession({
   totalDurationSec,
   config,
   ringMode,
-  onComplete,
+  pendingFinish = false,
+  onPendingBoundaryComplete,
 }) {
   const audioContextRef = useRef(null);
-  const completionSentRef = useRef(false);
+  const boundarySentRef = useRef(false);
   const lastCueKeyRef = useRef(null);
 
   const focusSec = Number(config?.focusSec) || 45;
@@ -59,7 +60,6 @@ export function StillnessRingSession({
   const intensity = String(config?.focusIntensity || "medium").toLowerCase();
 
   const {
-    isComplete,
     totalRemainingSec,
     segmentType,
     nextSegmentType,
@@ -67,6 +67,7 @@ export function StillnessRingSession({
     segmentElapsedSec,
     segmentRemainingSec,
     segmentIndex,
+    pendingBoundaryReached,
   } = useStillnessIntervalSessionState({
     isRunning,
     isPaused,
@@ -74,17 +75,26 @@ export function StillnessRingSession({
     totalDurationSec,
     focusSec,
     restSec,
+    pendingFinish,
   });
 
   useEffect(() => {
     if (!isRunning) {
-      completionSentRef.current = false;
+      boundarySentRef.current = false;
       return;
     }
-    if (!isComplete || completionSentRef.current) return;
-    completionSentRef.current = true;
-    onComplete?.();
-  }, [isComplete, isRunning, onComplete]);
+    if (!pendingFinish) {
+      boundarySentRef.current = false;
+      return;
+    }
+    if (!pendingBoundaryReached || boundarySentRef.current) return;
+    boundarySentRef.current = true;
+    onPendingBoundaryComplete?.({
+      segmentIndex,
+      segmentType,
+      boundary: "segment-end",
+    });
+  }, [isRunning, onPendingBoundaryComplete, pendingBoundaryReached, pendingFinish, segmentIndex, segmentType]);
 
   useEffect(() => {
     if (!isRunning || isPaused) return;

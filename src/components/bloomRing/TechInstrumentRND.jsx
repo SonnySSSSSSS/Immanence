@@ -1,5 +1,5 @@
-import { memo, useEffect, useMemo, useRef } from 'react';
-import { Canvas, useFrame } from '@react-three/fiber';
+import { memo, useEffect, useMemo, useRef, useState } from 'react';
+import { Canvas, useFrame, useThree } from '@react-three/fiber';
 import { EffectComposer, Bloom, GodRays } from '@react-three/postprocessing';
 import { BlendFunction, KernelSize } from 'postprocessing';
 import * as THREE from 'three';
@@ -108,6 +108,7 @@ const OFF_GRAY_MAIN = new THREE.Color(0.08, 0.08, 0.08);  // nearly-black for in
 const OFF_GRAY_CORE = new THREE.Color(0.06, 0.06, 0.06);  // nearly-black for inactive core
 
 const BLOOM_ENABLED = true;
+const PROBE_DISABLE_POSTPROCESSING = true;
 const LIGHTING_PROBE_ENABLED = true;
 
 const TMP_SIZE = new THREE.Vector2();
@@ -143,6 +144,21 @@ const rimFrag = `
 
 function clamp01(v) {
   return Math.min(1, Math.max(0, v));
+}
+
+function hasUsableComposerContext(renderer) {
+  if (!renderer || typeof renderer.getContext !== 'function') return false;
+
+  try {
+    const context = renderer.getContext();
+    if (!context || typeof context.getContextAttributes !== 'function') {
+      return false;
+    }
+
+    return !!context.getContextAttributes();
+  } catch {
+    return false;
+  }
 }
 
 // E) Keep rim colour accent-true: lerp toward white less aggressively so hue
@@ -241,6 +257,7 @@ export const TechInstrumentScene = memo(function TechInstrumentScene({
   accentColor,
   breathDriverRef,
   sunRef,
+  contextLostRef,
 }) {
   const segMainMatsRef   = useRef([]);
   const segCoreMatsRef   = useRef([]);
@@ -342,13 +359,19 @@ export const TechInstrumentScene = memo(function TechInstrumentScene({
   );
 
   useEffect(() => () => {
+    if (contextLostRef?.current === true) {
+      segMainMatsRef.current.length = 0;
+      segCoreMatsRef.current.length = 0;
+      segCoreMeshesRef.current.length = 0;
+      return;
+    }
     Object.values(geometries).forEach((geom) => geom.dispose());
     rimMaterials.bezel.dispose();
     rimMaterials.cal.dispose();
     segMainMatsRef.current.length = 0;
     segCoreMatsRef.current.length = 0;
     segCoreMeshesRef.current.length = 0;
-  }, [geometries, rimMaterials]);
+  }, [contextLostRef, geometries, rimMaterials]);
 
 	  useFrame(() => {
 	    const state = breathStateRef.current;
@@ -736,14 +759,43 @@ export function TechInstrumentSceneContent({ accentColor, breathDriver }) {
   const breathDriverRef = useRef(breathDriver);
   const tightBloomRef   = useRef(null);
   const godRaysRef      = useRef(null);
+  const composerWarnedRef = useRef(false);
+  const contextLostRef = useRef(false);
   // sunRef is passed into TechInstrumentScene so the sun mesh lives inside
   // AutoFitScene (scales with ring) while GodRays here can reference it.
   const sunRef          = useRef(null);
-  const composerEnabled = BLOOM_ENABLED;
+  const { gl } = useThree();
+  const [composerSuppressed, setComposerSuppressed] = useState(false);
 
   useEffect(() => {
     breathDriverRef.current = breathDriver;
   }, [breathDriver]);
+
+  useEffect(() => {
+    if (!gl?.domElement) return undefined;
+
+    const canvas = gl.domElement;
+    const handleContextLost = () => {
+      contextLostRef.current = true;
+      setComposerSuppressed(true);
+    };
+
+    canvas.addEventListener('webglcontextlost', handleContextLost, false);
+    return () => {
+      canvas.removeEventListener('webglcontextlost', handleContextLost, false);
+    };
+  }, [gl]);
+
+  const composerContextHealthy = hasUsableComposerContext(gl);
+  const composerEnabled = BLOOM_ENABLED
+    && !PROBE_DISABLE_POSTPROCESSING
+    && !composerSuppressed
+    && composerContextHealthy;
+
+  if (BLOOM_ENABLED && !composerEnabled && !composerWarnedRef.current) {
+    composerWarnedRef.current = true;
+    console.warn(`[TechInstrumentRND] composer disabled preset=${PRESET_NAME} usableContext=${composerContextHealthy} suppressed=${composerSuppressed}`);
+  }
 
   return (
     <>
@@ -751,6 +803,7 @@ export function TechInstrumentSceneContent({ accentColor, breathDriver }) {
         accentColor={accentColor}
         breathDriverRef={breathDriverRef}
         sunRef={sunRef}
+        contextLostRef={contextLostRef}
       />
       {composerEnabled && (
         <>

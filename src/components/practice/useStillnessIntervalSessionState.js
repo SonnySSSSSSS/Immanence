@@ -13,6 +13,7 @@ export function useStillnessIntervalSessionState({
   totalDurationSec,
   focusSec,
   restSec,
+  pendingFinish = false,
   tickMs = 200,
 }) {
   const [nowMs, setNowMs] = useState(() => performance.now());
@@ -34,15 +35,36 @@ export function useStillnessIntervalSessionState({
     const safeFocusSec = normalizePositiveInt(focusSec, 45, 1);
     const safeRestSec = normalizePositiveInt(restSec, 15, 1);
     const cycleSec = safeFocusSec + safeRestSec;
+    const boundaryEpsilonSec = 0.001;
 
     const elapsedSecRaw = (!isRunning || !Number.isFinite(sessionStartTime))
       ? 0
       : Math.max(0, (nowMs - sessionStartTime) / 1000);
-    const elapsedSec = Math.min(elapsedSecRaw, safeTotalSec);
-    const isComplete = isRunning && elapsedSecRaw >= safeTotalSec;
+    const totalRemainingSec = Math.max(0, Math.ceil(safeTotalSec - Math.min(elapsedSecRaw, safeTotalSec)));
+    const expired = isRunning && elapsedSecRaw >= safeTotalSec;
 
-    const totalRemainingSec = Math.max(0, Math.ceil(safeTotalSec - elapsedSec));
-    const cyclePositionSec = cycleSec > 0 ? (elapsedSec % cycleSec) : 0;
+    let pendingBoundarySec = safeTotalSec;
+    if (pendingFinish && cycleSec > 0) {
+      const cycleIndex = Math.floor(safeTotalSec / cycleSec);
+      const cycleOffsetSec = safeTotalSec - (cycleIndex * cycleSec);
+      const atCycleBoundary = cycleOffsetSec <= boundaryEpsilonSec || Math.abs(cycleOffsetSec - cycleSec) <= boundaryEpsilonSec;
+      const atFocusBoundary = Math.abs(cycleOffsetSec - safeFocusSec) <= boundaryEpsilonSec;
+
+      if (!atCycleBoundary && !atFocusBoundary) {
+        pendingBoundarySec = cycleOffsetSec < safeFocusSec
+          ? (cycleIndex * cycleSec) + safeFocusSec
+          : (cycleIndex * cycleSec) + cycleSec;
+      }
+    }
+
+    const effectiveEndSec = pendingFinish ? pendingBoundarySec : safeTotalSec;
+    const elapsedSec = Math.min(elapsedSecRaw, effectiveEndSec);
+    const pendingBoundaryReached = pendingFinish && elapsedSecRaw >= pendingBoundarySec;
+    const displayElapsedSec = pendingBoundaryReached
+      ? Math.max(0, pendingBoundarySec - boundaryEpsilonSec)
+      : elapsedSec;
+
+    const cyclePositionSec = cycleSec > 0 ? (displayElapsedSec % cycleSec) : 0;
     const segmentType = cyclePositionSec < safeFocusSec ? "focus" : "rest";
     const segmentDurationSec = segmentType === "focus" ? safeFocusSec : safeRestSec;
     const segmentElapsedSec = segmentType === "focus"
@@ -50,13 +72,14 @@ export function useStillnessIntervalSessionState({
       : Math.max(0, cyclePositionSec - safeFocusSec);
     const segmentRemainingSec = Math.max(0, Math.ceil(segmentDurationSec - segmentElapsedSec));
 
-    const completedCycles = Math.floor(elapsedSec / cycleSec);
+    const completedCycles = Math.floor(displayElapsedSec / cycleSec);
     const completedFocusIntervals = completedCycles + (cyclePositionSec >= safeFocusSec ? 1 : 0);
     const segmentIndex = (completedCycles * 2) + (segmentType === "focus" ? 0 : 1);
     const nextSegmentType = segmentType === "focus" ? "rest" : "focus";
 
     return {
-      isComplete,
+      isComplete: pendingFinish ? pendingBoundaryReached : expired,
+      expired,
       elapsedSec,
       totalRemainingSec,
       segmentType,
@@ -66,7 +89,8 @@ export function useStillnessIntervalSessionState({
       segmentRemainingSec,
       segmentIndex,
       completedFocusIntervals,
+      pendingBoundaryReached,
+      pendingBoundarySec,
     };
-  }, [focusSec, isRunning, nowMs, restSec, sessionStartTime, totalDurationSec]);
+  }, [focusSec, isRunning, nowMs, pendingFinish, restSec, sessionStartTime, totalDurationSec]);
 }
-

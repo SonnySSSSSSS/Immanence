@@ -7,9 +7,6 @@ import { PathOverviewPanel } from './PathOverviewPanel.jsx';
 import { ActivePathState, PathLifecycleActions } from './ActivePathState.jsx';
 import { NavigationPathReport } from './navigation/NavigationPathReport.jsx';
 import { PathFinderCard } from './PathFinderCard.jsx';
-import { CodexChamber } from './Codex/CodexChamber.jsx';
-import { StageTitle } from './StageTitle.jsx';
-import { NavigationSelectionModal } from './NavigationSelectionModal.jsx';
 import { useDisplayModeStore } from '../state/displayModeStore.js';
 import { getPathById } from '../data/navigationData.js';
 import { AvatarV3 } from './avatarV3/AvatarV3.jsx';
@@ -31,8 +28,6 @@ export function NavigationSection({ currentStage, previewPath, onNavigate, isPra
   const storedPath = getDisplayPath ? getDisplayPath(effectiveStage) : null;
   const avatarPath = previewPath ?? storedPath;
   const pathGridRef = useRef(null);
-  const [showCodex, setShowCodex] = useState(false);
-  const [navModalOpen, setNavModalOpen] = useState(false);
 
   // Local state for path overlay - only opens via explicit user click, never from persisted state
   const [overlayPathId, setOverlayPathId] = useState(null);
@@ -67,8 +62,6 @@ export function NavigationSection({ currentStage, previewPath, onNavigate, isPra
       });
     }
   };
-
-  const navSelectorClassName = "type-label px-6 py-3 rounded-full im-nav-btn im-nav-pill";
 
   return (
     <div
@@ -116,119 +109,59 @@ export function NavigationSection({ currentStage, previewPath, onNavigate, isPra
         </div>
       )}
 
-      {/* Navigation Selector - Dropdown Style (matching practice menu) */}
-      <div className="mb-6" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '12px' }}>
-        {/* Text prompt above button */}
+      {/* Active path actions (only when an active path exists) */}
+      {activePath && (
         <div
-          className="type-label italic"
+          className="flex flex-col items-center px-4 py-3 rounded-2xl"
           style={{
-            color: isLight ? 'rgba(60, 52, 37, 0.7)' : 'rgba(253,251,245,0.8)',
-            textShadow: isLight ? 'none' : '0 2px 8px rgba(0,0,0,0.5)'
+            gap: '6px',
+            background: isLight
+              ? 'rgba(60, 52, 37, 0.25)'
+              : 'rgba(0, 0, 0, 0.45)',
+            border: isLight
+              ? '1px solid rgba(180, 140, 90, 0.2)'
+              : '1px solid rgba(255, 255, 255, 0.1)',
+            backdropFilter: 'blur(6px)',
+            WebkitBackdropFilter: 'blur(6px)',
           }}
         >
-          Choose direction. Progress deliberately.
-        </div>
-        <button
-            onClick={() => setNavModalOpen(true)}
-            data-testid="navigation-selector-button"
-            className={navSelectorClassName}
-            data-nav-pill-id="nav:paths"
-            style={{
-              color: isLight ? (showCodex ? 'rgba(140, 100, 40, 1)' : 'rgba(180, 120, 40, 1)') : (showCodex ? 'rgba(220, 210, 180, 1)' : '#F5D18A'),
-              fontWeight: 700,
-              textShadow: !isLight ? '0 1px 4px rgba(0,0,0,0.4)' : undefined,
-              display: 'flex',
-              alignItems: 'center',
-              gap: '12px',
-              background: isLight
-                ? 'rgba(255, 255, 255, 0.4)'
-                : 'linear-gradient(135deg, rgba(255,255,255,0.08) 0%, transparent 100%)',
-              border: isLight
-                ? (showCodex ? '1px solid rgba(140, 100, 40, 0.4)' : '1px solid rgba(180, 140, 90, 0.4)')
-                : (showCodex ? '1px solid rgba(220, 210, 180, 0.4)' : '1px solid rgba(250, 208, 120, 0.4)'),
-              boxShadow: isLight
-                ? '0 4px 12px rgba(180, 140, 90, 0.1)'
-                : (showCodex
-                  ? '0 0 25px rgba(220, 210, 180, 0.15), inset 0 0 20px rgba(220, 210, 180, 0.08)'
-                  : '0 0 25px rgba(250, 208, 120, 0.15), inset 0 0 20px rgba(250, 208, 120, 0.08)'),
-              transform: navModalOpen ? 'scale(1.06)' : 'scale(1)',
-              transition: 'transform 300ms ease-out, background 300ms ease-out, box-shadow 300ms ease-out',
-            }}
-        >
-          <span>{showCodex ? '◈ Compass' : '◇ Paths'}</span>
-          {/* Chevron */}
-          <span
-            style={{
-              fontSize: '10px',
-              transform: navModalOpen ? 'rotate(180deg)' : 'rotate(0deg)',
-              transition: 'transform 200ms ease-out',
-            }}
-          >
-            ▼
-          </span>
-        </button>
-
-        {!showCodex && activePath && (
           <div
-            className="flex flex-col items-center px-4 py-3 rounded-2xl"
+            className="type-caption uppercase"
             style={{
-              marginTop: '8px',
-              gap: '6px',
-              background: isLight
-                ? 'rgba(60, 52, 37, 0.25)'
-                : 'rgba(0, 0, 0, 0.45)',
-              border: isLight
-                ? '1px solid rgba(180, 140, 90, 0.2)'
-                : '1px solid rgba(255, 255, 255, 0.1)',
-              backdropFilter: 'blur(6px)',
-              WebkitBackdropFilter: 'blur(6px)',
+              fontSize: '9px',
+              letterSpacing: '0.1em',
+              fontWeight: 700,
+              color: isLight ? 'rgba(90, 77, 60, 0.9)' : '#ffffff',
+              textShadow: !isLight ? '0 1px 2px rgba(0,0,0,0.8)' : undefined,
             }}
           >
-            <div
-              className="type-caption uppercase"
-              style={{
-                fontSize: '9px',
-                letterSpacing: '0.1em',
-                fontWeight: 700,
-                color: isLight ? 'rgba(90, 77, 60, 0.9)' : '#ffffff',
-                textShadow: !isLight ? '0 1px 2px rgba(0,0,0,0.8)' : undefined,
-              }}
-            >
-              Active path actions
-            </div>
-            <PathLifecycleActions compact />
+            Active path actions
           </div>
-        )}
-      </div>
+          <PathLifecycleActions compact />
+        </div>
+      )}
 
-      {/* Content Container */}
-      <div>
-        {/* Simple conditional rendering - no complex crossfade */}
-        {showCodex ? (
-          <CodexChamber onClose={() => setShowCodex(false)} onNavigate={onNavigate} />
-        ) : (
-          <div className="space-y-6" ref={pathGridRef}>
-            {/* Path Selection Grid - always visible */}
-            <PathSelectionGrid onPathSelected={handlePathSelected} selectedPathId={overlayPathId} />
+      {/* Paths Content */}
+      <div className="space-y-6" ref={pathGridRef}>
+        {/* Path Selection Grid - always visible */}
+        <PathSelectionGrid onPathSelected={handlePathSelected} selectedPathId={overlayPathId} />
 
-            {/* Active Path Display - shows current path progress inline */}
-            {activePath && (
-                <div className="mt-8 im-card" data-card-id="navigation:activePathPanel">
-                {/* Active Path Header */}
-                <div
-                  className="type-label mb-3"
-                  style={{ color: isLight ? 'rgba(90, 77, 60, 0.5)' : 'rgba(253,251,245,0.5)' }}
-                >
-                  Active Path
-                </div>
-                <ActivePathState onNavigate={onNavigate} />
-                <NavigationPathReport />
-                <div
-                  className="mt-4 pt-4 border-t"
-                  style={{ borderColor: 'rgba(253,251,245,0.06)' }}
-                />
-              </div>
-            )}
+        {/* Active Path Display - shows current path progress inline */}
+        {activePath && (
+            <div className="mt-8 im-card" data-card-id="navigation:activePathPanel">
+            {/* Active Path Header */}
+            <div
+              className="type-label mb-3"
+              style={{ color: isLight ? 'rgba(90, 77, 60, 0.5)' : 'rgba(253,251,245,0.5)' }}
+            >
+              Active Path
+            </div>
+            <ActivePathState onNavigate={onNavigate} />
+            <NavigationPathReport />
+            <div
+              className="mt-4 pt-4 border-t"
+              style={{ borderColor: 'rgba(253,251,245,0.06)' }}
+            />
           </div>
         )}
       </div>
@@ -303,14 +236,6 @@ export function NavigationSection({ currentStage, previewPath, onNavigate, isPra
           </div>
         </div>
       ), document.body)}
-
-      {/* Navigation Selection Modal */}
-      <NavigationSelectionModal
-        isOpen={navModalOpen}
-        onClose={() => setNavModalOpen(false)}
-        currentView={showCodex ? 'compass' : 'paths'}
-        onSelectView={(view) => setShowCodex(view === 'compass')}
-      />
 
       {/* Initiation onboarding — opened locally when HomeHub is not mounted */}
       {showInitiationOnboarding && createPortal(

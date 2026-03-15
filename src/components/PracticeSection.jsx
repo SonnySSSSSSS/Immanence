@@ -2242,7 +2242,9 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
     const pendingFinishWasArmed = pendingCycleFinishRef.current;
     completionDispatchedRef.current = true;
     pendingCycleFinishRef.current = false;
+    pendingNaturalFinishModeRef.current = null;
     setPendingCycleFinish(false);
+    setPendingNaturalFinishMode(null);
     completionProbeMetaRef.current = {
       ...meta,
       pendingFinish: pendingFinishWasArmed,
@@ -2250,6 +2252,13 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
     };
     queueMicrotask(() => handleStop({ completed: true }));
   }, [handleStop]);
+
+  const armPendingNaturalFinish = useCallback((mode) => {
+    if (completionDispatchedRef.current) return;
+    if (pendingNaturalFinishModeRef.current === mode) return;
+    pendingNaturalFinishModeRef.current = mode;
+    setPendingNaturalFinishMode(mode);
+  }, []);
 
   const getBreathCycleSnapshotRef = useRef(null);
   const queueNaturalSessionCompletionRef = useRef(null);
@@ -2277,6 +2286,24 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
       boundary: 'cycle-end',
     });
   }, [queueNaturalSessionCompletion, setBreathCount]);
+
+  const handleStillnessBoundaryComplete = useCallback((meta = {}) => {
+    if (pendingNaturalFinishModeRef.current !== 'stillness') return;
+    queueNaturalSessionCompletion({
+      trigger: 'pending-finish-stillness-boundary',
+      phase: meta.segmentType || 'focus',
+      boundary: meta.boundary || 'segment-end',
+    });
+  }, [queueNaturalSessionCompletion]);
+
+  const handleStepBoundaryComplete = useCallback((meta = {}) => {
+    if (pendingNaturalFinishModeRef.current !== 'step') return;
+    queueNaturalSessionCompletion({
+      trigger: 'pending-finish-step-boundary',
+      phase: meta.sensoryType || 'step',
+      boundary: meta.boundary || 'step-end',
+    });
+  }, [queueNaturalSessionCompletion]);
 
   const handleFocusRating = (rating) => {
     // Update the leg completion with focus rating
@@ -2537,14 +2564,7 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
       : normalizeSeconds(sharedBreathPreDelaySec, 0, 0, 20);
     const needsAudioCountdown = practiceId === "breath" && !isStillnessStart && tempoSyncEnabled;
     const totalCountdownSec = modePreDelaySec + (needsAudioCountdown ? 3 : 0);
-    const shouldSkipDirectBreathPreDelay = (
-      practiceId === "breath"
-      && !isStillnessStart
-      && !consumePendingAutoStart
-      && !needsAudioCountdown
-      && modePreDelaySec > 0
-    );
-    const effectiveCountdownSec = shouldSkipDirectBreathPreDelay ? 0 : totalCountdownSec;
+    const effectiveCountdownSec = totalCountdownSec;
     const shouldBypassDirectBreathHandoff = (
       practiceId === "breath"
       && !isStillnessStart
@@ -2694,6 +2714,13 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
   };
 
   const previousTimeLeftRef = useRef(timeLeft);
+  const pendingCycleFinishRef = useRef(false);
+  const pendingNaturalFinishModeRef = useRef(null);
+  const completionDispatchedRef = useRef(false);
+  const completionProbeMetaRef = useRef(null);
+  const lastCycleBoundaryAtRef = useRef(null);
+  const [pendingCycleFinish, setPendingCycleFinish] = useState(false);
+  const [pendingNaturalFinishMode, setPendingNaturalFinishMode] = useState(null);
 
   // Update tempo sync session elapsed time (calculates segment transitions)
   useEffect(() => {
@@ -2732,11 +2759,6 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
   const showFeedback = lastSignedErrorMs !== null && isBreathPractice && !isStillnessRuntime;
   const showBreathCountUi = showBreathCount && !isStillnessRuntime;
   const timeLeftText = formatTime(timeLeft);
-  const pendingCycleFinishRef = useRef(false);
-  const completionDispatchedRef = useRef(false);
-  const completionProbeMetaRef = useRef(null);
-  const lastCycleBoundaryAtRef = useRef(null);
-  const [pendingCycleFinish, setPendingCycleFinish] = useState(false);
 
   const getBreathCycleSnapshot = useCallback((atMs = performance.now()) => {
     if (!isBreathRunningSession || breathSubmode === 'stillness') return null;
@@ -2825,6 +2847,16 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
       breathSubmode !== 'stillness' &&
       !activeCircuitId &&
       !circuitConfig;
+    const isStillnessBoundaryCompletionSession =
+      isBreathRunningSession &&
+      breathSubmode === 'stillness' &&
+      !activeCircuitId &&
+      !circuitConfig;
+    const isStepBoundaryCompletionSession =
+      !isBreathRunningSession &&
+      !activeCircuitId &&
+      !circuitConfig &&
+      (renderPracticeId === "somatic_vipassana" || renderPracticeId === "feeling");
 
     if (isRunning && !isSessionPaused && practice !== "Rituals") {
       if (timeLeft > 0) {
@@ -2852,6 +2884,10 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
             pendingCycleFinishRef.current = true;
             setPendingCycleFinish(true);
           }
+        } else if (isStillnessBoundaryCompletionSession) {
+          armPendingNaturalFinish('stillness');
+        } else if (isStepBoundaryCompletionSession) {
+          armPendingNaturalFinish('step');
         } else {
           queueNaturalSessionCompletionRef.current?.({
             trigger: 'raw-expiry-non-breath',
@@ -2867,6 +2903,7 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
     };
   }, [
     activeCircuitId,
+    armPendingNaturalFinish,
     breathSubmode,
     circuitConfig,
     countdownValue,
@@ -2874,6 +2911,7 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
     isRunning,
     isSessionPaused,
     practice,
+    renderPracticeId,
     setTimeLeft,
     timeLeft,
   ]);
@@ -2897,10 +2935,12 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
   useEffect(() => {
     if (isRunning) return;
     pendingCycleFinishRef.current = false;
+    pendingNaturalFinishModeRef.current = null;
     completionDispatchedRef.current = false;
     completionProbeMetaRef.current = null;
     lastCycleBoundaryAtRef.current = null;
     setPendingCycleFinish(false);
+    setPendingNaturalFinishMode(null);
   }, [isRunning]);
 
   useEffect(() => {
@@ -3042,6 +3082,8 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
             duration={duration}
             onStop={activeCircuitId ? handleCircuitComplete : handleStop}
             onTimeUpdate={(remaining) => setTimeLeft(remaining)}
+            pendingFinish={pendingNaturalFinishMode === 'step'}
+            onPendingBoundaryComplete={handleStepBoundaryComplete}
             scanType={scanType}
             onScanTypeChange={setScanType}
             isLight={isLight}
@@ -3059,6 +3101,8 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
             duration={duration}
             onStop={activeCircuitId ? handleCircuitComplete : handleStop}
             onTimeUpdate={(remaining) => setTimeLeft(remaining)}
+            pendingFinish={pendingNaturalFinishMode === 'step'}
+            onPendingBoundaryComplete={handleStepBoundaryComplete}
             emotionMode={emotionMode}
             emotionPromptMode={emotionPromptMode}
             isLight={isLight}
@@ -3266,7 +3310,8 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
                     totalDurationSec={duration * 60}
                     config={stillnessConfig}
                     ringMode={currentRingPreset.id}
-                    onComplete={() => handleStop({ completed: true })}
+                    pendingFinish={pendingNaturalFinishMode === 'stillness'}
+                    onPendingBoundaryComplete={handleStillnessBoundaryComplete}
                   />
                 ) : shouldRenderRingCanvas ? (
                   <BreathingRing
