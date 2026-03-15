@@ -1,6 +1,13 @@
 import { useEffect, useMemo, useState } from "react";
 import { quantizePatternToMusicStrict } from "../../utils/quantizePatternToMusic.js";
 
+export function getSessionThreePhaseIndex(norm01) {
+  const n = Math.max(0, Math.min(1, Number(norm01)));
+  if (n < 1 / 3) return 0;
+  if (n < 2 / 3) return 1;
+  return 2;
+}
+
 export function useBreathSessionState({
   isRunning,
   practice,
@@ -33,8 +40,9 @@ export function useBreathSessionState({
 
   const computeCapacityMultiplier = (norm01) => {
     const n = Math.max(0, Math.min(1, Number(norm01)));
-    if (n < 1 / 3) return 0.5;
-    if (n < 2 / 3) return 0.75;
+    const phaseIndex = getSessionThreePhaseIndex(n);
+    if (phaseIndex === 0) return 0.5;
+    if (phaseIndex === 1) return 0.75;
 
     // Final third: hold at 0.90, then ramp to 1.0 near the end so sessions "land" at max.
     const rampStart = 0.92; // last ~8% of the session

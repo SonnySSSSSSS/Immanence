@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import { getSessionThreePhaseIndex } from "./useBreathSessionState.js";
 
 function normalizePositiveInt(value, fallback = 0, minimum = 0) {
   const n = Number(value);
@@ -32,10 +33,11 @@ export function useStillnessIntervalSessionState({
 
   return useMemo(() => {
     const safeTotalSec = normalizePositiveInt(totalDurationSec, 0, 1);
-    const safeFocusSec = normalizePositiveInt(focusSec, 45, 1);
-    const safeRestSec = normalizePositiveInt(restSec, 15, 1);
+    const safeFocusSec = 30;
+    const safeRestSec = 15;
     const cycleSec = safeFocusSec + safeRestSec;
     const boundaryEpsilonSec = 0.001;
+    const focusPhaseLabels = ["light focus", "medium focus", "heavy focus"];
 
     const elapsedSecRaw = (!isRunning || !Number.isFinite(sessionStartTime))
       ? 0
@@ -48,12 +50,8 @@ export function useStillnessIntervalSessionState({
       const cycleIndex = Math.floor(safeTotalSec / cycleSec);
       const cycleOffsetSec = safeTotalSec - (cycleIndex * cycleSec);
       const atCycleBoundary = cycleOffsetSec <= boundaryEpsilonSec || Math.abs(cycleOffsetSec - cycleSec) <= boundaryEpsilonSec;
-      const atFocusBoundary = Math.abs(cycleOffsetSec - safeFocusSec) <= boundaryEpsilonSec;
-
-      if (!atCycleBoundary && !atFocusBoundary) {
-        pendingBoundarySec = cycleOffsetSec < safeFocusSec
-          ? (cycleIndex * cycleSec) + safeFocusSec
-          : (cycleIndex * cycleSec) + cycleSec;
+      if (!atCycleBoundary) {
+        pendingBoundarySec = (cycleIndex * cycleSec) + cycleSec;
       }
     }
 
@@ -76,6 +74,11 @@ export function useStillnessIntervalSessionState({
     const completedFocusIntervals = completedCycles + (cyclePositionSec >= safeFocusSec ? 1 : 0);
     const segmentIndex = (completedCycles * 2) + (segmentType === "focus" ? 0 : 1);
     const nextSegmentType = segmentType === "focus" ? "rest" : "focus";
+    const normalizedSessionProgress = safeTotalSec > 0
+      ? Math.min(1, displayElapsedSec / safeTotalSec)
+      : 0;
+    const focusPhaseIndex = getSessionThreePhaseIndex(normalizedSessionProgress);
+    const focusPhaseLabel = focusPhaseLabels[focusPhaseIndex] || focusPhaseLabels[1];
 
     return {
       isComplete: pendingFinish ? pendingBoundaryReached : expired,
@@ -89,8 +92,10 @@ export function useStillnessIntervalSessionState({
       segmentRemainingSec,
       segmentIndex,
       completedFocusIntervals,
+      focusPhaseIndex,
+      focusPhaseLabel,
       pendingBoundaryReached,
       pendingBoundarySec,
     };
-  }, [focusSec, isRunning, nowMs, pendingFinish, restSec, sessionStartTime, totalDurationSec]);
+  }, [isRunning, nowMs, pendingFinish, sessionStartTime, totalDurationSec]);
 }

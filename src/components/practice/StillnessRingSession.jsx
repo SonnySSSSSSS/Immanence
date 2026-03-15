@@ -55,8 +55,8 @@ export function StillnessRingSession({
   const boundarySentRef = useRef(false);
   const lastCueKeyRef = useRef(null);
 
-  const focusSec = Number(config?.focusSec) || 45;
-  const restSec = Number(config?.restSec) || 15;
+  const focusSec = 30;
+  const restSec = 15;
   const intensity = String(config?.focusIntensity || "medium").toLowerCase();
 
   const {
@@ -67,6 +67,7 @@ export function StillnessRingSession({
     segmentElapsedSec,
     segmentRemainingSec,
     segmentIndex,
+    focusPhaseLabel,
     pendingBoundaryReached,
   } = useStillnessIntervalSessionState({
     isRunning,
@@ -142,10 +143,12 @@ export function StillnessRingSession({
     nextSegmentLabel: nextSegmentType === "focus" ? "FOCUS" : "REST",
     intensity,
     intensityCopy: (STILLNESS_INTENSITY_META[intensity] || STILLNESS_INTENSITY_META.medium).copy,
+    focusPhaseLabel,
     ringMode,
     isPaused,
   }), [
     cycleProgress01,
+    focusPhaseLabel,
     intensity,
     isPaused,
     nextSegmentType,
@@ -159,13 +162,41 @@ export function StillnessRingSession({
   ]);
 
   return (
-    <BreathingRing
-      startTime={sessionStartTime}
-      practiceActive={isRunning}
-      totalSessionDurationSec={totalDurationSec}
-      ringMode={ringMode}
-      stillnessVisual={stillnessVisual}
-    />
+    <div style={{ position: "relative", width: "100%", height: "100%" }}>
+      <BreathingRing
+        startTime={sessionStartTime}
+        practiceActive={isRunning}
+        totalSessionDurationSec={totalDurationSec}
+        ringMode={ringMode}
+        stillnessVisual={stillnessVisual}
+      />
+      {!isPaused && segmentType === "focus" && (
+        <div
+          style={{
+            position: "absolute",
+            left: "50%",
+            top: "calc(50% + 86px)",
+            transform: "translateX(-50%)",
+            zIndex: 40,
+            pointerEvents: "none",
+            padding: "6px 12px",
+            borderRadius: "999px",
+            background: "rgba(2, 6, 14, 0.52)",
+            border: "1px solid rgba(255,255,255,0.08)",
+            backdropFilter: "blur(5px)",
+            WebkitBackdropFilter: "blur(5px)",
+            color: "rgba(245,245,245,0.86)",
+            fontFamily: "var(--font-display)",
+            fontSize: "0.74rem",
+            letterSpacing: "0.08em",
+            textTransform: "lowercase",
+            whiteSpace: "nowrap",
+          }}
+        >
+          {focusPhaseLabel}
+        </div>
+      )}
+    </div>
   );
 }
 
