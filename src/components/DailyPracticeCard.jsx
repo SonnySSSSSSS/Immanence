@@ -821,20 +821,21 @@ export function DailyPracticeCard({ onStartPractice, onViewCurriculum, onNavigat
             <div
                 className="absolute inset-y-0 left-0 pointer-events-none"
                 style={{
-                    width: '34%',
+                    width: '40%',
                     backgroundImage: `url(${sessionRowWallpaperUrl})`,
-                    backgroundSize: 'cover',
+                    backgroundSize: 'auto 100%',
+                    backgroundRepeat: 'no-repeat',
                     backgroundPosition: 'left center',
-                    opacity: 0.5,
+                    opacity: 0.35,
                 }}
             />
             <div
                 className="absolute inset-y-0 left-0 pointer-events-none"
                 style={{
-                    width: '48%',
+                    width: '52%',
                     background: isLight
-                        ? 'linear-gradient(90deg, rgba(255,255,255,0.56) 0%, rgba(255,255,255,0.42) 42%, rgba(255,255,255,0) 100%)'
-                        : 'linear-gradient(90deg, rgba(18,15,24,0.58) 0%, rgba(18,15,24,0.38) 42%, rgba(18,15,24,0) 100%)',
+                        ? 'linear-gradient(90deg, rgba(255,255,255,0.62) 0%, rgba(255,255,255,0.46) 42%, rgba(255,255,255,0) 100%)'
+                        : 'linear-gradient(90deg, rgba(18,15,24,0.64) 0%, rgba(18,15,24,0.42) 42%, rgba(18,15,24,0) 100%)',
                 }}
             />
         </>
