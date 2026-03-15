@@ -4,13 +4,14 @@
 // ═══════════════════════════════════════════════════════════════════════════
 //
 // Skippable onboarding flow that introduces:
-// 1. Read framing
-// 2. Contract framing
-// 3. 14-day arc overview
-// 4. Practice day contract selection (5-7 days)
-// 5. Time selection for daily practice (exactly 2)
-// 6. Benchmark explanation
-// 7. Confirmation & start
+// 1. Initiation contract framing
+// 2. 14-day arc overview
+// 3. Posture guidance for breathwork and stillness
+// 4. Stillness focus-intensity intervals
+// 5. Practice day contract selection (5-7 days)
+// 6. Time selection for daily practice (exactly 2)
+// 7. Benchmark explanation
+// 8. Confirmation & start
 //
 // ═══════════════════════════════════════════════════════════════════════════
 
@@ -24,16 +25,55 @@ import { RITUAL_INITIATION_14_V2 } from '../data/ritualInitiation14v2.js';
 import { getLocalDateKey } from '../utils/dateUtils.js';
 import { computeScheduleAnchorStartAt, normalizeAndSortTimeSlots } from '../utils/scheduleUtils.js';
 import { useBreathBenchmarkStore } from '../state/breathBenchmarkStore.js';
-import { InstructionVideoModal } from './InstructionVideoModal.jsx';
 import { BreathBenchmark } from './BreathBenchmark.jsx';
-import { useVideoStore } from '../state/videoStore.js';
-
-const ONBOARDING_VIDEOS = Object.freeze({
-    1: { id: 'initiation-tutorial-1', title: 'The Mechanics of Meaning', videoUrl: '/videos/The_Mechanics_of_Meaning.mp4' },
-    2: { id: 'initiation-tutorial-2', title: 'Music: A Transmission of Consciousness', videoUrl: '/videos/Music__A_Transmission_of_Consciousness.mp4' },
-});
 
 const DAY_LABELS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+const TOTAL_STEPS = 8;
+const POSTURE_IMAGES = Object.freeze([
+    {
+        src: '/tutorial/breath and stillness/straight spine 1.png',
+        alt: 'Standing breath posture with a long spine and relaxed shoulders',
+        caption: 'Standing breath: feet grounded, spine long.',
+    },
+    {
+        src: '/tutorial/breath and stillness/straight spine 2.png',
+        alt: 'Seated stillness posture with an upright but relaxed spine',
+        caption: 'Seated stillness: sit tall without hardening.',
+    },
+    {
+        src: '/tutorial/breath and stillness/straight spine 3.png',
+        alt: 'Balanced standing posture with neutral head and easy neck',
+        caption: 'Balanced stance: neck easy, chin neutral.',
+    },
+    {
+        src: '/tutorial/breath and stillness/straight spine 4.png',
+        alt: 'Aligned posture example showing relaxed shoulders and upright alignment',
+        caption: 'Aligned line: shoulders soft, body steady.',
+    },
+]);
+const FOCUS_INTENSITY_IMAGES = Object.freeze([
+    {
+        src: '/tutorial/breath and stillness/intensity 1.webp',
+        alt: 'Two people speaking in a quiet room to represent light focus intensity',
+        title: 'Light Focus',
+        analogy: 'Like a 1-on-1 conversation in a quiet room.',
+        detail: 'Low distraction load. Hold attention gently, then release fully during rest.',
+    },
+    {
+        src: '/tutorial/breath and stillness/intensity 2.webp',
+        alt: 'Two people speaking in a crowded bar to represent medium focus intensity',
+        title: 'Medium Focus',
+        analogy: 'Like a 1-on-1 conversation in a crowded bar.',
+        detail: 'More filtering is required. Keep the target clear without hardening the body.',
+    },
+    {
+        src: '/tutorial/breath and stillness/intensity 3.webp',
+        alt: 'Two workers speaking beside a construction site to represent high focus intensity',
+        title: 'High Focus',
+        analogy: 'Like a 1-on-1 conversation beside a construction site.',
+        detail: 'Narrow attention more selectively, but do not add facial tension, clenching, or strain.',
+    },
+]);
 
 const formatTimeLabel = (timeValue) => {
     if (!timeValue || typeof timeValue !== 'string') return null;
@@ -48,10 +88,10 @@ const formatTimeLabel = (timeValue) => {
 // STEP COMPONENTS
 // ═══════════════════════════════════════════════════════════════════════════
 
-function StepWelcome({ onNext, isLight, onOpenVideo, video1Watched }) {
+function StepWelcome({ onNext, isLight }) {
     return (
         <div className="space-y-8 text-center" style={{ animation: 'fadeIn 400ms ease-out' }}>
-            <div className="space-y-6">
+            <div className="space-y-5">
                 <h1
                     className="text-2xl font-semibold tracking-wide"
                     style={{
@@ -69,44 +109,73 @@ function StepWelcome({ onNext, isLight, onOpenVideo, video1Watched }) {
 
                 <div className="w-32 h-px mx-auto" style={{ background: 'linear-gradient(to right, transparent, var(--accent-40), transparent)' }} />
 
-                <p className="text-[15px] leading-relaxed" style={{ color: isLight ? 'rgba(60, 50, 40, 0.7)' : 'rgba(253,251,245,0.7)' }}>
-                    You are setting a fixed 14-day contract.
+                <p className="text-[15px] leading-relaxed" style={{ color: isLight ? 'rgba(60, 50, 40, 0.75)' : 'rgba(253,251,245,0.75)' }}>
+                    You are setting a fixed 14-day contract built around one morning breath leg and one evening awareness leg.
                 </p>
 
                 <p className="text-[16px] leading-relaxed font-medium" style={{ color: isLight ? 'rgba(60, 50, 40, 0.9)' : 'rgba(253,251,245,0.95)' }}>
                     The rule is simple: show up for the sessions you commit to.
                 </p>
 
-                <div className="text-left space-y-1 px-4">
-                    <p className="text-[12px] uppercase tracking-widest mb-2" style={{ color: isLight ? 'rgba(60, 50, 40, 0.5)' : 'rgba(253,251,245,0.45)' }}>
-                        What this trains
-                    </p>
-                    {[
-                        'Feel your body more clearly',
-                        'Keep your attention steady',
-                        'Notice tension before it controls you',
-                    ].map((item) => (
-                        <p key={item} className="text-[14px]" style={{ color: isLight ? 'rgba(60, 50, 40, 0.75)' : 'rgba(253,251,245,0.75)' }}>
-                            · {item}
-                        </p>
-                    ))}
-                </div>
-
-                <button
-                    onClick={() => onOpenVideo(1)}
-                    className="inline-flex items-center gap-2 px-4 py-2 rounded-full text-[13px] transition-opacity hover:opacity-90"
+                <div
+                    className="space-y-4 rounded-2xl px-4 py-4 text-left"
                     style={{
-                        background: isLight ? 'rgba(180, 120, 40, 0.1)' : 'rgba(250, 208, 120, 0.1)',
-                        border: isLight ? '1px solid rgba(180, 120, 40, 0.3)' : '1px solid rgba(250, 208, 120, 0.3)',
-                        color: isLight ? 'rgba(140, 90, 20, 0.9)' : 'var(--accent-color)',
+                        background: isLight ? 'rgba(0,0,0,0.03)' : 'rgba(255,255,255,0.04)',
+                        border: `1px solid ${isLight ? 'rgba(0,0,0,0.06)' : 'rgba(255,255,255,0.08)'}`,
                     }}
                 >
-                    {video1Watched && <span style={{ color: 'var(--accent-color)' }}>✓ </span>}
-                    ▶ The Mechanics of Meaning
-                </button>
+                    <div className="space-y-2">
+                        <p className="text-[12px] uppercase tracking-widest" style={{ color: isLight ? 'rgba(60, 50, 40, 0.5)' : 'rgba(253,251,245,0.45)' }}>
+                            What the contract means
+                        </p>
+                        <p className="text-[13px] leading-relaxed" style={{ color: isLight ? 'rgba(60, 50, 40, 0.72)' : 'rgba(253,251,245,0.72)' }}>
+                            Completion is evaluated against the days and times you choose. Outside-schedule sessions are still logged, but they are not credited.
+                        </p>
+                    </div>
 
-                <p className="text-[15px] leading-relaxed" style={{ color: isLight ? 'rgba(60, 50, 40, 0.6)' : 'rgba(253,251,245,0.6)' }}>
-                    Continue when ready.
+                    <div className="space-y-3">
+                        <p className="text-[12px] uppercase tracking-widest" style={{ color: isLight ? 'rgba(60, 50, 40, 0.5)' : 'rgba(253,251,245,0.45)' }}>
+                            Daily structure
+                        </p>
+                        <div className="grid grid-cols-2 gap-3">
+                            <div>
+                                <p className="text-[13px] font-medium" style={{ color: isLight ? 'rgba(60, 50, 40, 0.85)' : 'rgba(253,251,245,0.85)' }}>
+                                    Morning · 10 min
+                                </p>
+                                <p className="text-[13px]" style={{ color: isLight ? 'rgba(60, 50, 40, 0.65)' : 'rgba(253,251,245,0.65)' }}>
+                                    Resonance breathing
+                                </p>
+                            </div>
+                            <div>
+                                <p className="text-[13px] font-medium" style={{ color: isLight ? 'rgba(60, 50, 40, 0.85)' : 'rgba(253,251,245,0.85)' }}>
+                                    Evening Circuit · 14 min
+                                </p>
+                                <p className="text-[13px]" style={{ color: isLight ? 'rgba(60, 50, 40, 0.65)' : 'rgba(253,251,245,0.65)' }}>
+                                    7 min stillness + 7 min body scan
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div className="space-y-2">
+                        <p className="text-[12px] uppercase tracking-widest" style={{ color: isLight ? 'rgba(60, 50, 40, 0.5)' : 'rgba(253,251,245,0.45)' }}>
+                            What this trains
+                        </p>
+                        {[
+                            'Feel your body more clearly',
+                            'Keep your attention steady',
+                            'Notice tension before it controls you',
+                            'Track where tension gathers and how attention holds each day',
+                        ].map((item) => (
+                            <p key={item} className="text-[13px]" style={{ color: isLight ? 'rgba(60, 50, 40, 0.72)' : 'rgba(253,251,245,0.72)' }}>
+                                · {item}
+                            </p>
+                        ))}
+                    </div>
+                </div>
+
+                <p className="text-[14px] leading-relaxed" style={{ color: isLight ? 'rgba(60, 50, 40, 0.62)' : 'rgba(253,251,245,0.62)' }}>
+                    Next you will see the 14-day arc, then the posture cues used for both breathwork and stillness.
                 </p>
             </div>
 
@@ -117,10 +186,10 @@ function StepWelcome({ onNext, isLight, onOpenVideo, video1Watched }) {
     );
 }
 
-function StepPracticeExplain({ onNext, onBack, isLight, onOpenVideo, video2Watched }) {
+function StepPostureGuidance({ onNext, onBack, isLight }) {
     return (
-        <div className="space-y-8 text-center" style={{ animation: 'fadeIn 400ms ease-out' }}>
-            <div className="space-y-6">
+        <div className="space-y-6 text-center" style={{ animation: 'fadeIn 400ms ease-out' }}>
+            <div className="space-y-5">
                 <h2
                     className="text-xl font-semibold tracking-wide"
                     style={{
@@ -128,90 +197,164 @@ function StepPracticeExplain({ onNext, onBack, isLight, onOpenVideo, video2Watch
                         color: 'var(--accent-color)',
                     }}
                 >
-                    Contract Terms
+                    Posture of Practice
                 </h2>
 
-                <div className="flex flex-col sm:grid sm:grid-cols-3 gap-4 py-4">
-                    <div className="flex flex-col items-center gap-2">
-                        <div className="w-12 h-12 rounded-full flex items-center justify-center" style={{ background: 'var(--accent-15)' }}>
-                            <span className="text-2xl">🌬️</span>
-                        </div>
-                        <span className="text-xs font-medium" style={{ color: isLight ? 'rgba(60, 50, 40, 0.7)' : 'rgba(253,251,245,0.7)' }}>Breathwork</span>
-                    </div>
-                    <div className="flex flex-col items-center gap-2">
-                        <div className="w-12 h-12 rounded-full flex items-center justify-center" style={{ background: 'var(--accent-15)' }}>
-                            <span className="text-2xl">👁️</span>
-                        </div>
-                        <span className="text-xs font-medium" style={{ color: isLight ? 'rgba(60, 50, 40, 0.7)' : 'rgba(253,251,245,0.7)' }}>Awareness</span>
-                    </div>
-                    <div className="flex flex-col items-center gap-2">
-                        <div className="w-12 h-12 rounded-full flex items-center justify-center" style={{ background: 'var(--accent-15)' }}>
-                            <span className="text-2xl">🔮</span>
-                        </div>
-                        <span className="text-xs font-medium" style={{ color: isLight ? 'rgba(60, 50, 40, 0.7)' : 'rgba(253,251,245,0.7)' }}>Rituals</span>
-                    </div>
-                </div>
-
                 <p className="text-[15px] leading-relaxed" style={{ color: isLight ? 'rgba(60, 50, 40, 0.8)' : 'rgba(253,251,245,0.8)' }}>
-                    You commit to two daily slots: one morning breath leg and one evening awareness leg.
+                    Both breathwork and stillness depend on the same principle: an upright spine that feels stable, grounded, and not rigid.
                 </p>
 
-                <div className="w-24 h-px mx-auto" style={{ background: 'linear-gradient(to right, transparent, var(--accent-40), transparent)' }} />
-
-                <p className="text-[15px] leading-relaxed" style={{ color: isLight ? 'rgba(60, 50, 40, 0.7)' : 'rgba(253,251,245,0.7)' }}>
-                    Completion is evaluated against your chosen days and times.
-                </p>
-
-                <p className="text-[14px] leading-relaxed italic" style={{ color: isLight ? 'rgba(60, 50, 40, 0.6)' : 'rgba(253,251,245,0.6)' }}>
-                    Outside schedule sessions are still logged, but they are not credited.
-                </p>
-
-                <div className="text-left space-y-3 px-2">
-                    <div>
-                        <p className="text-[13px] font-medium" style={{ color: isLight ? 'rgba(60, 50, 40, 0.85)' : 'rgba(253,251,245,0.85)' }}>
-                            Morning · 10 min
-                        </p>
-                        <p className="text-[13px]" style={{ color: isLight ? 'rgba(60, 50, 40, 0.65)' : 'rgba(253,251,245,0.65)' }}>
-                            · Resonance breathing
-                        </p>
-                    </div>
-                    <div>
-                        <p className="text-[13px] font-medium" style={{ color: isLight ? 'rgba(60, 50, 40, 0.85)' : 'rgba(253,251,245,0.85)' }}>
-                            Evening Circuit · 14 min
-                        </p>
-                        <p className="text-[13px]" style={{ color: isLight ? 'rgba(60, 50, 40, 0.65)' : 'rgba(253,251,245,0.65)' }}>
-                            · 7 min stillness meditation
-                        </p>
-                        <p className="text-[13px]" style={{ color: isLight ? 'rgba(60, 50, 40, 0.65)' : 'rgba(253,251,245,0.65)' }}>
-                            · 7 min body scan
-                        </p>
-                    </div>
+                <div className="grid grid-cols-2 gap-3">
+                    {POSTURE_IMAGES.map((image) => (
+                        <figure
+                            key={image.src}
+                            className="rounded-2xl p-3 text-left"
+                            style={{
+                                background: isLight ? 'rgba(0,0,0,0.03)' : 'rgba(255,255,255,0.04)',
+                                border: `1px solid ${isLight ? 'rgba(0,0,0,0.06)' : 'rgba(255,255,255,0.08)'}`,
+                            }}
+                        >
+                            <div
+                                className="rounded-xl overflow-hidden"
+                                style={{ background: isLight ? 'rgba(255,255,255,0.85)' : 'rgba(255,255,255,0.06)' }}
+                            >
+                                <img
+                                    src={image.src}
+                                    alt={image.alt}
+                                    className="w-full h-28 object-contain"
+                                />
+                            </div>
+                            <figcaption className="mt-2 text-[12px] leading-relaxed" style={{ color: isLight ? 'rgba(60, 50, 40, 0.7)' : 'rgba(253,251,245,0.72)' }}>
+                                {image.caption}
+                            </figcaption>
+                        </figure>
+                    ))}
                 </div>
 
-                <div className="text-left space-y-1 px-2">
-                    <p className="text-[12px] uppercase tracking-widest" style={{ color: isLight ? 'rgba(60, 50, 40, 0.5)' : 'rgba(253,251,245,0.45)' }}>
-                        Each day, notice
-                    </p>
-                    <p className="text-[13px]" style={{ color: isLight ? 'rgba(60, 50, 40, 0.7)' : 'rgba(253,251,245,0.7)' }}>
-                        · Where tension shows up in your body
-                    </p>
-                    <p className="text-[13px]" style={{ color: isLight ? 'rgba(60, 50, 40, 0.7)' : 'rgba(253,251,245,0.7)' }}>
-                        · How steady your attention stays
-                    </p>
-                </div>
-
-                <button
-                    onClick={() => onOpenVideo(2)}
-                    className="inline-flex items-center gap-2 px-4 py-2 rounded-full text-[13px] transition-opacity hover:opacity-90"
+                <div
+                    className="space-y-2 rounded-2xl px-4 py-4 text-left"
                     style={{
-                        background: isLight ? 'rgba(180, 120, 40, 0.1)' : 'rgba(250, 208, 120, 0.1)',
-                        border: isLight ? '1px solid rgba(180, 120, 40, 0.3)' : '1px solid rgba(250, 208, 120, 0.3)',
-                        color: isLight ? 'rgba(140, 90, 20, 0.9)' : 'var(--accent-color)',
+                        background: isLight ? 'rgba(0,0,0,0.03)' : 'rgba(255,255,255,0.04)',
+                        border: `1px solid ${isLight ? 'rgba(0,0,0,0.06)' : 'rgba(255,255,255,0.08)'}`,
                     }}
                 >
-                    {video2Watched && <span style={{ color: 'var(--accent-color)' }}>✓ </span>}
-                    ▶ Music: A Transmission of Consciousness
-                </button>
+                    <p className="text-[12px] uppercase tracking-widest" style={{ color: isLight ? 'rgba(60, 50, 40, 0.5)' : 'rgba(253,251,245,0.45)' }}>
+                        Practical guidance
+                    </p>
+                    <p className="text-[13px] leading-relaxed" style={{ color: isLight ? 'rgba(60, 50, 40, 0.72)' : 'rgba(253,251,245,0.72)' }}>
+                        Keep the spine upright and long, let the shoulders relax, and keep the neck easy with a neutral chin.
+                    </p>
+                    <p className="text-[13px] leading-relaxed" style={{ color: isLight ? 'rgba(60, 50, 40, 0.72)' : 'rgba(253,251,245,0.72)' }}>
+                        Standing breath posture should feel balanced rather than stiff. Seated stillness should feel grounded rather than collapsed.
+                    </p>
+                    <p className="text-[13px] leading-relaxed" style={{ color: isLight ? 'rgba(60, 50, 40, 0.72)' : 'rgba(253,251,245,0.72)' }}>
+                        Stable does not mean tense. Let the body organize around ease, then keep attention there.
+                    </p>
+                </div>
+            </div>
+
+            <div className="flex gap-4 justify-center">
+                <PillButton onClick={onBack} variant="secondary" size="md">
+                    Back
+                </PillButton>
+                <PillButton onClick={onNext} variant="primary" size="md">
+                    Continue
+                </PillButton>
+            </div>
+        </div>
+    );
+}
+
+function StepStillnessFocusIntensity({ onNext, onBack, isLight }) {
+    return (
+        <div className="space-y-6 text-center" style={{ animation: 'fadeIn 400ms ease-out' }}>
+            <div className="space-y-5">
+                <h2
+                    className="text-xl font-semibold tracking-wide"
+                    style={{
+                        fontFamily: 'var(--font-display)',
+                        color: 'var(--accent-color)',
+                    }}
+                >
+                    Stillness Focus Intensity
+                </h2>
+
+                <p className="text-[14px] leading-relaxed" style={{ color: isLight ? 'rgba(60, 50, 40, 0.8)' : 'rgba(253,251,245,0.8)' }}>
+                    This page is for the stillness meditation leg of the evening practice. It teaches attentional intensity, not breathwork intensity.
+                </p>
+
+                <div
+                    className="space-y-2 rounded-2xl px-4 py-4 text-left"
+                    style={{
+                        background: isLight ? 'rgba(0,0,0,0.03)' : 'rgba(255,255,255,0.04)',
+                        border: `1px solid ${isLight ? 'rgba(0,0,0,0.06)' : 'rgba(255,255,255,0.08)'}`,
+                    }}
+                >
+                    <p className="text-[12px] uppercase tracking-widest" style={{ color: isLight ? 'rgba(60, 50, 40, 0.5)' : 'rgba(253,251,245,0.45)' }}>
+                        Interval structure
+                    </p>
+                    <p className="text-[13px] leading-relaxed" style={{ color: isLight ? 'rgba(60, 50, 40, 0.72)' : 'rgba(253,251,245,0.72)' }}>
+                        The stillness leg alternates work and rest intervals, similar to HIIT. During active intervals, aim at the current focus stage. During short rest intervals, release effort briefly, then repeat until the stillness timer ends.
+                    </p>
+                    <p className="text-[13px] leading-relaxed" style={{ color: isLight ? 'rgba(60, 50, 40, 0.72)' : 'rgba(253,251,245,0.72)' }}>
+                        As the session progresses, the required intensity of focus rises in three stages: light, medium, then high. Rest periods are part of the method, not failure.
+                    </p>
+                </div>
+
+                <div className="space-y-3">
+                    {FOCUS_INTENSITY_IMAGES.map((image) => (
+                        <div
+                            key={image.src}
+                            className="rounded-2xl p-3 text-left"
+                            style={{
+                                background: isLight ? 'rgba(0,0,0,0.03)' : 'rgba(255,255,255,0.04)',
+                                border: `1px solid ${isLight ? 'rgba(0,0,0,0.06)' : 'rgba(255,255,255,0.08)'}`,
+                            }}
+                        >
+                            <div className="grid grid-cols-[96px,1fr] gap-3 items-center">
+                                <div
+                                    className="rounded-xl overflow-hidden"
+                                    style={{ background: isLight ? 'rgba(255,255,255,0.85)' : 'rgba(255,255,255,0.06)' }}
+                                >
+                                    <img
+                                        src={image.src}
+                                        alt={image.alt}
+                                        className="h-24 w-full object-cover"
+                                    />
+                                </div>
+                                <div className="space-y-1">
+                                    <p className="text-[13px] font-medium" style={{ color: isLight ? 'rgba(60, 50, 40, 0.88)' : 'rgba(253,251,245,0.88)' }}>
+                                        {image.title}
+                                    </p>
+                                    <p className="text-[12px] leading-relaxed" style={{ color: isLight ? 'rgba(60, 50, 40, 0.74)' : 'rgba(253,251,245,0.74)' }}>
+                                        {image.analogy}
+                                    </p>
+                                    <p className="text-[12px] leading-relaxed" style={{ color: isLight ? 'rgba(60, 50, 40, 0.62)' : 'rgba(253,251,245,0.62)' }}>
+                                        {image.detail}
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                    ))}
+                </div>
+
+                <div
+                    className="space-y-2 rounded-2xl px-4 py-4 text-left"
+                    style={{
+                        background: isLight ? 'rgba(0,0,0,0.03)' : 'rgba(255,255,255,0.04)',
+                        border: `1px solid ${isLight ? 'rgba(0,0,0,0.06)' : 'rgba(255,255,255,0.08)'}`,
+                    }}
+                >
+                    <p className="text-[12px] uppercase tracking-widest" style={{ color: isLight ? 'rgba(60, 50, 40, 0.5)' : 'rgba(253,251,245,0.45)' }}>
+                        What intensity means here
+                    </p>
+                    <p className="text-[13px] leading-relaxed" style={{ color: isLight ? 'rgba(60, 50, 40, 0.72)' : 'rgba(253,251,245,0.72)' }}>
+                        In breathwork, phases refer to breathing demand or capacity. In stillness meditation, these phases refer to attentional demand.
+                    </p>
+                    <p className="text-[13px] leading-relaxed" style={{ color: isLight ? 'rgba(60, 50, 40, 0.72)' : 'rgba(253,251,245,0.72)' }}>
+                        High intensity means narrower, more selective attention. It does not mean physical tension, facial clenching, or stressful effort.
+                    </p>
+                </div>
             </div>
 
             <div className="flex gap-4 justify-center">
@@ -554,26 +697,10 @@ function StepConfirm({ onComplete, onBack, selectedTimes, selectedDays, isLight,
 
 export function CurriculumOnboarding({ onDismiss, onComplete }) {
     const [step, setStep] = useState(1);
-    const [video1Watched, setVideo1Watched] = useState(false);
-    const [video2Watched, setVideo2Watched] = useState(false);
-    const [activeVideo, setActiveVideo] = useState(null); // 1 | 2 | null
     const [benchmarkResolved, setBenchmarkResolved] = useState(false);
 
     const colorScheme = useDisplayModeStore(s => s.colorScheme);
     const isLight = colorScheme === 'light';
-
-    const handleOpenVideo = (videoIndex) => setActiveVideo(videoIndex);
-
-    const handleCloseVideo = () => {
-        if (activeVideo) {
-            const vid = ONBOARDING_VIDEOS[activeVideo];
-            if (vid && useVideoStore.getState().byId[vid.id]?.completed) {
-                if (activeVideo === 1) setVideo1Watched(true);
-                if (activeVideo === 2) setVideo2Watched(true);
-            }
-        }
-        setActiveVideo(null);
-    };
     
     const {
         completeOnboarding,
@@ -621,7 +748,7 @@ export function CurriculumOnboarding({ onDismiss, onComplete }) {
             }}
         >
             <div
-                className="max-w-lg mx-auto px-8 py-10 relative"
+                className="custom-scrollbar max-h-[calc(100vh-2rem)] w-full max-w-lg overflow-y-auto px-8 py-10 relative"
                 style={{ animation: 'slideUp 800ms cubic-bezier(0.4, 0, 0.2, 1)' }}
             >
                 {/* Corner flourishes */}
@@ -644,7 +771,7 @@ export function CurriculumOnboarding({ onDismiss, onComplete }) {
 
                 {/* Progress dots */}
                 <div className="flex justify-center gap-2 mb-8">
-                    {[1, 2, 3, 4, 5, 6, 7].map(s => (
+                    {Array.from({ length: TOTAL_STEPS }, (_, index) => index + 1).map(s => (
                         <div
                             key={s}
                             className="w-2 h-2 rounded-full transition-all"
@@ -665,57 +792,60 @@ export function CurriculumOnboarding({ onDismiss, onComplete }) {
                         <StepWelcome
                             onNext={() => setStep(2)}
                             isLight={isLight}
-                            onOpenVideo={handleOpenVideo}
-                            video1Watched={video1Watched}
                         />
                     )}
                     {step === 2 && (
-                        <StepPracticeExplain
+                        <StepCurriculumOverview
                             onNext={() => setStep(3)}
                             onBack={() => setStep(1)}
                             isLight={isLight}
-                            onOpenVideo={handleOpenVideo}
-                            video2Watched={video2Watched}
                         />
                     )}
                     {step === 3 && (
-                        <StepCurriculumOverview
+                        <StepPostureGuidance
                             onNext={() => setStep(4)}
                             onBack={() => setStep(2)}
                             isLight={isLight}
                         />
                     )}
                     {step === 4 && (
-                        <StepDaySelection
+                        <StepStillnessFocusIntensity
                             onNext={() => setStep(5)}
                             onBack={() => setStep(3)}
+                            isLight={isLight}
+                        />
+                    )}
+                    {step === 5 && (
+                        <StepDaySelection
+                            onNext={() => setStep(6)}
+                            onBack={() => setStep(4)}
                             selectedDays={selectedDays}
                             setSelectedDays={handleSelectedDaysChange}
                             isLight={isLight}
                         />
                     )}
-                    {step === 5 && (
+                    {step === 6 && (
                         <StepTimeSelection
-                            onNext={() => setStep(6)}
-                            onBack={() => setStep(4)}
+                            onNext={() => setStep(7)}
+                            onBack={() => setStep(5)}
                             selectedTimes={selectedTimes}
                             setSelectedTimes={handleSelectedTimesChange}
                             isLight={isLight}
                         />
                     )}
-                    {step === 6 && (
+                    {step === 7 && (
                         <StepBenchmark
-                            onNext={() => setStep(7)}
-                            onBack={() => setStep(5)}
+                            onNext={() => setStep(8)}
+                            onBack={() => setStep(6)}
                             isLight={isLight}
                             benchmarkResolved={benchmarkResolved}
                             onBenchmarkResolved={() => setBenchmarkResolved(true)}
                         />
                     )}
-                    {step === 7 && (
+                    {step === 8 && (
                         <StepConfirm
                             onComplete={handleComplete}
-                            onBack={() => setStep(6)}
+                            onBack={() => setStep(7)}
                             selectedTimes={selectedTimes}
                             selectedDays={selectedDays}
                             benchmarkResolved={benchmarkResolved}
@@ -746,16 +876,6 @@ export function CurriculumOnboarding({ onDismiss, onComplete }) {
                     border-radius: 3px;
                 }
             `}</style>
-
-            {activeVideo && ONBOARDING_VIDEOS[activeVideo] && (
-                <InstructionVideoModal
-                    isOpen={true}
-                    videoId={ONBOARDING_VIDEOS[activeVideo].id}
-                    title={ONBOARDING_VIDEOS[activeVideo].title}
-                    videoUrl={ONBOARDING_VIDEOS[activeVideo].videoUrl}
-                    onClose={handleCloseVideo}
-                />
-            )}
         </div>
     );
 }
