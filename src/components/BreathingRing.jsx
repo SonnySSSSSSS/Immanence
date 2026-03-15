@@ -19,6 +19,8 @@ import ParticleCountdownPreset from './countdown/ParticleCountdownPreset.jsx';
 import { PRODUCTION_RING_DEFAULTS } from './bloomRing/bloomRingProductionDefaults.js';
 import { useTheme } from '../context/ThemeContext.jsx';
 import { BREATH_RING_PRESETS } from './breathingRingPresets.js';
+import { useTempoAudioStore } from '../state/tempoAudioStore.js';
+import { isGuidanceAudioPlaybackActive } from './audio/GuidanceAudioController.jsx';
 
 const BREATH_RING_MAX_DPR = 1.5;
 const RING_MODE_CYCLE = BREATH_RING_PRESETS.map((preset) => preset.id);
@@ -434,6 +436,7 @@ function StillnessVisualRing({ stillnessVisual, practiceActive = true }) {
   const intensity = String(stillnessVisual?.intensity || "medium").toUpperCase();
   const intensityCopy = stillnessVisual?.intensityCopy || "";
   const supportInfoDetached = Boolean(stillnessVisual?.supportInfoDetached);
+  const suppressSupportBox = Boolean(stillnessVisual?.suppressSupportBox);
   const isPaused = Boolean(stillnessVisual?.isPaused);
   const normalizedMode = normalizeRingMode(stillnessVisual?.ringMode) || "instrument";
   const isOrb = normalizedMode === "orb";
@@ -807,92 +810,92 @@ function StillnessVisualRing({ stillnessVisual, practiceActive = true }) {
           </div>
 
           {useDetachedAuxText && (
-            <>
-              <div
-                style={{
-                  position: "absolute",
-                  left: "50%",
-                  top: `calc(50% - ${Math.round(ringStageSize / 2)}px - 38px)`,
-                  transform: "translateX(-50%)",
-                  zIndex: 34,
-                  pointerEvents: "none",
-                  textTransform: "uppercase",
-                  color: "var(--accent-primary)",
-                  fontFamily: "var(--font-display)",
-                  fontSize: "clamp(1.45rem, 4.8vw, 1.8rem)",
-                  fontWeight: 400,
-                  letterSpacing: "0.24em",
-                  opacity: 0.9,
-                  textShadow: "0 2px 12px rgba(0,0,0,0.58)",
-                  textAlign: "center",
-                  whiteSpace: "nowrap",
-                }}
-              >
-                {isPaused ? "Paused" : segmentLabel}
-              </div>
+            <div
+              style={{
+                position: "absolute",
+                left: "50%",
+                top: `calc(50% - ${Math.round(ringStageSize / 2)}px - 38px)`,
+                transform: "translateX(-50%)",
+                zIndex: 34,
+                pointerEvents: "none",
+                textTransform: "uppercase",
+                color: "var(--accent-primary)",
+                fontFamily: "var(--font-display)",
+                fontSize: "clamp(1.45rem, 4.8vw, 1.8rem)",
+                fontWeight: 400,
+                letterSpacing: "0.24em",
+                opacity: 0.9,
+                textShadow: "0 2px 12px rgba(0,0,0,0.58)",
+                textAlign: "center",
+                whiteSpace: "nowrap",
+              }}
+            >
+              {isPaused ? "Paused" : segmentLabel}
+            </div>
+          )}
 
+          {useDetachedAuxText && !suppressSupportBox && (
+            <div
+              style={{
+                position: "absolute",
+                left: "50%",
+                bottom: "calc(54px + env(safe-area-inset-bottom))",
+                transform: "translateX(-50%)",
+                zIndex: 35,
+                pointerEvents: "none",
+                width: "min(82vw, 320px)",
+                display: "flex",
+                flexDirection: "column",
+                alignItems: "center",
+                justifyContent: "center",
+                gap: "6px",
+                padding: "10px 14px",
+                borderRadius: "18px",
+                background: "rgba(2, 6, 14, 0.52)",
+                border: "1px solid rgba(255,255,255,0.08)",
+                backdropFilter: "blur(5px)",
+                WebkitBackdropFilter: "blur(5px)",
+                textAlign: "center",
+              }}
+            >
               <div
                 style={{
-                  position: "absolute",
-                  left: "50%",
-                  bottom: "calc(54px + env(safe-area-inset-bottom))",
-                  transform: "translateX(-50%)",
-                  zIndex: 35,
-                  pointerEvents: "none",
-                  width: "min(82vw, 320px)",
-                  display: "flex",
-                  flexDirection: "column",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  gap: "6px",
-                  padding: "10px 14px",
-                  borderRadius: "18px",
-                  background: "rgba(2, 6, 14, 0.52)",
-                  border: "1px solid rgba(255,255,255,0.08)",
-                  backdropFilter: "blur(5px)",
-                  WebkitBackdropFilter: "blur(5px)",
-                  textAlign: "center",
+                  color: "rgba(245,245,245,0.74)",
+                  fontFamily: "var(--font-display)",
+                  fontSize: "0.78rem",
+                  letterSpacing: "0.12em",
+                  textTransform: "uppercase",
+                  textShadow: "0 2px 8px rgba(0,0,0,0.46)",
+                  lineHeight: 1.35,
                 }}
               >
-                <div
-                  style={{
-                    color: "rgba(245,245,245,0.74)",
-                    fontFamily: "var(--font-display)",
-                    fontSize: "0.78rem",
-                    letterSpacing: "0.12em",
-                    textTransform: "uppercase",
-                    textShadow: "0 2px 8px rgba(0,0,0,0.46)",
-                    lineHeight: 1.35,
-                  }}
-                >
-                  {isPaused ? "Phase timing paused" : `Next ${nextSegmentLabel} in ${segmentRemainingSec}s`}
-                </div>
-                {segmentType === "focus" && !supportInfoDetached && (
-                  <>
-                    <div
-                      style={{
-                        color: "rgba(245,245,245,0.82)",
-                        fontFamily: "var(--font-display)",
-                        fontSize: "0.74rem",
-                        letterSpacing: "0.14em",
-                        textTransform: "uppercase",
-                      }}
-                    >
-                      {intensity}
-                    </div>
-                    <div
-                      style={{
-                        color: "rgba(245,245,245,0.66)",
-                        fontSize: "0.92rem",
-                        lineHeight: 1.3,
-                      }}
-                    >
-                      {intensityCopy}
-                    </div>
-                  </>
-                )}
+                {isPaused ? "Phase timing paused" : `Next ${nextSegmentLabel} in ${segmentRemainingSec}s`}
               </div>
-            </>
+              {segmentType === "focus" && !supportInfoDetached && (
+                <>
+                  <div
+                    style={{
+                      color: "rgba(245,245,245,0.82)",
+                      fontFamily: "var(--font-display)",
+                      fontSize: "0.74rem",
+                      letterSpacing: "0.14em",
+                      textTransform: "uppercase",
+                    }}
+                  >
+                    {intensity}
+                  </div>
+                  <div
+                    style={{
+                      color: "rgba(245,245,245,0.66)",
+                      fontSize: "0.92rem",
+                      lineHeight: 1.3,
+                    }}
+                  >
+                    {intensityCopy}
+                  </div>
+                </>
+              )}
+            </div>
           )}
 
           {isOrb && (
@@ -991,10 +994,17 @@ export function BreathingRing({
   onUnmount = null,
   ringMode = null,
   stillnessVisual = null,
+  guidanceAudioActive = null,
 }) {
   const isStillnessMode = Boolean(stillnessVisual);
   const startTimeValid = startTime != null && Number.isFinite(startTime);
   const canRunBreathingRuntime = !isStillnessMode && !!startTime;
+  const guidanceSource = useTempoAudioStore((state) => state.source);
+  const guidanceStatus = useTempoAudioStore((state) => state.status);
+  const isGuidanceAudioActive = guidanceAudioActive ?? isGuidanceAudioPlaybackActive({
+    source: guidanceSource,
+    status: guidanceStatus,
+  });
 
   const theme = useTheme();
   const liveAccentColor = theme?.accent?.primary ?? '#22d3ee';
@@ -1196,7 +1206,7 @@ export function BreathingRing({
   useBreathSoundEngine({
     phase: soundPhase,
     pattern: displayedPattern,
-    isRunning: canRunBreathingRuntime,
+    isRunning: canRunBreathingRuntime && !isGuidanceAudioActive,
   });
 
   // Trigger echo visual effect

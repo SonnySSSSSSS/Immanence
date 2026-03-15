@@ -157,6 +157,7 @@ export function StillnessRingSession({
     ringMode,
     isPaused,
     supportInfoDetached: true,
+    suppressSupportBox: true,
   }), [
     cycleProgress01,
     focusPhaseLabel,
@@ -181,69 +182,57 @@ export function StillnessRingSession({
         ringMode={ringMode}
         stillnessVisual={stillnessVisual}
       />
-      {!isPaused && segmentType === "focus" && (
+      {!decompressionActive && (segmentType === "focus" || segmentType === "rest") && (
         <div
           style={{
             position: "absolute",
             left: "50%",
-            top: "calc(50% + 86px)",
-            transform: "translateX(-50%)",
-            zIndex: 40,
-            pointerEvents: "none",
-            padding: "6px 12px",
-            borderRadius: "999px",
-            background: "rgba(2, 6, 14, 0.52)",
-            border: "1px solid rgba(255,255,255,0.08)",
-            backdropFilter: "blur(5px)",
-            WebkitBackdropFilter: "blur(5px)",
-            color: "rgba(245,245,245,0.86)",
-            fontFamily: "var(--font-display)",
-            fontSize: "0.74rem",
-            letterSpacing: "0.08em",
-            textTransform: "lowercase",
-            whiteSpace: "nowrap",
-          }}
-        >
-          {focusPhaseLabel}
-        </div>
-      )}
-      {!isPaused && segmentType === "focus" && (
-        <div
-          style={{
-            position: "absolute",
-            left: "50%",
-            bottom: "calc(104px + env(safe-area-inset-bottom))",
+            bottom: "calc(54px + env(safe-area-inset-bottom))",
             transform: "translateX(-50%)",
             zIndex: 40,
             pointerEvents: "none",
             width: "min(78vw, 300px)",
+            padding: "10px 16px",
+            borderRadius: "18px",
+            background: "rgba(2, 6, 14, 0.52)",
+            border: "1px solid rgba(255,255,255,0.08)",
+            backdropFilter: "blur(5px)",
+            WebkitBackdropFilter: "blur(5px)",
             display: "flex",
             flexDirection: "column",
             alignItems: "center",
-            justifyContent: "center",
-            gap: "4px",
+            gap: "5px",
             textAlign: "center",
           }}
         >
+          {segmentType === "focus" && (
+            <div
+              style={{
+                color: "rgba(245,245,245,0.82)",
+                fontFamily: "var(--font-display)",
+                fontSize: "0.92rem",
+                lineHeight: 1.3,
+              }}
+            >
+              {(STILLNESS_INTENSITY_META[intensity] || STILLNESS_INTENSITY_META.medium).copy}
+            </div>
+          )}
           <div
             style={{
-              color: "rgba(245,245,245,0.82)",
+              color: segmentType === "focus" ? "rgba(245,245,245,0.50)" : "rgba(245,245,245,0.65)",
               fontFamily: "var(--font-display)",
-              fontSize: "0.74rem",
-              letterSpacing: "0.14em",
+              fontSize: segmentType === "focus" ? "0.72rem" : "0.78rem",
+              letterSpacing: "0.12em",
               textTransform: "uppercase",
+              lineHeight: 1.35,
             }}
           >
-            {String(intensity).toUpperCase()}
-          </div>
-          <div
-            style={{
-              color: "rgba(245,245,245,0.66)",
-              fontSize: "0.92rem",
-              lineHeight: 1.3,
-            }}
-          >
-            {(STILLNESS_INTENSITY_META[intensity] || STILLNESS_INTENSITY_META.medium).copy}
+            {isPaused
+              ? "Phase timing paused"
+              : segmentType === "focus"
+                ? `${focusPhaseLabel}  ·  Next ${nextSegmentType === "complete" ? "Complete" : "Rest"} in ${segmentRemainingSec}s`
+                : `Next ${nextSegmentType === "complete" ? "Complete" : "Focus"} in ${segmentRemainingSec}s`
+            }
           </div>
         </div>
       )}
