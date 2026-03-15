@@ -10,6 +10,12 @@ import { computeScheduleAnchorStartAt, normalizeAndSortTimeSlots } from '../util
 
 const DEFAULT_SELECTED_DAYS_OF_WEEK = [1, 2, 3, 4, 5, 6]; // Mon-Sat
 
+const normalizeUserId = (userId) => {
+    if (typeof userId !== 'string') return null;
+    const trimmed = userId.trim();
+    return trimmed || null;
+};
+
 const normalizeDaysOfWeek = (days = []) => {
     const normalized = Array.isArray(days)
         ? days.filter((d) => Number.isInteger(d) && d >= 0 && d <= 6)
@@ -71,41 +77,71 @@ export const FOUNDATION_CIRCUIT = {
     recommendedFor: 'foundation_cycle',
 };
 
+const buildInitialCurriculumState = () => ({
+    onboardingComplete: false,
+    onboardingDismissed: false,
+    onboardingDismissedAt: null,
+    practiceTimeSlots: [],
+    selectedDaysOfWeekDraft: DEFAULT_SELECTED_DAYS_OF_WEEK,
+    thoughtCatalog: [],
+    activeCurriculumId: 'ritual-initiation-14-v2',
+    curriculumStartDate: null,
+    dayCompletions: {},
+    legCompletions: {},
+    activePracticeSession: null,
+    activePracticeLeg: null,
+    activePracticeStartedAt: null,
+    lastSessionFailed: false,
+    precisionMode: 'curriculum',
+    offDaysOfWeek: [0],
+    paths: {
+        breath: { name: 'Breath Path', description: 'Pranayama and breath regulation', exercises: [] },
+        focus: { name: 'Focus Path', description: 'Concentration and mental clarity', exercises: [] },
+        body: { name: 'Body Path', description: 'Somatic awareness and embodied presence', exercises: [] },
+    },
+    circuits: [FOUNDATION_CIRCUIT, EVENING_TEST_CIRCUIT, EVENING_AWARENESS_CIRCUIT],
+    progress: {},
+});
+
 export const useCurriculumStore = create(
     persist(
         (set, get) => ({
-            // ONBOARDING STATE
-            onboardingComplete: false,
-            onboardingDismissed: false,
-            onboardingDismissedAt: null,
-            practiceTimeSlots: [],
-            selectedDaysOfWeekDraft: DEFAULT_SELECTED_DAYS_OF_WEEK,
-            thoughtCatalog: [], // User's 5-8 personal thoughts for ritual observation
+            ownerUserId: null,
+            activeUserId: null,
+            ...buildInitialCurriculumState(),
 
-            // CURRICULUM STATE
-            activeCurriculumId: 'ritual-initiation-14-v2',
-            curriculumStartDate: null,
-            dayCompletions: {},
-			legCompletions: {},
+            setActiveUserId: (userId) => {
+                const normalizedUserId = normalizeUserId(userId);
+                set((state) => {
+                    if (!normalizedUserId) {
+                        return { activeUserId: null };
+                    }
 
-            // ACTIVE PRACTICE SESSION
-            activePracticeSession: null,
-            activePracticeLeg: null,
-            activePracticeStartedAt: null,
-            lastSessionFailed: false,
+                    if (state.ownerUserId === normalizedUserId) {
+                        return { activeUserId: normalizedUserId };
+                    }
 
-            // PRECISION RAIL CONFIGURATION
-            precisionMode: 'curriculum', // 'curriculum' or 'advanced' (if 'advanced', all days are GRAY)
-            offDaysOfWeek: [0], // LEGACY preference only; active path contracts must use selectedDaysOfWeek on the run schedule.
-
-            // LEGACY STATE
-            paths: {
-                breath: { name: 'Breath Path', description: 'Pranayama and breath regulation', exercises: [] },
-                focus: { name: 'Focus Path', description: 'Concentration and mental clarity', exercises: [] },
-                body: { name: 'Body Path', description: 'Somatic awareness and embodied presence', exercises: [] },
+                    return {
+                        ...buildInitialCurriculumState(),
+                        ownerUserId: normalizedUserId,
+                        activeUserId: normalizedUserId,
+                    };
+                });
             },
-            circuits: [FOUNDATION_CIRCUIT, EVENING_TEST_CIRCUIT, EVENING_AWARENESS_CIRCUIT],
-            progress: {},
+
+            resetForIdentityBoundary: (userId = null) => {
+                const normalizedUserId = normalizeUserId(userId);
+                set({
+                    ...buildInitialCurriculumState(),
+                    ownerUserId: normalizedUserId,
+                    activeUserId: normalizedUserId,
+                });
+            },
+
+            isOwnedByActiveUser: () => {
+                const state = get();
+                return Boolean(state.activeUserId && state.ownerUserId && state.activeUserId === state.ownerUserId);
+            },
 
             // ONBOARDING ACTIONS
             completeOnboarding: (timeSlots = [], thoughts = [], selectedDaysOfWeek = null) => {
@@ -571,27 +607,9 @@ getNextLeg: (dayNumber, offset = 1) => {
             // DEV HELPERS
             _devReset: () => {
                 set({
-                    onboardingComplete: false,
-                    onboardingDismissed: false,
-                    onboardingDismissedAt: null,
-                    practiceTimeSlots: [],
-                    selectedDaysOfWeekDraft: DEFAULT_SELECTED_DAYS_OF_WEEK,
-                    thoughtCatalog: [],
-                    activeCurriculumId: 'ritual-initiation-14-v2',
-                    curriculumStartDate: null,
-                    dayCompletions: {},
-					legCompletions: {},
-                    activePracticeSession: null,
-                    activePracticeLeg: null,
-                    activePracticeStartedAt: null,
-                    lastSessionFailed: false,
-                    paths: {
-                        breath: { name: 'Breath Path', description: '', exercises: [] },
-                        focus: { name: 'Focus Path', description: '', exercises: [] },
-                        body: { name: 'Body Path', description: '', exercises: [] },
-                    },
-                    circuits: [FOUNDATION_CIRCUIT, EVENING_TEST_CIRCUIT, EVENING_AWARENESS_CIRCUIT],
-                    progress: {},
+                    ...buildInitialCurriculumState(),
+                    ownerUserId: get().ownerUserId,
+                    activeUserId: get().activeUserId,
                 });
             },
 
@@ -634,18 +652,46 @@ getNextLeg: (dayNumber, offset = 1) => {
         }),
         {
             name: 'immanenceOS.curriculum',
-            version: 4,
+            version: 5,
+            partialize: (state) => ({
+                ownerUserId: normalizeUserId(state.ownerUserId),
+                onboardingComplete: state.onboardingComplete,
+                onboardingDismissed: state.onboardingDismissed,
+                onboardingDismissedAt: state.onboardingDismissedAt,
+                practiceTimeSlots: state.practiceTimeSlots,
+                selectedDaysOfWeekDraft: state.selectedDaysOfWeekDraft,
+                thoughtCatalog: state.thoughtCatalog,
+                activeCurriculumId: state.activeCurriculumId,
+                curriculumStartDate: state.curriculumStartDate,
+                dayCompletions: state.dayCompletions,
+                legCompletions: state.legCompletions,
+                activePracticeSession: state.activePracticeSession,
+                activePracticeLeg: state.activePracticeLeg,
+                activePracticeStartedAt: state.activePracticeStartedAt,
+                lastSessionFailed: state.lastSessionFailed,
+                precisionMode: state.precisionMode,
+                offDaysOfWeek: state.offDaysOfWeek,
+                paths: state.paths,
+                circuits: state.circuits,
+                progress: state.progress,
+            }),
             migrate: (persistedState) => {
                 const next = persistedState || {};
                 const selectedDaysOfWeekDraft = normalizeDaysOfWeek(next.selectedDaysOfWeekDraft || []);
                 return {
                     ...next,
+                    ownerUserId: normalizeUserId(next.ownerUserId),
                     practiceTimeSlots: normalizeAndSortTimeSlots(next.practiceTimeSlots || [], { maxCount: 3 }),
                     selectedDaysOfWeekDraft: selectedDaysOfWeekDraft.length > 0
                         ? selectedDaysOfWeekDraft
                         : DEFAULT_SELECTED_DAYS_OF_WEEK,
                 };
             },
+            merge: (persistedState, currentState) => ({
+                ...currentState,
+                ...(persistedState || {}),
+                ownerUserId: normalizeUserId(persistedState?.ownerUserId),
+            }),
         }
     )
 );

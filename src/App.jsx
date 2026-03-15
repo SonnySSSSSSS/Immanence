@@ -23,6 +23,7 @@ import { useDisplayModeStore } from "./state/displayModeStore.js";
 import { useUserModeStore } from "./state/userModeStore.js";
 import { useUiStore } from "./state/uiStore.js";
 import { useCurriculumStore } from "./state/curriculumStore.js";
+import { useNavigationStore } from "./state/navigationStore.js";
 import { useTempoAudioStore } from "./state/tempoAudioStore.js";
 import { useDevOverrideStore } from "./dev/devOverrideStore.js";
 import { ThemeProvider } from "./context/ThemeContext.jsx";
@@ -112,10 +113,17 @@ function App({ playgroundMode = false, playgroundBottomLayer = true }) {
   const modeByUserId = useUserModeStore((s) => s.modeByUserId);
   const setUserMode = useUserModeStore((s) => s.setUserMode);
   const setActiveUserModeUserId = useUserModeStore((s) => s.setActiveUserId);
+  const navigationActivePath = useNavigationStore((s) => s.activePath);
+  const navigationOwnerUserId = useNavigationStore((s) => s.ownerUserId);
+  const setNavigationActiveUserId = useNavigationStore((s) => s.setActiveUserId);
+  const resetNavigationForIdentityBoundary = useNavigationStore((s) => s.resetForIdentityBoundary);
+  const curriculumOwnerUserId = useCurriculumStore((s) => s.ownerUserId);
+  const setCurriculumActiveUserId = useCurriculumStore((s) => s.setActiveUserId);
+  const resetCurriculumForIdentityBoundary = useCurriculumStore((s) => s.resetForIdentityBoundary);
+  const resetUiLaunchContext = useUiStore((s) => s.resetLaunchContext);
   const practiceLaunchContext = useUiStore((s) => s.practiceLaunchContext);
   const onboardingComplete = useCurriculumStore((s) => s.onboardingComplete);
   const practiceTimeSlots = useCurriculumStore((s) => s.practiceTimeSlots);
-  const needsSetup = !onboardingComplete && (!practiceTimeSlots || practiceTimeSlots.length === 0);
   const isLight = colorScheme === 'light';
 
   const outerBackground = isLight
@@ -171,6 +179,13 @@ function App({ playgroundMode = false, playgroundBottomLayer = true }) {
   const [, setDevtoolsGateTick] = useState(0);
   const [showSettings, setShowSettings] = useState(false); // Settings panel
   const [authUser, setAuthUser] = useState(null);
+  const authUserId = authUser?.id ?? null;
+  const navigationStateOwnedByCurrentUser = Boolean(authUserId && navigationOwnerUserId === authUserId);
+  const curriculumStateOwnedByCurrentUser = Boolean(authUserId && curriculumOwnerUserId === authUserId);
+  const ownedActivePath = navigationStateOwnedByCurrentUser ? navigationActivePath : null;
+  const ownedPracticeTimeSlots = curriculumStateOwnedByCurrentUser ? practiceTimeSlots : [];
+  const ownedOnboardingComplete = curriculumStateOwnedByCurrentUser ? onboardingComplete : false;
+  const needsSetup = !ownedActivePath && !ownedOnboardingComplete && ownedPracticeTimeSlots.length === 0;
   const [hideCards, setHideCards] = useState(false); // Dev mode: hide cards to view wallpaper
   // GRAVEYARD: Top layer removed
   // const [showBackgroundTopLayer, setShowBackgroundTopLayer] = useState(true);
@@ -436,6 +451,40 @@ function App({ playgroundMode = false, playgroundBottomLayer = true }) {
     }
   }, [needsSetup, playgroundMode, practiceLaunchContext, userMode]);
 
+  useEffect(() => {
+    if (playgroundMode) return;
+    if (!authUserId) return;
+    if (!hasChosenUserMode) return;
+
+    if (userMode === 'student') {
+      if (!ownedActivePath) {
+        if (activeSection !== 'navigation') {
+          setActiveSection('navigation');
+        }
+        return;
+      }
+
+      if (activeSection === 'navigation') {
+        setActiveSection(null);
+      }
+    }
+  }, [activeSection, authUserId, hasChosenUserMode, ownedActivePath, playgroundMode, userMode]);
+
+  const handleChooseStudentMode = useCallback(() => {
+    setUserMode('student');
+    setActiveSection('navigation');
+  }, [setUserMode]);
+
+  const handleChooseExplorerMode = useCallback((event) => {
+    if (!event?.shiftKey) return;
+    if (authUserId) {
+      resetNavigationForIdentityBoundary(authUserId);
+      resetCurriculumForIdentityBoundary(authUserId);
+    }
+    setUserMode('explorer');
+    setActiveSection(null);
+  }, [authUserId, resetCurriculumForIdentityBoundary, resetNavigationForIdentityBoundary, setUserMode]);
+
   // Sync avatarStage with previewStage so theme colors update
   useEffect(() => {
     if (playgroundMode) return;
@@ -609,6 +658,7 @@ function App({ playgroundMode = false, playgroundBottomLayer = true }) {
 
   // PROBE:OFFLINE_FIRST_USER_STATE_SYNC:START
   const userStateSyncCleanupRef = useRef(null);
+  const previousAuthUserIdRef = useRef(null);
 
   const stopUserStateSync = useCallback(() => {
     try {
@@ -649,6 +699,8 @@ function App({ playgroundMode = false, playgroundBottomLayer = true }) {
     if (event === "SIGNED_OUT") {
       setAuthUser(null);
       setActiveUserModeUserId(null);
+      setNavigationActiveUserId(null);
+      setCurriculumActiveUserId(null);
       stopUserStateSync();
       setShowSettings(false);
       setActiveSection(null);
@@ -658,22 +710,53 @@ function App({ playgroundMode = false, playgroundBottomLayer = true }) {
     if (event === "USER_UPDATED" && session) {
       setAuthUser(session?.user ?? null);
       setActiveUserModeUserId(session?.user?.id ?? null);
+      setNavigationActiveUserId(session?.user?.id ?? null);
+      setCurriculumActiveUserId(session?.user?.id ?? null);
       return;
     }
 
     if ((event === "SIGNED_IN" || event === "INITIAL_SESSION") && session) {
       setAuthUser(session?.user ?? null);
       setActiveUserModeUserId(session?.user?.id ?? null);
+      setNavigationActiveUserId(session?.user?.id ?? null);
+      setCurriculumActiveUserId(session?.user?.id ?? null);
       stopUserStateSync();
       startUserStateSync(session);
       setShowSettings(false);
       setActiveSection(null);
     }
-  }, [setActiveUserModeUserId, startUserStateSync, stopUserStateSync]);
+  }, [
+    setActiveUserModeUserId,
+    setCurriculumActiveUserId,
+    setNavigationActiveUserId,
+    startUserStateSync,
+    stopUserStateSync,
+  ]);
 
   useEffect(() => {
-    setActiveUserModeUserId(authUser?.id ?? null);
-  }, [authUser?.id, modeByUserId, setActiveUserModeUserId]);
+    const previousUserId = previousAuthUserIdRef.current;
+    const currentUserId = authUser?.id ?? null;
+    const identityChanged = previousUserId !== currentUserId;
+
+    setActiveUserModeUserId(currentUserId);
+    setNavigationActiveUserId(currentUserId);
+    setCurriculumActiveUserId(currentUserId);
+
+    if (identityChanged) {
+      resetUiLaunchContext();
+      setShowSettings(false);
+      setActiveSection(null);
+    }
+
+    previousAuthUserIdRef.current = currentUserId;
+  }, [
+    authUser?.id,
+    modeByUserId,
+    resetUiLaunchContext,
+    setActiveUserModeUserId,
+    setCurriculumActiveUserId,
+    setNavigationActiveUserId,
+  ]);
   // PROBE:OFFLINE_FIRST_USER_STATE_SYNC:END
 
   return (
@@ -1079,7 +1162,7 @@ function App({ playgroundMode = false, playgroundBottomLayer = true }) {
                           </ul>
                           <button
                             type="button"
-                            onClick={() => setUserMode('student')}
+                            onClick={handleChooseStudentMode}
                             className="w-full rounded-full px-4 py-2.5 text-sm font-semibold transition-transform duration-150 hover:scale-[1.01] active:scale-[0.99] sm:py-3"
                             style={{
                               background: isLight
@@ -1140,7 +1223,8 @@ function App({ playgroundMode = false, playgroundBottomLayer = true }) {
                           </ul>
                           <button
                             type="button"
-                            onClick={() => setUserMode('explorer')}
+                            onClick={handleChooseExplorerMode}
+                            aria-disabled="true"
                             className="w-full rounded-full px-4 py-2.5 text-sm font-semibold transition-transform duration-150 hover:scale-[1.01] active:scale-[0.99] sm:py-3"
                             style={{
                               background: isLight
@@ -1150,9 +1234,11 @@ function App({ playgroundMode = false, playgroundBottomLayer = true }) {
                               boxShadow: isLight
                                 ? '0 12px 28px rgba(70,110,138,0.24)'
                                 : '0 12px 28px rgba(39,76,108,0.32)',
+                              opacity: 0.68,
+                              cursor: 'not-allowed',
                             }}
                           >
-                            Enter as Explorer
+                            Shift+Click for Explorer
                           </button>
                         </section>
                       </div>

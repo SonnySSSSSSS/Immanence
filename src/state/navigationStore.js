@@ -28,6 +28,11 @@ const createFallbackRunId = () => `run_${Date.now()}_${Math.random().toString(36
 const normalizeNavigationPathId = (pathId) => (
     pathId === LEGACY_INITIATION_PATH_ID ? AUTHORITATIVE_INITIATION_PATH_ID : pathId
 );
+const normalizeUserId = (userId) => {
+    if (typeof userId !== 'string') return null;
+    const trimmed = userId.trim();
+    return trimmed || null;
+};
 
 const generateRunId = () => {
     try {
@@ -192,13 +197,58 @@ const buildCurriculumBackedActivePath = ({
     };
 };
 
+const buildInitialNavigationState = () => ({
+    selectedPathId: null,
+    pendingAttemptRunId: null,
+    pendingAttemptPathId: null,
+    activePath: null,
+    hasWatchedFoundation: false,
+    pathAssessment: null,
+    lastActivityDate: null,
+    scheduleSlots: [],
+    scheduleAdherenceLog: [],
+    annualAdherenceStats: [],
+    unlockedSections: [],
+});
+
 export const useNavigationStore = create(
     persist(
         (set, get) => ({
+            ownerUserId: null,
+            activeUserId: null,
+            ...buildInitialNavigationState(),
+            setActiveUserId: (userId) => {
+                const normalizedUserId = normalizeUserId(userId);
+                set((state) => {
+                    if (!normalizedUserId) {
+                        return { activeUserId: null };
+                    }
+
+                    if (state.ownerUserId === normalizedUserId) {
+                        return { activeUserId: normalizedUserId };
+                    }
+
+                    return {
+                        ...buildInitialNavigationState(),
+                        ownerUserId: normalizedUserId,
+                        activeUserId: normalizedUserId,
+                    };
+                });
+            },
+            resetForIdentityBoundary: (userId = null) => {
+                const normalizedUserId = normalizeUserId(userId);
+                set({
+                    ...buildInitialNavigationState(),
+                    ownerUserId: normalizedUserId,
+                    activeUserId: normalizedUserId,
+                });
+            },
+            isOwnedByActiveUser: () => {
+                const state = get();
+                return Boolean(state.activeUserId && state.ownerUserId && state.activeUserId === state.ownerUserId);
+            },
+
             // Selection state (before beginning a path)
-            selectedPathId: null,
-            pendingAttemptRunId: null,
-            pendingAttemptPathId: null,
             setSelectedPath: (id) => {
                 const normalizedPathId = normalizeNavigationPathId(id);
                 console.log("[navigationStore] setSelectedPath ->", normalizedPathId);
@@ -237,9 +287,6 @@ export const useNavigationStore = create(
             },
             
             // Pilot session tracking moved to curriculumStore
-
-            // Active path state (after beginning)
-            activePath: null, // Canonical fields only
 
             // Begin a new path
             beginPath: (pathId) => {
@@ -509,23 +556,18 @@ export const useNavigationStore = create(
             },
 
             // Foundation video tracking
-            hasWatchedFoundation: false,
             setWatchedFoundation: (watched) => set({ hasWatchedFoundation: watched }),
 
             // Path assessment tracking
-            pathAssessment: null, // Selected prompt ID from PathFinderCard
             setPathAssessment: (promptId) => set({ pathAssessment: promptId }),
 
             // Last activity tracking
-            lastActivityDate: null,
             updateActivity: () => set({ lastActivityDate: new Date().toISOString() }),
 
             // Schedule adherence tracking
-            scheduleSlots: [], // [{ slotId: 1, time: "HH:mm" }, ...]
-            scheduleAdherenceLog: [],
+            // scheduleSlots shape: [{ slotId: 1, time: "HH:mm" }, ...]
 
             // Long-term tracking (annual adherence stats)
-            annualAdherenceStats: [],
             /* Structure:
             [{
               year: 2024,
@@ -541,8 +583,6 @@ export const useNavigationStore = create(
             // ========================================
             // SECTION UNLOCKING (for quiz-gated content)
             // ========================================
-            unlockedSections: [],
-
             /**
              * Unlock a section (e.g., after passing a quiz)
              */
@@ -1057,11 +1097,12 @@ export const useNavigationStore = create(
         }),
         {
             name: 'immanenceOS.navigationState',
-            version: 9,  // Bumped for merged initiation path id
+            version: 10,  // Bumped for per-user ownership isolation
             // Do not persist transient UI selections to avoid auto-opening overlays on load
             partialize: (state) => {
-                const { selectedPathId, ...rest } = state;
+                const { selectedPathId, activeUserId, ...rest } = state;
                 void selectedPathId;
+                void activeUserId;
                 return rest;
             },
             migrate: (persistedState) => {
@@ -1109,11 +1150,18 @@ export const useNavigationStore = create(
                 
                 return {
                     ...rest,
+                    ownerUserId: normalizeUserId(rest?.ownerUserId),
                     selectedPathId: null,
                     pendingAttemptRunId: rest?.pendingAttemptRunId || null,
                     pendingAttemptPathId: normalizeNavigationPathId(rest?.pendingAttemptPathId || null),
                 };
             },
+            merge: (persistedState, currentState) => ({
+                ...currentState,
+                ...(persistedState || {}),
+                ownerUserId: normalizeUserId(persistedState?.ownerUserId),
+                activeUserId: null,
+            }),
             onRehydrateStorage: () => (state) => {
                 // Force-clear selection after every hydration cycle
                 if (state?.selectedPathId) {

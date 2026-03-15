@@ -1,6 +1,7 @@
 // src/components/SideNavigation.jsx
 import React from "react";
 import { useDisplayModeStore } from "../state/displayModeStore";
+import { useUserModeStore } from "../state/userModeStore.js";
 
 /**
  * SideNavigation Component - "Cymatic Arc" Pattern
@@ -16,7 +17,12 @@ import { useDisplayModeStore } from "../state/displayModeStore";
  */
 export function SideNavigation({ onNavigate, className = "" }) {
     const colorScheme = useDisplayModeStore(s => s.colorScheme);
+    const userMode = useUserModeStore((s) => s.userMode);
     const isLight = colorScheme === 'light';
+
+    if (userMode === 'student') {
+        return null;
+    }
 
     // Arc configuration
     const radius = 160; // Distance from center to button positions

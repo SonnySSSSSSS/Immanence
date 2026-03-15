@@ -116,5 +116,14 @@ export const useUiStore = create((set, get) => ({
         }
         return current || null;
     },
+
+    resetLaunchContext: () => set({
+        practiceLaunchContext: null,
+        lastPracticeLaunchContext: null,
+        lastPracticeLaunchContextAt: null,
+        lastPracticeStartProbe: null,
+        contentLaunchContext: null,
+        trackerLaunchContext: null,
+    }),
     
 }));

@@ -89,6 +89,7 @@ function HomeHub({ onSelectSection, activeSection = null, currentStage, previewP
   const { stage: avatarStage, modeWeights, lastStageChange, lastModeChange, lastSessionComplete } = useAvatarV3State();
   const colorScheme = useDisplayModeStore(s => s.colorScheme);
   const userMode = useUserModeStore((s) => s.userMode);
+  const activeUserId = useUserModeStore((s) => s.activeUserId);
   const isLight = colorScheme === 'light';
   const modeTileBgUrl = 'none';
   const modeTileBackgroundImage = sanitizeModeTileBackgroundImage(modeTileBgUrl);
@@ -111,19 +112,31 @@ function HomeHub({ onSelectSection, activeSection = null, currentStage, previewP
 
   // Cloud background test state
   // Curriculum state
-  const curriculumOnboardingComplete = useCurriculumStore(s => s.onboardingComplete);
-  const curriculumPracticeTimeSlots = useCurriculumStore(s => s.practiceTimeSlots);
+  const curriculumOwnerUserId = useCurriculumStore(s => s.ownerUserId);
+  const navigationOwnerUserId = useNavigationStore(s => s.ownerUserId);
+  const rawCurriculumOnboardingComplete = useCurriculumStore(s => s.onboardingComplete);
+  const rawCurriculumPracticeTimeSlots = useCurriculumStore(s => s.practiceTimeSlots);
+  const rawActiveCurriculumId = useCurriculumStore(s => s.activeCurriculumId);
+  const rawCurriculumStartDate = useCurriculumStore(s => s.curriculumStartDate);
+  const rawDayCompletions = useCurriculumStore(s => s.dayCompletions);
+  const rawLegCompletions = useCurriculumStore(s => s.legCompletions);
+  const rawActivePath = useNavigationStore(s => s.activePath);
+  const isCurriculumStateOwnedByCurrentUser = Boolean(activeUserId && curriculumOwnerUserId === activeUserId);
+  const isNavigationStateOwnedByCurrentUser = Boolean(activeUserId && navigationOwnerUserId === activeUserId);
+  const curriculumOnboardingComplete = isCurriculumStateOwnedByCurrentUser ? rawCurriculumOnboardingComplete : false;
+  const curriculumPracticeTimeSlots = isCurriculumStateOwnedByCurrentUser ? rawCurriculumPracticeTimeSlots : [];
   // Use canonical getter to avoid stale scheduleSlots (called outside subscription to prevent infinite loops)
-  const navigationScheduleSlots = React.useMemo(() => {
+  const navigationScheduleSlots = (() => {
+    if (!isNavigationStateOwnedByCurrentUser) return [];
     const getScheduleSlots = useNavigationStore.getState().getScheduleSlots;
     return typeof getScheduleSlots === 'function' ? getScheduleSlots() : [];
-  }, [curriculumPracticeTimeSlots]); // Depend on curriculum state to stay in sync
-  const activePath = useNavigationStore(s => s.activePath);
+  })();
+  const activePath = isNavigationStateOwnedByCurrentUser ? rawActivePath : null;
   const practiceTimeSlots = (navigationScheduleSlots && navigationScheduleSlots.length > 0)
     ? navigationScheduleSlots.map(slot => slot.time)
     : curriculumPracticeTimeSlots;
   const isCurriculumComplete = useCurriculumStore(s => s.isCurriculumComplete);
-  const activeCurriculumId = useCurriculumStore(s => s.activeCurriculumId);
+  const activeCurriculumId = isCurriculumStateOwnedByCurrentUser ? rawActiveCurriculumId : 'ritual-initiation-14-v2';
   const setActiveCurriculumId = useCurriculumStore(s => s.setActiveCurriculumId);
   const [showCurriculumHub, setShowCurriculumHubState] = useState(false);
   const [showCurriculumOnboarding, setShowCurriculumOnboarding] = useState(false);
@@ -159,21 +172,33 @@ function HomeHub({ onSelectSection, activeSection = null, currentStage, previewP
     setShowCurriculumHubState(false);
   }, [activeCurriculumId]);
   const [launcherContext, setLauncherContext] = useState(null);
-  const [hasPersistedCurriculumData, setHasPersistedCurriculumData] = useState(null);
   const [frameRect, setFrameRect] = useState(null);
   const [leftRolled, setLeftRolled] = useState(false);
   const [rightRolled, setRightRolled] = useState(false);
-
+  const hasPersistedCurriculumData = Boolean(
+    isCurriculumStateOwnedByCurrentUser
+    && (
+      curriculumOnboardingComplete
+      || practiceTimeSlots.length > 0
+      || Boolean(rawCurriculumStartDate)
+      || Object.keys(rawDayCompletions || {}).length > 0
+      || Object.keys(rawLegCompletions || {}).length > 0
+    )
+  );
+  const probeLabel = !activeUserId
+    ? 'FRESH_USER'
+    : (userMode === 'explorer'
+      ? 'EXPLORER_STARTUP_REQUIRED'
+      : (showCurriculumOnboarding
+        ? 'STUDENT_ONBOARDING'
+        : (activePath ? 'STUDENT_ACTIVE' : 'STUDENT_SETUP_REQUIRED')));
 
   useEffect(() => {
-    if (typeof window === 'undefined') return;
-    try {
-      const raw = window.localStorage.getItem('immanenceOS.curriculum');
-      setHasPersistedCurriculumData(raw !== null);
-    } catch {
-      setHasPersistedCurriculumData(true);
-    }
-  }, []);
+    setShowCurriculumHubState(false);
+    setShowCurriculumOnboarding(false);
+    setCurriculumSetupError(null);
+    setLauncherContext(null);
+  }, [activeUserId]);
 
 
   useLayoutEffect(() => {
@@ -874,6 +899,16 @@ function HomeHub({ onSelectSection, activeSection = null, currentStage, previewP
           ...SANCTUARY_RAIL_STYLE,
           borderTop: `1px solid ${isLight ? 'rgba(100, 80, 60, 0.15)' : 'rgba(255, 255, 255, 0.08)'}`,
         }}>
+          <div
+            className="mb-2 inline-flex rounded-full border px-3 py-1 text-[10px] font-black uppercase tracking-[0.18em]"
+            style={{
+              borderColor: isLight ? 'rgba(100, 80, 60, 0.18)' : 'rgba(255,255,255,0.12)',
+              background: isLight ? 'rgba(255,255,255,0.55)' : 'rgba(255,255,255,0.05)',
+              color: isLight ? 'rgba(60,50,35,0.78)' : 'rgba(253,251,245,0.72)',
+            }}
+          >
+            {probeLabel}
+          </div>
           <div className="w-full">
             <DailyPracticeCard
               onStartPractice={handleStartPractice}
