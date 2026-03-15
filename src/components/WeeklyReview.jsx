@@ -42,15 +42,15 @@ export function WeeklyReview() {
     return (
         <div className="w-full">
             <div className="bg-[#0f0f1a] border border-[var(--accent-15)] rounded-3xl p-8 space-y-8 relative overflow-hidden">
-                {/* Application background - axe & stump */}
+                {/* Atmospheric background wash */}
                 <div
                     className="absolute inset-0 pointer-events-none rounded-3xl"
                     style={{
-                        backgroundImage: `url(${import.meta.env.BASE_URL}application-axe-stump.webp)`,
-                        backgroundSize: 'contain',
-                        backgroundPosition: 'center center',
-                        backgroundRepeat: 'no-repeat',
-                        opacity: 0.17,
+                        background: `
+                            radial-gradient(circle at 50% 22%, rgba(212, 181, 114, 0.12), transparent 34%),
+                            radial-gradient(circle at 18% 82%, rgba(120, 166, 154, 0.14), transparent 30%),
+                            linear-gradient(180deg, rgba(255, 255, 255, 0.03), rgba(0, 0, 0, 0.16))
+                        `,
                         zIndex: 0,
                     }}
                 />
