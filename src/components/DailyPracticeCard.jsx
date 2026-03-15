@@ -178,6 +178,24 @@ function normalizeListForSlots(list, slotCount) {
     return out;
 }
 
+function getDateKeyDayOfWeek(dateKey) {
+    if (typeof dateKey !== 'string' || !dateKey) return null;
+    const date = new Date(`${dateKey}T12:00:00`);
+    const day = date.getDay();
+    return Number.isInteger(day) ? day : null;
+}
+
+function formatPracticeDateLabel(dateKey) {
+    if (typeof dateKey !== 'string' || !dateKey) return '';
+    const date = new Date(`${dateKey}T12:00:00`);
+    if (Number.isNaN(date.getTime())) return '';
+    return date.toLocaleDateString('en-US', {
+        weekday: 'short',
+        month: 'short',
+        day: 'numeric',
+    });
+}
+
 /**
  * Resolve practice ID from various entry formats
  * Supports: string (direct ID), object with .type or .practiceId
@@ -759,6 +777,66 @@ export function DailyPracticeCard({ onStartPractice, onViewCurriculum, onNavigat
 
     const theme = useTheme();
     const primaryHex = theme?.accent?.primary || '#4ade80';
+    const sessionRowWallpaperUrl = `${import.meta.env.BASE_URL}off%20day.webp`;
+    const activeScheduleDays = frozenActiveDays.length > 0 ? frozenActiveDays : [0, 1, 2, 3, 4, 5, 6];
+    const nextScheduledPracticeDate = useMemo(() => {
+        if (!activePathObj || times.length === 0) return null;
+
+        const startSearchKey = startDayKey > todayKey ? startDayKey : todayKey;
+        const firstOffset = startSearchKey === todayKey ? 1 : 0;
+
+        for (let offset = firstOffset; offset <= 14; offset++) {
+            const candidateKey = addDaysToDateKey(startSearchKey, offset);
+            const candidateDow = getDateKeyDayOfWeek(candidateKey);
+            if (candidateDow == null) continue;
+            if (activeScheduleDays.includes(candidateDow)) {
+                return candidateKey;
+            }
+        }
+
+        return null;
+    }, [activePathObj, times.length, startDayKey, todayKey, activeScheduleDays]);
+    const nextScheduledPracticeLabel = useMemo(
+        () => formatPracticeDateLabel(nextScheduledPracticeDate),
+        [nextScheduledPracticeDate]
+    );
+
+    const getSessionRowStyle = useCallback((opacity = 1) => ({
+        position: 'relative',
+        overflow: 'hidden',
+        borderColor: isLight ? 'rgba(160, 120, 60, 0.18)' : 'var(--accent-15)',
+        background: isLight
+            ? 'linear-gradient(135deg, rgba(255,255,255,0.95) 0%, rgba(255,255,255,0.85) 100%)'
+            : 'linear-gradient(135deg, rgba(30, 25, 35, 0.95) 0%, rgba(24, 20, 30, 0.92) 100%)',
+        boxShadow: isLight
+            ? '0 6px 18px rgba(120, 90, 60, 0.1)'
+            : '0 10px 30px rgba(0,0,0,0.45)',
+        opacity,
+    }), [isLight]);
+
+    const renderSessionRowWallpaper = useCallback(() => (
+        <>
+            <div
+                className="absolute inset-y-0 left-0 pointer-events-none"
+                style={{
+                    width: '34%',
+                    backgroundImage: `url(${sessionRowWallpaperUrl})`,
+                    backgroundSize: 'cover',
+                    backgroundPosition: 'left center',
+                    opacity: 0.5,
+                }}
+            />
+            <div
+                className="absolute inset-y-0 left-0 pointer-events-none"
+                style={{
+                    width: '48%',
+                    background: isLight
+                        ? 'linear-gradient(90deg, rgba(255,255,255,0.56) 0%, rgba(255,255,255,0.42) 42%, rgba(255,255,255,0) 100%)'
+                        : 'linear-gradient(90deg, rgba(18,15,24,0.58) 0%, rgba(18,15,24,0.38) 42%, rgba(18,15,24,0) 100%)',
+                }}
+            />
+        </>
+    ), [isLight, sessionRowWallpaperUrl]);
     const progressBarColor = theme?.ui?.progressBar || '#4ade80';
 
     const maybeShadow = (shadow) => (debugShadowOff ? 'none' : shadow);
@@ -1225,34 +1303,6 @@ export function DailyPracticeCard({ onStartPractice, onViewCurriculum, onNavigat
                                             </button>
                                         </div>
                                     </div>
-                                ) : isRestDayToday ? (
-                                    <div className="text-center">
-                                        <div className="text-[11px] font-bold uppercase tracking-[0.24em]" style={{
-                                            color: isLight ? 'rgba(60, 50, 35, 0.5)' : 'var(--accent-60)',
-                                            letterSpacing: '0.08em'
-                                        }}>
-                                            Today's Practice
-                                        </div>
-                                        <div className="mt-2 text-xl font-bold tracking-tight" style={{
-                                            fontFamily: 'var(--font-display)',
-                                            color: isLight ? '#3c3020' : 'var(--accent-color)',
-                                        }}>
-                                            Rest Day
-                                        </div>
-                                        <div className="mt-2 text-sm opacity-80" style={{ color: isLight ? '#3c3020' : '#fdfbf5' }}>
-                                            No contract obligations today.
-                                        </div>
-                                        <div style={{ marginTop: '20px', width: '100%', display: 'flex', justifyContent: 'center' }}>
-                                            <img
-                                                src={`${import.meta.env.BASE_URL}off%20day.webp`}
-                                                alt="Rest day"
-                                                style={{ width: '100%', maxHeight: '260px', objectFit: 'cover', borderRadius: '16px', opacity: 0.9 }}
-                                            />
-                                        </div>
-                                        <div className="mt-4 pt-3 border-t" style={{ borderColor: isLight ? 'rgba(180, 140, 60, 0.15)' : 'rgba(255, 255, 255, 0.05)' }}>
-                                            <CurriculumPrecisionRail />
-                                        </div>
-                                    </div>
                                 ) : allDone ? (
                                     <div className="text-center">
                                         <div className="text-lg font-semibold" style={{ color: isLight ? '#3c3020' : '#fdfbf5', fontFamily: 'var(--font-display)' }}>Schedule complete</div>
@@ -1282,106 +1332,150 @@ export function DailyPracticeCard({ onStartPractice, onViewCurriculum, onNavigat
                                         </div>
 
                                         <div className="mt-4 space-y-5">
-                                            {times.map((time, idx) => {
+                                            {(isRestDayToday ? [{
+                                                key: 'off-day-next-practice',
+                                                variant: 'info',
+                                                badge: '•',
+                                                eyebrow: nextScheduledPracticeLabel || 'No next practice day scheduled',
+                                                title: nextScheduledPracticeLabel ? 'Next practice day' : 'No active practice day scheduled',
+                                                detail: nextScheduledPracticeLabel
+                                                    ? `Your next scheduled session is ${nextScheduledPracticeLabel}.`
+                                                    : 'Update your active days to see the next scheduled session.',
+                                                actionLabel: 'Off Day',
+                                                actionTone: 'muted',
+                                            }] : times.map((time, idx) => {
                                                 const isDone = completedSlotIndices.has(idx);
                                                 const slotDateKey = slotDates[idx] || todayKey;
-                                                // Check time window for this slot using the correct date
                                                 const scheduledAt = localDateTimeFromDateKeyAndTime(slotDateKey, time);
                                                 const { tooEarly, expired } = scheduledAt ? getStartWindowState({ now: new Date(), scheduledAt }) : { tooEarly: false, expired: false };
                                                 const isOutsideWindow = tooEarly || expired;
-                                                // Each slot opens independently based on its own time window (allows partial day completion)
                                                 const isActionable = !isDone && !isOutsideWindow && slotLaunches[idx]?.practiceId;
-                                                // Format the date for display
-                                                const slotDate = new Date(`${slotDateKey}T00:00:00`);
-                                                const dateStr = slotDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
-                                                const legNumber = idx + 1;
+                                                const dateStr = formatPracticeDateLabel(slotDateKey);
+
+                                                return {
+                                                    key: `${time}-${idx}`,
+                                                    variant: 'slot',
+                                                    badge: isDone ? '✓' : idx + 1,
+                                                    eyebrow: dateStr,
+                                                    title: practiceLabels[idx] || 'Scheduled session',
+                                                    actionLabel: expired ? 'Missed' : (tooEarly ? 'Not Yet' : 'Start'),
+                                                    time,
+                                                    isDone,
+                                                    isActionable,
+                                                    expired,
+                                                    tooEarly,
+                                                    isOutsideWindow,
+                                                    slotDateKey,
+                                                    slot: slotLaunches[idx],
+                                                    idx,
+                                                };
+                                            })).map((row) => {
+                                                const isInfoRow = row.variant === 'info';
+                                                const actionStyle = isInfoRow
+                                                    ? {
+                                                        background: isLight ? 'rgba(60,50,35,0.06)' : 'rgba(255,255,255,0.08)',
+                                                        color: isLight ? '#3c3020' : 'rgba(253,251,245,0.72)',
+                                                        boxShadow: 'none',
+                                                        cursor: 'default',
+                                                    }
+                                                    : {
+                                                        background: row.isOutsideWindow
+                                                            ? (isLight ? 'rgba(60,50,35,0.06)' : 'rgba(255,255,255,0.08)')
+                                                            : 'linear-gradient(135deg, var(--accent-color), var(--accent-70))',
+                                                        color: row.isOutsideWindow ? (isLight ? '#3c3020' : 'var(--accent-color)') : '#fff',
+                                                        boxShadow: row.isOutsideWindow ? 'none' : '0 3px 10px var(--accent-30)',
+                                                        cursor: row.isOutsideWindow ? 'not-allowed' : 'pointer',
+                                                        ...(row.isActionable && {
+                                                            boxShadow: '0 8px 20px var(--accent-30)',
+                                                        }),
+                                                    };
+
                                                 return (
                                                     <div
-                                                        key={idx}
+                                                        key={row.key}
                                                         className="rounded-2xl border p-4 flex items-center gap-3 transition-all"
-                                                        style={{
-                                                            borderColor: isLight ? 'rgba(160, 120, 60, 0.18)' : 'var(--accent-15)',
-                                                            background: isLight
-                                                                ? 'linear-gradient(135deg, rgba(255,255,255,0.95) 0%, rgba(255,255,255,0.85) 100%)'
-                                                                : 'linear-gradient(135deg, rgba(30, 25, 35, 0.95) 0%, rgba(24, 20, 30, 0.92) 100%)',
-                                                            boxShadow: isLight
-                                                                ? '0 6px 18px rgba(120, 90, 60, 0.1)'
-                                                                : '0 10px 30px rgba(0,0,0,0.45)',
-                                                            opacity: isDone ? 0.7 : 1,
-                                                        }}
+                                                        style={getSessionRowStyle(isInfoRow ? 1 : (row.isDone ? 0.7 : 1))}
                                                     >
+                                                        {renderSessionRowWallpaper()}
                                                         {/* Leg Number / Status */}
                                                         <div
-                                                            className="w-7 h-7 rounded-lg flex items-center justify-center text-xs font-semibold shrink-0 transition-all"
+                                                            className="relative z-10 w-7 h-7 rounded-lg flex items-center justify-center text-xs font-semibold shrink-0 transition-all"
                                                             style={{
-                                                                background: isDone
+                                                                background: isInfoRow
+                                                                    ? (isLight ? 'rgba(160, 120, 60, 0.14)' : 'rgba(255, 255, 255, 0.10)')
+                                                                    : row.isDone
                                                                     ? 'linear-gradient(135deg, var(--accent-color), var(--accent-60))'
                                                                     : (isLight ? 'rgba(160, 120, 60, 0.1)' : 'rgba(255, 255, 255, 0.08)'),
-                                                                color: isDone ? '#fff' : (isLight ? '#3c3020' : '#fdfbf5'),
+                                                                color: (!isInfoRow && row.isDone) ? '#fff' : (isLight ? '#3c3020' : '#fdfbf5'),
                                                                 boxShadow: 'none',
                                                                 transform: 'scale(1)',
                                                             }}
                                                         >
-                                                            {isDone ? 'âœ“' : legNumber}
+                                                            {row.badge}
                                                         </div>
 
                                                         {/* Leg Details */}
-                                                        <div className="flex-1 min-w-0">
+                                                        <div className="relative z-10 flex-1 min-w-0">
                                                             <div className="text-[11px] leading-snug" style={{ color: isLight ? 'rgba(60, 50, 35, 0.7)' : 'rgba(253,251,245,0.55)' }}>
-                                                                {dateStr}
+                                                                {row.eyebrow}
                                                             </div>
-                                                            {practiceLabels[idx] && (
-                                                                <div className="text-sm font-bold leading-tight mt-1" style={{ color: isLight ? '#3c3020' : '#fdfbf5', fontFamily: 'var(--font-display)' }}>
-                                                                    {practiceLabels[idx]}
+                                                            <div className="text-sm font-bold leading-tight mt-1" style={{ color: isLight ? '#3c3020' : '#fdfbf5', fontFamily: 'var(--font-display)' }}>
+                                                                {row.title}
+                                                            </div>
+                                                            {isInfoRow && (
+                                                                <div className="text-[11px] leading-snug mt-1" style={{ color: isLight ? 'rgba(60, 50, 35, 0.7)' : 'rgba(253,251,245,0.55)' }}>
+                                                                    {row.detail}
                                                                 </div>
                                                             )}
                                                         </div>
                                                         {/* Action - matches curriculum styling */}
-                                                        {!isDone ? (
-                                                            <div className="flex flex-col items-end gap-1">
+                                                        {!row.isDone ? (
+                                                            <div className="relative z-10 flex flex-col items-end gap-1">
                                                                 {/* Time label */}
-                                                                <div className="text-[11px] font-mono uppercase tracking-wider" style={{ color: 'var(--accent-color)' }}>
-                                                                    {time}
-                                                                </div>
+                                                                {!isInfoRow && (
+                                                                    <div className="text-[11px] font-mono uppercase tracking-wider" style={{ color: 'var(--accent-color)' }}>
+                                                                        {row.time}
+                                                                    </div>
+                                                                )}
                                                                 {/* Status text */}
-                                                                {expired && (
+                                                                {!isInfoRow && row.expired && (
                                                                     <div className="text-[10px] uppercase font-black tracking-widest" style={{ color: isLight ? '#8b7b63' : 'rgba(253,251,245,0.55)' }}>
                                                                         Time Passed
                                                                     </div>
                                                                 )}
-                                                                {isActionable && (
+                                                                {!isInfoRow && row.isActionable && (
                                                                     <div className="text-[10px] uppercase font-black tracking-widest" style={{ color: 'var(--accent-color)' }}>
                                                                         Next Up
                                                                     </div>
                                                                 )}
                                                                 {/* Wrapper catches shift-click even when button disabled */}
                                                                 <div style={{ pointerEvents: 'auto' }} onPointerDown={(e) => {
-                                                                    if (e.shiftKey && slotLaunches[idx]?.practiceId) {
+                                                                    if (isInfoRow) return;
+                                                                    if (e.shiftKey && row.slot?.practiceId) {
                                                                         e.preventDefault();
                                                                         e.stopPropagation();
-                                                                        console.log('[DEV] Shift-click override: bypassing time window slot', { idx, practiceId: slotLaunches[idx]?.practiceId });
-                                                                        const slot = slotLaunches[idx];
-                                                                        launchPathPractice(slot, idx, time, {
+                                                                        console.log('[DEV] Shift-click override: bypassing time window slot', { idx: row.idx, practiceId: row.slot?.practiceId });
+                                                                        launchPathPractice(row.slot, row.idx, row.time, {
                                                                             forceStart: true,
-                                                                            forceWindowBypass: isOutsideWindow,
-                                                                            scheduleDateKey: slotDateKey,
+                                                                            forceWindowBypass: row.isOutsideWindow,
+                                                                            scheduleDateKey: row.slotDateKey,
                                                                         });
                                                                     }
                                                                 }}>
                                                                     <button
                                                                         onClick={(e) => {
                                                                             if (isUiPickingActive()) return;
+                                                                            if (isInfoRow) return;
                                                                             if (!e.shiftKey) {
-                                                                                if (isOutsideWindow) {
+                                                                                if (row.isOutsideWindow) {
                                                                                     console.log('[BLOCKED] Time window violation on slot click (shift+click bypasses)');
                                                                                     return;
                                                                                 }
-                                                                                const slot = slotLaunches[idx];
-                                                                                const practiceId = slot?.practiceId;
-                                                                                const durationMin = slot?.durationMin;
+                                                                                const practiceId = row.slot?.practiceId;
+                                                                                const durationMin = row.slot?.durationMin;
                                                                                 console.log("[DailyPracticeCard] START slot", {
-                                                                                    slotTime: time,
-                                                                                    slotIndex: idx,
+                                                                                    slotTime: row.time,
+                                                                                    slotIndex: row.idx,
                                                                                     practiceId,
                                                                                     durationMin,
                                                                                     activePathId: activePath?.activePathId,
@@ -1390,12 +1484,12 @@ export function DailyPracticeCard({ onStartPractice, onViewCurriculum, onNavigat
                                                                                 });
 
                                                                                 if (!practiceId) {
-                                                                                    console.warn("[DailyPracticeCard] No practiceId resolved for slot", idx);
+                                                                                    console.warn("[DailyPracticeCard] No practiceId resolved for slot", row.idx);
                                                                                     return;
                                                                                 }
 
-                                                                                launchPathPractice(slot, idx, time, {
-                                                                                    scheduleDateKey: slotDateKey,
+                                                                                launchPathPractice(row.slot, row.idx, row.time, {
+                                                                                    scheduleDateKey: row.slotDateKey,
                                                                                 });
                                                                             }
                                                                         }}
@@ -1405,29 +1499,19 @@ export function DailyPracticeCard({ onStartPractice, onViewCurriculum, onNavigat
                                                                         data-ui-id="dailyPractice:legStatusPill"
                                                                         data-ui-fx-surface="true"
                                                                         data-ui="practice-button"
-                                                                        data-practice-type={slotLaunches[idx]?.practiceId === 'perception' ? 'visual' : (slotLaunches[idx]?.practiceId === 'resonance' ? 'sound' : (slotLaunches[idx]?.practiceId || undefined))}
-                                                                        data-practice-id={slotLaunches[idx]?.practiceId ? `daily-slot:${idx}:${slotLaunches[idx].practiceId}` : undefined}
+                                                                        data-practice-type={row.slot?.practiceId === 'perception' ? 'visual' : (row.slot?.practiceId === 'resonance' ? 'sound' : (row.slot?.practiceId || undefined))}
+                                                                        data-practice-id={row.slot?.practiceId ? `daily-slot:${row.idx}:${row.slot.practiceId}` : undefined}
                                                                         className="px-4 py-2 rounded-full text-[10px] font-black uppercase tracking-wider transition-all hover:scale-105 disabled:opacity-60 disabled:cursor-not-allowed"
-                                                                        style={{
-                                                                            background: isOutsideWindow
-                                                                                ? (isLight ? 'rgba(60,50,35,0.06)' : 'rgba(255,255,255,0.08)')
-                                                                                : 'linear-gradient(135deg, var(--accent-color), var(--accent-70))',
-                                                                            color: isOutsideWindow ? (isLight ? '#3c3020' : 'var(--accent-color)') : '#fff',
-                                                                            boxShadow: isOutsideWindow ? 'none' : '0 3px 10px var(--accent-30)',
-                                                                            cursor: isOutsideWindow ? 'not-allowed' : 'pointer',
-                                                                            ...(isActionable && {
-                                                                                boxShadow: '0 8px 20px var(--accent-30)',
-                                                                            }),
-                                                                        }}
+                                                                        style={actionStyle}
                                                                     >
-                                                                        {expired ? 'Missed' : (tooEarly ? 'Not Yet' : 'Start')}
+                                                                        {row.actionLabel}
                                                                     </button>
                                                                 </div>
                                                             </div>
                                                         ) : (
-                                                            <div className="flex flex-col items-end gap-1" style={{ flexShrink: 0 }}>
+                                                            <div className="relative z-10 flex flex-col items-end gap-1" style={{ flexShrink: 0 }}>
                                                                 <div className="text-[11px] font-mono uppercase tracking-wider" style={{ color: isLight ? '#8b7b63' : 'var(--accent-40)' }}>
-                                                                    {time}
+                                                                    {row.time}
                                                                 </div>
                                                                 <div style={{
                                                                     fontSize: '9px',
@@ -2058,20 +2142,12 @@ export function DailyPracticeCard({ onStartPractice, onViewCurriculum, onNavigat
                                             <div
                                                 key={`${dayNumber}-${leg.legNumber}`}
                                                 className="rounded-2xl border p-4 flex items-center gap-3 transition-all"
-                                                style={{
-                                                    borderColor: isLight ? 'rgba(160, 120, 60, 0.18)' : 'var(--accent-15)',
-                                                    background: isLight
-                                                        ? 'linear-gradient(135deg, rgba(255,255,255,0.95) 0%, rgba(255,255,255,0.85) 100%)'
-                                                        : 'linear-gradient(135deg, rgba(30, 25, 35, 0.95) 0%, rgba(24, 20, 30, 0.92) 100%)',
-                                                    boxShadow: isLight
-                                                        ? '0 6px 18px rgba(120, 90, 60, 0.1)'
-                                                        : '0 10px 30px rgba(0,0,0,0.45)',
-                                                    opacity: isLockedLeg ? 0.5 : ((expired || tooEarly) ? 0.75 : 1),
-                                                }}
+                                                style={getSessionRowStyle(isLockedLeg ? 0.5 : ((expired || tooEarly) ? 0.75 : 1))}
                                             >
+                                                {renderSessionRowWallpaper()}
                                                 {/* Leg Number / Status */}
                                                 <div
-                                                    className="w-10 h-10 rounded-xl flex items-center justify-center text-sm font-black shrink-0 transition-all"
+                                                    className="relative z-10 w-10 h-10 rounded-xl flex items-center justify-center text-sm font-black shrink-0 transition-all"
                                                     style={{
                                                         background: leg.completed
                                                             ? 'linear-gradient(135deg, var(--accent-color), var(--accent-60))'
@@ -2085,7 +2161,7 @@ export function DailyPracticeCard({ onStartPractice, onViewCurriculum, onNavigat
                                                 </div>
 
                                                 {/* Leg Details */}
-                                                <div className="flex-1 min-w-0">
+                                                <div className="relative z-10 flex-1 min-w-0">
                                                     <div className="flex items-center justify-between gap-3">
                                                         <div className="text-sm font-bold leading-tight" style={{ color: isLight ? '#3c3020' : '#fdfbf5', fontFamily: 'var(--font-display)' }}>
                                                             {leg.label || leg.practiceType}
@@ -2103,7 +2179,7 @@ export function DailyPracticeCard({ onStartPractice, onViewCurriculum, onNavigat
 
                                                 {/* Action */}
                                                 {!leg.completed ? (
-                                                    <div className="flex flex-col items-end gap-1">
+                                                    <div className="relative z-10 flex flex-col items-end gap-1">
                                                         {legTimeStr && (
                                                             <div className="text-[11px] font-mono uppercase tracking-wider" style={{ color: 'var(--accent-color)' }}>
                                                                 {legTimeStr}
@@ -2168,7 +2244,7 @@ export function DailyPracticeCard({ onStartPractice, onViewCurriculum, onNavigat
                                                         </div>
                                                     </div>
                                                 ) : (
-                                                    <div className="flex flex-col items-end gap-1" style={{ flexShrink: 0 }}>
+                                                    <div className="relative z-10 flex flex-col items-end gap-1" style={{ flexShrink: 0 }}>
                                                         {legTimeStr && (
                                                             <div className="text-[11px] font-mono uppercase tracking-wider" style={{ color: isLight ? '#8b7b63' : 'var(--accent-40)' }}>
                                                                 {legTimeStr}
