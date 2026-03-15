@@ -15,6 +15,10 @@
 import { useEffect, useRef } from "react";
 import { useTempoAudioStore } from "../../state/tempoAudioStore.js";
 
+export function isGuidanceAudioPlaybackActive({ source, status }) {
+  return Boolean(source) && status === "playing";
+}
+
 export function GuidanceAudioController() {
   const source = useTempoAudioStore((state) => state.source);
   const status = useTempoAudioStore((state) => state.status);
@@ -42,15 +46,27 @@ export function GuidanceAudioController() {
     const handleError = () => {
       setStatus("failed");
     };
+    const handlePlay = () => {
+      setStatus("playing");
+    };
+    const handlePause = () => {
+      const currentStore = useTempoAudioStore.getState();
+      if (!currentStore.source || currentStore.status === "idle") return;
+      setStatus("paused");
+    };
 
     audio.addEventListener("timeupdate", syncTiming);
     audio.addEventListener("loadedmetadata", syncTiming);
     audio.addEventListener("error", handleError);
+    audio.addEventListener("play", handlePlay);
+    audio.addEventListener("pause", handlePause);
 
     return () => {
       audio.removeEventListener("timeupdate", syncTiming);
       audio.removeEventListener("loadedmetadata", syncTiming);
       audio.removeEventListener("error", handleError);
+      audio.removeEventListener("play", handlePlay);
+      audio.removeEventListener("pause", handlePause);
       audio.pause();
       try {
         audio.currentTime = 0;

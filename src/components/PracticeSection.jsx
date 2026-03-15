@@ -69,6 +69,7 @@ import { getEmotionClosingLine, getEmotionLabel } from '../data/emotionPractices
 import { useProgressStore } from '../state/progressStore.js';
 import { useBreathSessionManager } from '../hooks/useBreathSessionManager.js';
 import { audioGuidance } from "../services/audioGuidanceService.js";
+import { isGuidanceAudioPlaybackActive } from "./audio/GuidanceAudioController.jsx";
 
 // CONFIG_COMPONENTS moved to PracticeOptionsCard.jsx
 
@@ -515,6 +516,10 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
   const guidanceSource = useTempoAudioStore((s) => s.source);
   const guidanceCurrentTime = useTempoAudioStore((s) => s.currentTime);
   const guidanceDuration = useTempoAudioStore((s) => s.duration);
+  const isGuidanceAudioActive = isGuidanceAudioPlaybackActive({
+    source: guidanceSource,
+    status: guidanceStatus,
+  });
   const activePath = useNavigationStore(s => s.activePath);
   
   // Tempo sync state for music-synced breathing
@@ -3335,6 +3340,7 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
                     pathId={avatarPath}
                     ringMode={currentRingPreset.id}
                     totalSessionDurationSec={duration}
+                    guidanceAudioActive={isGuidanceAudioActive}
                   />
                 ) : null}
               </div>
