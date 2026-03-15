@@ -465,9 +465,9 @@ export function PathOverviewPanel({ path, onBegin, onClose, onNavigate }) {
                     >
                         <div className="font-semibold mb-1">Morning (10 min)</div>
                         <div className="mb-3">• Resonance breathing</div>
-                        <div className="font-semibold mb-1">Evening Circuit (14 min)</div>
-                        <div>• 7 min stillness meditation</div>
-                        <div>• 7 min body scan</div>
+                        <div className="font-semibold mb-1">Evening Focus Reset (10 min)</div>
+                        <div>• 30s focus / 15s rest intervals</div>
+                        <div>• 1 min guided decompression after the timer</div>
                     </div>
                 </div>
             )}

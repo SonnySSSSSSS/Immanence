@@ -82,6 +82,8 @@ const DEFAULT_STILLNESS_CONFIG = Object.freeze({
   focusSec: 45,
   restSec: 15,
   preDelaySec: 0,
+  postDelaySec: 0,
+  decompressionCue: "",
 });
 const GUIDANCE_FALLBACK_LINE = "For the remaining time, continue breathing until the timer ends.";
 const GUIDANCE_FALLBACK_MIN_REMAINING_MS = 8000;
@@ -119,6 +121,15 @@ function normalizeStillnessConfig(raw, { fallback = DEFAULT_STILLNESS_CONFIG, sh
       0,
       20
     ),
+    postDelaySec: normalizeSeconds(
+      src.postDelaySec,
+      normalizeSeconds(fallbackCfg.postDelaySec, DEFAULT_STILLNESS_CONFIG.postDelaySec, 0, 180),
+      0,
+      180
+    ),
+    decompressionCue: typeof src.decompressionCue === "string"
+      ? src.decompressionCue.trim()
+      : (typeof fallbackCfg.decompressionCue === "string" ? fallbackCfg.decompressionCue.trim() : ""),
   };
 }
 

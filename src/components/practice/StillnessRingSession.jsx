@@ -58,6 +58,10 @@ export function StillnessRingSession({
   const focusSec = 30;
   const restSec = 15;
   const intensity = String(config?.focusIntensity || "medium").toLowerCase();
+  const postDelaySec = Math.max(0, Number(config?.postDelaySec) || 0);
+  const decompressionCue = typeof config?.decompressionCue === "string" && config.decompressionCue.trim()
+    ? config.decompressionCue.trim()
+    : "Relax. Let the focus unpack like a glacier turning into a river.";
 
   const {
     totalRemainingSec,
@@ -68,6 +72,8 @@ export function StillnessRingSession({
     segmentRemainingSec,
     segmentIndex,
     focusPhaseLabel,
+    decompressionActive,
+    completionBoundaryKind,
     pendingBoundaryReached,
   } = useStillnessIntervalSessionState({
     isRunning,
@@ -76,6 +82,7 @@ export function StillnessRingSession({
     totalDurationSec,
     focusSec,
     restSec,
+    postDelaySec,
     pendingFinish,
   });
 
@@ -93,19 +100,20 @@ export function StillnessRingSession({
     onPendingBoundaryComplete?.({
       segmentIndex,
       segmentType,
-      boundary: "segment-end",
+      boundary: completionBoundaryKind,
     });
-  }, [isRunning, onPendingBoundaryComplete, pendingBoundaryReached, pendingFinish, segmentIndex, segmentType]);
+  }, [completionBoundaryKind, isRunning, onPendingBoundaryComplete, pendingBoundaryReached, pendingFinish, segmentIndex, segmentType]);
 
   useEffect(() => {
     if (!isRunning || isPaused) return;
+    if (decompressionActive) return;
     if (segmentRemainingSec !== 3) return;
 
     const cueKey = `${segmentIndex}:${segmentType}`;
     if (lastCueKeyRef.current === cueKey) return;
     lastCueKeyRef.current = cueKey;
     triggerTransitionCue(audioContextRef);
-  }, [isPaused, isRunning, segmentIndex, segmentRemainingSec, segmentType]);
+  }, [decompressionActive, isPaused, isRunning, segmentIndex, segmentRemainingSec, segmentType]);
 
   useEffect(() => {
     const audioContext = audioContextRef.current;
@@ -125,7 +133,9 @@ export function StillnessRingSession({
     : 0;
   const visualCycleDurationSec = segmentType === "focus"
     ? Math.max(4, Math.min(segmentDurationSec, 10))
-    : Math.max(4, Math.min(segmentDurationSec, 6));
+    : segmentType === "decompression"
+      ? Math.max(6, Math.min(segmentDurationSec, 12))
+      : Math.max(4, Math.min(segmentDurationSec, 6));
   const visualCycleElapsedSec = ((segmentElapsedSec % visualCycleDurationSec) + visualCycleDurationSec) % visualCycleDurationSec;
   const cycleProgress01 = visualCycleDurationSec > 0
     ? Math.max(0, Math.min(1, visualCycleElapsedSec / visualCycleDurationSec))
@@ -133,14 +143,14 @@ export function StillnessRingSession({
 
   const stillnessVisual = useMemo(() => ({
     segmentType,
-    segmentLabel: segmentType === "focus" ? "FOCUS" : "REST",
+    segmentLabel: segmentType === "focus" ? "FOCUS" : segmentType === "decompression" ? "RELEASE" : "REST",
     segmentDurationSec,
     segmentProgress01,
     segmentRemainingSec,
     cycleProgress01,
     visualCycleDurationSec,
     totalRemainingSec,
-    nextSegmentLabel: nextSegmentType === "focus" ? "FOCUS" : "REST",
+    nextSegmentLabel: nextSegmentType === "focus" ? "FOCUS" : nextSegmentType === "complete" ? "COMPLETE" : "REST",
     intensity,
     intensityCopy: (STILLNESS_INTENSITY_META[intensity] || STILLNESS_INTENSITY_META.medium).copy,
     focusPhaseLabel,
@@ -194,6 +204,48 @@ export function StillnessRingSession({
           }}
         >
           {focusPhaseLabel}
+        </div>
+      )}
+      {!isPaused && decompressionActive && postDelaySec > 0 && (
+        <div
+          style={{
+            position: "absolute",
+            left: "50%",
+            bottom: "calc(46px + env(safe-area-inset-bottom))",
+            transform: "translateX(-50%)",
+            zIndex: 40,
+            pointerEvents: "none",
+            width: "min(82vw, 320px)",
+            padding: "10px 14px",
+            borderRadius: "18px",
+            background: "rgba(2, 6, 14, 0.52)",
+            border: "1px solid rgba(255,255,255,0.08)",
+            backdropFilter: "blur(5px)",
+            WebkitBackdropFilter: "blur(5px)",
+            textAlign: "center",
+          }}
+        >
+          <div
+            style={{
+              color: "rgba(245,245,245,0.82)",
+              fontFamily: "var(--font-display)",
+              fontSize: "0.74rem",
+              letterSpacing: "0.14em",
+              textTransform: "uppercase",
+            }}
+          >
+            Decompression
+          </div>
+          <div
+            style={{
+              marginTop: "4px",
+              color: "rgba(245,245,245,0.66)",
+              fontSize: "0.92rem",
+              lineHeight: 1.3,
+            }}
+          >
+            {decompressionCue}
+          </div>
         </div>
       )}
     </div>

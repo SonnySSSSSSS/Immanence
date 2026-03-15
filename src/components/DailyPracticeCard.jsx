@@ -331,6 +331,7 @@ function resolvePracticeLaunchFromEntry(entry) {
         if (entry.breathPattern) practiceConfig.breathPattern = String(entry.breathPattern).toLowerCase();
         if (entry.variant) practiceConfig.variant = entry.variant;
         if (entry.circuitId) practiceConfig.circuitId = entry.circuitId;
+        if (entry.stillness && typeof entry.stillness === 'object') practiceConfig.stillness = { ...entry.stillness };
 
         const practiceParamsPatch =
             entry.practiceParamsPatch && typeof entry.practiceParamsPatch === 'object'
@@ -435,6 +436,7 @@ function resolvePracticeLaunchFromProgramLeg(leg) {
     if (practiceConfigRaw.breathPattern) normalizedEntry.breathPattern = practiceConfigRaw.breathPattern;
     if (practiceConfigRaw.variant) normalizedEntry.variant = practiceConfigRaw.variant;
     if (practiceConfigRaw.circuitId) normalizedEntry.circuitId = practiceConfigRaw.circuitId;
+    if (practiceConfigRaw.stillness && typeof practiceConfigRaw.stillness === 'object') normalizedEntry.stillness = practiceConfigRaw.stillness;
 
     return resolvePracticeLaunchFromEntry(normalizedEntry);
 }
@@ -1924,6 +1926,7 @@ export function DailyPracticeCard({ onStartPractice, onViewCurriculum, onNavigat
         const isPilotLeg =
             leg?.label === 'Morning Breath' ||
             leg?.label === 'Evening Circuit' ||
+            leg?.label === 'Evening Focus Reset' ||
             leg?.practiceConfig?.circuitId === 'evening-test-circuit';
 
         const metadata = isPilotLeg

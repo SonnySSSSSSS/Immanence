@@ -33,8 +33,16 @@ export const paths = [
                 },
             },
             {
-                type: "Body Scan",
-                duration: 12,
+                type: "Breath & Stillness",
+                name: "Evening Focus Reset",
+                duration: 10,
+                stillness: {
+                    focusIntensity: "medium",
+                    focusSec: 30,
+                    restSec: 15,
+                    postDelaySec: 60,
+                    decompressionCue: "Relax. Let the focus unpack like a glacier turning into a river.",
+                },
                 guidance: {
                     audioUrl: "/audio/breathing guidance/meditation guidance 2.wav",
                     startMode: "onPracticeStart",
@@ -51,10 +59,10 @@ export const paths = [
             {
                 number: 1,
                 title: "Establish the Contract",
-                focus: "Morning resonance (10min) + Evening body scan (12min)",
+                focus: "Morning resonance (10min) + Evening Focus Reset (10min)",
                 practices: [
                     "Morning: Resonance breathing (10min)",
-                    "Evening: Body scan (12min)"
+                    "Evening: Evening Focus Reset (10min)"
                 ],
                 reading: [],
                 tracking: "Complete both daily sessions across six active days."
@@ -65,7 +73,7 @@ export const paths = [
                 focus: "Maintain the rhythm, refine body clarity and steadiness",
                 practices: [
                     "Morning: Resonance breathing (10min)",
-                    "Evening: Body scan (12min)"
+                    "Evening: Evening Focus Reset (10min)"
                 ],
                 reading: [],
                 tracking: "Final day: re-benchmark and compare your first and last attempts."

@@ -17,7 +17,7 @@ const DEFAULT_ONBOARDING_CURRICULUM_CONTENT = Object.freeze({
         title: 'Initiation Path',
         intro: 'This onboarding takes about 3 minutes.',
         paragraphs: [
-            'You are setting a fixed 14-day contract built around one morning breath leg and one evening awareness leg.',
+            'You are setting a fixed 14-day contract built around one morning breath leg and one evening focus leg.',
             'The rule is simple: show up for the sessions you commit to.',
         ],
         contractMeaning: {
@@ -34,8 +34,8 @@ const DEFAULT_ONBOARDING_CURRICULUM_CONTENT = Object.freeze({
                     description: 'Resonance breathing',
                 },
                 {
-                    label: 'Evening Circuit · 14 min',
-                    description: '7 min stillness + 7 min body scan',
+                    label: 'Evening Focus Reset · 10 min',
+                    description: 'Focus intervals followed by a 1-minute decompression.',
                 },
             ],
         },
@@ -61,7 +61,7 @@ const DEFAULT_ONBOARDING_CURRICULUM_CONTENT = Object.freeze({
         weekCards: [
             {
                 title: 'Week 1: Establish',
-                description: 'Morning breath + evening circuit every obligation day.',
+                description: 'Morning breath + evening focus reset every obligation day.',
             },
             {
                 title: 'Week 2: Consolidate',
