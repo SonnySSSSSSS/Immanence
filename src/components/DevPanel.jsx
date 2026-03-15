@@ -12,7 +12,7 @@ import { useNavigationStore } from '../state/navigationStore';
 import { useTutorialStore } from '../state/tutorialStore';
 import { normalizeStageKey } from '../config/avatarStageAssets.js';
 import { CoordinateHelper } from './dev/CoordinateHelper.jsx';
-import { TutorialEditor } from './dev/TutorialEditor.jsx';
+import { OnboardingContentEditor, TutorialEditor } from './dev/TutorialEditor.jsx';
 import { getQuickDashboardTiles, getCurriculumPracticeBreakdown, getPracticeDetailMetrics } from '../reporting/dashboardProjection.js';
 import * as devHelpers from '../utils/devHelpers.js';
 import {
@@ -169,6 +169,7 @@ export function DevPanel({
         navBtnTuner: false,
         curriculum: false,
         tracking: false,
+        onboardingContent: false,
         data: false
     });
 
@@ -1329,6 +1330,18 @@ export function DevPanel({
                         <div className="mt-4">
                             <TutorialEditor />
                         </div>
+                    </Section>
+
+                    <Section
+                        title="Onboarding Content"
+                        expanded={expandedSections.onboardingContent}
+                        onToggle={() => toggleSection('onboardingContent')}
+                        isLight={isLight}
+                    >
+                        <div className="text-[10px] text-white/45 mb-3">
+                            Edits only the externalized non-interactive onboarding steps and previews through the live onboarding renderer.
+                        </div>
+                        <OnboardingContentEditor />
                     </Section>
 
                     {/* ═══════════════════════════════════════════════════════════════ */}

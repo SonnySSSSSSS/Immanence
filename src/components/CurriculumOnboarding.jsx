@@ -15,13 +15,14 @@
 //
 // ═══════════════════════════════════════════════════════════════════════════
 
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useCurriculumStore } from '../state/curriculumStore.js';
 import { useDisplayModeStore } from '../state/displayModeStore.js';
 import { PillButton } from './ui/PillButton';
 import { PracticeTimesPicker } from './schedule/PracticeTimesPicker.jsx';
 import { DayOfWeekPicker } from './schedule/DayOfWeekPicker.jsx';
 import { RITUAL_INITIATION_14_V2 } from '../data/ritualInitiation14v2.js';
+import { ONBOARDING_CONTENT_CHANGE_EVENT, readOnboardingCurriculumContent } from '../data/onboardingCurriculumContent.js';
 import { getLocalDateKey } from '../utils/dateUtils.js';
 import { computeScheduleAnchorStartAt, normalizeAndSortTimeSlots } from '../utils/scheduleUtils.js';
 import { useBreathBenchmarkStore } from '../state/breathBenchmarkStore.js';
@@ -29,51 +30,12 @@ import { BreathBenchmark } from './BreathBenchmark.jsx';
 
 const DAY_LABELS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 const TOTAL_STEPS = 8;
-const POSTURE_IMAGES = Object.freeze([
-    {
-        src: '/tutorial/breath and stillness/straight spine 1.png',
-        alt: 'Standing breath posture with a long spine and relaxed shoulders',
-        caption: 'Standing breath: feet grounded, spine long.',
-    },
-    {
-        src: '/tutorial/breath and stillness/straight spine 2.png',
-        alt: 'Seated stillness posture with an upright but relaxed spine',
-        caption: 'Seated stillness: sit tall without hardening.',
-    },
-    {
-        src: '/tutorial/breath and stillness/straight spine 3.png',
-        alt: 'Balanced standing posture with neutral head and easy neck',
-        caption: 'Balanced stance: neck easy, chin neutral.',
-    },
-    {
-        src: '/tutorial/breath and stillness/straight spine 4.png',
-        alt: 'Aligned posture example showing relaxed shoulders and upright alignment',
-        caption: 'Aligned line: shoulders soft, body steady.',
-    },
-]);
-const FOCUS_INTENSITY_IMAGES = Object.freeze([
-    {
-        src: '/tutorial/breath and stillness/intensity 1.webp',
-        alt: 'Two people speaking in a quiet room to represent light focus intensity',
-        title: 'Light Focus',
-        analogy: 'Like a 1-on-1 conversation in a quiet room.',
-        detail: 'Low distraction load. Hold attention gently, then release fully during rest.',
-    },
-    {
-        src: '/tutorial/breath and stillness/intensity 2.webp',
-        alt: 'Two people speaking in a crowded bar to represent medium focus intensity',
-        title: 'Medium Focus',
-        analogy: 'Like a 1-on-1 conversation in a crowded bar.',
-        detail: 'More filtering is required. Keep the target clear without hardening the body.',
-    },
-    {
-        src: '/tutorial/breath and stillness/intensity 3.webp',
-        alt: 'Two workers speaking beside a construction site to represent high focus intensity',
-        title: 'High Focus',
-        analogy: 'Like a 1-on-1 conversation beside a construction site.',
-        detail: 'Narrow attention more selectively, but do not add facial tension, clenching, or strain.',
-    },
-]);
+const DEFAULT_STEP_SPACING = { compact: 'space-y-6', normal: 'space-y-8', roomy: 'space-y-10' };
+const DEFAULT_SECTION_SPACING = { compact: 'space-y-4', normal: 'space-y-5', roomy: 'space-y-6' };
+const DEFAULT_CARD_SPACING = { compact: 'space-y-3', normal: 'space-y-4', roomy: 'space-y-5' };
+const DEFAULT_LIST_SPACING = { compact: 'space-y-2', normal: 'space-y-3', roomy: 'space-y-4' };
+
+const getSpacingClass = (token, classMap) => classMap[token] || classMap.normal;
 
 const formatTimeLabel = (timeValue) => {
     if (!timeValue || typeof timeValue !== 'string') return null;
@@ -88,10 +50,10 @@ const formatTimeLabel = (timeValue) => {
 // STEP COMPONENTS
 // ═══════════════════════════════════════════════════════════════════════════
 
-function StepWelcome({ onNext, isLight }) {
+function StepWelcome({ onNext, isLight, content }) {
     return (
-        <div className="space-y-8 text-center" style={{ animation: 'fadeIn 400ms ease-out' }}>
-            <div className="space-y-5">
+        <div className={`${getSpacingClass(content.spacing?.step, DEFAULT_STEP_SPACING)} text-center`} style={{ animation: 'fadeIn 400ms ease-out' }}>
+            <div className={getSpacingClass(content.spacing?.content, DEFAULT_SECTION_SPACING)}>
                 <h1
                     className="text-2xl font-semibold tracking-wide"
                     style={{
@@ -100,25 +62,25 @@ function StepWelcome({ onNext, isLight }) {
                         textShadow: '0 0 20px var(--accent-20)',
                     }}
                 >
-                    Initiation Path
+                    {content.title}
                 </h1>
 
                 <p className="text-[16px] leading-relaxed" style={{ color: isLight ? 'rgba(60, 50, 40, 0.8)' : 'rgba(253,251,245,0.8)' }}>
-                    This onboarding takes about 3 minutes.
+                    {content.intro}
                 </p>
 
                 <div className="w-32 h-px mx-auto" style={{ background: 'linear-gradient(to right, transparent, var(--accent-40), transparent)' }} />
 
                 <p className="text-[15px] leading-relaxed" style={{ color: isLight ? 'rgba(60, 50, 40, 0.75)' : 'rgba(253,251,245,0.75)' }}>
-                    You are setting a fixed 14-day contract built around one morning breath leg and one evening awareness leg.
+                    {content.paragraphs?.[0]}
                 </p>
 
                 <p className="text-[16px] leading-relaxed font-medium" style={{ color: isLight ? 'rgba(60, 50, 40, 0.9)' : 'rgba(253,251,245,0.95)' }}>
-                    The rule is simple: show up for the sessions you commit to.
+                    {content.paragraphs?.[1]}
                 </p>
 
                 <div
-                    className="space-y-4 rounded-2xl px-4 py-4 text-left"
+                    className={`${getSpacingClass(content.spacing?.card, DEFAULT_CARD_SPACING)} rounded-2xl px-4 py-4 text-left`}
                     style={{
                         background: isLight ? 'rgba(0,0,0,0.03)' : 'rgba(255,255,255,0.04)',
                         border: `1px solid ${isLight ? 'rgba(0,0,0,0.06)' : 'rgba(255,255,255,0.08)'}`,
@@ -126,47 +88,38 @@ function StepWelcome({ onNext, isLight }) {
                 >
                     <div className="space-y-2">
                         <p className="text-[12px] uppercase tracking-widest" style={{ color: isLight ? 'rgba(60, 50, 40, 0.5)' : 'rgba(253,251,245,0.45)' }}>
-                            What the contract means
+                            {content.contractMeaning?.title}
                         </p>
-                        <p className="text-[13px] leading-relaxed" style={{ color: isLight ? 'rgba(60, 50, 40, 0.72)' : 'rgba(253,251,245,0.72)' }}>
-                            Completion is evaluated against the days and times you choose. Outside-schedule sessions are still logged, but they are not credited.
-                        </p>
+                        {(content.contractMeaning?.paragraphs || []).map((paragraph) => (
+                            <p key={paragraph} className="text-[13px] leading-relaxed" style={{ color: isLight ? 'rgba(60, 50, 40, 0.72)' : 'rgba(253,251,245,0.72)' }}>
+                                {paragraph}
+                            </p>
+                        ))}
                     </div>
 
                     <div className="space-y-3">
                         <p className="text-[12px] uppercase tracking-widest" style={{ color: isLight ? 'rgba(60, 50, 40, 0.5)' : 'rgba(253,251,245,0.45)' }}>
-                            Daily structure
+                            {content.dailyStructure?.title}
                         </p>
                         <div className="grid grid-cols-2 gap-3">
-                            <div>
-                                <p className="text-[13px] font-medium" style={{ color: isLight ? 'rgba(60, 50, 40, 0.85)' : 'rgba(253,251,245,0.85)' }}>
-                                    Morning · 10 min
-                                </p>
-                                <p className="text-[13px]" style={{ color: isLight ? 'rgba(60, 50, 40, 0.65)' : 'rgba(253,251,245,0.65)' }}>
-                                    Resonance breathing
-                                </p>
-                            </div>
-                            <div>
-                                <p className="text-[13px] font-medium" style={{ color: isLight ? 'rgba(60, 50, 40, 0.85)' : 'rgba(253,251,245,0.85)' }}>
-                                    Evening Circuit · 14 min
-                                </p>
-                                <p className="text-[13px]" style={{ color: isLight ? 'rgba(60, 50, 40, 0.65)' : 'rgba(253,251,245,0.65)' }}>
-                                    7 min stillness + 7 min body scan
-                                </p>
-                            </div>
+                            {(content.dailyStructure?.items || []).map((item) => (
+                                <div key={`${item.label}-${item.description}`}>
+                                    <p className="text-[13px] font-medium" style={{ color: isLight ? 'rgba(60, 50, 40, 0.85)' : 'rgba(253,251,245,0.85)' }}>
+                                        {item.label}
+                                    </p>
+                                    <p className="text-[13px]" style={{ color: isLight ? 'rgba(60, 50, 40, 0.65)' : 'rgba(253,251,245,0.65)' }}>
+                                        {item.description}
+                                    </p>
+                                </div>
+                            ))}
                         </div>
                     </div>
 
                     <div className="space-y-2">
                         <p className="text-[12px] uppercase tracking-widest" style={{ color: isLight ? 'rgba(60, 50, 40, 0.5)' : 'rgba(253,251,245,0.45)' }}>
-                            What this trains
+                            {content.trainingFocus?.title}
                         </p>
-                        {[
-                            'Feel your body more clearly',
-                            'Keep your attention steady',
-                            'Notice tension before it controls you',
-                            'Track where tension gathers and how attention holds each day',
-                        ].map((item) => (
+                        {(content.trainingFocus?.bulletItems || []).map((item) => (
                             <p key={item} className="text-[13px]" style={{ color: isLight ? 'rgba(60, 50, 40, 0.72)' : 'rgba(253,251,245,0.72)' }}>
                                 · {item}
                             </p>
@@ -175,7 +128,7 @@ function StepWelcome({ onNext, isLight }) {
                 </div>
 
                 <p className="text-[14px] leading-relaxed" style={{ color: isLight ? 'rgba(60, 50, 40, 0.62)' : 'rgba(253,251,245,0.62)' }}>
-                    Next you will see the 14-day arc, then the posture cues used for both breathwork and stillness.
+                    {content.calloutText}
                 </p>
             </div>
 
@@ -186,10 +139,10 @@ function StepWelcome({ onNext, isLight }) {
     );
 }
 
-function StepPostureGuidance({ onNext, onBack, isLight }) {
+function StepPostureGuidance({ onNext, onBack, isLight, content }) {
     return (
-        <div className="space-y-6 text-center" style={{ animation: 'fadeIn 400ms ease-out' }}>
-            <div className="space-y-5">
+        <div className={`${getSpacingClass(content.spacing?.step, { compact: 'space-y-5', normal: 'space-y-6', roomy: 'space-y-8' })} text-center`} style={{ animation: 'fadeIn 400ms ease-out' }}>
+            <div className={getSpacingClass(content.spacing?.cards, DEFAULT_SECTION_SPACING)}>
                 <h2
                     className="text-xl font-semibold tracking-wide"
                     style={{
@@ -197,15 +150,15 @@ function StepPostureGuidance({ onNext, onBack, isLight }) {
                         color: 'var(--accent-color)',
                     }}
                 >
-                    Posture of Practice
+                    {content.title}
                 </h2>
 
                 <p className="text-[15px] leading-relaxed" style={{ color: isLight ? 'rgba(60, 50, 40, 0.8)' : 'rgba(253,251,245,0.8)' }}>
-                    Both breathwork and stillness depend on the same principle: an upright spine that feels stable, grounded, and not rigid.
+                    {content.intro}
                 </p>
 
                 <div className="grid grid-cols-2 gap-3">
-                    {POSTURE_IMAGES.map((image) => (
+                    {(content.imageCards || []).map((image) => (
                         <figure
                             key={image.src}
                             className="rounded-2xl p-3 text-left"
@@ -224,7 +177,12 @@ function StepPostureGuidance({ onNext, onBack, isLight }) {
                                     className="w-full h-28 object-contain"
                                 />
                             </div>
-                            <figcaption className="mt-2 text-[12px] leading-relaxed" style={{ color: isLight ? 'rgba(60, 50, 40, 0.7)' : 'rgba(253,251,245,0.72)' }}>
+                            {image.label ? (
+                                <p className="mt-2 text-[11px] uppercase tracking-wide" style={{ color: isLight ? 'rgba(60, 50, 40, 0.55)' : 'rgba(253,251,245,0.55)' }}>
+                                    {image.label}
+                                </p>
+                            ) : null}
+                            <figcaption className={`${image.label ? 'mt-1' : 'mt-2'} text-[12px] leading-relaxed`} style={{ color: isLight ? 'rgba(60, 50, 40, 0.7)' : 'rgba(253,251,245,0.72)' }}>
                                 {image.caption}
                             </figcaption>
                         </figure>
@@ -232,24 +190,20 @@ function StepPostureGuidance({ onNext, onBack, isLight }) {
                 </div>
 
                 <div
-                    className="space-y-2 rounded-2xl px-4 py-4 text-left"
+                    className={`${getSpacingClass(content.spacing?.guidance, DEFAULT_LIST_SPACING)} rounded-2xl px-4 py-4 text-left`}
                     style={{
                         background: isLight ? 'rgba(0,0,0,0.03)' : 'rgba(255,255,255,0.04)',
                         border: `1px solid ${isLight ? 'rgba(0,0,0,0.06)' : 'rgba(255,255,255,0.08)'}`,
                     }}
                 >
                     <p className="text-[12px] uppercase tracking-widest" style={{ color: isLight ? 'rgba(60, 50, 40, 0.5)' : 'rgba(253,251,245,0.45)' }}>
-                        Practical guidance
+                        {content.guidanceTitle}
                     </p>
-                    <p className="text-[13px] leading-relaxed" style={{ color: isLight ? 'rgba(60, 50, 40, 0.72)' : 'rgba(253,251,245,0.72)' }}>
-                        Keep the spine upright and long, let the shoulders relax, and keep the neck easy with a neutral chin.
-                    </p>
-                    <p className="text-[13px] leading-relaxed" style={{ color: isLight ? 'rgba(60, 50, 40, 0.72)' : 'rgba(253,251,245,0.72)' }}>
-                        Standing breath posture should feel balanced rather than stiff. Seated stillness should feel grounded rather than collapsed.
-                    </p>
-                    <p className="text-[13px] leading-relaxed" style={{ color: isLight ? 'rgba(60, 50, 40, 0.72)' : 'rgba(253,251,245,0.72)' }}>
-                        Stable does not mean tense. Let the body organize around ease, then keep attention there.
-                    </p>
+                    {(content.guidanceParagraphs || []).map((paragraph) => (
+                        <p key={paragraph} className="text-[13px] leading-relaxed" style={{ color: isLight ? 'rgba(60, 50, 40, 0.72)' : 'rgba(253,251,245,0.72)' }}>
+                            {paragraph}
+                        </p>
+                    ))}
                 </div>
             </div>
 
@@ -265,10 +219,10 @@ function StepPostureGuidance({ onNext, onBack, isLight }) {
     );
 }
 
-function StepStillnessFocusIntensity({ onNext, onBack, isLight }) {
+function StepStillnessFocusIntensity({ onNext, onBack, isLight, content }) {
     return (
-        <div className="space-y-6 text-center" style={{ animation: 'fadeIn 400ms ease-out' }}>
-            <div className="space-y-5">
+        <div className={`${getSpacingClass(content.spacing?.step, { compact: 'space-y-5', normal: 'space-y-6', roomy: 'space-y-8' })} text-center`} style={{ animation: 'fadeIn 400ms ease-out' }}>
+            <div className={getSpacingClass(content.spacing?.callout, DEFAULT_SECTION_SPACING)}>
                 <h2
                     className="text-xl font-semibold tracking-wide"
                     style={{
@@ -276,33 +230,32 @@ function StepStillnessFocusIntensity({ onNext, onBack, isLight }) {
                         color: 'var(--accent-color)',
                     }}
                 >
-                    Stillness Focus Intensity
+                    {content.title}
                 </h2>
 
                 <p className="text-[14px] leading-relaxed" style={{ color: isLight ? 'rgba(60, 50, 40, 0.8)' : 'rgba(253,251,245,0.8)' }}>
-                    This page is for the stillness meditation leg of the evening practice. It teaches attentional intensity, not breathwork intensity.
+                    {content.intro}
                 </p>
 
                 <div
-                    className="space-y-2 rounded-2xl px-4 py-4 text-left"
+                    className={`${getSpacingClass(content.spacing?.callout, DEFAULT_LIST_SPACING)} rounded-2xl px-4 py-4 text-left`}
                     style={{
                         background: isLight ? 'rgba(0,0,0,0.03)' : 'rgba(255,255,255,0.04)',
                         border: `1px solid ${isLight ? 'rgba(0,0,0,0.06)' : 'rgba(255,255,255,0.08)'}`,
                     }}
                 >
                     <p className="text-[12px] uppercase tracking-widest" style={{ color: isLight ? 'rgba(60, 50, 40, 0.5)' : 'rgba(253,251,245,0.45)' }}>
-                        Interval structure
+                        {content.intervalTitle}
                     </p>
-                    <p className="text-[13px] leading-relaxed" style={{ color: isLight ? 'rgba(60, 50, 40, 0.72)' : 'rgba(253,251,245,0.72)' }}>
-                        The stillness leg alternates work and rest intervals, similar to HIIT. During active intervals, aim at the current focus stage. During short rest intervals, release effort briefly, then repeat until the stillness timer ends.
-                    </p>
-                    <p className="text-[13px] leading-relaxed" style={{ color: isLight ? 'rgba(60, 50, 40, 0.72)' : 'rgba(253,251,245,0.72)' }}>
-                        As the session progresses, the required intensity of focus rises in three stages: light, medium, then high. Rest periods are part of the method, not failure.
-                    </p>
+                    {(content.intervalParagraphs || []).map((paragraph) => (
+                        <p key={paragraph} className="text-[13px] leading-relaxed" style={{ color: isLight ? 'rgba(60, 50, 40, 0.72)' : 'rgba(253,251,245,0.72)' }}>
+                            {paragraph}
+                        </p>
+                    ))}
                 </div>
 
-                <div className="space-y-3">
-                    {FOCUS_INTENSITY_IMAGES.map((image) => (
+                <div className={getSpacingClass(content.spacing?.cards, DEFAULT_LIST_SPACING)}>
+                    {(content.imageCards || []).map((image) => (
                         <div
                             key={image.src}
                             className="rounded-2xl p-3 text-left"
@@ -324,13 +277,13 @@ function StepStillnessFocusIntensity({ onNext, onBack, isLight }) {
                                 </div>
                                 <div className="space-y-1">
                                     <p className="text-[13px] font-medium" style={{ color: isLight ? 'rgba(60, 50, 40, 0.88)' : 'rgba(253,251,245,0.88)' }}>
-                                        {image.title}
+                                        {image.label}
                                     </p>
                                     <p className="text-[12px] leading-relaxed" style={{ color: isLight ? 'rgba(60, 50, 40, 0.74)' : 'rgba(253,251,245,0.74)' }}>
-                                        {image.analogy}
+                                        {image.caption}
                                     </p>
                                     <p className="text-[12px] leading-relaxed" style={{ color: isLight ? 'rgba(60, 50, 40, 0.62)' : 'rgba(253,251,245,0.62)' }}>
-                                        {image.detail}
+                                        {image.description}
                                     </p>
                                 </div>
                             </div>
@@ -339,21 +292,20 @@ function StepStillnessFocusIntensity({ onNext, onBack, isLight }) {
                 </div>
 
                 <div
-                    className="space-y-2 rounded-2xl px-4 py-4 text-left"
+                    className={`${getSpacingClass(content.spacing?.callout, DEFAULT_LIST_SPACING)} rounded-2xl px-4 py-4 text-left`}
                     style={{
                         background: isLight ? 'rgba(0,0,0,0.03)' : 'rgba(255,255,255,0.04)',
                         border: `1px solid ${isLight ? 'rgba(0,0,0,0.06)' : 'rgba(255,255,255,0.08)'}`,
                     }}
                 >
                     <p className="text-[12px] uppercase tracking-widest" style={{ color: isLight ? 'rgba(60, 50, 40, 0.5)' : 'rgba(253,251,245,0.45)' }}>
-                        What intensity means here
+                        {content.meaningTitle}
                     </p>
-                    <p className="text-[13px] leading-relaxed" style={{ color: isLight ? 'rgba(60, 50, 40, 0.72)' : 'rgba(253,251,245,0.72)' }}>
-                        In breathwork, phases refer to breathing demand or capacity. In stillness meditation, these phases refer to attentional demand.
-                    </p>
-                    <p className="text-[13px] leading-relaxed" style={{ color: isLight ? 'rgba(60, 50, 40, 0.72)' : 'rgba(253,251,245,0.72)' }}>
-                        High intensity means narrower, more selective attention. It does not mean physical tension, facial clenching, or stressful effort.
-                    </p>
+                    {(content.meaningParagraphs || []).map((paragraph) => (
+                        <p key={paragraph} className="text-[13px] leading-relaxed" style={{ color: isLight ? 'rgba(60, 50, 40, 0.72)' : 'rgba(253,251,245,0.72)' }}>
+                            {paragraph}
+                        </p>
+                    ))}
                 </div>
             </div>
 
@@ -369,11 +321,11 @@ function StepStillnessFocusIntensity({ onNext, onBack, isLight }) {
     );
 }
 
-function StepCurriculumOverview({ onNext, onBack, isLight }) {
+function StepCurriculumOverview({ onNext, onBack, isLight, content }) {
     const curriculum = RITUAL_INITIATION_14_V2;
     
     return (
-        <div className="space-y-6 text-center" style={{ animation: 'fadeIn 400ms ease-out' }}>
+        <div className={`${getSpacingClass(content.spacing?.step, { compact: 'space-y-5', normal: 'space-y-6', roomy: 'space-y-8' })} text-center`} style={{ animation: 'fadeIn 400ms ease-out' }}>
             <h2
                 className="text-xl font-semibold tracking-wide"
                 style={{
@@ -381,35 +333,26 @@ function StepCurriculumOverview({ onNext, onBack, isLight }) {
                     color: 'var(--accent-color)',
                 }}
             >
-                The 14-Day Arc
+                {content.title}
             </h2>
 
             {/* Week Overview */}
             <div className="grid grid-cols-2 gap-4 py-2">
-                <div 
-                    className="p-4 rounded-xl text-left"
-                    style={{ 
-                        background: isLight ? 'rgba(0,0,0,0.03)' : 'rgba(255,255,255,0.05)',
-                        border: `1px solid ${isLight ? 'rgba(0,0,0,0.08)' : 'rgba(255,255,255,0.08)'}`,
-                    }}
-                >
-                    <h3 className="text-sm font-semibold mb-2" style={{ color: 'var(--accent-color)' }}>Week 1: Establish</h3>
-                    <p className="text-xs" style={{ color: isLight ? 'rgba(60, 50, 40, 0.6)' : 'rgba(253,251,245,0.6)' }}>
-                        Morning breath + evening circuit every obligation day.
-                    </p>
-                </div>
-                <div 
-                    className="p-4 rounded-xl text-left"
-                    style={{ 
-                        background: isLight ? 'rgba(0,0,0,0.03)' : 'rgba(255,255,255,0.05)',
-                        border: `1px solid ${isLight ? 'rgba(0,0,0,0.08)' : 'rgba(255,255,255,0.08)'}`,
-                    }}
-                >
-                    <h3 className="text-sm font-semibold mb-2" style={{ color: 'var(--accent-color)' }}>Week 2: Consolidate</h3>
-                    <p className="text-xs" style={{ color: isLight ? 'rgba(60, 50, 40, 0.6)' : 'rgba(253,251,245,0.6)' }}>
-                        Same structure, tighter execution, no drift.
-                    </p>
-                </div>
+                {(content.weekCards || []).map((card) => (
+                    <div 
+                        key={card.title}
+                        className="p-4 rounded-xl text-left"
+                        style={{ 
+                            background: isLight ? 'rgba(0,0,0,0.03)' : 'rgba(255,255,255,0.05)',
+                            border: `1px solid ${isLight ? 'rgba(0,0,0,0.08)' : 'rgba(255,255,255,0.08)'}`,
+                        }}
+                    >
+                        <h3 className="text-sm font-semibold mb-2" style={{ color: 'var(--accent-color)' }}>{card.title}</h3>
+                        <p className="text-xs" style={{ color: isLight ? 'rgba(60, 50, 40, 0.6)' : 'rgba(253,251,245,0.6)' }}>
+                            {card.description}
+                        </p>
+                    </div>
+                ))}
             </div>
 
             {/* Day Dots Preview */}
@@ -430,11 +373,11 @@ function StepCurriculumOverview({ onNext, onBack, isLight }) {
             </div>
 
             <p className="text-[14px] leading-relaxed" style={{ color: isLight ? 'rgba(60, 50, 40, 0.7)' : 'rgba(253,251,245,0.7)' }}>
-                Day 1 captures your baseline breath benchmark.
+                {content.paragraphs?.[0]}
             </p>
 
             <p className="text-[14px] leading-relaxed font-medium" style={{ color: isLight ? 'rgba(60, 50, 40, 0.9)' : 'rgba(253,251,245,0.9)' }}>
-                Day 14 repeats it so you can compare your change directly.
+                {content.paragraphs?.[1]}
             </p>
 
             <div className="flex gap-4 justify-center pt-2">
@@ -622,7 +565,7 @@ function StepBenchmark({ onNext, onBack, isLight, benchmarkResolved, onBenchmark
     );
 }
 
-function StepConfirm({ onComplete, onBack, selectedTimes, selectedDays, isLight, benchmarkResolved }) {
+function StepConfirm({ onComplete, onBack, selectedTimes, selectedDays, isLight, benchmarkResolved, content }) {
     const now = new Date();
     const firstSlotTime = selectedTimes?.[0] || null;
     const startAt = firstSlotTime ? computeScheduleAnchorStartAt({ now, firstSlotTime }) : null;
@@ -631,7 +574,7 @@ function StepConfirm({ onComplete, onBack, selectedTimes, selectedDays, isLight,
     const selectedTimeLabels = selectedTimes.map((timeValue) => formatTimeLabel(timeValue) || timeValue).join(' and ');
 
     return (
-        <div className="space-y-8 text-center" style={{ animation: 'fadeIn 400ms ease-out' }}>
+        <div className={`${getSpacingClass(content.spacing?.step, DEFAULT_STEP_SPACING)} text-center`} style={{ animation: 'fadeIn 400ms ease-out' }}>
             <h2
                 className="text-xl font-semibold tracking-wide"
                 style={{
@@ -639,33 +582,33 @@ function StepConfirm({ onComplete, onBack, selectedTimes, selectedDays, isLight,
                     color: 'var(--accent-color)',
                 }}
             >
-                Final Contract Summary
+                {content.title}
             </h2>
 
-            <div className="space-y-4">
+            <div className={getSpacingClass(content.spacing?.summary, DEFAULT_CARD_SPACING)}>
                 <p className="text-[15px] leading-relaxed" style={{ color: isLight ? 'rgba(60, 50, 40, 0.8)' : 'rgba(253,251,245,0.8)' }}>
-                    Your 14-day contract starts {startsTomorrow ? 'tomorrow' : 'today'}.
+                    {content.introPrefix}{startsTomorrow ? 'tomorrow' : 'today'}{content.introSuffix}
                 </p>
 
                 <p className="text-[14px]" style={{ color: isLight ? 'rgba(60, 50, 40, 0.7)' : 'rgba(253,251,245,0.7)' }}>
-                    Days: {selectedDayLabels}
+                    {content.daysLabel}: {selectedDayLabels}
                 </p>
                 <p className="text-[14px]" style={{ color: isLight ? 'rgba(60, 50, 40, 0.7)' : 'rgba(253,251,245,0.7)' }}>
-                    Times: {selectedTimeLabels}
+                    {content.timesLabel}: {selectedTimeLabels}
                 </p>
                 <p className="text-[12px]" style={{ color: isLight ? 'rgba(140, 80, 40, 0.75)' : 'rgba(255, 170, 140, 0.85)' }}>
-                    Outside these days/times is logged but not credited.
+                    {content.creditNote}
                 </p>
                 {!benchmarkResolved && (
                     <p className="text-[12px]" style={{ color: isLight ? 'rgba(180, 80, 40, 0.85)' : 'rgba(255, 180, 120, 0.95)' }}>
-                        Complete the breathing benchmark first.
+                        {content.benchmarkWarning}
                     </p>
                 )}
 
                 <div className="w-24 h-px mx-auto" style={{ background: 'linear-gradient(to right, transparent, var(--accent-40), transparent)' }} />
 
                 <p className="text-[14px] leading-relaxed italic" style={{ color: isLight ? 'rgba(60, 50, 40, 0.7)' : 'rgba(253,251,245,0.7)' }}>
-                    This is about keeping your word, one day at a time.
+                    {content.closingText}
                 </p>
             </div>
 
@@ -698,6 +641,7 @@ function StepConfirm({ onComplete, onBack, selectedTimes, selectedDays, isLight,
 export function CurriculumOnboarding({ onDismiss, onComplete }) {
     const [step, setStep] = useState(1);
     const [benchmarkResolved, setBenchmarkResolved] = useState(false);
+    const [onboardingContent, setOnboardingContent] = useState(() => readOnboardingCurriculumContent());
 
     const colorScheme = useDisplayModeStore(s => s.colorScheme);
     const isLight = colorScheme === 'light';
@@ -715,6 +659,20 @@ export function CurriculumOnboarding({ onDismiss, onComplete }) {
     const [selectedDays, setSelectedDays] = useState(
         getSelectedDaysOfWeekDraft?.() || selectedDaysOfWeekDraft || [1, 2, 3, 4, 5, 6]
     );
+
+    useEffect(() => {
+        const syncContent = () => {
+            setOnboardingContent(readOnboardingCurriculumContent());
+        };
+
+        window.addEventListener(ONBOARDING_CONTENT_CHANGE_EVENT, syncContent);
+        window.addEventListener('storage', syncContent);
+
+        return () => {
+            window.removeEventListener(ONBOARDING_CONTENT_CHANGE_EVENT, syncContent);
+            window.removeEventListener('storage', syncContent);
+        };
+    }, []);
 
     const handleSelectedDaysChange = (days) => {
         setSelectedDays(days);
@@ -792,6 +750,7 @@ export function CurriculumOnboarding({ onDismiss, onComplete }) {
                         <StepWelcome
                             onNext={() => setStep(2)}
                             isLight={isLight}
+                            content={onboardingContent.welcome}
                         />
                     )}
                     {step === 2 && (
@@ -799,6 +758,7 @@ export function CurriculumOnboarding({ onDismiss, onComplete }) {
                             onNext={() => setStep(3)}
                             onBack={() => setStep(1)}
                             isLight={isLight}
+                            content={onboardingContent.curriculumOverview}
                         />
                     )}
                     {step === 3 && (
@@ -806,6 +766,7 @@ export function CurriculumOnboarding({ onDismiss, onComplete }) {
                             onNext={() => setStep(4)}
                             onBack={() => setStep(2)}
                             isLight={isLight}
+                            content={onboardingContent.postureGuidance}
                         />
                     )}
                     {step === 4 && (
@@ -813,6 +774,7 @@ export function CurriculumOnboarding({ onDismiss, onComplete }) {
                             onNext={() => setStep(5)}
                             onBack={() => setStep(3)}
                             isLight={isLight}
+                            content={onboardingContent.stillnessFocusIntensity}
                         />
                     )}
                     {step === 5 && (
@@ -850,6 +812,7 @@ export function CurriculumOnboarding({ onDismiss, onComplete }) {
                             selectedDays={selectedDays}
                             benchmarkResolved={benchmarkResolved}
                             isLight={isLight}
+                            content={onboardingContent.confirm}
                         />
                     )}
                 </div>
