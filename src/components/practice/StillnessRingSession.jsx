@@ -156,6 +156,7 @@ export function StillnessRingSession({
     focusPhaseLabel,
     ringMode,
     isPaused,
+    supportInfoDetached: true,
   }), [
     cycleProgress01,
     focusPhaseLabel,
@@ -204,6 +205,46 @@ export function StillnessRingSession({
           }}
         >
           {focusPhaseLabel}
+        </div>
+      )}
+      {!isPaused && segmentType === "focus" && (
+        <div
+          style={{
+            position: "absolute",
+            left: "50%",
+            bottom: "calc(104px + env(safe-area-inset-bottom))",
+            transform: "translateX(-50%)",
+            zIndex: 40,
+            pointerEvents: "none",
+            width: "min(78vw, 300px)",
+            display: "flex",
+            flexDirection: "column",
+            alignItems: "center",
+            justifyContent: "center",
+            gap: "4px",
+            textAlign: "center",
+          }}
+        >
+          <div
+            style={{
+              color: "rgba(245,245,245,0.82)",
+              fontFamily: "var(--font-display)",
+              fontSize: "0.74rem",
+              letterSpacing: "0.14em",
+              textTransform: "uppercase",
+            }}
+          >
+            {String(intensity).toUpperCase()}
+          </div>
+          <div
+            style={{
+              color: "rgba(245,245,245,0.66)",
+              fontSize: "0.92rem",
+              lineHeight: 1.3,
+            }}
+          >
+            {(STILLNESS_INTENSITY_META[intensity] || STILLNESS_INTENSITY_META.medium).copy}
+          </div>
         </div>
       )}
       {!isPaused && decompressionActive && postDelaySec > 0 && (

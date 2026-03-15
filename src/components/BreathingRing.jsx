@@ -433,6 +433,7 @@ function StillnessVisualRing({ stillnessVisual, practiceActive = true }) {
   const totalRemainingSec = Math.max(0, Math.ceil(Number(stillnessVisual?.totalRemainingSec) || 0));
   const intensity = String(stillnessVisual?.intensity || "medium").toUpperCase();
   const intensityCopy = stillnessVisual?.intensityCopy || "";
+  const supportInfoDetached = Boolean(stillnessVisual?.supportInfoDetached);
   const isPaused = Boolean(stillnessVisual?.isPaused);
   const normalizedMode = normalizeRingMode(stillnessVisual?.ringMode) || "instrument";
   const isOrb = normalizedMode === "orb";
@@ -771,7 +772,7 @@ function StillnessVisualRing({ stillnessVisual, practiceActive = true }) {
                         >
                           {isPaused ? "Phase timing paused" : `Next ${nextSegmentLabel} in ${segmentRemainingSec}s`}
                         </div>
-                        {segmentType === "focus" && (
+                        {segmentType === "focus" && !supportInfoDetached && (
                           <>
                             <div
                               style={{
@@ -866,7 +867,7 @@ function StillnessVisualRing({ stillnessVisual, practiceActive = true }) {
                 >
                   {isPaused ? "Phase timing paused" : `Next ${nextSegmentLabel} in ${segmentRemainingSec}s`}
                 </div>
-                {segmentType === "focus" && (
+                {segmentType === "focus" && !supportInfoDetached && (
                   <>
                     <div
                       style={{
