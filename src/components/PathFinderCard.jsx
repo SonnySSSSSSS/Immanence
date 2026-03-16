@@ -3,6 +3,9 @@ import React from 'react';
 import { useNavigationStore } from '../state/navigationStore.js';
 import { useDisplayModeStore } from '../state/displayModeStore.js';
 
+const PATH_FINDER_CHAMFER = '18px';
+const PATH_FINDER_CLIP = `polygon(${PATH_FINDER_CHAMFER} 0, calc(100% - ${PATH_FINDER_CHAMFER}) 0, 100% ${PATH_FINDER_CHAMFER}, 100% calc(100% - ${PATH_FINDER_CHAMFER}), calc(100% - ${PATH_FINDER_CHAMFER}) 100%, ${PATH_FINDER_CHAMFER} 100%, 0 calc(100% - ${PATH_FINDER_CHAMFER}), 0 ${PATH_FINDER_CHAMFER})`;
+
 const PATH_PROMPTS = [
     {
         id: 'scattered',
@@ -68,10 +71,41 @@ export function PathFinderCard({ onPathRecommended, selectedPathId }) {
     // Collapsed state
     if (!isExpanded) {
         return (
-            <div className="im-card w-full" data-tutorial="navigation-path-finder" data-card="true" data-card-id="pathFinder">
+            <div
+                className="im-card w-full"
+                data-tutorial="navigation-path-finder"
+                data-card="true"
+                data-card-id="pathFinder"
+                style={{
+                    position: 'relative',
+                    clipPath: PATH_FINDER_CLIP,
+                    borderRadius: '28px',
+                    background: 'linear-gradient(180deg, rgba(7, 16, 24, 0.94) 0%, rgba(4, 10, 18, 0.90) 100%)',
+                    border: '1px solid rgba(112, 233, 242, 0.18)',
+                    boxShadow: '0 16px 28px rgba(0,0,0,0.3), inset 0 1px 0 rgba(168, 241, 248, 0.06)',
+                }}
+            >
+                <div
+                    aria-hidden="true"
+                    className="absolute inset-[8px] pointer-events-none"
+                    style={{
+                        clipPath: 'polygon(12px 0, calc(100% - 12px) 0, 100% 12px, 100% calc(100% - 12px), calc(100% - 12px) 100%, 12px 100%, 0 calc(100% - 12px), 0 12px)',
+                        border: '1px solid rgba(101, 211, 224, 0.10)',
+                        background: 'linear-gradient(180deg, rgba(8, 16, 24, 0.34) 0%, rgba(9, 18, 27, 0.24) 100%)',
+                    }}
+                />
+                <div
+                    aria-hidden="true"
+                    className="absolute left-0 right-0 top-0 h-px pointer-events-none"
+                    style={{
+                        background: 'linear-gradient(90deg, rgba(117, 231, 240, 0.64) 0%, rgba(117, 231, 240, 0.22) 18%, rgba(117, 231, 240, 0.1) 82%, rgba(117, 231, 240, 0.44) 100%)',
+                    }}
+                />
+                <div aria-hidden="true" className="absolute top-[10px] left-[10px] h-[14px] w-[14px] pointer-events-none" style={{ borderTop: '1px solid rgba(117, 231, 240, 0.48)', borderLeft: '1px solid rgba(117, 231, 240, 0.48)' }} />
+                <div aria-hidden="true" className="absolute top-[10px] right-[10px] h-[14px] w-[14px] pointer-events-none" style={{ borderTop: '1px solid rgba(117, 231, 240, 0.48)', borderRight: '1px solid rgba(117, 231, 240, 0.48)' }} />
                 <button
                     onClick={() => setIsExpanded(true)}
-                    className="w-full text-center py-3 rounded-xl transition-all border"
+                    className="relative z-10 w-full text-center py-3 px-4 rounded-xl transition-all border"
                     style={{
                         fontFamily: 'var(--font-body)',
                         fontSize: '13px',
@@ -80,12 +114,13 @@ export function PathFinderCard({ onPathRecommended, selectedPathId }) {
                         color: isLight ? 'rgba(60, 52, 37, 0.95)' : 'rgba(253,251,245,0.95)',
                         background: isLight
                             ? 'rgba(180, 140, 90, 0.15)'
-                            : 'rgba(253, 251, 245, 0.08)',
+                            : 'rgba(8, 18, 27, 0.28)',
                         borderColor: isLight
                             ? 'rgba(180, 140, 90, 0.3)'
-                            : 'rgba(253, 251, 245, 0.15)',
+                            : 'rgba(101, 211, 224, 0.12)',
                         backdropFilter: 'blur(4px)',
                         WebkitBackdropFilter: 'blur(4px)',
+                        margin: '10px',
                     }}
                 >
                     ✨ For path guidance, click here...
@@ -96,27 +131,50 @@ export function PathFinderCard({ onPathRecommended, selectedPathId }) {
 
     // Expanded state
     return (
-        <div className="im-card w-full" data-tutorial="navigation-path-finder" data-card="true" data-card-id="pathFinder">
+        <div
+            className="im-card w-full"
+            data-tutorial="navigation-path-finder"
+            data-card="true"
+            data-card-id="pathFinder"
+            style={{
+                position: 'relative',
+                clipPath: PATH_FINDER_CLIP,
+                borderRadius: '28px',
+                background: 'linear-gradient(180deg, rgba(7, 16, 24, 0.94) 0%, rgba(4, 10, 18, 0.90) 100%)',
+                border: '1px solid rgba(112, 233, 242, 0.18)',
+                boxShadow: '0 16px 28px rgba(0,0,0,0.3), inset 0 1px 0 rgba(168, 241, 248, 0.06)',
+            }}
+        >
             <div
-                className="relative rounded-3xl p-8 overflow-hidden"
+                aria-hidden="true"
+                className="absolute inset-[8px] pointer-events-none"
+                style={{
+                    clipPath: 'polygon(12px 0, calc(100% - 12px) 0, 100% 12px, 100% calc(100% - 12px), calc(100% - 12px) 100%, 12px 100%, 0 calc(100% - 12px), 0 12px)',
+                    border: '1px solid rgba(101, 211, 224, 0.10)',
+                    background: 'linear-gradient(180deg, rgba(8, 16, 24, 0.34) 0%, rgba(9, 18, 27, 0.24) 100%)',
+                }}
+            />
+            <div
+                aria-hidden="true"
+                className="absolute left-0 right-0 top-0 h-px pointer-events-none"
+                style={{
+                    background: 'linear-gradient(90deg, rgba(117, 231, 240, 0.64) 0%, rgba(117, 231, 240, 0.22) 18%, rgba(117, 231, 240, 0.1) 82%, rgba(117, 231, 240, 0.44) 100%)',
+                }}
+            />
+            <div aria-hidden="true" className="absolute top-[10px] left-[10px] h-[14px] w-[14px] pointer-events-none" style={{ borderTop: '1px solid rgba(117, 231, 240, 0.48)', borderLeft: '1px solid rgba(117, 231, 240, 0.48)' }} />
+            <div aria-hidden="true" className="absolute top-[10px] right-[10px] h-[14px] w-[14px] pointer-events-none" style={{ borderTop: '1px solid rgba(117, 231, 240, 0.48)', borderRight: '1px solid rgba(117, 231, 240, 0.48)' }} />
+            <div
+                className="relative rounded-3xl p-8 overflow-hidden z-10"
                 style={{
                     background: isLight
                         ? 'linear-gradient(135deg, rgba(255, 255, 255, 0.7) 0%, rgba(255, 255, 255, 0.4) 100%)'
-                        : 'linear-gradient(145deg, rgba(26, 15, 28, 0.92) 0%, rgba(21, 11, 22, 0.95) 100%)',
-                    border: isLight ? '1px solid rgba(180, 140, 90, 0.25)' : '1px solid transparent',
-                    backgroundImage: isLight ? 'none' : `
-                        linear-gradient(145deg, rgba(26, 15, 28, 0.92), rgba(21, 11, 22, 0.95)),
-                        linear-gradient(135deg, var(--accent-40) 0%, rgba(138, 43, 226, 0.2) 50%, var(--accent-30) 100%)
-                    `,
-                    backgroundOrigin: 'border-box',
-                    backgroundClip: 'padding-box, border-box',
+                        : 'linear-gradient(180deg, rgba(8, 18, 27, 0.56) 0%, rgba(5, 11, 18, 0.34) 100%)',
+                    border: isLight ? '1px solid rgba(180, 140, 90, 0.25)' : '1px solid rgba(101, 211, 224, 0.10)',
                     boxShadow: isLight
                         ? '0 10px 30px rgba(180, 140, 90, 0.15)'
                         : `
-                        0 8px 32px rgba(0, 0, 0, 0.6),
-                        0 2px 8px var(--accent-15),
-                        inset 0 1px 0 rgba(255, 255, 255, 0.08),
-                        inset 0 -3px 12px rgba(0, 0, 0, 0.4)
+                        inset 0 1px 0 rgba(168, 241, 248, 0.04),
+                        inset 0 -6px 18px rgba(0, 0, 0, 0.28)
                     `
                 }}
             >
@@ -147,7 +205,7 @@ export function PathFinderCard({ onPathRecommended, selectedPathId }) {
                         className="text-lg uppercase tracking-[0.25em] mb-4 text-center font-bold"
                         style={{
                             fontFamily: 'var(--font-display)',
-                            color: isLight ? 'rgba(180, 120, 40, 0.9)' : 'var(--accent-80)'
+                            color: isLight ? 'rgba(180, 120, 40, 0.9)' : 'rgba(170, 230, 236, 0.88)'
                         }}
                     >
                         FIND YOUR PATH
@@ -182,11 +240,11 @@ export function PathFinderCard({ onPathRecommended, selectedPathId }) {
                                     style={{
                                         borderColor: isSelected
                                             ? (isLight ? 'rgba(180, 140, 90, 0.5)' : 'var(--accent-50)')
-                                            : (isLight ? 'rgba(180, 140, 90, 0.1)' : 'var(--accent-15)'),
+                                            : (isLight ? 'rgba(180, 140, 90, 0.1)' : 'rgba(101, 211, 224, 0.10)'),
                                         background: isSelected
-                                            ? (isLight ? 'rgba(180, 140, 90, 0.1)' : 'var(--accent-10)')
-                                            : (isLight ? 'rgba(255, 255, 255, 0.3)' : 'rgba(253, 251, 245, 0.02)'),
-                                        boxShadow: isSelected && !isLight ? '0 0 15px var(--accent-10)' : 'none'
+                                            ? (isLight ? 'rgba(180, 140, 90, 0.1)' : 'rgba(78, 214, 226, 0.08)')
+                                            : (isLight ? 'rgba(255, 255, 255, 0.3)' : 'rgba(8, 18, 27, 0.48)'),
+                                        boxShadow: isSelected && !isLight ? '0 0 15px rgba(78, 214, 226, 0.08)' : 'none'
                                     }}
                                 >
                                     {/* Radio Circle */}
@@ -232,14 +290,14 @@ export function PathFinderCard({ onPathRecommended, selectedPathId }) {
 
                     {/* Recommendation */}
                     {selectedPrompt && (
-                        <div
-                            className="text-center py-3 px-4 rounded-xl border"
-                            style={{
-                                animation: 'fadeIn 300ms ease-out',
-                                background: isLight ? 'rgba(180, 140, 90, 0.1)' : 'var(--accent-10)',
-                                borderColor: isLight ? 'rgba(180, 140, 90, 0.2)' : 'var(--accent-15)'
-                            }}
-                        >
+                            <div
+                                className="text-center py-3 px-4 rounded-xl border"
+                                style={{
+                                    animation: 'fadeIn 300ms ease-out',
+                                    background: isLight ? 'rgba(180, 140, 90, 0.1)' : 'rgba(78, 214, 226, 0.08)',
+                                    borderColor: isLight ? 'rgba(180, 140, 90, 0.2)' : 'rgba(101, 211, 224, 0.12)'
+                                }}
+                            >
                             <p
                                 className="text-sm"
                                 style={{

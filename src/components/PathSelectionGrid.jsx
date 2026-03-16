@@ -7,6 +7,9 @@ import { getResumableNavigationPathId, useCurriculumStore } from '../state/curri
 import { ThoughtDetachmentOnboarding } from './ThoughtDetachmentOnboarding.jsx';
 import { getPathContract } from '../utils/pathContract.js';
 
+const PATH_CARD_CHAMFER = '16px';
+const PATH_CARD_CLIP = `polygon(${PATH_CARD_CHAMFER} 0, calc(100% - ${PATH_CARD_CHAMFER}) 0, 100% ${PATH_CARD_CHAMFER}, 100% calc(100% - ${PATH_CARD_CHAMFER}), calc(100% - ${PATH_CARD_CHAMFER}) 100%, ${PATH_CARD_CHAMFER} 100%, 0 calc(100% - ${PATH_CARD_CHAMFER}), 0 ${PATH_CARD_CHAMFER})`;
+
 export function PathSelectionGrid({ onPathSelected, selectedPathId }) {
     const allPaths = getAllPaths();
     const paths = allPaths.filter((p) => p.id === 'initiation');
@@ -90,15 +93,16 @@ export function PathSelectionGrid({ onPathSelected, selectedPathId }) {
                                 disabled={isPlaceholder}
                                 className="relative px-3 py-5 sm:px-4 sm:py-6 rounded-3xl border transition-all text-left overflow-hidden group"
                                 style={{
+                                    clipPath: PATH_CARD_CLIP,
                                     background: isLight
                                         ? 'linear-gradient(145deg, rgba(255, 255, 255, 0.8) 0%, rgba(255, 255, 255, 0.5) 100%)'
-                                        : 'linear-gradient(145deg, rgba(26, 15, 28, 0.92) 0%, rgba(21, 11, 22, 0.95) 100%)',
+                                        : 'linear-gradient(180deg, rgba(7, 16, 24, 0.95) 0%, rgba(4, 10, 18, 0.92) 100%)',
                                     borderColor: hasActivePathMatch
-                                        ? '#D4A84A'
+                                        ? 'rgba(128, 230, 238, 0.42)'
                                         : isLight
                                             ? 'rgba(180, 140, 90, 0.15)'
-                                            : 'transparent',
-                                    borderWidth: hasActivePathMatch ? '3px' : '1px',
+                                            : 'rgba(112, 233, 242, 0.16)',
+                                    borderWidth: '1px',
                                     backgroundImage: isLight
                                         ? isPlaceholder
                                             ? 'linear-gradient(145deg, rgba(255, 255, 255, 0.3), rgba(0, 0, 0, 0.02))'
@@ -108,27 +112,21 @@ export function PathSelectionGrid({ onPathSelected, selectedPathId }) {
                                                     ? 'linear-gradient(145deg, rgba(255, 255, 255, 0.95), rgba(180, 140, 90, 0.05))'
                                                     : 'linear-gradient(145deg, rgba(255, 255, 255, 0.7), rgba(0, 0, 0, 0.01))'
                                         : isPlaceholder
-                                            ? `linear-gradient(145deg, rgba(26, 15, 28, 0.5), rgba(21, 11, 22, 0.6)),
-                                               linear-gradient(135deg, rgba(128, 128, 128, 0.2) 0%, rgba(128, 128, 128, 0.1) 50%, rgba(128, 128, 128, 0.15) 100%)`
+                                            ? 'linear-gradient(180deg, rgba(7, 16, 24, 0.64), rgba(4, 10, 18, 0.72))'
                                             : isSelected
-                                                ? `linear-gradient(145deg, rgba(26, 15, 28, 0.92), rgba(21, 11, 22, 0.95)),
-                                                   linear-gradient(135deg, rgba(212, 168, 74, 0.3) 0%, rgba(212, 168, 74, 0.15) 50%, rgba(212, 168, 74, 0.25) 100%)`
+                                                ? 'linear-gradient(180deg, rgba(9, 20, 30, 0.96), rgba(5, 12, 19, 0.94))'
                                                 : isActive
-                                                    ? `linear-gradient(145deg, rgba(26, 15, 28, 0.92), rgba(21, 11, 22, 0.95)),
-                                                       linear-gradient(135deg, var(--accent-50) 0%, var(--accent-40) 50%, var(--accent-50) 100%)`
-                                                    : `linear-gradient(145deg, rgba(26, 15, 28, 0.92), rgba(21, 11, 22, 0.95)),
-                                                       linear-gradient(135deg, var(--accent-40) 0%, rgba(138, 43, 226, 0.2) 50%, var(--accent-30) 100%)`,
-                                    backgroundOrigin: 'border-box',
-                                    backgroundClip: 'padding-box, border-box',
+                                                    ? 'linear-gradient(180deg, rgba(8, 18, 28, 0.95), rgba(5, 11, 18, 0.93))'
+                                                    : 'linear-gradient(180deg, rgba(7, 16, 24, 0.95), rgba(4, 10, 18, 0.92))',
                                     boxShadow: isLight
                                         ? hasActivePathMatch
                                             ? '0 0 30px rgba(212, 168, 74, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.8)'
                                             : '0 4px 12px rgba(0, 0, 0, 0.03), inset 0 1px 0 rgba(255, 255, 255, 0.5)'
                                         : hasActivePathMatch
-                                            ? '0 0 40px rgba(212, 168, 74, 0.5), 0 0 60px rgba(212, 168, 74, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.12), inset 0 -3px 12px rgba(0, 0, 0, 0.4)'
+                                            ? '0 0 22px rgba(78, 214, 226, 0.12), inset 0 1px 0 rgba(168, 241, 248, 0.10), inset 0 -6px 18px rgba(0, 0, 0, 0.30)'
                                             : isPlaceholder
-                                                ? '0 4px 16px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.03), inset 0 -3px 12px rgba(0, 0, 0, 0.3)'
-                                                : '0 8px 32px rgba(0, 0, 0, 0.6), 0 2px 8px var(--accent-10), inset 0 1px 0 rgba(255, 255, 255, 0.08), inset 0 -3px 12px rgba(0, 0, 0, 0.4)',
+                                                ? '0 4px 16px rgba(0, 0, 0, 0.32), inset 0 1px 0 rgba(168, 241, 248, 0.03), inset 0 -3px 12px rgba(0, 0, 0, 0.3)'
+                                                : '0 12px 24px rgba(0, 0, 0, 0.34), inset 0 1px 0 rgba(168, 241, 248, 0.06), inset 0 -6px 18px rgba(0, 0, 0, 0.30)',
                                     opacity: isPlaceholder ? 0.4 : 1,
                                     cursor: isPlaceholder ? 'not-allowed' : 'pointer'
                                 }}
@@ -147,15 +145,33 @@ export function PathSelectionGrid({ onPathSelected, selectedPathId }) {
                                     }
                                 }}
                             >
+                            <div
+                                aria-hidden="true"
+                                className="absolute inset-[6px] pointer-events-none"
+                                style={{
+                                    clipPath: 'polygon(10px 0, calc(100% - 10px) 0, 100% 10px, 100% calc(100% - 10px), calc(100% - 10px) 100%, 10px 100%, 0 calc(100% - 10px), 0 10px)',
+                                    border: '1px solid rgba(101, 211, 224, 0.10)',
+                                    background: 'linear-gradient(180deg, rgba(8, 16, 24, 0.18) 0%, rgba(6, 12, 19, 0.06) 100%)',
+                                }}
+                            />
+                            <div
+                                aria-hidden="true"
+                                className="absolute left-0 right-0 top-0 h-px pointer-events-none"
+                                style={{
+                                    background: 'linear-gradient(90deg, rgba(117, 231, 240, 0.64) 0%, rgba(117, 231, 240, 0.22) 18%, rgba(117, 231, 240, 0.1) 82%, rgba(117, 231, 240, 0.44) 100%)',
+                                }}
+                            />
+                            <div aria-hidden="true" className="absolute top-[8px] left-[8px] h-[12px] w-[12px] pointer-events-none" style={{ borderTop: '1px solid rgba(117, 231, 240, 0.42)', borderLeft: '1px solid rgba(117, 231, 240, 0.42)' }} />
+                            <div aria-hidden="true" className="absolute top-[8px] right-[8px] h-[12px] w-[12px] pointer-events-none" style={{ borderTop: '1px solid rgba(117, 231, 240, 0.42)', borderRight: '1px solid rgba(117, 231, 240, 0.42)' }} />
                             {/* Volcanic glass texture overlay */}
                             <div
                                 className="absolute inset-0 pointer-events-none rounded-2xl"
                                 style={{
                                     background: `
-                                        radial-gradient(circle at 30% 20%, rgba(255, 255, 255, 0.02) 0%, transparent 50%),
-                                        repeating-linear-gradient(45deg, transparent, transparent 3px, rgba(0, 0, 0, 0.015) 3px, rgba(0, 0, 0, 0.015) 6px)
+                                        radial-gradient(circle at 24% 18%, rgba(78, 214, 226, 0.05) 0%, transparent 42%),
+                                        linear-gradient(180deg, rgba(8, 16, 24, 0.08) 0%, transparent 100%)
                                     `,
-                                    opacity: 0.7
+                                    opacity: 0.9
                                 }}
                             />
 
