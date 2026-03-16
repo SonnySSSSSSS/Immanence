@@ -253,14 +253,14 @@ function ChapterModal({
                   : "rgba(253,251,245,0.4)",
               }}
             >
-              {isBookmarked ? "â˜…" : "â˜†"}
+              {isBookmarked ? "\u2605" : "\u2606"}
             </button>
             <button
               onClick={onClose}
               className="text-xl w-9 h-9 flex items-center justify-center rounded-full transition-all"
               style={{ color: "rgba(253,251,245,0.5)" }}
             >
-              âœ•
+              {"\u2715"}
             </button>
           </div>
         </div>
@@ -390,13 +390,13 @@ function ChapterModal({
             }}
             disabled={!hasPrev}
           >
-            â† Previous
+            {"\u2190"} Previous
           </button>
           <div
             className="text-[10px] uppercase tracking-[0.15em]"
             style={{ color: "rgba(253,251,245,0.4)" }}
           >
-            Press â† â†’ to navigate â€¢ Esc to close
+            Press {"\u2190"} {"\u2192"} to navigate {"\u2022"} Esc to close
           </div>
           <button
             onClick={() => hasNext && onNavigate(allChapters[currentIndex + 1])}
@@ -409,7 +409,7 @@ function ChapterModal({
             }}
             disabled={!hasNext}
           >
-            Next â†’
+            Next {"\u2192"}
           </button>
         </div>
       </div>
@@ -532,7 +532,7 @@ function PartAccordion({
 }) {
   const chapterCount = chapters.length;
   const rangeText = part.chapterRange
-    ? `Ch ${part.chapterRange[0]}â€“${part.chapterRange[1]} `
+    ? `Ch ${part.chapterRange[0]}\u2013${part.chapterRange[1]} `
     : "";
 
   return (
@@ -557,7 +557,7 @@ function PartAccordion({
                 transform: isExpanded ? "rotate(90deg)" : "rotate(0deg)",
               }}
             >
-              â€º
+              {"\u203a"}
             </span>
           )}
           <div>
@@ -659,7 +659,7 @@ function PartAccordion({
                         : "rgba(253,251,245,0.3)",
                     }}
                   >
-                    {isBookmarked ? "â˜…" : "â˜†"}
+                    {isBookmarked ? "\u2605" : "\u2606"}
                   </button>
                 </div>
               </button>
@@ -972,7 +972,7 @@ export function WisdomSection() {
                 animation: "pulse 3s ease-in-out infinite",
               }}
             >
-              âœ§
+              {"\u2727"}
             </div>
             <div
               className="text-[14px] italic mb-2"
@@ -1092,7 +1092,7 @@ export function WisdomSection() {
                   filter: "drop-shadow(0 0 6px var(--accent-glow))",
                 }}
               >
-                â˜…
+                {"\u2605"}
               </div>
 
               <div className="flex items-start justify-between gap-3 pl-4">
@@ -1121,7 +1121,7 @@ export function WisdomSection() {
                   style={{ color: "rgba(255,200,200,0.8)" }}
                   title="Remove from constellation"
                 >
-                  âœ•
+                  {"\u2715"}
                 </button>
               </div>
             </button>
@@ -1144,7 +1144,10 @@ export function WisdomSection() {
   // VIDEOS VIEW - Now uses VideoLibrary component
   // â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   const renderVideosView = () => (
-    <WisdomCardHousing cardId="wisdom:videosPanel">
+    <WisdomCardHousing
+      cardId="wisdom:videosPanel"
+      contentClassName="px-3 py-3 sm:px-4 sm:py-4"
+    >
       <VideoLibrary
         initialVideoId={initialVideoId}
         initialVideoBudgetMin={initialVideoBudgetMin}
@@ -1257,7 +1260,7 @@ export function WisdomSection() {
                   transition: "transform 200ms ease-out",
                 }}
               >
-                â–¼
+                {"\u25bc"}
               </span>
             </button>
           </div>

@@ -30,16 +30,18 @@ function VideoHearth({ video, isPlaying, setIsPlaying, isTransitioning, onClear,
         <section
             className="w-full flex flex-col items-center justify-center px-4 pt-4 pb-8 relative z-10"
             style={{
-                // Solid background to hide decorative elements
                 background: isLight
-                    ? 'rgba(250, 245, 235, 0.98)'
-                    : 'rgba(10,10,15,0.98)',
-                // Subtle warmth when playing
+                    ? 'rgba(244, 249, 250, 0.92)'
+                    : 'linear-gradient(180deg, rgba(6, 14, 22, 0.88) 0%, rgba(5, 11, 18, 0.94) 100%)',
+                border: isLight
+                    ? '1px solid rgba(91, 165, 177, 0.18)'
+                    : '1px solid rgba(101, 211, 224, 0.12)',
+                borderRadius: '20px',
                 boxShadow: isPlaying
                     ? isLight
-                        ? 'inset 0 0 80px rgba(180, 140, 100, 0.15)'
-                        : 'inset 0 0 80px rgba(255,120,40,0.08)'
-                    : 'none',
+                        ? 'inset 0 0 60px rgba(91, 165, 177, 0.08)'
+                        : 'inset 0 0 60px rgba(78, 214, 226, 0.06)'
+                    : 'inset 0 1px 0 rgba(168, 241, 248, 0.04)',
                 transition: 'all 0.5s ease',
             }}
         >
@@ -48,13 +50,13 @@ function VideoHearth({ video, isPlaying, setIsPlaying, isTransitioning, onClear,
                 className="w-full max-w-3xl rounded-xl overflow-hidden relative"
                 style={{
                     aspectRatio: '16 / 9',
-                    background: '#0a0a0f',
+                    background: '#071019',
                     boxShadow: video
-                        ? '0 0 60px rgba(255,100,30,0.25), 0 0 120px rgba(255,80,20,0.15), 0 25px 50px rgba(0,0,0,0.5)'
-                        : '0 25px 50px rgba(0,0,0,0.5)',
+                        ? '0 0 28px rgba(78, 214, 226, 0.10), 0 20px 42px rgba(0,0,0,0.42)'
+                        : '0 20px 42px rgba(0,0,0,0.42)',
                     border: video
-                        ? '2px solid rgba(255,120,40,0.4)'
-                        : '1px solid rgba(255,255,255,0.06)',
+                        ? '1px solid rgba(101, 211, 224, 0.26)'
+                        : '1px solid rgba(101, 211, 224, 0.12)',
                     transition: 'all 0.5s ease',
                 }}
             >
@@ -78,7 +80,7 @@ function VideoHearth({ video, isPlaying, setIsPlaying, isTransitioning, onClear,
                             className="w-full h-full object-contain"
                             style={{
                                 colorScheme: 'dark',
-                                backgroundColor: '#0a0a0f'
+                            backgroundColor: '#071019'
                             }}
                             controls
                             onPlay={() => setIsPlaying(true)}
@@ -104,8 +106,8 @@ function VideoHearth({ video, isPlaying, setIsPlaying, isTransitioning, onClear,
                         onClick={onClear}
                         className="absolute top-3 right-3 z-20 w-8 h-8 rounded-full flex items-center justify-center transition-all opacity-40 hover:opacity-100"
                         style={{
-                            background: 'rgba(0,0,0,0.6)',
-                            border: '1px solid rgba(255,255,255,0.2)',
+                            background: 'rgba(6, 14, 22, 0.86)',
+                            border: '1px solid rgba(101, 211, 224, 0.18)',
                         }}
                         title="Clear video"
                     >
@@ -167,22 +169,22 @@ function VideoToken({ video, isSelected, onClick, isLight }) {
             style={{
                 background: isSelected
                     ? isLight
-                        ? 'rgba(180, 140, 100, 0.2)'
-                        : 'rgba(255,140,50,0.1)'
+                        ? 'rgba(120, 202, 214, 0.16)'
+                        : 'rgba(78, 214, 226, 0.08)'
                     : isLight
-                        ? 'rgba(80, 60, 40, 0.08)'
-                        : 'rgba(255,255,255,0.02)',
+                        ? 'rgba(82, 124, 132, 0.07)'
+                        : 'rgba(10, 18, 26, 0.72)',
                 borderColor: isSelected
                     ? isLight
-                        ? 'rgba(180, 140, 100, 0.6)'
-                        : 'rgba(255,140,50,0.5)'
+                        ? 'rgba(97, 177, 190, 0.42)'
+                        : 'rgba(101, 211, 224, 0.28)'
                     : isLight
-                        ? 'rgba(80, 60, 40, 0.2)'
-                        : 'rgba(255,255,255,0.08)',
+                        ? 'rgba(91, 165, 177, 0.18)'
+                        : 'rgba(101, 211, 224, 0.10)',
                 boxShadow: isSelected
                     ? isLight
-                        ? '0 0 20px rgba(180, 140, 100, 0.3)'
-                        : '0 0 20px rgba(255,120,40,0.2)'
+                        ? '0 0 16px rgba(91, 165, 177, 0.16)'
+                        : '0 0 18px rgba(78, 214, 226, 0.08)'
                     : 'none',
                 transform: isSelected ? 'scale(1.02)' : 'scale(1)',
             }}
@@ -192,8 +194,8 @@ function VideoToken({ video, isSelected, onClick, isLight }) {
                 <span
                     className="text-sm"
                     style={{ color: isSelected 
-                        ? isLight ? 'rgba(140, 100, 60, 0.9)' : 'rgba(255,180,100,0.9)' 
-                        : isLight ? 'rgba(80, 60, 40, 0.5)' : 'rgba(255,255,255,0.3)' 
+                        ? isLight ? 'rgba(72, 136, 146, 0.9)' : 'rgba(152, 232, 238, 0.86)' 
+                        : isLight ? 'rgba(80, 60, 40, 0.5)' : 'rgba(170, 230, 236, 0.34)' 
                     }}
                 >
                     {icon}
@@ -201,8 +203,8 @@ function VideoToken({ video, isSelected, onClick, isLight }) {
                 <span
                     className="text-[9px] font-mono"
                     style={{ color: isSelected 
-                        ? isLight ? 'rgba(140, 100, 60, 0.8)' : 'rgba(255,180,100,0.7)' 
-                        : isLight ? 'rgba(80, 60, 40, 0.5)' : 'rgba(255,255,255,0.3)' 
+                        ? isLight ? 'rgba(72, 136, 146, 0.78)' : 'rgba(152, 232, 238, 0.7)' 
+                        : isLight ? 'rgba(80, 60, 40, 0.5)' : 'rgba(170, 230, 236, 0.28)' 
                     }}
                 >
                     {video.duration}
@@ -213,8 +215,8 @@ function VideoToken({ video, isSelected, onClick, isLight }) {
                 className="text-[11px] leading-tight line-clamp-2"
                 style={{
                     color: isSelected 
-                        ? isLight ? 'rgba(80, 60, 40, 0.95)' : 'rgba(255,220,180,0.95)' 
-                        : isLight ? 'rgba(80, 60, 40, 0.8)' : 'rgba(255,255,255,0.6)',
+                        ? isLight ? 'rgba(40, 66, 72, 0.95)' : 'rgba(233, 252, 255, 0.92)' 
+                        : isLight ? 'rgba(80, 60, 40, 0.8)' : 'rgba(225, 239, 242, 0.58)',
                     fontFamily: 'var(--font-display)',
                     fontWeight: 600,
                     letterSpacing: 'var(--tracking-wide)',
@@ -276,18 +278,18 @@ function OfferingBand({ label, videos, activeVideoId, onSelect, isLight }) {
                     <div
                         className="text-[10px] uppercase tracking-[0.2em]"
                         style={{
-                            color: isLight ? 'rgba(140, 100, 60, 0.85)' : 'rgba(255,200,120,0.7)',
+                            color: isLight ? 'rgba(72, 136, 146, 0.84)' : 'rgba(170, 230, 236, 0.72)',
                             fontFamily: 'var(--font-display)',
                             fontWeight: 600,
                             letterSpacing: 'var(--tracking-mythic)',
                         }}
                     >
-                        ▶ {label}
+                        {`\u25b8 ${label}`}
                     </div>
                     {label === 'Featured' && (
                         <div
                             className="text-[8px] italic mt-0.5"
-                            style={{ color: isLight ? 'rgba(100, 80, 60, 0.5)' : 'rgba(255,200,120,0.4)' }}
+                            style={{ color: isLight ? 'rgba(100, 80, 60, 0.5)' : 'rgba(170, 230, 236, 0.38)' }}
                         >
                             Curated picks
                         </div>
@@ -295,7 +297,7 @@ function OfferingBand({ label, videos, activeVideoId, onSelect, isLight }) {
                     {label === 'Library' && (
                         <div
                             className="text-[8px] italic mt-0.5"
-                            style={{ color: isLight ? 'rgba(100, 80, 60, 0.5)' : 'rgba(255,200,120,0.4)' }}
+                            style={{ color: isLight ? 'rgba(100, 80, 60, 0.5)' : 'rgba(170, 230, 236, 0.38)' }}
                         >
                             All videos
                         </div>
@@ -309,26 +311,26 @@ function OfferingBand({ label, videos, activeVideoId, onSelect, isLight }) {
                         disabled={!canScrollLeft}
                         className="w-6 h-6 rounded-full flex items-center justify-center transition-all"
                         style={{
-                            background: canScrollLeft ? 'rgba(255,180,100,0.15)' : 'transparent',
-                            color: canScrollLeft ? 'rgba(255,180,100,0.8)' : 'rgba(255,255,255,0.2)',
+                            background: canScrollLeft ? 'rgba(78, 214, 226, 0.12)' : 'transparent',
+                            color: canScrollLeft ? 'rgba(152, 232, 238, 0.76)' : 'rgba(255,255,255,0.2)',
                             cursor: canScrollLeft ? 'pointer' : 'default',
                             opacity: canScrollLeft ? 0.7 : 0.15,
                         }}
                     >
-                        ←
+                        {'\u2190'}
                     </button>
                     <button
                         onClick={() => scroll('right')}
                         disabled={!canScrollRight}
                         className="w-6 h-6 rounded-full flex items-center justify-center transition-all"
                         style={{
-                            background: canScrollRight ? 'rgba(255,180,100,0.15)' : 'transparent',
-                            color: canScrollRight ? 'rgba(255,180,100,0.8)' : 'rgba(255,255,255,0.2)',
+                            background: canScrollRight ? 'rgba(78, 214, 226, 0.12)' : 'transparent',
+                            color: canScrollRight ? 'rgba(152, 232, 238, 0.76)' : 'rgba(255,255,255,0.2)',
                             cursor: canScrollRight ? 'pointer' : 'default',
                             opacity: canScrollRight ? 0.7 : 0.15,
                         }}
                     >
-                        →
+                        {'\u2192'}
                     </button>
                 </div>
             </div>
@@ -395,7 +397,7 @@ function AshFadeBoundary() {
         <div
             className="h-24 pointer-events-none"
             style={{
-                background: 'linear-gradient(to top, rgba(20,15,12,0.8), transparent)',
+                background: 'linear-gradient(to top, rgba(7, 14, 20, 0.8), transparent)',
             }}
         />
     );
@@ -475,8 +477,15 @@ export function VideoLibrary({ initialVideoId = null, initialVideoBudgetMin = nu
             style={{
                 background: isLight
                     ? 'rgba(250, 245, 235, 1)'
-                    : 'rgba(10,10,15,1)', // Fully opaque
-                zIndex: 50 // Above PathParticles and other decorations
+                    : 'linear-gradient(180deg, rgba(7, 14, 21, 0.88) 0%, rgba(4, 9, 16, 0.92) 100%)',
+                border: isLight
+                    ? '1px solid rgba(91, 165, 177, 0.16)'
+                    : '1px solid rgba(101, 211, 224, 0.10)',
+                borderRadius: '22px',
+                boxShadow: isLight
+                    ? 'inset 0 1px 0 rgba(255,255,255,0.45)'
+                    : 'inset 0 1px 0 rgba(168, 241, 248, 0.04)',
+                zIndex: 50
             }}
         >
             {/* THE HEARTH - Always at top, fixed size */}
