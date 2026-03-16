@@ -9,7 +9,7 @@ import { useUiStore } from '../state/uiStore.js';
 import { useTheme } from '../context/ThemeContext.jsx';
 import { getPathById } from '../data/navigationData.js';
 import { addDaysToDateKey, getLocalDateKey, parseDateKeyToUtcMs } from '../utils/dateUtils.js';
-import { getStartWindowState, localDateTimeFromDateKeyAndTime, normalizeAndSortTimeSlots } from '../utils/scheduleUtils.js';
+import { computeScheduleAnchorStartAt, getStartWindowState, localDateTimeFromDateKeyAndTime, normalizeAndSortTimeSlots } from '../utils/scheduleUtils.js';
 import { CurriculumPrecisionRail } from './infographics/CurriculumPrecisionRail.jsx';
 import { getProgramDefinition, getProgramDay } from '../data/programRegistry.js';
 import { isUiPickingActive } from '../dev/uiControlsCaptureManager.js';
@@ -472,10 +472,14 @@ export function DailyPracticeCard({ onStartPractice, onViewCurriculum, onNavigat
 
     const startDayKey = useMemo(() => {
         if (!activePath?.startedAt) return todayKey;
-        const d = new Date(activePath.startedAt);
+        const d = computeScheduleAnchorStartAt({
+            now: new Date(activePath.startedAt),
+            firstSlotTime: times[0] ?? null,
+            selectedDaysOfWeek: frozenActiveDays,
+        });
         if (Number.isNaN(d.getTime())) return todayKey;
         return getLocalDateKey(d);
-    }, [activePath?.startedAt, todayKey]);
+    }, [activePath?.startedAt, frozenActiveDays, times, todayKey]);
 
     const displayDayKey = useMemo(() => {
         if (times.length === 0 || !activePath?.startedAt) return todayKey;
@@ -657,8 +661,11 @@ export function DailyPracticeCard({ onStartPractice, onViewCurriculum, onNavigat
         return getProgramDay(programId, scheduledDayIndex);
     }, [activePathObj?.tracking?.curriculumId, scheduledDayIndex]);
 
+    const isBeforePathStart = startDayKey > todayKey;
+    // NEVER CHANGE THIS: if the first scheduled path day is still in the future,
+    // the visible day meter must stay at 0 until that date actually arrives.
     const pathDayIndexDisplay = Number.isFinite(Number(metrics?.dayIndex))
-        ? Number(metrics.dayIndex)
+        ? (isBeforePathStart ? 0 : Number(metrics.dayIndex))
         : 1;
 
     const pathDayProgressRatio = metrics.durationDays > 0 ? pathDayIndexDisplay / metrics.durationDays : 0;
@@ -861,8 +868,6 @@ export function DailyPracticeCard({ onStartPractice, onViewCurriculum, onNavigat
         practiceTimeSlots: storePracticeTimeSlots,
         lastSessionFailed,
         clearLastSessionFailed,
-        activePracticeSession = null,
-        legCompletions = null,
     } = useCurriculumStore();
 
     const onboardingComplete = onboardingCompleteProp ?? storeOnboardingComplete;
@@ -1552,7 +1557,6 @@ export function DailyPracticeCard({ onStartPractice, onViewCurriculum, onNavigat
     const todaysPractice = getTodaysPractice();
     const streak = getStreak();
     const legs = getDayLegsWithStatus(dayNumber);
-    const hasStartedCurriculum = !!activePracticeSession || (legCompletions && Object.keys(legCompletions).length > 0);
 
     // Use *days* for "DAY X OF Y" (not total legs/sessions).
     // Priority: program duration (when curriculum is active) > path duration > fallback
@@ -1576,19 +1580,24 @@ export function DailyPracticeCard({ onStartPractice, onViewCurriculum, onNavigat
         return 14;
     })();
 
-    const dayIndexDisplay = activePathObj ? pathDayIndexDisplay : (hasStartedCurriculum ? dayNumber : 0);
-    const dayProgressRatio = (() => {
-        const n = Number(dayIndexDisplay);
-        const d = Number(totalDaysDisplay);
-        if (!Number.isFinite(n) || !Number.isFinite(d) || d <= 0) return 0;
-        return Math.max(0, Math.min(1, n / d));
-    })();
-
     const curriculumStartKey = (() => {
         if (!curriculumStartDate) return getLocalDateKey();
         const d = new Date(curriculumStartDate);
         if (Number.isNaN(d.getTime())) return getLocalDateKey();
         return getLocalDateKey(d);
+    })();
+    const isBeforeCurriculumStart = curriculumStartKey > getLocalDateKey();
+
+    // NEVER CHANGE THIS: pre-start dates must render as 0/14 even if stale session/progress state exists.
+    // Day 1 starts on the scheduled curriculum date itself, never before it.
+    const dayIndexDisplay = activePathObj
+        ? pathDayIndexDisplay
+        : (isBeforeCurriculumStart ? 0 : dayNumber);
+    const dayProgressRatio = (() => {
+        const n = Number(dayIndexDisplay);
+        const d = Number(totalDaysDisplay);
+        if (!Number.isFinite(n) || !Number.isFinite(d) || d <= 0) return 0;
+        return Math.max(0, Math.min(1, n / d));
     })();
 
     const practiceDayKey = addDaysToDateKey(curriculumStartKey, Math.max(0, (dayNumber || 1) - 1)) || getLocalDateKey();

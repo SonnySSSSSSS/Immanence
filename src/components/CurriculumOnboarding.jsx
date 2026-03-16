@@ -568,7 +568,13 @@ function StepBenchmark({ onNext, onBack, isLight, benchmarkResolved, onBenchmark
 function StepConfirm({ onComplete, onBack, selectedTimes, selectedDays, isLight, benchmarkResolved, content }) {
     const now = new Date();
     const firstSlotTime = selectedTimes?.[0] || null;
-    const startAt = firstSlotTime ? computeScheduleAnchorStartAt({ now, firstSlotTime }) : null;
+    const startAt = firstSlotTime
+        ? computeScheduleAnchorStartAt({
+            now,
+            firstSlotTime,
+            selectedDaysOfWeek: selectedDays,
+        })
+        : null;
     const startsTomorrow = !!startAt && getLocalDateKey(startAt) !== getLocalDateKey(now);
     const selectedDayLabels = (selectedDays || []).map((d) => DAY_LABELS[d]).filter(Boolean).join(' ');
     const selectedTimeLabels = selectedTimes.map((timeValue) => formatTimeLabel(timeValue) || timeValue).join(' and ');

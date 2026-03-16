@@ -74,6 +74,63 @@ export function localDateTimeFromDateKeyAndTime(dateKey, timeStr) {
   return d;
 }
 
+function normalizeSelectedDaysOfWeek(selectedDaysOfWeek = []) {
+  if (!Array.isArray(selectedDaysOfWeek)) return [];
+  const normalized = selectedDaysOfWeek
+    .map((day) => {
+      if (Number.isInteger(day) && day >= 0 && day <= 6) return day;
+      if (Number.isInteger(day) && day >= 1 && day <= 7) return day % 7;
+      if (typeof day === 'string') {
+        const lower = day.trim().toLowerCase();
+        const byName = {
+          sun: 0, sunday: 0,
+          mon: 1, monday: 1,
+          tue: 2, tues: 2, tuesday: 2,
+          wed: 3, wednesday: 3,
+          thu: 4, thur: 4, thurs: 4, thursday: 4,
+          fri: 5, friday: 5,
+          sat: 6, saturday: 6,
+        };
+        if (Object.prototype.hasOwnProperty.call(byName, lower)) return byName[lower];
+      }
+      return null;
+    })
+    .filter((day) => Number.isInteger(day) && day >= 0 && day <= 6);
+
+  return [...new Set(normalized)].sort((a, b) => a - b);
+}
+
+function getLocalDayOfWeek(dateKey) {
+  if (typeof dateKey !== 'string' || !dateKey) return null;
+  const [year, month, day] = dateKey.split('-').map(Number);
+  if (!Number.isFinite(year) || !Number.isFinite(month) || !Number.isFinite(day)) return null;
+  const date = new Date(year, month - 1, day, 0, 0, 0, 0);
+  return Number.isNaN(date.getTime()) ? null : date.getDay();
+}
+
+function findScheduledDateKey({
+  baseDateKey,
+  selectedDaysOfWeek = [],
+  startOffsetDays = 0,
+} = {}) {
+  if (typeof baseDateKey !== 'string' || !baseDateKey) return null;
+
+  const normalizedSelectedDays = normalizeSelectedDaysOfWeek(selectedDaysOfWeek);
+  if (normalizedSelectedDays.length === 0) {
+    return addDaysToDateKey(baseDateKey, startOffsetDays) || baseDateKey;
+  }
+
+  for (let offset = Math.max(0, startOffsetDays); offset < Math.max(0, startOffsetDays) + 7; offset += 1) {
+    const candidateKey = addDaysToDateKey(baseDateKey, offset);
+    const candidateDow = getLocalDayOfWeek(candidateKey);
+    if (candidateKey && candidateDow !== null && normalizedSelectedDays.includes(candidateDow)) {
+      return candidateKey;
+    }
+  }
+
+  return addDaysToDateKey(baseDateKey, Math.max(0, startOffsetDays)) || baseDateKey;
+}
+
 /**
  * Compute the effective "Day 1" anchor time based on a first slot time.
  * If the first slot's start window has already passed today, Day 1 begins tomorrow.
@@ -81,26 +138,42 @@ export function localDateTimeFromDateKeyAndTime(dateKey, timeStr) {
 export function computeScheduleAnchorStartAt({
   now = new Date(),
   firstSlotTime,
+  selectedDaysOfWeek = [],
   lateWindowMin = DEFAULT_START_WINDOW_LATE_MIN,
 } = {}) {
   const todayKey = getLocalDateKey(now);
-  const todayAtFirst = localDateTimeFromDateKeyAndTime(todayKey, firstSlotTime);
-  if (!todayAtFirst) return new Date(now);
+  const firstScheduledDateKey = findScheduledDateKey({
+    baseDateKey: todayKey,
+    selectedDaysOfWeek,
+    startOffsetDays: 0,
+  });
+  const firstScheduledAt = localDateTimeFromDateKeyAndTime(firstScheduledDateKey, firstSlotTime);
+  if (!firstScheduledAt) return new Date(now);
+
+  // NEVER CHANGE THIS: pre-start/off-day dates do not count as Day 1.
+  // Day 1 begins only on the first scheduled practice date, never on the activation click date.
+  if (firstScheduledDateKey !== todayKey) {
+    return firstScheduledAt;
+  }
 
   const startWindowState = getStartWindowState({
     now,
-    scheduledAt: todayAtFirst,
+    scheduledAt: firstScheduledAt,
     lateWindowMin,
   });
 
   // If today's first slot has not yet expired, Day 1 should remain anchored to today.
   // This keeps the first scheduled practice actionable in the same onboarding session.
   if (!startWindowState.expired) {
-    return todayAtFirst;
+    return firstScheduledAt;
   }
 
-  const tomorrowKey = addDaysToDateKey(todayKey, 1);
-  return localDateTimeFromDateKeyAndTime(tomorrowKey, firstSlotTime) ?? new Date(now);
+  const nextScheduledDateKey = findScheduledDateKey({
+    baseDateKey: todayKey,
+    selectedDaysOfWeek,
+    startOffsetDays: 1,
+  });
+  return localDateTimeFromDateKeyAndTime(nextScheduledDateKey, firstSlotTime) ?? new Date(now);
 }
 
 export function timeStringToMinutes(str) {

@@ -105,9 +105,9 @@ function HomeHub({ onSelectSection, activeSection = null, currentStage, previewP
   const { isOpen: isTutorialOpen, tutorialId, stepIndex } = useTutorialStore();
   const activeTutorialTarget = tutorialId ? TUTORIALS[tutorialId]?.steps?.[stepIndex]?.target : null;
   const isDailyCardTutorialTarget = isTutorialOpen && activeTutorialTarget?.includes('home-daily-card');
-  const handleSelectSection = React.useCallback((section) => {
+  const handleSelectSection = React.useCallback((section, options = undefined) => {
     if (lockToHub) return;
-    onSelectSection(section);
+    onSelectSection(section, options);
   }, [lockToHub, onSelectSection]);
 
   // Cloud background test state
@@ -234,6 +234,8 @@ function HomeHub({ onSelectSection, activeSection = null, currentStage, previewP
   const [showTrackingHub, setShowTrackingHub] = useState(false);
   const [archiveOptions, setArchiveOptions] = useState({ initialTab: 'all', initialReportDomain: null });
   const trackerLaunchContext = useUiStore(s => s.trackerLaunchContext);
+  const restartPath = useNavigationStore((s) => s.restartPath);
+  const [showStudentActiveActions, setShowStudentActiveActions] = useState(false);
 
   // Dynamic max-width based on display mode: sanctuary=1024px, hearth=580px (narrower for visual balance)
   const streakInfo = getStreakInfo();
@@ -308,6 +310,25 @@ function HomeHub({ onSelectSection, activeSection = null, currentStage, previewP
     handleSelectSection(null);
   };
 
+  const openStudentActiveActions = React.useCallback(() => {
+    if (!activePath) return;
+    setShowStudentActiveActions(true);
+  }, [activePath]);
+
+  const closeStudentActiveActions = React.useCallback(() => {
+    setShowStudentActiveActions(false);
+  }, []);
+
+  const handleRestartPathFromStudentActive = React.useCallback(() => {
+    restartPath?.();
+    setShowStudentActiveActions(false);
+  }, [restartPath]);
+
+  const handleGoToNavigationFromStudentActive = React.useCallback(() => {
+    setShowStudentActiveActions(false);
+    handleSelectSection('navigation', { forceStudentNavigation: true });
+  }, [handleSelectSection]);
+
   const openArchive = (initialTab = ARCHIVE_TABS.ALL, initialReportDomain = null) => {
     setArchiveOptions({ initialTab, initialReportDomain });
     setShowHistory(true);
@@ -334,6 +355,20 @@ function HomeHub({ onSelectSection, activeSection = null, currentStage, previewP
     window.addEventListener('immanence-open-archive', handler);
     return () => window.removeEventListener('immanence-open-archive', handler);
   }, []);
+
+  useEffect(() => {
+    if (!showStudentActiveActions) return undefined;
+
+    const onKeyDown = (event) => {
+      if (event.key === 'Escape') {
+        event.preventDefault();
+        setShowStudentActiveActions(false);
+      }
+    };
+
+    window.addEventListener('keydown', onKeyDown);
+    return () => window.removeEventListener('keydown', onKeyDown);
+  }, [showStudentActiveActions]);
 
   useEffect(() => {
     if (trackerLaunchContext?.target === 'applicationHeatmap') {
@@ -899,16 +934,33 @@ function HomeHub({ onSelectSection, activeSection = null, currentStage, previewP
           ...SANCTUARY_RAIL_STYLE,
           borderTop: `1px solid ${isLight ? 'rgba(100, 80, 60, 0.15)' : 'rgba(255, 255, 255, 0.08)'}`,
         }}>
-          <div
-            className="mb-2 inline-flex rounded-full border px-3 py-1 text-[10px] font-black uppercase tracking-[0.18em]"
-            style={{
-              borderColor: isLight ? 'rgba(100, 80, 60, 0.18)' : 'rgba(255,255,255,0.12)',
-              background: isLight ? 'rgba(255,255,255,0.55)' : 'rgba(255,255,255,0.05)',
-              color: isLight ? 'rgba(60,50,35,0.78)' : 'rgba(253,251,245,0.72)',
-            }}
-          >
-            {probeLabel}
-          </div>
+          {activePath ? (
+            <button
+              type="button"
+              onClick={openStudentActiveActions}
+              data-testid="student-active-actions-trigger"
+              className="mb-2 inline-flex rounded-full border px-3 py-1 text-[10px] font-black uppercase tracking-[0.18em] transition-all hover:scale-[1.02]"
+              style={{
+                borderColor: isLight ? 'rgba(100, 80, 60, 0.18)' : 'rgba(255,255,255,0.12)',
+                background: isLight ? 'rgba(255,255,255,0.55)' : 'rgba(255,255,255,0.05)',
+                color: isLight ? 'rgba(60,50,35,0.78)' : 'rgba(253,251,245,0.72)',
+                boxShadow: isLight ? '0 8px 18px rgba(80, 60, 35, 0.08)' : '0 10px 24px rgba(0, 0, 0, 0.24)',
+              }}
+            >
+              {probeLabel}
+            </button>
+          ) : (
+            <div
+              className="mb-2 inline-flex rounded-full border px-3 py-1 text-[10px] font-black uppercase tracking-[0.18em]"
+              style={{
+                borderColor: isLight ? 'rgba(100, 80, 60, 0.18)' : 'rgba(255,255,255,0.12)',
+                background: isLight ? 'rgba(255,255,255,0.55)' : 'rgba(255,255,255,0.05)',
+                color: isLight ? 'rgba(60,50,35,0.78)' : 'rgba(253,251,245,0.72)',
+              }}
+            >
+              {probeLabel}
+            </div>
+          )}
           <div className="w-full">
             <DailyPracticeCard
               onStartPractice={handleStartPractice}
@@ -1050,6 +1102,81 @@ function HomeHub({ onSelectSection, activeSection = null, currentStage, previewP
             onDismiss={() => setShowCurriculumOnboarding(false)}
             onComplete={handleCurriculumSetupComplete}
           />,
+          document.body
+        )}
+
+        {showStudentActiveActions && createPortal(
+          <div className="fixed inset-0 z-[10010] isolate">
+            <button
+              type="button"
+              aria-label="Close student active actions"
+              className="absolute inset-0 bg-black/45 backdrop-blur-md"
+              onClick={closeStudentActiveActions}
+            />
+            <div className="absolute inset-0 flex items-center justify-center px-6">
+              <div
+                data-testid="student-active-actions-dialog"
+                className="w-full max-w-sm rounded-[28px] border p-6 shadow-2xl"
+                style={{
+                  borderColor: isLight ? 'rgba(100, 80, 60, 0.18)' : 'rgba(255,255,255,0.12)',
+                  background: isLight
+                    ? 'linear-gradient(180deg, rgba(250,246,238,0.98) 0%, rgba(245,239,229,0.96) 100%)'
+                    : 'linear-gradient(180deg, rgba(12,16,20,0.96) 0%, rgba(16,20,26,0.94) 100%)',
+                  color: isLight ? '#3c3020' : '#fdfbf5',
+                  boxShadow: isLight
+                    ? '0 24px 50px rgba(70, 52, 30, 0.16)'
+                    : '0 28px 60px rgba(0, 0, 0, 0.5)',
+                }}
+                onClick={(event) => event.stopPropagation()}
+              >
+                <div className="text-[10px] font-black uppercase tracking-[0.24em]" style={{ color: isLight ? 'rgba(60,50,35,0.62)' : 'rgba(253,251,245,0.55)' }}>
+                  Student Active
+                </div>
+                <div className="mt-3 text-2xl font-semibold" style={{ fontFamily: 'var(--font-display)' }}>
+                  Path Actions
+                </div>
+                <div className="mt-2 text-sm" style={{ color: isLight ? 'rgba(60,50,35,0.72)' : 'rgba(253,251,245,0.68)' }}>
+                  Restart this run now, or open Navigation to manage the path there.
+                </div>
+                <div className="mt-6 flex flex-col gap-3">
+                  <button
+                    type="button"
+                    onClick={handleRestartPathFromStudentActive}
+                    className="rounded-full px-4 py-3 text-[10px] font-black uppercase tracking-[0.22em] transition-all hover:scale-[1.02]"
+                    style={{
+                      background: 'linear-gradient(135deg, var(--accent-color), var(--accent-70))',
+                      color: '#fff',
+                      boxShadow: '0 8px 20px var(--accent-30)',
+                    }}
+                  >
+                    Restart Path
+                  </button>
+                  <button
+                    type="button"
+                    onClick={handleGoToNavigationFromStudentActive}
+                    className="rounded-full border px-4 py-3 text-[10px] font-black uppercase tracking-[0.22em] transition-all hover:scale-[1.02]"
+                    style={{
+                      borderColor: isLight ? 'rgba(60,50,35,0.14)' : 'rgba(255,255,255,0.16)',
+                      background: isLight ? 'rgba(255,255,255,0.75)' : 'rgba(255,255,255,0.06)',
+                      color: isLight ? '#3c3020' : '#fdfbf5',
+                    }}
+                  >
+                    Go To Navigation
+                  </button>
+                  <button
+                    type="button"
+                    onClick={closeStudentActiveActions}
+                    className="rounded-full px-4 py-2 text-[10px] font-black uppercase tracking-[0.22em]"
+                    style={{
+                      color: isLight ? 'rgba(60,50,35,0.62)' : 'rgba(253,251,245,0.58)',
+                    }}
+                  >
+                    Close
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>,
           document.body
         )}
 

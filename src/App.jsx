@@ -178,6 +178,7 @@ function App({ playgroundMode = false, playgroundBottomLayer = true }) {
   const [showDevPanel, setShowDevPanel] = useState(() => (isDev ? false : devPanelGateEnabled)); // Dev Panel (🎨 button)
   const [, setDevtoolsGateTick] = useState(0);
   const [showSettings, setShowSettings] = useState(false); // Settings panel
+  const [studentNavigationOverride, setStudentNavigationOverride] = useState(false);
   const [authUser, setAuthUser] = useState(null);
   const authUserId = authUser?.id ?? null;
   const navigationStateOwnedByCurrentUser = Boolean(authUserId && navigationOwnerUserId === authUserId);
@@ -424,31 +425,38 @@ function App({ playgroundMode = false, playgroundBottomLayer = true }) {
     setPreviewStage(stageName);
   }, [playgroundMode, setOverrideStage]);
 
-  const handleSectionSelect = useCallback((section) => {
+  const handleSectionSelect = useCallback((section, options = {}) => {
+    const forceStudentNavigation = options?.forceStudentNavigation === true;
     if (playgroundMode) {
+      setStudentNavigationOverride(false);
       setActiveSection(null);
       return;
     }
     if (userMode !== 'student') {
+      setStudentNavigationOverride(false);
       setActiveSection(section);
       return;
     }
     if (section === null) {
+      setStudentNavigationOverride(false);
       setActiveSection(null);
       return;
     }
     if (section === 'navigation') {
-      if (needsSetup) {
+      if (needsSetup || forceStudentNavigation) {
+        setStudentNavigationOverride(forceStudentNavigation);
         setActiveSection('navigation');
       }
       return;
     }
     if (section === 'practice') {
       if (practiceLaunchContext) {
+        setStudentNavigationOverride(false);
         setActiveSection('practice');
       }
       return;
     }
+    setStudentNavigationOverride(false);
   }, [needsSetup, playgroundMode, practiceLaunchContext, userMode]);
 
   useEffect(() => {
@@ -458,17 +466,26 @@ function App({ playgroundMode = false, playgroundBottomLayer = true }) {
 
     if (userMode === 'student') {
       if (!ownedActivePath) {
+        if (studentNavigationOverride) {
+          setStudentNavigationOverride(false);
+        }
         if (activeSection !== 'navigation') {
           setActiveSection('navigation');
         }
         return;
       }
 
-      if (activeSection === 'navigation') {
+      if (activeSection === 'navigation' && !studentNavigationOverride) {
         setActiveSection(null);
       }
     }
-  }, [activeSection, authUserId, hasChosenUserMode, ownedActivePath, playgroundMode, userMode]);
+  }, [activeSection, authUserId, hasChosenUserMode, ownedActivePath, playgroundMode, studentNavigationOverride, userMode]);
+
+  useEffect(() => {
+    if (!studentNavigationOverride) return;
+    if (activeSection === 'navigation') return;
+    setStudentNavigationOverride(false);
+  }, [activeSection, studentNavigationOverride]);
 
   const handleChooseStudentMode = useCallback(() => {
     setUserMode('student');

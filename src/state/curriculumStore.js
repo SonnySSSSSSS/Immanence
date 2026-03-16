@@ -153,6 +153,7 @@ export const useCurriculumStore = create(
                 const startAt = computeScheduleAnchorStartAt({
                     now: nowDate,
                     firstSlotTime: normalizedSlots[0] ?? null,
+                    selectedDaysOfWeek: normalizedDays,
                 });
                 const now = nowDate.toISOString();
                 set({

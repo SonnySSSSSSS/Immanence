@@ -99,6 +99,40 @@ const normalizeDayOfWeekList = (days = []) => {
     return [...new Set(normalized)].sort((a, b) => a - b);
 };
 
+const getFrozenScheduleDaysOfWeek = (schedule = null) => {
+    const selectedDaysOfWeek = normalizeDayOfWeekList(schedule?.selectedDaysOfWeek || []);
+    if (selectedDaysOfWeek.length > 0) return selectedDaysOfWeek;
+
+    const activeDays = normalizeDayOfWeekList(schedule?.activeDays || []);
+    if (activeDays.length > 0) {
+        // NEVER CHANGE THIS: legacy runs missing selectedDaysOfWeek must still honor their frozen activeDays.
+        // If this falls through to "every day", pre-start runs jump to Day 1 before the first scheduled practice date.
+        return activeDays;
+    }
+
+    return [0, 1, 2, 3, 4, 5, 6];
+};
+
+const getCanonicalScheduledStartDate = ({
+    startedAt = null,
+    selectedTimes = [],
+    selectedDaysOfWeek = [],
+} = {}) => {
+    if (!startedAt) return null;
+    const rawStartDate = new Date(startedAt);
+    if (Number.isNaN(rawStartDate.getTime())) return null;
+
+    const normalizedTimes = normalizeAndSortTimeSlots(selectedTimes, { maxCount: 3 });
+    const firstSlotTime = normalizedTimes[0] || null;
+    if (!firstSlotTime) return rawStartDate;
+
+    return computeScheduleAnchorStartAt({
+        now: rawStartDate,
+        firstSlotTime,
+        selectedDaysOfWeek,
+    });
+};
+
 const selectedDaysFromOffDays = (offDays = []) => {
     // LEGACY migration helper only. Do not use this for new run contract authoring.
     const offSet = new Set(normalizeDayOfWeekList(offDays));
@@ -161,6 +195,7 @@ const buildCurriculumBackedActivePath = ({
         : computeScheduleAnchorStartAt({
             now: new Date(),
             firstSlotTime: selectedTimes[0],
+            selectedDaysOfWeek: frozenSelectedDaysOfWeek,
         });
     const startedAt = startedAtDate.toISOString();
     const durationDays = getPathDurationDays(normalizedPathId);
@@ -367,6 +402,7 @@ export const useNavigationStore = create(
                 const startedAtDate = computeScheduleAnchorStartAt({
                     now: new Date(),
                     firstSlotTime: selectedTimes[0],
+                    selectedDaysOfWeek: frozenSelectedDaysOfWeek,
                 });
                 const startedAt = startedAtDate.toISOString();
                 const durationDays = getPathDurationDays(normalizedPathId);
@@ -856,6 +892,11 @@ export const useNavigationStore = create(
 
                 const path = getPathById(state.activePath.activePathId);
                 const durationDays = path?.tracking?.durationDays || (path?.duration * 7) || 0;
+                const selectedDaysArg = getFrozenScheduleDaysOfWeek(state.activePath.schedule);
+                const frozenSelectedTimes = normalizeAndSortTimeSlots(
+                    state.activePath.schedule?.selectedTimes || [],
+                    { maxCount: state.activePath.schedule?.maxLegsPerDay ?? 3 }
+                );
                 
                 if (!state.activePath.startedAt || durationDays === 0) {
                     return {
@@ -869,7 +910,11 @@ export const useNavigationStore = create(
                 }
 
                 // Compute day index (1-based, local date)
-                const startedAtDate = new Date(state.activePath.startedAt);
+                const startedAtDate = getCanonicalScheduledStartDate({
+                    startedAt: state.activePath.startedAt,
+                    selectedTimes: frozenSelectedTimes,
+                    selectedDaysOfWeek: selectedDaysArg,
+                }) || new Date(state.activePath.startedAt);
                 const startedAtLocalKey = getLocalDateKey(startedAtDate); // YYYY-MM-DD in local timezone
                 const todayKey = getLocalDateKey(); // Today in local timezone
                 
@@ -887,16 +932,6 @@ export const useNavigationStore = create(
                     activePathId: state.activePath.activePathId || null,
                     startedAt: state.activePath.startedAt || null,
                 });
-                const frozenSelectedDaysOfWeek = normalizeDayOfWeekList(
-                    state.activePath.schedule?.selectedDaysOfWeek || []
-                );
-                const selectedDaysArg = frozenSelectedDaysOfWeek.length > 0
-                    ? frozenSelectedDaysOfWeek
-                    : [0, 1, 2, 3, 4, 5, 6];
-                const frozenSelectedTimes = normalizeAndSortTimeSlots(
-                    state.activePath.schedule?.selectedTimes || [],
-                    { maxCount: state.activePath.schedule?.maxLegsPerDay ?? 3 }
-                );
 
                 const pathEndLocalKey = addDaysToDateKey(startedAtLocalKey, durationDays - 1);
                 const windowEndLocalKey = pathEndLocalKey && pathEndLocalKey < todayKey
@@ -987,7 +1022,18 @@ export const useNavigationStore = create(
 
                 const progressState = useProgressStore.getState();
                 const curriculumState = useCurriculumStore.getState();
-                const startedAtLocalKey = getLocalDateKey(new Date(state.activePath.startedAt));
+                const selectedDaysArg = getFrozenScheduleDaysOfWeek(state.activePath.schedule);
+                const frozenSelectedTimes = normalizeAndSortTimeSlots(
+                    state.activePath.schedule?.selectedTimes || [],
+                    { maxCount: state.activePath.schedule?.maxLegsPerDay ?? 3 }
+                );
+                const startedAtLocalKey = getLocalDateKey(
+                    getCanonicalScheduledStartDate({
+                        startedAt: state.activePath.startedAt,
+                        selectedTimes: frozenSelectedTimes,
+                        selectedDaysOfWeek: selectedDaysArg,
+                    }) || new Date(state.activePath.startedAt)
+                );
                 const todayKey = getLocalDateKey();
                 if (startedAtLocalKey > todayKey) {
                     return { consecutiveMissedDays: 0, broken: false };
@@ -998,16 +1044,6 @@ export const useNavigationStore = create(
                     activePathId: state.activePath.activePathId || null,
                     startedAt: state.activePath.startedAt || null,
                 });
-                const frozenSelectedDaysOfWeek = normalizeDayOfWeekList(
-                    state.activePath.schedule?.selectedDaysOfWeek || []
-                );
-                const selectedDaysArg = frozenSelectedDaysOfWeek.length > 0
-                    ? frozenSelectedDaysOfWeek
-                    : [0, 1, 2, 3, 4, 5, 6];
-                const frozenSelectedTimes = normalizeAndSortTimeSlots(
-                    state.activePath.schedule?.selectedTimes || [],
-                    { maxCount: state.activePath.schedule?.maxLegsPerDay ?? 3 }
-                );
 
                 const contractSummary = computeContractObligationSummary({
                     windowStartLocalDateKey: startedAtLocalKey,
@@ -1042,9 +1078,7 @@ export const useNavigationStore = create(
                 const selectedTimes = normalizeAndSortTimeSlots(state.activePath.schedule?.selectedTimes || [], {
                     maxCount: scheduleConstraint?.maxCount ?? state.activePath.schedule?.maxLegsPerDay ?? 3,
                 });
-                const frozenSelectedDaysOfWeek = normalizeDayOfWeekList(
-                    state.activePath.schedule?.selectedDaysOfWeek || []
-                );
+                const frozenSelectedDaysOfWeek = getFrozenScheduleDaysOfWeek(state.activePath.schedule);
                 const fallbackSelectedDays = normalizeDayOfWeekList(
                     useCurriculumStore.getState().getSelectedDaysOfWeekDraft?.()
                     || useCurriculumStore.getState().selectedDaysOfWeekDraft
@@ -1053,6 +1087,9 @@ export const useNavigationStore = create(
                 const startedAtDate = computeScheduleAnchorStartAt({
                     now: new Date(),
                     firstSlotTime: selectedTimes[0],
+                    selectedDaysOfWeek: frozenSelectedDaysOfWeek.length > 0
+                        ? frozenSelectedDaysOfWeek
+                        : fallbackSelectedDays,
                 });
                 const startedAt = startedAtDate.toISOString();
                 const endsAt = computeEndsAt(startedAt, durationDays);
