@@ -140,10 +140,11 @@ function HomeHub({ onSelectSection, activeSection = null, currentStage, previewP
     setShowCurriculumHubState(false);
   }, []);
   const handleOpenCurriculumSetup = React.useCallback(() => {
-    setActiveCurriculumId?.('ritual-initiation-14-v2');
     setCurriculumSetupError(null);
-    setShowCurriculumOnboarding(true);
-  }, [setActiveCurriculumId]);
+    setShowCurriculumOnboarding(false);
+    setShowCurriculumHubState(false);
+    handleSelectSection('navigation', { forceStudentNavigation: true });
+  }, [handleSelectSection]);
   const handleCurriculumSetupComplete = React.useCallback(() => {
     const result = useNavigationStore.getState().beginPathForCurriculum(activeCurriculumId || 'ritual-initiation-14-v2');
     if (result?.ok === false) {
