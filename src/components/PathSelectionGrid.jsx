@@ -61,22 +61,28 @@ export function PathSelectionGrid({ onPathSelected, selectedPathId }) {
                 <div className="mb-4 flex items-end justify-between gap-4">
                     <div>
                         <div
-                            className="type-label"
-                            style={{ color: isLight ? 'rgba(60, 52, 37, 0.62)' : 'rgba(253,251,245,0.68)', textShadow: isLight ? 'none' : '0 1px 3px rgba(0,0,0,0.4)' }}
+                            className="text-[10px] font-semibold uppercase tracking-[0.22em]"
+                            style={{ color: isLight ? 'rgba(122, 88, 50, 0.48)' : 'rgba(182, 232, 236, 0.40)' }}
                         >
                             Posted Curricula
                         </div>
                         <div
-                            className="mt-1 text-[11px] font-semibold uppercase tracking-[0.16em]"
-                            style={{ color: isLight ? 'rgba(132, 94, 52, 0.72)' : 'rgba(143, 216, 227, 0.66)' }}
+                            className="mt-2 text-[18px] font-black uppercase tracking-[0.10em] sm:text-[22px]"
+                            style={{
+                                color: isLight ? 'rgba(66, 48, 28, 0.96)' : 'rgba(248, 244, 236, 0.96)',
+                                textShadow: isLight
+                                    ? '0 1px 0 rgba(255,255,255,0.50)'
+                                    : '0 2px 12px rgba(0,0,0,0.34)',
+                                lineHeight: 1.05,
+                            }}
                         >
-                            Select Your Path
+                            Choose Your Path
                         </div>
                     </div>
                     <div
                         aria-hidden="true"
                         className="hidden sm:flex items-center gap-2"
-                        style={{ color: isLight ? 'rgba(132, 94, 52, 0.46)' : 'rgba(143, 216, 227, 0.40)' }}
+                        style={{ color: isLight ? 'rgba(132, 94, 52, 0.28)' : 'rgba(143, 216, 227, 0.24)' }}
                     >
                         <span className="h-px w-10" style={{ background: 'currentColor' }} />
                         <span className="text-[10px] uppercase tracking-[0.28em]">Notice Board</span>
