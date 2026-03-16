@@ -85,6 +85,33 @@ export function NavigationSection({ currentStage, previewPath, onNavigate, isPra
           path={avatarPath}
         />
       </div>
+      <div className="flex justify-center px-4">
+        <div
+          className="text-center"
+          style={{
+            maxWidth: 'min(420px, 92vw)',
+          }}
+        >
+          <div
+            className="mx-auto h-px"
+            style={{
+              width: 'min(180px, 44vw)',
+              background: isLight
+                ? 'linear-gradient(90deg, transparent 0%, rgba(168, 128, 78, 0.34) 50%, transparent 100%)'
+                : 'linear-gradient(90deg, transparent 0%, rgba(139, 212, 224, 0.26) 50%, transparent 100%)',
+            }}
+          />
+          <div
+            className="mt-3 text-[13px] font-medium tracking-[0.04em] sm:text-[14px]"
+            style={{
+              color: isLight ? 'rgba(80, 64, 44, 0.72)' : 'rgba(239, 237, 229, 0.72)',
+              textShadow: isLight ? 'none' : '0 1px 6px rgba(0,0,0,0.24)',
+            }}
+          >
+            Choose your curriculum of practice
+          </div>
+        </div>
+      </div>
       {/* The Threshold - Foundation & Path Finder (only show if no active path) */}
       {!activePath && (
         <div

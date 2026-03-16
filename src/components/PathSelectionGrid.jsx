@@ -9,6 +9,7 @@ import { getPathContract } from '../utils/pathContract.js';
 
 const PATH_CARD_CHAMFER = '16px';
 const PATH_CARD_CLIP = `polygon(${PATH_CARD_CHAMFER} 0, calc(100% - ${PATH_CARD_CHAMFER}) 0, 100% ${PATH_CARD_CHAMFER}, 100% calc(100% - ${PATH_CARD_CHAMFER}), calc(100% - ${PATH_CARD_CHAMFER}) 100%, ${PATH_CARD_CHAMFER} 100%, 0 calc(100% - ${PATH_CARD_CHAMFER}), 0 ${PATH_CARD_CHAMFER})`;
+const NOTICE_ROTATIONS = ['-1.2deg', '0.9deg', '-0.65deg', '1.1deg'];
 
 export function PathSelectionGrid({ onPathSelected, selectedPathId }) {
     const allPaths = getAllPaths();
@@ -46,14 +47,44 @@ export function PathSelectionGrid({ onPathSelected, selectedPathId }) {
     return (
         <div className="w-full" data-testid="path-grid-root">
             <div
-                className="type-label mb-3"
-                style={{ color: isLight ? 'rgba(60, 52, 37, 0.7)' : 'rgba(253,251,245,0.9)', textShadow: isLight ? 'none' : '0 1px 3px rgba(0,0,0,0.4)' }}
+                className="rounded-[30px] border px-4 py-4 sm:px-5 sm:py-5"
+                style={{
+                    borderColor: isLight ? 'rgba(166, 132, 88, 0.18)' : 'rgba(112, 233, 242, 0.14)',
+                    background: isLight
+                        ? 'linear-gradient(180deg, rgba(251, 247, 240, 0.92) 0%, rgba(245, 238, 228, 0.86) 100%)'
+                        : 'linear-gradient(180deg, rgba(8, 14, 22, 0.94) 0%, rgba(5, 10, 17, 0.96) 100%)',
+                    boxShadow: isLight
+                        ? '0 18px 38px rgba(82, 58, 30, 0.08), inset 0 1px 0 rgba(255,255,255,0.68)'
+                        : '0 22px 48px rgba(0, 0, 0, 0.36), inset 0 1px 0 rgba(178, 241, 246, 0.05)',
+                }}
             >
-                Select Your Path
-            </div>
+                <div className="mb-4 flex items-end justify-between gap-4">
+                    <div>
+                        <div
+                            className="type-label"
+                            style={{ color: isLight ? 'rgba(60, 52, 37, 0.62)' : 'rgba(253,251,245,0.68)', textShadow: isLight ? 'none' : '0 1px 3px rgba(0,0,0,0.4)' }}
+                        >
+                            Posted Curricula
+                        </div>
+                        <div
+                            className="mt-1 text-[11px] font-semibold uppercase tracking-[0.16em]"
+                            style={{ color: isLight ? 'rgba(132, 94, 52, 0.72)' : 'rgba(143, 216, 227, 0.66)' }}
+                        >
+                            Select Your Path
+                        </div>
+                    </div>
+                    <div
+                        aria-hidden="true"
+                        className="hidden sm:flex items-center gap-2"
+                        style={{ color: isLight ? 'rgba(132, 94, 52, 0.46)' : 'rgba(143, 216, 227, 0.40)' }}
+                    >
+                        <span className="h-px w-10" style={{ background: 'currentColor' }} />
+                        <span className="text-[10px] uppercase tracking-[0.28em]">Notice Board</span>
+                    </div>
+                </div>
 
-            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
-                {combinedEntries.map((entry) => {
+                <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4">
+                {combinedEntries.map((entry, index) => {
                     const effectivePathId = activePath?.activePathId ?? resumablePathId;
                     const isActive = entry.isProgram ? entry.isActive : effectivePathId === entry.id;
                     const isSelected = selectedPathId === entry.id;
@@ -63,6 +94,10 @@ export function PathSelectionGrid({ onPathSelected, selectedPathId }) {
                     const durationLabel = Number.isInteger(contract.totalDays)
                         ? `${contract.totalDays} days`
                         : (typeof entry.duration === 'number' ? `${entry.duration} weeks` : `${entry.duration} · Ongoing`);
+                    const cardRotation = NOTICE_ROTATIONS[index % NOTICE_ROTATIONS.length];
+                    const pinColor = isLight
+                        ? (isSelected ? 'rgba(145, 96, 34, 0.96)' : 'rgba(181, 122, 58, 0.92)')
+                        : (isSelected ? 'rgba(255, 208, 138, 0.94)' : 'rgba(133, 221, 231, 0.88)');
 
                     return (
                         <div key={entry.id} className="flex flex-col gap-2">
@@ -91,96 +126,111 @@ export function PathSelectionGrid({ onPathSelected, selectedPathId }) {
                                     }
                                 }}
                                 disabled={isPlaceholder}
-                                className="relative px-3 py-5 sm:px-4 sm:py-6 rounded-3xl border transition-all text-left overflow-hidden group"
+                                className="relative rounded-[28px] border px-3 pb-5 pt-6 text-left overflow-hidden transition-all group sm:px-4 sm:pb-6 sm:pt-7"
                                 style={{
                                     clipPath: PATH_CARD_CLIP,
+                                    transform: `rotate(${cardRotation})`,
                                     background: isLight
-                                        ? 'linear-gradient(145deg, rgba(255, 255, 255, 0.8) 0%, rgba(255, 255, 255, 0.5) 100%)'
-                                        : 'linear-gradient(180deg, rgba(7, 16, 24, 0.95) 0%, rgba(4, 10, 18, 0.92) 100%)',
+                                        ? 'linear-gradient(180deg, rgba(255, 252, 246, 0.98) 0%, rgba(246, 238, 227, 0.94) 100%)'
+                                        : 'linear-gradient(180deg, rgba(16, 24, 33, 0.96) 0%, rgba(10, 16, 24, 0.94) 100%)',
                                     borderColor: hasActivePathMatch
-                                        ? 'rgba(128, 230, 238, 0.42)'
+                                        ? (isLight ? 'rgba(168, 118, 56, 0.34)' : 'rgba(132, 224, 233, 0.34)')
                                         : isLight
-                                            ? 'rgba(180, 140, 90, 0.15)'
+                                            ? 'rgba(166, 128, 82, 0.18)'
                                             : 'rgba(112, 233, 242, 0.16)',
                                     borderWidth: '1px',
-                                    backgroundImage: isLight
-                                        ? isPlaceholder
-                                            ? 'linear-gradient(145deg, rgba(255, 255, 255, 0.3), rgba(0, 0, 0, 0.02))'
-                                            : isSelected
-                                                ? 'linear-gradient(145deg, rgba(255, 255, 255, 0.95), rgba(212, 168, 74, 0.08))'
-                                                : isActive
-                                                    ? 'linear-gradient(145deg, rgba(255, 255, 255, 0.95), rgba(180, 140, 90, 0.05))'
-                                                    : 'linear-gradient(145deg, rgba(255, 255, 255, 0.7), rgba(0, 0, 0, 0.01))'
-                                        : isPlaceholder
-                                            ? 'linear-gradient(180deg, rgba(7, 16, 24, 0.64), rgba(4, 10, 18, 0.72))'
-                                            : isSelected
-                                                ? 'linear-gradient(180deg, rgba(9, 20, 30, 0.96), rgba(5, 12, 19, 0.94))'
-                                                : isActive
-                                                    ? 'linear-gradient(180deg, rgba(8, 18, 28, 0.95), rgba(5, 11, 18, 0.93))'
-                                                    : 'linear-gradient(180deg, rgba(7, 16, 24, 0.95), rgba(4, 10, 18, 0.92))',
                                     boxShadow: isLight
                                         ? hasActivePathMatch
-                                            ? '0 0 30px rgba(212, 168, 74, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.8)'
-                                            : '0 4px 12px rgba(0, 0, 0, 0.03), inset 0 1px 0 rgba(255, 255, 255, 0.5)'
+                                            ? '0 16px 26px rgba(110, 76, 34, 0.18), 0 0 0 1px rgba(201, 155, 92, 0.16), inset 0 1px 0 rgba(255, 255, 255, 0.88)'
+                                            : '0 14px 24px rgba(86, 62, 34, 0.10), 0 0 0 1px rgba(160, 122, 78, 0.04), inset 0 1px 0 rgba(255, 255, 255, 0.76)'
                                         : hasActivePathMatch
-                                            ? '0 0 22px rgba(78, 214, 226, 0.12), inset 0 1px 0 rgba(168, 241, 248, 0.10), inset 0 -6px 18px rgba(0, 0, 0, 0.30)'
+                                            ? '0 18px 34px rgba(0, 0, 0, 0.44), 0 0 24px rgba(78, 214, 226, 0.10), inset 0 1px 0 rgba(168, 241, 248, 0.12)'
                                             : isPlaceholder
-                                                ? '0 4px 16px rgba(0, 0, 0, 0.32), inset 0 1px 0 rgba(168, 241, 248, 0.03), inset 0 -3px 12px rgba(0, 0, 0, 0.3)'
-                                                : '0 12px 24px rgba(0, 0, 0, 0.34), inset 0 1px 0 rgba(168, 241, 248, 0.06), inset 0 -6px 18px rgba(0, 0, 0, 0.30)',
+                                                ? '0 12px 22px rgba(0, 0, 0, 0.30), inset 0 1px 0 rgba(168, 241, 248, 0.03)'
+                                                : '0 16px 28px rgba(0, 0, 0, 0.38), inset 0 1px 0 rgba(168, 241, 248, 0.06)',
                                     opacity: isPlaceholder ? 0.4 : 1,
-                                    cursor: isPlaceholder ? 'not-allowed' : 'pointer'
+                                    cursor: isPlaceholder ? 'not-allowed' : 'pointer',
                                 }}
                                 onMouseEnter={(e) => {
                                     if (!isPlaceholder && !isActive) {
                                         e.currentTarget.style.boxShadow = isLight
-                                            ? '0 12px 30px rgba(180, 140, 90, 0.25), inset 0 1px 0 rgba(255, 255, 255, 0.8)'
-                                            : `0 12px 40px rgba(0, 0, 0, 0.7), 0 0 30px var(--accent-20), inset 0 1px 0 rgba(255, 255, 255, 0.12), inset 0 -3px 12px rgba(0, 0, 0, 0.4)`;
+                                            ? '0 18px 30px rgba(154, 104, 44, 0.18), 0 0 0 1px rgba(196, 150, 86, 0.10), inset 0 1px 0 rgba(255, 255, 255, 0.84)'
+                                            : '0 20px 34px rgba(0, 0, 0, 0.46), 0 0 22px rgba(112, 233, 242, 0.12), inset 0 1px 0 rgba(255, 255, 255, 0.10)';
                                     }
                                 }}
                                 onMouseLeave={(e) => {
                                     if (!isPlaceholder && !isActive) {
                                         e.currentTarget.style.boxShadow = isLight
-                                            ? '0 4px 12px rgba(0, 0, 0, 0.03), inset 0 1px 0 rgba(255, 255, 255, 0.5)'
-                                            : '0 8px 32px rgba(0, 0, 0, 0.6), 0 2px 8px var(--accent-10), inset 0 1px 0 rgba(255, 255, 255, 0.08), inset 0 -3px 12px rgba(0, 0, 0, 0.4)';
+                                            ? '0 14px 24px rgba(86, 62, 34, 0.10), 0 0 0 1px rgba(160, 122, 78, 0.04), inset 0 1px 0 rgba(255, 255, 255, 0.76)'
+                                            : '0 16px 28px rgba(0, 0, 0, 0.38), inset 0 1px 0 rgba(168, 241, 248, 0.06)';
                                     }
                                 }}
                             >
                             <div
                                 aria-hidden="true"
+                                className="absolute left-1/2 top-[10px] z-20 h-[18px] w-[18px] -translate-x-1/2 rounded-full border"
+                                style={{
+                                    borderColor: isLight ? 'rgba(255, 248, 240, 0.92)' : 'rgba(240, 245, 247, 0.18)',
+                                    background: pinColor,
+                                    boxShadow: isLight
+                                        ? '0 8px 16px rgba(150, 90, 38, 0.18)'
+                                        : '0 8px 14px rgba(0, 0, 0, 0.34), 0 0 10px rgba(132, 224, 233, 0.14)',
+                                }}
+                            />
+                            <div
+                                aria-hidden="true"
+                                className="absolute left-1/2 top-[24px] z-10 h-[26px] w-[1px] -translate-x-1/2"
+                                style={{
+                                    background: isLight ? 'rgba(162, 128, 92, 0.18)' : 'rgba(132, 224, 233, 0.18)',
+                                }}
+                            />
+                            <div
+                                aria-hidden="true"
                                 className="absolute inset-[6px] pointer-events-none"
                                 style={{
-                                    clipPath: 'polygon(10px 0, calc(100% - 10px) 0, 100% 10px, 100% calc(100% - 10px), calc(100% - 10px) 100%, 10px 100%, 0 calc(100% - 10px), 0 10px)',
-                                    border: '1px solid rgba(101, 211, 224, 0.10)',
-                                    background: 'linear-gradient(180deg, rgba(8, 16, 24, 0.18) 0%, rgba(6, 12, 19, 0.06) 100%)',
+                                    clipPath: 'polygon(12px 0, calc(100% - 12px) 0, 100% 12px, 100% calc(100% - 12px), calc(100% - 12px) 100%, 12px 100%, 0 calc(100% - 12px), 0 12px)',
+                                    border: isLight
+                                        ? '1px solid rgba(158, 122, 82, 0.08)'
+                                        : '1px solid rgba(132, 224, 233, 0.10)',
+                                    background: isLight
+                                        ? 'linear-gradient(180deg, rgba(255,255,255,0.28) 0%, rgba(237,227,213,0.12) 100%)'
+                                        : 'linear-gradient(180deg, rgba(255,255,255,0.03) 0%, rgba(10,16,24,0.10) 100%)',
                                 }}
                             />
                             <div
                                 aria-hidden="true"
                                 className="absolute left-0 right-0 top-0 h-px pointer-events-none"
                                 style={{
-                                    background: 'linear-gradient(90deg, rgba(117, 231, 240, 0.64) 0%, rgba(117, 231, 240, 0.22) 18%, rgba(117, 231, 240, 0.1) 82%, rgba(117, 231, 240, 0.44) 100%)',
+                                    background: isLight
+                                        ? 'linear-gradient(90deg, rgba(214, 167, 110, 0.44) 0%, rgba(214, 167, 110, 0.10) 22%, rgba(214, 167, 110, 0.05) 82%, rgba(214, 167, 110, 0.30) 100%)'
+                                        : 'linear-gradient(90deg, rgba(117, 231, 240, 0.50) 0%, rgba(117, 231, 240, 0.18) 18%, rgba(117, 231, 240, 0.08) 82%, rgba(117, 231, 240, 0.36) 100%)',
                                 }}
                             />
-                            <div aria-hidden="true" className="absolute top-[8px] left-[8px] h-[12px] w-[12px] pointer-events-none" style={{ borderTop: '1px solid rgba(117, 231, 240, 0.42)', borderLeft: '1px solid rgba(117, 231, 240, 0.42)' }} />
-                            <div aria-hidden="true" className="absolute top-[8px] right-[8px] h-[12px] w-[12px] pointer-events-none" style={{ borderTop: '1px solid rgba(117, 231, 240, 0.42)', borderRight: '1px solid rgba(117, 231, 240, 0.42)' }} />
-                            {/* Volcanic glass texture overlay */}
                             <div
                                 className="absolute inset-0 pointer-events-none rounded-2xl"
                                 style={{
-                                    background: `
-                                        radial-gradient(circle at 24% 18%, rgba(78, 214, 226, 0.05) 0%, transparent 42%),
-                                        linear-gradient(180deg, rgba(8, 16, 24, 0.08) 0%, transparent 100%)
-                                    `,
-                                    opacity: 0.9
+                                    background: isLight
+                                        ? `
+                                            radial-gradient(circle at 50% 0%, rgba(255,255,255,0.55) 0%, transparent 32%),
+                                            linear-gradient(180deg, rgba(255,255,255,0.12) 0%, transparent 44%),
+                                            repeating-linear-gradient(180deg, transparent 0, transparent 27px, rgba(151, 122, 90, 0.06) 28px, transparent 29px)
+                                        `
+                                        : `
+                                            radial-gradient(circle at 50% 0%, rgba(132, 224, 233, 0.08) 0%, transparent 34%),
+                                            linear-gradient(180deg, rgba(255,255,255,0.02) 0%, transparent 44%),
+                                            repeating-linear-gradient(180deg, transparent 0, transparent 29px, rgba(132, 224, 233, 0.05) 30px, transparent 31px)
+                                        `,
+                                    opacity: 1,
                                 }}
                             />
 
-                            {/* Inner glow */}
                             {!isPlaceholder && (
                                 <div
                                     className="absolute inset-0 pointer-events-none rounded-2xl"
                                     style={{
-                                        background: `radial-gradient(circle at 50% 0%, ${isActive ? 'var(--accent-glow)20' : 'var(--accent-glow)08'} 0%, transparent 60%)`
+                                        background: isLight
+                                            ? `radial-gradient(circle at 50% 8%, ${isActive ? 'rgba(208, 165, 102, 0.22)' : 'rgba(208, 165, 102, 0.10)'} 0%, transparent 52%)`
+                                            : `radial-gradient(circle at 50% 8%, ${isActive ? 'rgba(132, 224, 233, 0.18)' : 'rgba(132, 224, 233, 0.08)'} 0%, transparent 56%)`,
                                     }}
                                 />
                             )}
@@ -194,49 +244,68 @@ export function PathSelectionGrid({ onPathSelected, selectedPathId }) {
                             )}
 
                             <div className="relative z-10">
-                                {/* Glyph */}
                                 <div
-                                    className="type-h1 mb-3 transition-colors"
-                                    style={{
-                                        color: isLight
-                                            ? (isSelected ? 'rgba(140, 100, 40, 0.9)' : 'rgba(140, 100, 40, 0.6)')
-                                            : 'var(--accent-70)'
-                                    }}
+                                    className="mb-4 flex items-start justify-between gap-3"
                                 >
-                                    {entry.glyph}
+                                    <div
+                                        className="rounded-full border px-2.5 py-1 text-[10px] font-black uppercase tracking-[0.18em]"
+                                        style={{
+                                            borderColor: isLight ? 'rgba(166, 128, 82, 0.14)' : 'rgba(132, 224, 233, 0.16)',
+                                            background: isLight ? 'rgba(255,255,255,0.42)' : 'rgba(255,255,255,0.04)',
+                                            color: isLight ? 'rgba(122, 88, 50, 0.72)' : 'rgba(182, 232, 236, 0.68)',
+                                        }}
+                                    >
+                                        Posted Notice
+                                    </div>
+                                    <div
+                                        className="type-h1 transition-colors"
+                                        style={{
+                                            color: isLight
+                                                ? (isSelected ? 'rgba(140, 100, 40, 0.9)' : 'rgba(140, 100, 40, 0.66)')
+                                                : 'var(--accent-70)',
+                                            lineHeight: 1,
+                                        }}
+                                    >
+                                        {entry.glyph}
+                                    </div>
                                 </div>
 
-                                {/* Title */}
                                 <h3
-                                    className="mb-1.5 leading-tight line-clamp-2 transition-colors"
+                                    className="mb-2 leading-tight line-clamp-2 transition-colors"
                                     style={{
                                         fontFamily: 'var(--font-display)',
                                         fontSize: '13px',
                                         fontWeight: 600,
                                         letterSpacing: 'var(--tracking-normal)',
-                                        color: isLight ? 'rgba(60, 52, 37, 0.9)' : 'rgba(253,251,245,0.92)'
+                                        color: isLight ? 'rgba(60, 52, 37, 0.92)' : 'rgba(253,251,245,0.94)'
                                     }}
                                 >
                                     {entry.title}
                                 </h3>
 
-                                {/* Subtitle */}
                                 <p
-                                    className="type-caption text-[11px] mb-2.5 leading-snug line-clamp-2 italic transition-colors"
+                                    className="type-caption mb-3 min-h-[34px] text-[11px] leading-snug line-clamp-2 transition-colors"
                                     style={{
-                                        color: isLight ? 'rgba(90, 77, 60, 0.6)' : 'rgba(253,251,245,0.65)'
+                                        color: isLight ? 'rgba(90, 77, 60, 0.68)' : 'rgba(253,251,245,0.68)'
                                     }}
                                 >
                                     {entry.subtitle}
                                 </p>
 
-                                {/* Duration */}
                                 {!isPlaceholder && (
-                                    <div
-                                        className="type-label font-bold"
-                                        style={{ color: isLight ? 'rgba(140, 100, 40, 0.7)' : 'var(--accent-50)' }}
-                                    >
-                                        {durationLabel}
+                                    <div className="flex items-center justify-between gap-2">
+                                        <div
+                                            className="type-label font-bold"
+                                            style={{ color: isLight ? 'rgba(140, 100, 40, 0.76)' : 'var(--accent-50)' }}
+                                        >
+                                            {durationLabel}
+                                        </div>
+                                        <div
+                                            className="text-[10px] font-semibold uppercase tracking-[0.12em]"
+                                            style={{ color: isLight ? 'rgba(122, 88, 50, 0.46)' : 'rgba(182, 232, 236, 0.46)' }}
+                                        >
+                                            Tap to open
+                                        </div>
                                     </div>
                                 )}
 
@@ -253,6 +322,7 @@ export function PathSelectionGrid({ onPathSelected, selectedPathId }) {
                         </div>
                     );
                 })}
+                </div>
             </div>
 
             <ThoughtDetachmentOnboarding
