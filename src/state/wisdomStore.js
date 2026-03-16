@@ -46,12 +46,6 @@ export const useWisdomStore = create(
             dueCardsCache: [], // IDs of cards due for review today
 
             // ========================================
-            // RECOMMENDATIONS
-            // ========================================
-            recommendationHistory: [],
-            // { date, sectionId, reason }
-
-            // ========================================
             // ACTIONS
             // ========================================
 
@@ -230,23 +224,6 @@ export const useWisdomStore = create(
                             reviews: current.reviews + 1
                         }
                     }
-                });
-            },
-
-            /**
-             * Add recommendation to history
-             */
-            recordRecommendation: (sectionId, reason) => {
-                const state = get();
-                set({
-                    recommendationHistory: [
-                        ...state.recommendationHistory.slice(-50), // Keep last 50
-                        {
-                            date: new Date().toISOString(),
-                            sectionId,
-                            reason
-                        }
-                    ]
                 });
             },
 

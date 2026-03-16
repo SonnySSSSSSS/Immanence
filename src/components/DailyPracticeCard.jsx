@@ -853,6 +853,105 @@ export function DailyPracticeCard({ onStartPractice, onViewCurriculum, onNavigat
     const maybeBlur = (blur) => (debugBlurOff ? 'none' : blur);
     const maybeBorder = (border) => (debugBorderOff ? 'none' : border);
     const clipOverflow = debugMaskOff ? 'visible' : 'hidden';
+    const cardHousingRadius = '24px';
+    const cardHousingClipPath = 'polygon(18px 0, calc(100% - 18px) 0, 100% 18px, 100% calc(100% - 18px), calc(100% - 18px) 100%, 18px 100%, 0 calc(100% - 18px), 0 18px)';
+    const cardHousingShadow = isLight
+        ? '0 16px 34px rgba(18, 40, 52, 0.12)'
+        : `0 20px 42px rgba(0,0,0,0.32), 0 0 20px ${primaryHex}18`;
+    const cardHousingShellStyle = {
+        borderRadius: cardHousingRadius,
+        clipPath: cardHousingClipPath,
+        overflow: 'visible',
+        boxShadow: maybeShadow(cardHousingShadow),
+    };
+    const cardHousingContainerStyle = {
+        borderRadius: cardHousingRadius,
+        clipPath: cardHousingClipPath,
+        background: isLight ? 'rgba(236, 246, 248, 0.9)' : 'rgba(7, 14, 20, 0.88)',
+        border: 'none',
+        '--dp-radius': cardHousingRadius,
+        '--dp-inset-shadow': isLight
+            ? 'inset 0 1px 0 rgba(255,255,255,0.42)'
+            : 'inset 0 1px 0 rgba(125, 225, 235, 0.1)',
+        backdropFilter: isLight ? 'blur(8px)' : maybeBlur('blur(16px)'),
+        WebkitBackdropFilter: isLight ? 'blur(8px)' : maybeBlur('blur(16px)'),
+        isolation: 'isolate',
+    };
+    const cardHousingOuterChromeStyle = {
+        position: 'absolute',
+        inset: 0,
+        clipPath: cardHousingClipPath,
+        background: isLight
+            ? 'linear-gradient(180deg, rgba(228, 244, 248, 0.84) 0%, rgba(206, 232, 238, 0.62) 100%)'
+            : 'linear-gradient(180deg, rgba(7, 16, 24, 0.96) 0%, rgba(4, 10, 18, 0.94) 100%)',
+        border: `1px solid ${isLight ? 'rgba(97, 177, 190, 0.34)' : 'rgba(112, 233, 242, 0.24)'}`,
+        boxShadow: isLight
+            ? 'inset 0 1px 0 rgba(255,255,255,0.62), inset 0 -10px 24px rgba(18,40,52,0.08)'
+            : `inset 0 1px 0 rgba(168, 241, 248, 0.08), inset 0 -14px 24px rgba(0,0,0,0.42), 0 0 14px ${primaryHex}14`,
+        pointerEvents: 'none',
+        zIndex: 0,
+    };
+    const cardHousingInnerPlateStyle = {
+        position: 'absolute',
+        inset: '9px',
+        clipPath: 'polygon(14px 0, calc(100% - 14px) 0, 100% 14px, 100% calc(100% - 14px), calc(100% - 14px) 100%, 14px 100%, 0 calc(100% - 14px), 0 14px)',
+        background: isLight
+            ? 'linear-gradient(180deg, rgba(242, 250, 252, 0.56) 0%, rgba(219, 238, 242, 0.28) 100%)'
+            : 'linear-gradient(180deg, rgba(8, 16, 24, 0.58) 0%, rgba(10, 20, 29, 0.46) 46%, rgba(4, 10, 17, 0.62) 100%)',
+        border: `1px solid ${isLight ? 'rgba(91, 165, 177, 0.2)' : 'rgba(101, 211, 224, 0.14)'}`,
+        boxShadow: isLight
+            ? 'inset 0 1px 0 rgba(255,255,255,0.5)'
+            : 'inset 0 0 0 1px rgba(8,39,46,0.45), inset 0 10px 18px rgba(0,0,0,0.18)',
+        pointerEvents: 'none',
+        zIndex: 0,
+    };
+    const cardHousingRailStyle = {
+        position: 'absolute',
+        left: '18px',
+        right: '18px',
+        height: '1px',
+        background: isLight
+            ? 'linear-gradient(90deg, transparent, rgba(52, 139, 152, 0.42) 14%, rgba(52, 139, 152, 0.12) 86%, transparent)'
+            : 'linear-gradient(90deg, transparent, rgba(117, 231, 240, 0.48) 16%, rgba(117, 231, 240, 0.12) 86%, transparent)',
+        opacity: 0.9,
+        pointerEvents: 'none',
+        zIndex: 1,
+    };
+    const cardHousingCornerStyle = {
+        position: 'absolute',
+        width: '16px',
+        height: '16px',
+        borderColor: isLight ? 'rgba(59, 144, 156, 0.56)' : 'rgba(117, 231, 240, 0.62)',
+        pointerEvents: 'none',
+        zIndex: 1,
+    };
+    const cardHousingBackgroundStyle = {
+        background: isLight
+            ? 'radial-gradient(circle at 18% 18%, rgba(108, 207, 218, 0.08), transparent 26%), radial-gradient(circle at 82% 84%, rgba(108, 207, 218, 0.06), transparent 24%), linear-gradient(180deg, rgba(248, 252, 252, 0.82) 0%, rgba(229, 241, 244, 0.6) 100%)'
+            : 'radial-gradient(circle at 20% 20%, rgba(78, 214, 226, 0.05), transparent 24%), radial-gradient(circle at 80% 82%, rgba(78, 214, 226, 0.05), transparent 22%), linear-gradient(180deg, rgba(8, 15, 22, 0.72) 0%, rgba(5, 10, 16, 0.8) 100%)',
+        transition: 'all 0.7s ease-in-out',
+    };
+    const cardHousingDividerStyle = {
+        borderLeft: isLight ? '1px solid rgba(91, 165, 177, 0.18)' : '1px solid rgba(101, 211, 224, 0.12)',
+        boxShadow: isLight ? 'inset 1px 0 0 rgba(255,255,255,0.35)' : 'inset 1px 0 0 rgba(101, 211, 224, 0.04)',
+    };
+    const cardHousingContentLayerStyle = {
+        position: 'relative',
+        zIndex: 10,
+        isolation: 'isolate',
+    };
+    const renderCardHousingChrome = () => (
+        <>
+            <div style={cardHousingOuterChromeStyle} />
+            <div style={cardHousingInnerPlateStyle} />
+            <div style={{ ...cardHousingRailStyle, top: '14px' }} />
+            <div style={{ ...cardHousingRailStyle, bottom: '14px' }} />
+            <div style={{ ...cardHousingCornerStyle, top: '12px', left: '12px', borderTop: '1px solid', borderLeft: '1px solid' }} />
+            <div style={{ ...cardHousingCornerStyle, top: '12px', right: '12px', borderTop: '1px solid', borderRight: '1px solid' }} />
+            <div style={{ ...cardHousingCornerStyle, bottom: '12px', left: '12px', borderBottom: '1px solid', borderLeft: '1px solid' }} />
+            <div style={{ ...cardHousingCornerStyle, bottom: '12px', right: '12px', borderBottom: '1px solid', borderRight: '1px solid' }} />
+        </>
+    );
 
     const {
         onboardingComplete: storeOnboardingComplete,
@@ -1048,7 +1147,6 @@ export function DailyPracticeCard({ onStartPractice, onViewCurriculum, onNavigat
     }, [hasActivePath]);
 
     if (hasActivePath || needsSetup || showNoCurriculumSetupState || (!onboardingComplete && hasPersistedCurriculumData === false)) {
-        const bgAssetUrl = `${import.meta.env.BASE_URL}bg/practice-breath-mandala.webp`;
         const isSetupEmptyState = !activePathObj;
 
         return (
@@ -1063,13 +1161,10 @@ export function DailyPracticeCard({ onStartPractice, onViewCurriculum, onNavigat
                 <div
                     className="w-full relative"
                     style={{
-                        borderRadius: '24px',
-                        overflow: 'visible',
-                        boxShadow: maybeShadow(isLight
-                            ? '0 14px 34px rgba(0,0,0,0.10), 0 6px 14px rgba(0,0,0,0.06)'
-                            : `0 18px 40px rgba(0,0,0,0.28), 0 6px 14px rgba(0,0,0,0.18), 0 0 18px ${primaryHex}22`),
+                        ...cardHousingShellStyle,
                     }}
                 >
+                 {/* PROBE:homehub-card-housing:START */}
                  <div
                      data-card="true"
                      data-card-id="dailyPractice"
@@ -1077,57 +1172,22 @@ export function DailyPracticeCard({ onStartPractice, onViewCurriculum, onNavigat
                      data-card-carousel={dataCardCarousel}
                      className="im-card w-full relative dpBlurSurface"
                      style={{
-                         borderRadius: '24px',
+                         ...cardHousingContainerStyle,
                          overflow: clipOverflow,
-                        background: isLight
-                            ? (isSetupEmptyState ? 'rgba(250, 246, 238, 0.96)' : 'rgba(250, 246, 238, 0.92)')
-                            : (isSetupEmptyState ? 'rgba(10, 12, 16, 0.72)' : 'rgba(10, 12, 16, 0.58)'),
-                         border: maybeBorder(isLight ? '1px solid rgba(160, 120, 60, 0.2)' : '1px solid var(--accent-30)'),
-                         '--dp-radius': '24px',
-                         // Set inset-only shadow via CSS var + !important class to prevent accidental depth shadows on this layer.
-                         '--dp-inset-shadow': isLight
-                             ? 'inset 0 1px 0 rgba(255,255,255,0.22)'
-                            : 'inset 0 1px 0 rgba(255,255,255,0.06)',
-                        backdropFilter: isLight ? 'none' : maybeBlur('blur(16px)'),
-                        WebkitBackdropFilter: isLight ? 'none' : maybeBlur('blur(16px)'),
-                        isolation: 'isolate',
                     }}
                 >
-                        {/* Inner decorative border - matches practice card styling */}
-                        <div
-                            className="absolute pointer-events-none"
-                            style={{
-                                top: '8px',
-                                left: '8px',
-                                right: '8px',
-                                bottom: '8px',
-                                border: isLight ? '1px solid rgba(160, 120, 60, 0.15)' : '1px solid var(--accent-25)',
-                                borderRadius: '14px',
-                                zIndex: 10,
-                            }}
-                        />
-                        <div className="glassCardContent">
+                        {renderCardHousingChrome()}
+                        <div className="glassCardContent" style={cardHousingContentLayerStyle}>
                         <div className="dpClipSurface">
                         <div
                             className="absolute inset-0 pointer-events-none dpRadiusInherit"
-                            style={{
-                                backgroundImage: `url(${bgAssetUrl})`,
-                                backgroundSize: 'cover',
-                                backgroundPosition: 'center',
-                                opacity: isSetupEmptyState ? 0.72 : 1,
-                                filter: isLight ? (isSetupEmptyState ? 'saturate(0.95)' : 'saturate(1.1)') : 'none',
-                                transition: 'all 0.7s ease-in-out',
-                            }}
+                            style={cardHousingBackgroundStyle}
                         />
 
                         <div className="absolute inset-0 pointer-events-none dpRadiusInherit" style={{
                             background: isLight
-                                ? (isSetupEmptyState
-                                    ? 'linear-gradient(180deg, rgba(250, 246, 238, 0.58) 0%, rgba(250, 246, 238, 0.78) 100%)'
-                                    : 'linear-gradient(180deg, rgba(250, 246, 238, 0.42) 0%, rgba(250, 246, 238, 0.62) 100%)')
-                                : (isSetupEmptyState
-                                    ? 'linear-gradient(180deg, rgba(20, 15, 25, 0.66) 0%, rgba(20, 15, 25, 0.84) 100%)'
-                                    : 'linear-gradient(180deg, rgba(20, 15, 25, 0.48) 0%, rgba(20, 15, 25, 0.72) 100%)')
+                                ? 'linear-gradient(180deg, rgba(246, 251, 252, 0.08) 0%, rgba(225, 239, 242, 0.16) 100%)'
+                                : 'linear-gradient(180deg, rgba(8, 18, 27, 0.06) 0%, rgba(4, 9, 16, 0.12) 100%)'
                         }} />
 
                         {!isSetupEmptyState && (
@@ -1189,42 +1249,36 @@ export function DailyPracticeCard({ onStartPractice, onViewCurriculum, onNavigat
 
                         {/* Right content panel */}
                         <div
-                            className={`relative z-10 overflow-hidden flex flex-col ${isSetupEmptyState ? 'w-full max-w-full min-w-0' : 'ml-auto w-[380px] max-w-[70%] min-w-[320px]'}`}
+                            className={`relative overflow-hidden flex flex-col ${isSetupEmptyState ? 'w-full max-w-full min-w-0' : 'ml-auto w-[380px] max-w-[70%] min-w-[320px]'}`}
                             style={{
+                                ...cardHousingContentLayerStyle,
                                 background: isSetupEmptyState
-                                    ? (isLight ? 'rgba(250, 246, 238, 0.55)' : 'rgba(0, 0, 0, 0.18)')
+                                    ? (isLight ? 'rgba(241, 250, 252, 0.18)' : 'rgba(8, 18, 27, 0.18)')
                                     : 'transparent',
                                 borderLeft: isSetupEmptyState
                                     ? 'none'
-                                    : (isLight ? '1px solid rgba(160, 120, 60, 0.1)' : '1px solid var(--accent-15)'),
+                                    : cardHousingDividerStyle.borderLeft,
+                                boxShadow: isSetupEmptyState ? 'none' : cardHousingDividerStyle.boxShadow,
+                                border: isSetupEmptyState
+                                    ? (isLight ? '1px solid rgba(91, 165, 177, 0.16)' : '1px solid rgba(101, 211, 224, 0.12)')
+                                    : 'none',
                                 color: isLight ? '#3c3020' : '#fdfbf5',
                             }}
                         >
-                            {isLight && (
-                                <div
-                                    className="absolute inset-0 pointer-events-none opacity-40"
-                                    style={{
-                                        backgroundImage: `url(${import.meta.env.BASE_URL}assets/parchment_blank.webp)`,
-                                        backgroundSize: 'cover',
-                                        mixBlendMode: 'multiply',
-                                    }}
-                                />
-                            )}
-
                             <div className="px-6 sm:px-7 pt-4 sm:pt-5 pb-4 sm:pb-5 relative z-10 flex flex-col flex-1">
                                 <div className="absolute inset-0 pointer-events-none" style={{
                                     background: isLight
                                         ? (isSetupEmptyState
-                                            ? 'radial-gradient(circle at 10% 10%, rgba(180, 140, 60, 0.06), transparent 32%), radial-gradient(circle at 90% 90%, rgba(180, 140, 60, 0.06), transparent 32%)'
-                                            : 'radial-gradient(circle at 10% 10%, rgba(180, 140, 60, 0.12), transparent 30%), radial-gradient(circle at 90% 90%, rgba(180, 140, 60, 0.12), transparent 30%)')
+                                            ? 'radial-gradient(circle at 10% 10%, rgba(108, 207, 218, 0.08), transparent 32%), radial-gradient(circle at 90% 90%, rgba(108, 207, 218, 0.07), transparent 32%)'
+                                            : 'radial-gradient(circle at 10% 10%, rgba(108, 207, 218, 0.1), transparent 30%), radial-gradient(circle at 90% 90%, rgba(108, 207, 218, 0.08), transparent 30%)')
                                         : (isSetupEmptyState
-                                            ? 'radial-gradient(circle at 10% 10%, rgba(255, 255, 255, 0.03), transparent 32%), radial-gradient(circle at 90% 90%, rgba(255, 255, 255, 0.03), transparent 32%)'
-                                            : 'radial-gradient(circle at 10% 10%, rgba(255, 255, 255, 0.06), transparent 30%), radial-gradient(circle at 90% 90%, rgba(255, 255, 255, 0.06), transparent 30%)')
+                                            ? 'radial-gradient(circle at 10% 10%, rgba(78, 214, 226, 0.05), transparent 32%), radial-gradient(circle at 90% 90%, rgba(78, 214, 226, 0.05), transparent 32%)'
+                                            : 'radial-gradient(circle at 10% 10%, rgba(78, 214, 226, 0.07), transparent 30%), radial-gradient(circle at 90% 90%, rgba(78, 214, 226, 0.07), transparent 30%)')
                                 }} />
 
                                 {!activePathObj ? (
                                     <div className="flex flex-col justify-center flex-1">
-                                        <div>
+                                        <div style={{ textShadow: isLight ? '0 1px 1px rgba(255,255,255,0.2)' : '0 1px 8px rgba(0,0,0,0.7)' }}>
                                             <div className="text-[10px] font-black uppercase tracking-[0.32em] opacity-60" style={{ color: isLight ? 'rgba(60, 50, 35, 0.6)' : 'rgba(253,251,245,0.6)' }}>
                                                 Today's Practice
                                             </div>
@@ -1549,6 +1603,7 @@ export function DailyPracticeCard({ onStartPractice, onViewCurriculum, onNavigat
                         </div>
                     </div>
                 </div>
+                {/* PROBE:homehub-card-housing:END */}
             </div>
         );
     }
@@ -1634,17 +1689,11 @@ export function DailyPracticeCard({ onStartPractice, onViewCurriculum, onNavigat
     _devDepsRef.current = { legs, dayNumber, isLegTooEarly, isLegExpired };
 
     if ((isCurriculumActive && dayNumber > 14) || isCurriculumComplete) {
-        const bgAssetUrl = `${import.meta.env.BASE_URL}bg/practice-breath-mandala.webp`;
-
         return (
             <div
                 className="w-full"
                 style={{
-                    borderRadius: '24px',
-                    overflow: 'visible',
-                    boxShadow: maybeShadow(isLight
-                        ? '0 14px 34px rgba(0,0,0,0.10), 0 6px 14px rgba(0,0,0,0.06)'
-                        : '0 18px 40px rgba(0,0,0,0.28), 0 6px 14px rgba(0,0,0,0.18), 0 0 18px rgba(95,255,170,0.08)'),
+                    ...cardHousingShellStyle,
                 }}
             >
                 <div
@@ -1654,57 +1703,16 @@ export function DailyPracticeCard({ onStartPractice, onViewCurriculum, onNavigat
                     data-card-carousel={dataCardCarousel}
                     className="im-card w-full relative dpBlurSurface"
                     style={{
-                        borderRadius: '24px',
+                        ...cardHousingContainerStyle,
                         overflow: clipOverflow,
-                        background: isLight ? 'rgba(245, 239, 229, 0.92)' : 'rgba(10, 10, 15, 0.72)',
-                        border: maybeBorder(isLight ? '1px solid rgba(160, 120, 60, 0.2)' : '1px solid var(--accent-30)'),
-                        '--dp-radius': '24px',
-                        '--dp-inset-shadow': isLight
-                            ? 'inset 0 1px 0 rgba(255,255,255,0.22)'
-                            : 'inset 0 1px 0 rgba(255,255,255,0.06)',
-                        backdropFilter: isLight ? 'none' : maybeBlur('blur(16px)'),
-                        WebkitBackdropFilter: isLight ? 'none' : maybeBlur('blur(16px)'),
-                        isolation: 'isolate',
                     }}
                 >
-                {/* Inner decorative border - matches practice card styling */}
-                <div
-                    className="absolute pointer-events-none"
-                    style={{
-                        top: '8px',
-                        left: '8px',
-                        right: '8px',
-                        bottom: '8px',
-                        border: isLight ? '1px solid rgba(160, 120, 60, 0.15)' : '1px solid var(--accent-25)',
-                        borderRadius: '14px',
-                        zIndex: 10,
-                    }}
-                />
+                {renderCardHousingChrome()}
                 <div className="dpClipSurface">
-                {/* Relic/Cosmic Background Wallpaper */}
                 <div
                     className="absolute inset-0 pointer-events-none dpRadiusInherit"
-                    style={{
-                        backgroundImage: `url(${bgAssetUrl})`,
-                        backgroundSize: 'cover',
-                        backgroundPosition: 'center',
-                        opacity: isLight ? 0.21 : 0.36,
-                        mixBlendMode: isLight ? 'multiply' : 'screen',
-                        filter: 'none',
-                    }}
+                    style={cardHousingBackgroundStyle}
                 />
-
-                {/* Canvas Grain Texture (Light mode only) */}
-                {isLight && (
-                    <div
-                        className="absolute inset-0 pointer-events-none opacity-[0.03] dpRadiusInherit"
-                        style={{
-                            backgroundImage: `url(${import.meta.env.BASE_URL}assets/canvas_grain.webp)`,
-                            backgroundSize: '200px',
-                            mixBlendMode: 'multiply',
-                        }}
-                    />
-                )}
                 </div>
 
                 <div className="glassCardContent relative z-10 p-8 text-center">
@@ -1785,18 +1793,17 @@ export function DailyPracticeCard({ onStartPractice, onViewCurriculum, onNavigat
                     data-card-id="dailyPracticeFallback"
                     data-card-active={dataCardActive}
                     data-card-carousel={dataCardCarousel}
-                    className="im-card w-full"
+                    className="im-card w-full relative dpBlurSurface"
                     style={{
-                        borderRadius: '24px',
+                        ...cardHousingContainerStyle,
+                        overflow: clipOverflow,
                         padding: '20px',
-                        background: isLight ? '#f5efe5' : '#14121a',
-                        border: isLight ? '1px solid rgba(160, 120, 60, 0.2)' : '1px solid rgba(255,255,255,0.12)',
-                        boxShadow: isLight
-                            ? '0 14px 34px rgba(0,0,0,0.10)'
-                            : '0 18px 40px rgba(0,0,0,0.28)',
                         color: isLight ? '#3c3020' : '#fdfbf5',
                     }}
                 >
+                    {renderCardHousingChrome()}
+                    <div className="absolute inset-0 pointer-events-none dpRadiusInherit" style={cardHousingBackgroundStyle} />
+                    <div className="relative z-10">
                     <div style={{ fontSize: 10, letterSpacing: '0.32em', textTransform: 'uppercase', opacity: 0.7 }}>
                         Today&apos;s Practice
                     </div>
@@ -1882,6 +1889,7 @@ export function DailyPracticeCard({ onStartPractice, onViewCurriculum, onNavigat
                             Start Setup
                         </button>
                     )}
+                    </div>
                 </div>
             </div>
         );

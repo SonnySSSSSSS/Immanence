@@ -5,6 +5,7 @@
 import { useState } from 'react';
 import { BigFiveAssessment } from './BigFiveAssessment.jsx';
 import { PersonalityWave } from './PersonalityWave.jsx';
+import { WisdomCardHousing } from './WisdomCardHousing.jsx';
 
 function getDefaultProfile() {
     return {
@@ -46,7 +47,11 @@ export function SelfKnowledgeView() {
     // If showing Big Five assessment
     if (showAssessment && assessmentType === 'bigFive') {
         return (
-            <div className="space-y-6 im-card" data-card-id="wisdom:selfKnowledgePanel">
+            <WisdomCardHousing
+                className="space-y-6"
+                cardId="wisdom:selfKnowledgePanel"
+                contentClassName="space-y-6 px-5 py-5 sm:px-6 sm:py-6"
+            >
                 {draftScores && (
                     <div className="px-2 pt-4">
                         <PersonalityWave scores={draftScores} height={100} />
@@ -71,7 +76,7 @@ export function SelfKnowledgeView() {
                         setDraftScores(null);
                     }}
                 />
-            </div>
+            </WisdomCardHousing>
         );
     }
 
@@ -100,7 +105,11 @@ export function SelfKnowledgeView() {
     const traits = getTraitSummary(bigFive?.scores);
 
     return (
-        <div className="space-y-6 im-card" data-card-id="wisdom:selfKnowledgePanel">
+        <WisdomCardHousing
+            className="space-y-6"
+            cardId="wisdom:selfKnowledgePanel"
+            contentClassName="space-y-6 px-5 py-5 sm:px-6 sm:py-6"
+        >
             {/* Header / Wave Visualization */}
             <div className="relative pt-2 pb-6">
                 <div className="text-center mb-6">
@@ -419,6 +428,6 @@ export function SelfKnowledgeView() {
                     {selfDescribedTags.length}/10 tags
                 </div>
             </div>
-        </div>
+        </WisdomCardHousing>
     );
 }

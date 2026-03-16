@@ -15,6 +15,7 @@ import { CymaticsConfig } from '../CymaticsConfig.jsx';
 import { RitualSelectionDeck } from '../RitualSelectionDeck.jsx';
 import { PhoticControlPanel } from '../PhoticControlPanel.jsx';
 import { EmotionConfig } from '../EmotionConfig.jsx';
+import { getPracticeHousingStyles, PracticeHousingChrome } from './practiceHousing.jsx';
 
 // Map string names to actual components (direct imports, not lazy)
 const CONFIG_COMPONENTS = {
@@ -49,13 +50,10 @@ export function PracticeOptionsCard({
   const p = getPracticeConfig(practiceId);
   const isCollapsed = !practiceId;
   const isSanctuary = false;
-  const practicePanelWallpaperUrl = `${import.meta.env.BASE_URL}bg/practice-breath-mandala.webp`;
-  const practicePanelTint = tokens?.isLight
-    ? 'linear-gradient(rgba(245, 240, 230, 0.52), rgba(245, 240, 230, 0.68))'
-    : 'linear-gradient(rgba(10, 12, 18, 0.10), rgba(10, 12, 18, 0.24))';
   const cardPadding = practiceId === 'breath'
     ? (isSanctuary ? '8px 28px 28px' : '8px 20px 20px')
     : (isSanctuary ? '24px' : '20px');
+  const housing = getPracticeHousingStyles({ isLight: Boolean(tokens?.isLight), radius: 20, quiet: true });
 
   const [showTrajectory, setShowTrajectory] = useState(false);
   const [showTempoSync, setShowTempoSync] = useState(false);
@@ -139,43 +137,26 @@ export function PracticeOptionsCard({
         zIndex: 1,
       }}
     >
-      {/* Glassmorphic Main Panel */}
+      {/* PROBE:practice-card-housing:START */}
       <div 
         className="relative PracticePanelShell overflow-x-hidden im-card"
         data-card="true"
         data-card-id="practice-options"
         style={{
-          backdropFilter: 'blur(40px) saturate(180%)',
-          WebkitBackdropFilter: 'blur(40px) saturate(180%)',
-          borderRadius: '20px',
+          ...housing.panel,
           padding: cardPadding,
           minHeight: isCollapsed ? '88px' : 'auto',
-          border: '1px solid var(--accent-30)',
-          backgroundColor: tokens?.isLight ? 'rgba(245, 240, 230, 0.22)' : 'rgba(10, 12, 18, 0.12)',
-          boxShadow: `
-            0 12px 48px rgba(0, 0, 0, 0.6),
-            0 4px 16px var(--accent-15),
-            inset 0 1px 0 rgba(255, 255, 255, 0.15),
-            inset 0 -1px 0 rgba(0, 0, 0, 0.8),
-            inset 0 0 60px var(--accent-10)
-          `,
+          ...housing.shell,
         }}
       >
+        <PracticeHousingChrome isLight={Boolean(tokens?.isLight)} quiet radius={20} />
         <div
           style={{
             position: 'absolute',
             inset: 0,
             pointerEvents: 'none',
             zIndex: 0,
-            backgroundImage: `url(${practicePanelWallpaperUrl})`,
-            backgroundSize: 'cover',
-            backgroundPosition: 'center',
-            backgroundRepeat: 'no-repeat',
-            opacity: tokens?.isLight ? 0.96 : 0.88,
-            transform: 'scale(1.01)',
-            filter: tokens?.isLight
-              ? 'saturate(0.92) contrast(1.02) brightness(1.02)'
-              : 'saturate(1.04) contrast(1.08) brightness(0.92)',
+            ...housing.background,
           }}
         />
         <div
@@ -184,69 +165,14 @@ export function PracticeOptionsCard({
             inset: 0,
             pointerEvents: 'none',
             zIndex: 1,
-            background: practicePanelTint,
-          }}
-        />
-        <div
-          style={{
-            position: 'absolute',
-            inset: 0,
-            pointerEvents: 'none',
-            zIndex: 2,
             background: tokens?.isLight
-              ? 'linear-gradient(135deg, rgba(255,255,255,0.03) 0%, transparent 30%, rgba(120, 90, 50, 0.04) 100%)'
-              : 'linear-gradient(135deg, rgba(255,255,255,0.02) 0%, transparent 34%, rgba(0,0,0,0.08) 100%)',
+              ? 'linear-gradient(180deg, rgba(246, 251, 252, 0.08) 0%, rgba(225, 239, 242, 0.16) 100%)'
+              : 'linear-gradient(180deg, rgba(8, 18, 27, 0.06) 0%, rgba(4, 9, 16, 0.12) 100%)',
           }}
         />
-
-        {/* Inner decorative border line */}
-        <div 
-          className="absolute pointer-events-none"
-          style={{
-            top: '8px',
-            left: '8px',
-            right: '8px',
-            bottom: '8px',
-            zIndex: 3,
-            border: '1px solid var(--accent-25)',
-            borderRadius: '10px',
-          }}
-        />
-        
-        {/* Corner flourishes - top left */}
-        <div className="absolute pointer-events-none" style={{ top: '0', left: '0', width: '40px', height: '40px' }}>
-          <svg viewBox="0 0 40 40" fill="none" style={{ width: '100%', height: '100%' }}>
-            <path d="M0 20 Q0 0 20 0" stroke="var(--accent-60)" strokeWidth="2" fill="none"/>
-            <path d="M5 15 Q5 5 15 5" stroke="var(--accent-40)" strokeWidth="1" fill="none"/>
-          </svg>
-        </div>
-        {/* Corner flourishes - top right */}
-        <div className="absolute pointer-events-none" style={{ top: '0', right: '0', width: '40px', height: '40px', transform: 'scaleX(-1)' }}>
-          <svg viewBox="0 0 40 40" fill="none" style={{ width: '100%', height: '100%' }}>
-            <path d="M0 20 Q0 0 20 0" stroke="var(--accent-60)" strokeWidth="2" fill="none"/>
-            <path d="M5 15 Q5 5 15 5" stroke="var(--accent-40)" strokeWidth="1" fill="none"/>
-          </svg>
-        </div>
-        {/* Corner flourishes - bottom left */}
-        <div className="absolute pointer-events-none" style={{ bottom: '0', left: '0', width: '40px', height: '40px', transform: 'scaleY(-1)' }}>
-          <svg viewBox="0 0 40 40" fill="none" style={{ width: '100%', height: '100%' }}>
-            <path d="M0 20 Q0 0 20 0" stroke="var(--accent-60)" strokeWidth="2" fill="none"/>
-            <path d="M5 15 Q5 5 15 5" stroke="var(--accent-40)" strokeWidth="1" fill="none"/>
-          </svg>
-        </div>
-        {/* Corner flourishes - bottom right */}
-        <div className="absolute pointer-events-none" style={{ bottom: '0', right: '0', width: '40px', height: '40px', transform: 'scale(-1, -1)' }}>
-          <svg viewBox="0 0 40 40" fill="none" style={{ width: '100%', height: '100%' }}>
-            <path d="M0 20 Q0 0 20 0" stroke="rgba(212, 175, 55, 0.6)" strokeWidth="2" fill="none"/>
-            <path d="M5 15 Q5 5 15 5" stroke="rgba(212, 175, 55, 0.4)" strokeWidth="1" fill="none"/>
-          </svg>
-        </div>
-
-        {/* Top highlight line */}
-        <div className="absolute top-0 left-[20%] right-[20%] h-[1px] pointer-events-none" style={{ background: 'linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent)' }} />
       
       {isCollapsed ? (
-        <div className="relative z-[4] h-[88px] flex items-center justify-center">
+        <div className="h-[88px] flex items-center justify-center" style={housing.content}>
           <span style={{ 
             fontFamily: 'var(--font-display)', 
             fontSize: '11px', 
@@ -260,7 +186,7 @@ export function PracticeOptionsCard({
         </div>
       ) : (
         practiceId === 'breath' ? (
-          <div className="relative z-[4]">
+          <div style={housing.content}>
             <BreathPracticeCard
             practiceId={practiceId}
             label={label}
@@ -288,7 +214,7 @@ export function PracticeOptionsCard({
           />
           </div>
         ) : (
-          <div className="relative z-[4]">
+          <div style={housing.content}>
             <PracticeMenu
             containerKey={practiceId}
             label={label}
@@ -316,6 +242,7 @@ export function PracticeOptionsCard({
           </div>
         ))}
         </div>
+      {/* PROBE:practice-card-housing:END */}
       </div>
   );
 }

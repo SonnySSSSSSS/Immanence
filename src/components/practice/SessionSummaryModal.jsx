@@ -3,7 +3,8 @@
 
 import React from 'react';
 import { useDisplayModeStore } from '../../state/displayModeStore.js';
-import { plateauMaterial, innerGlowStyle, getCardMaterial, getInnerGlowStyle } from '../../styles/cardMaterial.js';
+import { innerGlowStyle, getInnerGlowStyle } from '../../styles/cardMaterial.js';
+import { getPracticeHousingStyles, PracticeHousingChrome } from './practiceHousing.jsx';
 
 // Quick practice suggestions based on what was just completed
 const PRACTICE_SUGGESTIONS = {
@@ -30,6 +31,7 @@ export function SessionSummaryModal({ summary, onContinue, onStartNext, onFocusR
   const colorScheme = useDisplayModeStore(s => s.colorScheme);
   const isLight = colorScheme === 'light';
   const [focusRating, setFocusRating] = React.useState(null);
+  const housing = getPracticeHousingStyles({ isLight, radius: 32, quiet: true });
 
   React.useEffect(() => {
     if (import.meta.env.DEV && summary) {
@@ -58,16 +60,23 @@ export function SessionSummaryModal({ summary, onContinue, onStartNext, onFocusR
         style={{
           width: '480px',
           maxWidth: '95vw',
-          ...(isLight ? getCardMaterial(true) : plateauMaterial),
-          border: isLight ? '1px solid var(--light-border, rgba(60,50,35,0.15))' : '1px solid var(--accent-20)',
-          boxShadow: isLight
-            ? '0 4px 24px rgba(60,50,35,0.12), inset 0 1px 0 rgba(255,255,255,0.8)'
-            : '0 12px 48px rgba(0,0,0,0.6), inset 0 1px 0 rgba(255,255,255,0.04)',
+          ...housing.panel,
+          ...housing.shell,
         }}
       >
-        <div className="absolute inset-0 pointer-events-none" style={isLight ? getInnerGlowStyle(true) : innerGlowStyle} />
+        {/* PROBE:practice-card-housing:START */}
+        <PracticeHousingChrome isLight={isLight} quiet radius={32} />
+        <div className="absolute inset-0 pointer-events-none" style={{ ...housing.background, zIndex: 0 }} />
+        <div
+          className="absolute inset-0 pointer-events-none"
+          style={{
+            ...(isLight ? getInnerGlowStyle(true) : innerGlowStyle),
+            opacity: isLight ? 0.35 : 0.2,
+            zIndex: 1,
+          }}
+        />
 
-        <div className="relative px-8 py-8 text-center">
+        <div className="relative px-8 py-8 text-center" style={housing.content}>
           {/* Decorative Icon */}
           <div
             style={{
@@ -334,6 +343,7 @@ export function SessionSummaryModal({ summary, onContinue, onStartNext, onFocusR
             {allLegsComplete ? 'See You Tomorrow ✦' : (summary.nextLeg ? 'Continue' : 'Completed')}
           </button>
         </div>
+        {/* PROBE:practice-card-housing:END */}
       </div>
     </section>
   );

@@ -65,23 +65,6 @@ const sanitizeModeTileBackgroundImage = (bgUrl) => {
   return `url("${raw}")`;
 };
 
-const HOME_HUB_SIDE_PANEL_ASSETS = Object.freeze({
-  practiceLog: 'locker.png',
-  rhythmReport: 'elements.png',
-});
-
-function resolveHomeHubAssetUrl(fileName) {
-  const baseUrl = import.meta.env.BASE_URL || '/';
-  const normalizedBaseUrl = baseUrl.endsWith('/') ? baseUrl : `${baseUrl}/`;
-  return `${normalizedBaseUrl}assets/${fileName}`;
-}
-
-const HOME_HUB_SIDE_PANEL_ASSET_URLS = Object.freeze({
-  practiceLog: resolveHomeHubAssetUrl(HOME_HUB_SIDE_PANEL_ASSETS.practiceLog),
-  rhythmReport: resolveHomeHubAssetUrl(HOME_HUB_SIDE_PANEL_ASSETS.rhythmReport),
-});
-
-
 function HomeHub({ onSelectSection, activeSection = null, currentStage, previewPath, isPracticing = false, lockToHub = false, debugShadowScan = false }) {
   // Real data from stores
   const { getStreakInfo, getDomainStats, getWeeklyPattern } = useProgressStore();
@@ -401,7 +384,7 @@ function HomeHub({ onSelectSection, activeSection = null, currentStage, previewP
   const panelW = `clamp(94px, calc(${RAIL_W} * 0.185), 153px)`;
   const panelH = `clamp(112px, calc(${RAIL_W} * 0.305), 132px)`;
   const panelPad = `calc(${U} * 1.0)`;
-  const panelRadius = `calc(${U} * 1.2)`;
+  const panelChamfer = `calc(${U} * 0.72)`;
   const sidePanelFrameStyle = {
     width: panelW,
     height: panelH,
@@ -411,14 +394,14 @@ function HomeHub({ onSelectSection, activeSection = null, currentStage, previewP
     alignItems: 'stretch',
     padding: 0,
     boxSizing: 'border-box',
-    background: isLight ? 'rgba(255, 255, 255, 0.45)' : 'rgba(0, 0, 0, 0.28)',
-    backdropFilter: 'blur(12px)',
-    WebkitBackdropFilter: 'blur(12px)',
-    borderRadius: panelRadius,
-    border: `1px solid ${isLight ? 'rgba(200, 160, 100, 0.2)' : 'rgba(255, 255, 255, 0.09)'}`,
+    background: 'transparent',
+    backdropFilter: isLight ? 'blur(10px)' : 'blur(14px)',
+    WebkitBackdropFilter: isLight ? 'blur(10px)' : 'blur(14px)',
+    clipPath: `polygon(${panelChamfer} 0, calc(100% - ${panelChamfer}) 0, 100% ${panelChamfer}, 100% calc(100% - ${panelChamfer}), calc(100% - ${panelChamfer}) 100%, ${panelChamfer} 100%, 0 calc(100% - ${panelChamfer}), 0 ${panelChamfer})`,
+    border: 'none',
     boxShadow: isLight
-      ? 'inset 0 -12px 18px rgba(60, 50, 35, 0.08)'
-      : 'inset 0 -12px 18px rgba(0,0,0,0.18)',
+      ? '0 10px 24px rgba(18, 40, 52, 0.12)'
+      : '0 14px 34px rgba(0, 0, 0, 0.38), 0 0 18px rgba(74, 214, 226, 0.12)',
     overflow: 'hidden',
     position: 'relative',
   };
@@ -489,7 +472,7 @@ function HomeHub({ onSelectSection, activeSection = null, currentStage, previewP
     width: '100%',
     height: '2px',
     borderRadius: '999px',
-    background: isLight ? 'rgba(100, 80, 60, 0.42)' : 'rgba(255, 255, 255, 0.32)',
+    background: isLight ? 'rgba(55, 112, 126, 0.62)' : 'rgba(138, 228, 236, 0.48)',
   };
   const sidePanelTileContentBaseStyle = {
     width: '100%',
@@ -537,6 +520,53 @@ function HomeHub({ onSelectSection, activeSection = null, currentStage, previewP
     minHeight: `calc(${U} * 1.65)`,
     justifyContent: 'center',
   };
+  const sidePanelHousingGlowColor = isLight ? 'rgba(76, 199, 214, 0.12)' : 'rgba(76, 219, 235, 0.18)';
+  const sidePanelHousingOuterStyle = {
+    position: 'absolute',
+    inset: 0,
+    clipPath: sidePanelFrameStyle.clipPath,
+    background: isLight
+      ? 'linear-gradient(180deg, rgba(230, 246, 250, 0.76) 0%, rgba(201, 228, 235, 0.56) 100%)'
+      : 'linear-gradient(180deg, rgba(6, 16, 24, 0.92) 0%, rgba(3, 10, 18, 0.9) 100%)',
+    border: `1px solid ${isLight ? 'rgba(97, 177, 190, 0.38)' : 'rgba(112, 233, 242, 0.28)'}`,
+    boxShadow: isLight
+      ? 'inset 0 1px 0 rgba(255,255,255,0.58), inset 0 -10px 24px rgba(18,40,52,0.08)'
+      : `inset 0 1px 0 rgba(168, 241, 248, 0.12), inset 0 -16px 28px rgba(0, 0, 0, 0.4), 0 0 0 1px rgba(38, 88, 98, 0.22), 0 0 14px ${sidePanelHousingGlowColor}`,
+    pointerEvents: 'none',
+  };
+  const sidePanelHousingInnerStyle = {
+    position: 'absolute',
+    inset: `clamp(6px, calc(${U} * 0.36), 10px)`,
+    clipPath: `polygon(calc(${panelChamfer} * 0.68) 0, calc(100% - calc(${panelChamfer} * 0.68)) 0, 100% calc(${panelChamfer} * 0.68), 100% calc(100% - calc(${panelChamfer} * 0.68)), calc(100% - calc(${panelChamfer} * 0.68)) 100%, calc(${panelChamfer} * 0.68) 100%, 0 calc(100% - calc(${panelChamfer} * 0.68)), 0 calc(${panelChamfer} * 0.68))`,
+    background: isLight
+      ? 'linear-gradient(180deg, rgba(241, 250, 252, 0.7) 0%, rgba(214, 234, 239, 0.5) 100%)'
+      : 'linear-gradient(180deg, rgba(5, 12, 20, 0.88) 0%, rgba(9, 20, 29, 0.8) 48%, rgba(4, 9, 16, 0.92) 100%)',
+    border: `1px solid ${isLight ? 'rgba(91, 165, 177, 0.22)' : 'rgba(101, 211, 224, 0.16)'}`,
+    boxShadow: isLight
+      ? 'inset 0 1px 0 rgba(255,255,255,0.55)'
+      : 'inset 0 0 0 1px rgba(8, 39, 46, 0.65), inset 0 12px 26px rgba(0, 0, 0, 0.28)',
+    pointerEvents: 'none',
+  };
+  const sidePanelHousingLineStyle = {
+    position: 'absolute',
+    left: `calc(${U} * 0.5)`,
+    right: `calc(${U} * 0.5)`,
+    height: '1px',
+    background: isLight
+      ? 'linear-gradient(90deg, transparent, rgba(52, 139, 152, 0.42) 16%, rgba(52, 139, 152, 0.12) 84%, transparent)'
+      : 'linear-gradient(90deg, transparent, rgba(117, 231, 240, 0.52) 18%, rgba(117, 231, 240, 0.14) 84%, transparent)',
+    opacity: 0.9,
+    pointerEvents: 'none',
+  };
+  const sidePanelHousingCornerStyle = {
+    position: 'absolute',
+    width: `calc(${U} * 0.72)`,
+    height: `calc(${U} * 0.72)`,
+    borderColor: isLight ? 'rgba(59, 144, 156, 0.62)' : 'rgba(117, 231, 240, 0.72)',
+    pointerEvents: 'none',
+  };
+  const sidePanelTextShadow = isLight ? '0 1px 2px rgba(240,248,250,0.35)' : '0 1px 6px rgba(0,0,0,0.9)';
+  const sidePanelAccentTextShadow = isLight ? '0 1px 2px rgba(240,248,250,0.2)' : '0 0 10px rgba(72, 208, 220, 0.18)';
   const sidePanelTileExpandedMaxHeight = `calc(${panelH} - ((${panelPad}) * 0.9) - 12px)`;
   const sidePanelTileRolledMaxHeight = `calc(${U} * 1.6)`;
   const PANEL_EXPANDED_H = panelH;
@@ -567,7 +597,7 @@ function HomeHub({ onSelectSection, activeSection = null, currentStage, previewP
         className="w-full flex flex-col items-center gap-0 pb-0 transition-all duration-500 overflow-visible"
         style={{ paddingTop: '12px' }}
       >
-        {/* PROBE:HOMEHUB_SIDE_PANELS_V1:START */}
+        {/* PROBE:flank-housing:START */}
         <div
           style={{
             display: 'flex',
@@ -590,19 +620,14 @@ function HomeHub({ onSelectSection, activeSection = null, currentStage, previewP
               overflow: 'hidden',
             }}
           >
-            <div
-              style={{
-                position: 'absolute',
-                inset: 0,
-                backgroundImage: `url("${HOME_HUB_SIDE_PANEL_ASSET_URLS.practiceLog}")`,
-                backgroundSize: 'cover',
-                backgroundPosition: 'center',
-                opacity: isLight ? 0.30 : 0.20,
-                filter: 'saturate(0.72) contrast(0.94) brightness(0.93)',
-                pointerEvents: 'none',
-                zIndex: 0,
-              }}
-            />
+            <div style={sidePanelHousingOuterStyle} />
+            <div style={sidePanelHousingInnerStyle} />
+            <div style={{ ...sidePanelHousingLineStyle, top: `calc(${U} * 0.7)` }} />
+            <div style={{ ...sidePanelHousingLineStyle, bottom: `calc(${U} * 0.82)` }} />
+            <div style={{ ...sidePanelHousingCornerStyle, top: `calc(${U} * 0.3)`, left: `calc(${U} * 0.34)`, borderTopWidth: '1px', borderLeftWidth: '1px', borderTopStyle: 'solid', borderLeftStyle: 'solid' }} />
+            <div style={{ ...sidePanelHousingCornerStyle, top: `calc(${U} * 0.3)`, right: `calc(${U} * 0.34)`, borderTopWidth: '1px', borderRightWidth: '1px', borderTopStyle: 'solid', borderRightStyle: 'solid' }} />
+            <div style={{ ...sidePanelHousingCornerStyle, bottom: `calc(${U} * 0.38)`, left: `calc(${U} * 0.34)`, borderBottomWidth: '1px', borderLeftWidth: '1px', borderBottomStyle: 'solid', borderLeftStyle: 'solid' }} />
+            <div style={{ ...sidePanelHousingCornerStyle, bottom: `calc(${U} * 0.38)`, right: `calc(${U} * 0.34)`, borderBottomWidth: '1px', borderRightWidth: '1px', borderBottomStyle: 'solid', borderRightStyle: 'solid' }} />
             <div style={{ ...sidePanelTileWrapStyle, position: 'relative', zIndex: 1 }}>
               <button
                 type="button"
@@ -622,24 +647,24 @@ function HomeHub({ onSelectSection, activeSection = null, currentStage, previewP
               >
                 <div style={sidePanelLeftTileStatsColStyle}>
                   <div style={sidePanelLeftMetricCellStyle}>
-                    <div className="type-metric" style={{ ...sidePanelTileValueStyle, textShadow: '0 1px 4px rgba(0,0,0,0.9)' }}>
+                    <div className="type-metric" style={{ ...sidePanelTileValueStyle, color: isLight ? 'rgba(18, 68, 78, 0.96)' : 'rgba(233, 252, 255, 0.96)', textShadow: sidePanelAccentTextShadow }}>
                       {Math.round(hubTiles?.sessions_total ?? 0)}
                     </div>
-                    <div className="type-label" style={{ ...sidePanelTileLabelStyle, textShadow: '0 1px 3px rgba(0,0,0,0.9)' }}>
+                    <div className="type-label" style={{ ...sidePanelTileLabelStyle, color: isLight ? 'rgba(31, 97, 108, 0.82)' : 'rgba(170, 230, 236, 0.82)', textShadow: sidePanelTextShadow }}>
                       Sessions
                     </div>
-                    <div className="type-label" style={{ ...sidePanelTileSubLabelStyle, textShadow: '0 1px 3px rgba(0,0,0,0.9)' }}>
+                    <div className="type-label" style={{ ...sidePanelTileSubLabelStyle, color: isLight ? 'rgba(31, 97, 108, 0.56)' : 'rgba(170, 230, 236, 0.54)', textShadow: sidePanelTextShadow }}>
                       14D
                     </div>
                   </div>
                   <div style={sidePanelLeftMetricCellStyle}>
-                    <div className="type-metric" style={{ ...sidePanelTileValueStyle, textShadow: '0 1px 4px rgba(0,0,0,0.9)' }}>
+                    <div className="type-metric" style={{ ...sidePanelTileValueStyle, color: isLight ? 'rgba(18, 68, 78, 0.96)' : 'rgba(233, 252, 255, 0.96)', textShadow: sidePanelAccentTextShadow }}>
                       {Math.round(hubTiles?.days_active ?? 0)}
                     </div>
-                    <div className="type-label" style={{ ...sidePanelTileLabelStyle, textShadow: '0 1px 3px rgba(0,0,0,0.9)' }}>
+                    <div className="type-label" style={{ ...sidePanelTileLabelStyle, color: isLight ? 'rgba(31, 97, 108, 0.82)' : 'rgba(170, 230, 236, 0.82)', textShadow: sidePanelTextShadow }}>
                       Active
                     </div>
-                    <div className="type-label" style={{ ...sidePanelTileSubLabelStyle, textShadow: '0 1px 3px rgba(0,0,0,0.9)' }}>
+                    <div className="type-label" style={{ ...sidePanelTileSubLabelStyle, color: isLight ? 'rgba(31, 97, 108, 0.56)' : 'rgba(170, 230, 236, 0.54)', textShadow: sidePanelTextShadow }}>
                       Days
                     </div>
                   </div>
@@ -697,19 +722,14 @@ function HomeHub({ onSelectSection, activeSection = null, currentStage, previewP
               overflow: 'hidden',
             }}
           >
-            <div
-              style={{
-                position: 'absolute',
-                inset: 0,
-                backgroundImage: `url("${HOME_HUB_SIDE_PANEL_ASSET_URLS.rhythmReport}")`,
-                backgroundSize: 'cover',
-                backgroundPosition: 'center',
-                opacity: isLight ? 0.30 : 0.20,
-                filter: 'saturate(0.72) contrast(0.94) brightness(0.93)',
-                pointerEvents: 'none',
-                zIndex: 0,
-              }}
-            />
+            <div style={sidePanelHousingOuterStyle} />
+            <div style={sidePanelHousingInnerStyle} />
+            <div style={{ ...sidePanelHousingLineStyle, top: `calc(${U} * 0.7)` }} />
+            <div style={{ ...sidePanelHousingLineStyle, bottom: `calc(${U} * 0.82)` }} />
+            <div style={{ ...sidePanelHousingCornerStyle, top: `calc(${U} * 0.3)`, left: `calc(${U} * 0.34)`, borderTopWidth: '1px', borderLeftWidth: '1px', borderTopStyle: 'solid', borderLeftStyle: 'solid' }} />
+            <div style={{ ...sidePanelHousingCornerStyle, top: `calc(${U} * 0.3)`, right: `calc(${U} * 0.34)`, borderTopWidth: '1px', borderRightWidth: '1px', borderTopStyle: 'solid', borderRightStyle: 'solid' }} />
+            <div style={{ ...sidePanelHousingCornerStyle, bottom: `calc(${U} * 0.38)`, left: `calc(${U} * 0.34)`, borderBottomWidth: '1px', borderLeftWidth: '1px', borderBottomStyle: 'solid', borderLeftStyle: 'solid' }} />
+            <div style={{ ...sidePanelHousingCornerStyle, bottom: `calc(${U} * 0.38)`, right: `calc(${U} * 0.34)`, borderBottomWidth: '1px', borderRightWidth: '1px', borderBottomStyle: 'solid', borderRightStyle: 'solid' }} />
             <div style={{ ...sidePanelTileWrapStyle, position: 'relative', zIndex: 1 }}>
               <button
                 type="button"
@@ -733,7 +753,8 @@ function HomeHub({ onSelectSection, activeSection = null, currentStage, previewP
                   ...sidePanelTileLabelStyle,
                   fontSize: '8px',
                   whiteSpace: 'nowrap',
-                  textShadow: '0 1px 4px rgba(0,0,0,0.95)',
+                  color: isLight ? 'rgba(31, 97, 108, 0.82)' : 'rgba(170, 230, 236, 0.84)',
+                  textShadow: sidePanelTextShadow,
                   textAlign: 'center',
                   letterSpacing: '0.10em',
                 }}>
@@ -746,7 +767,8 @@ function HomeHub({ onSelectSection, activeSection = null, currentStage, previewP
                     ...sidePanelTileValueStyle,
                     fontSize: '26px',
                     fontWeight: 700,
-                    textShadow: '0 1px 8px rgba(0,0,0,0.75)',
+                    color: isLight ? 'rgba(18, 68, 78, 0.96)' : 'rgba(233, 252, 255, 0.96)',
+                    textShadow: sidePanelAccentTextShadow,
                   }}>
                     {daysUntilNextEffective}
                   </span>
@@ -757,7 +779,8 @@ function HomeHub({ onSelectSection, activeSection = null, currentStage, previewP
                   ...sidePanelTileLabelStyle,
                   fontSize: '8px',
                   textAlign: 'center',
-                  textShadow: '0 1px 4px rgba(0,0,0,0.95)',
+                  color: isLight ? 'rgba(31, 97, 108, 0.82)' : 'rgba(170, 230, 236, 0.84)',
+                  textShadow: sidePanelTextShadow,
                 }}>
                   days remaining
                 </div>
@@ -768,14 +791,16 @@ function HomeHub({ onSelectSection, activeSection = null, currentStage, previewP
                     width: '100%',
                     height: '3px',
                     borderRadius: '2px',
-                    background: isLight ? 'rgba(100,80,60,0.18)' : 'rgba(255,255,255,0.12)',
+                    background: isLight ? 'rgba(56, 122, 133, 0.14)' : 'rgba(92, 177, 188, 0.12)',
                   }}>
                     <div style={{
                       height: '100%',
                       width: `${stageProgressPct}%`,
                       borderRadius: '2px',
-                      background: 'linear-gradient(90deg, var(--accent-color), var(--accent-70))',
-                      boxShadow: '0 0 4px var(--accent-30)',
+                      background: isLight
+                        ? 'linear-gradient(90deg, rgba(44, 172, 189, 0.68), rgba(100, 226, 236, 0.42))'
+                        : 'linear-gradient(90deg, rgba(87, 222, 236, 0.88), rgba(124, 240, 248, 0.52))',
+                      boxShadow: isLight ? '0 0 4px rgba(44, 172, 189, 0.18)' : '0 0 6px rgba(87, 222, 236, 0.32)',
                       transition: 'width 600ms ease',
                     }} />
                   </div>
@@ -798,9 +823,9 @@ function HomeHub({ onSelectSection, activeSection = null, currentStage, previewP
                     letterSpacing: '0.06em',
                     color: decayInfo.isRecovering
                       ? 'rgba(76,175,80,0.85)'
-                      : (isLight ? 'rgba(100,80,60,0.65)' : 'rgba(255,255,255,0.55)'),
+                      : (isLight ? 'rgba(31, 97, 108, 0.65)' : 'rgba(170, 230, 236, 0.58)'),
                     cursor: 'default',
-                    textShadow: '0 1px 3px rgba(0,0,0,0.75)',
+                    textShadow: sidePanelTextShadow,
                   }}
                 >
                   {decayInfo.isRecovering
@@ -813,7 +838,15 @@ function HomeHub({ onSelectSection, activeSection = null, currentStage, previewP
                   type="button"
                   onClick={(e) => { e.stopPropagation(); openArchive(ARCHIVE_TABS.REPORTS); }}
                   className="type-label rounded-full font-bold transition-all hover:scale-105"
-                  style={sidePanelTileReportButtonStyle}
+                  style={{
+                    ...sidePanelTileReportButtonStyle,
+                    background: isLight
+                      ? 'linear-gradient(135deg, rgba(54, 175, 190, 0.72), rgba(124, 227, 235, 0.52))'
+                      : 'linear-gradient(135deg, rgba(41, 182, 198, 0.62), rgba(96, 238, 247, 0.34))',
+                    boxShadow: isLight
+                      ? '0 3px 10px rgba(44, 172, 189, 0.14)'
+                      : '0 0 10px rgba(72, 208, 220, 0.2)',
+                  }}
                 >
                   REPORT
                 </button>
@@ -821,7 +854,7 @@ function HomeHub({ onSelectSection, activeSection = null, currentStage, previewP
             </div>
           </div>
         </div>
-        {/* PROBE:HOMEHUB_SIDE_PANELS_V1:END */}
+        {/* PROBE:flank-housing:END */}
 
       </div>
 

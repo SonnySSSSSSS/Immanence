@@ -1,9 +1,9 @@
 // src/components/WisdomSelectionModal.jsx
-// Modal for selecting Wisdom section: Recommendations, Treatise, Bookmarks, Videos
+// Modal for selecting Wisdom section: Treatise, Bookmarks, Videos, Self-Knowledge
 
 import React, { useEffect } from 'react';
 
-const TABS = ["Recommendations", "Treatise", "Bookmarks", "Videos", "Self-Knowledge"];
+const TABS = ["Treatise", "Bookmarks", "Videos", "Self-Knowledge"];
 
 export function WisdomSelectionModal({
     isOpen,

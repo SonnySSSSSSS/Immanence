@@ -4,18 +4,14 @@ import { WisdomSelectionModal } from "./WisdomSelectionModal.jsx";
 import ReactMarkdown from "react-markdown";
 import { treatiseChapters } from "../data/treatise.generated.js";
 import { treatiseParts, getChaptersForPart } from "../data/treatiseParts.js";
-import {
-  wisdomCategories,
-  getAllCategories,
-} from "../data/wisdomRecommendations.js";
 import { sanitizeText } from "../utils/textUtils.js";
 import { VideoLibrary } from "./VideoLibrary.jsx";
 import { SelfKnowledgeView } from "./wisdom/SelfKnowledgeView.jsx";
+import { WisdomCardHousing } from "./wisdom/WisdomCardHousing.jsx";
 import { useDisplayModeStore } from "../state/displayModeStore.js";
 import { useUiStore } from "../state/uiStore.js";
 
 const TABS = [
-  "Recommendations",
   "Treatise",
   "Bookmarks",
   "Videos",
@@ -683,310 +679,6 @@ function PartAccordion({
 }
 
 // â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-// CATEGORY SIGIL - Archetypal visual anchors
-// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-function CategorySigil({ categoryKey }) {
-  // SVG symbols for all categories - consistent visual language
-  const SVG_SIGILS = {
-    "focus-presence": (
-      <svg
-        width="80"
-        height="80"
-        viewBox="0 0 80 80"
-        className="absolute top-4 left-1/2 -translate-x-1/2 pointer-events-none"
-        style={{ opacity: 0.16, zIndex: 1 }}
-      >
-        <circle
-          cx="40"
-          cy="40"
-          r="22"
-          fill="none"
-          stroke="var(--accent-color)"
-          strokeWidth="1.5"
-        />
-        <circle cx="40" cy="40" r="4" fill="var(--accent-color)" />
-      </svg>
-    ),
-    "emotional-regulation": (
-      <svg
-        width="80"
-        height="80"
-        viewBox="0 0 80 80"
-        className="absolute top-4 left-1/2 -translate-x-1/2 pointer-events-none"
-        style={{ opacity: 0.16, zIndex: 1 }}
-      >
-        <path
-          d="M20,35 Q30,25 40,35 T60,35"
-          fill="none"
-          stroke="var(--accent-color)"
-          strokeWidth="1.5"
-        />
-        <path
-          d="M20,45 Q30,35 40,45 T60,45"
-          fill="none"
-          stroke="var(--accent-color)"
-          strokeWidth="1.5"
-        />
-      </svg>
-    ),
-    "grounding-safety": (
-      <svg
-        width="80"
-        height="80"
-        viewBox="0 0 80 80"
-        className="absolute top-4 left-1/2 -translate-x-1/2 pointer-events-none"
-        style={{ opacity: 0.16, zIndex: 1 }}
-      >
-        <path
-          d="M40,60 L20,25 L60,25 Z"
-          fill="none"
-          stroke="var(--accent-color)"
-          strokeWidth="1.5"
-        />
-        <line
-          x1="25"
-          y1="65"
-          x2="55"
-          y2="65"
-          stroke="var(--accent-color)"
-          strokeWidth="1.5"
-        />
-      </svg>
-    ),
-    "shadow-integration": (
-      <svg
-        width="80"
-        height="80"
-        viewBox="0 0 80 80"
-        className="absolute top-4 left-1/2 -translate-x-1/2 pointer-events-none"
-        style={{ opacity: 0.16, zIndex: 1 }}
-      >
-        <circle
-          cx="40"
-          cy="40"
-          r="20"
-          fill="none"
-          stroke="var(--accent-color)"
-          strokeWidth="1.5"
-        />
-        <circle
-          cx="48"
-          cy="40"
-          r="20"
-          fill="none"
-          stroke="var(--accent-color)"
-          strokeWidth="1.5"
-        />
-      </svg>
-    ),
-    "expression-voice": (
-      <svg
-        width="80"
-        height="80"
-        viewBox="0 0 80 80"
-        className="absolute top-4 left-1/2 -translate-x-1/2 pointer-events-none"
-        style={{ opacity: 0.16, zIndex: 1 }}
-      >
-        <circle cx="40" cy="40" r="3" fill="var(--accent-color)" />
-        {[0, 45, 90, 135, 180, 225, 270, 315].map((angle) => (
-          <line
-            key={angle}
-            x1="40"
-            y1="40"
-            x2={40 + Math.cos((angle * Math.PI) / 180) * 25}
-            y2={40 + Math.sin((angle * Math.PI) / 180) * 25}
-            stroke="var(--accent-color)"
-            strokeWidth="1.5"
-          />
-        ))}
-      </svg>
-    ),
-    "heart-connection": (
-      <svg
-        width="80"
-        height="80"
-        viewBox="0 0 80 80"
-        className="absolute top-4 left-1/2 -translate-x-1/2 pointer-events-none"
-        style={{ opacity: 0.16, zIndex: 1 }}
-      >
-        <circle
-          cx="35"
-          cy="40"
-          r="18"
-          fill="none"
-          stroke="var(--accent-color)"
-          strokeWidth="1.5"
-        />
-        <circle
-          cx="45"
-          cy="40"
-          r="18"
-          fill="none"
-          stroke="var(--accent-color)"
-          strokeWidth="1.5"
-        />
-      </svg>
-    ),
-    "resonance-alignment": (
-      <svg
-        width="80"
-        height="80"
-        viewBox="0 0 80 80"
-        className="absolute top-4 left-1/2 -translate-x-1/2 pointer-events-none"
-        style={{ opacity: 0.16, zIndex: 1 }}
-      >
-        <path
-          d="M20,40 Q30,25 40,40 T60,40"
-          fill="none"
-          stroke="var(--accent-color)"
-          strokeWidth="1.5"
-        />
-        <path
-          d="M20,40 Q30,55 40,40 T60,40"
-          fill="none"
-          stroke="var(--accent-color)"
-          strokeWidth="1.5"
-        />
-      </svg>
-    ),
-    "self-knowledge": (
-      <svg
-        width="80"
-        height="80"
-        viewBox="0 0 80 80"
-        className="absolute top-4 left-1/2 -translate-x-1/2 pointer-events-none"
-        style={{ opacity: 0.16, zIndex: 1 }}
-      >
-        <circle
-          cx="40"
-          cy="40"
-          r="25"
-          fill="none"
-          stroke="var(--accent-color)"
-          strokeWidth="1.5"
-        />
-        <circle
-          cx="40"
-          cy="40"
-          r="15"
-          fill="none"
-          stroke="var(--accent-color)"
-          strokeWidth="1.5"
-        />
-        <circle
-          cx="40"
-          cy="40"
-          r="5"
-          fill="none"
-          stroke="var(--accent-color)"
-          strokeWidth="1.5"
-        />
-      </svg>
-    ),
-  };
-
-  return SVG_SIGILS[categoryKey] || null;
-}
-
-// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-// CATEGORY CARD - For Recommendations
-// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-function CategoryCard({ category, isSelected, onClick, isLight }) {
-  const cardBg = isLight
-    ? 'linear-gradient(145deg, rgba(255, 250, 240, 0.9) 0%, rgba(250, 240, 230, 0.95) 100%)'
-    : 'linear-gradient(145deg, rgba(26, 15, 28, 0.92) 0%, rgba(21, 11, 22, 0.95) 100%)';
-  
-  const borderColor = isLight
-    ? 'rgba(180, 140, 100, 0.3)'
-    : 'rgba(138, 43, 226, 0.2)';
-  
-  
-  const symptomColor = isLight
-    ? 'rgba(80, 60, 40, 0.6)'
-    : 'rgba(253, 251, 245, 0.55)';
-
-  return (
-    <button
-      onClick={onClick}
-      data-card="true"
-      data-card-id={`wisdomCategory:${category?.key ?? 'unknown'}`}
-      className="relative p-4 rounded-2xl border text-left transition-all overflow-hidden"
-      style={{
-        background: cardBg,
-        border: `1px solid ${borderColor}`,
-        boxShadow: isSelected
-          ? isLight
-            ? '0 12px 40px rgba(80, 60, 40, 0.2), 0 0 40px var(--accent-25), inset 0 1px 0 rgba(255, 255, 255, 0.5)'
-            : '0 12px 40px rgba(0, 0, 0, 0.7), 0 0 40px var(--accent-25), 0 0 80px var(--accent-10), inset 0 1px 0 rgba(255, 255, 255, 0.12), inset 0 -3px 12px rgba(0, 0, 0, 0.4)'
-          : isLight
-            ? '0 8px 32px rgba(80, 60, 40, 0.15), inset 0 1px 0 rgba(255, 255, 255, 0.3)'
-            : '0 8px 32px rgba(0, 0, 0, 0.6), 0 2px 8px var(--accent-15), inset 0 1px 0 rgba(255, 255, 255, 0.08), inset 0 -3px 12px rgba(0, 0, 0, 0.4)',
-        minHeight: "140px",
-      }}
-      onMouseEnter={(e) => {
-        if (!isSelected) {
-          e.currentTarget.style.boxShadow = isLight
-            ? '0 12px 40px rgba(80, 60, 40, 0.25), 0 0 30px var(--accent-20), inset 0 1px 0 rgba(255, 255, 255, 0.5)'
-            : '0 12px 40px rgba(0, 0, 0, 0.7), 0 0 30px var(--accent-20), inset 0 1px 0 rgba(255, 255, 255, 0.12), inset 0 -3px 12px rgba(0, 0, 0, 0.4)';
-        }
-      }}
-      onMouseLeave={(e) => {
-        if (!isSelected) {
-          e.currentTarget.style.boxShadow = isLight
-            ? '0 8px 32px rgba(80, 60, 40, 0.15), inset 0 1px 0 rgba(255, 255, 255, 0.3)'
-            : '0 8px 32px rgba(0, 0, 0, 0.6), 0 2px 8px var(--accent-15), inset 0 1px 0 rgba(255, 255, 255, 0.08), inset 0 -3px 12px rgba(0, 0, 0, 0.4)';
-        }
-      }}
-    >
-      {/* Symbolic sigil anchor - quiet archetypal visual */}
-      <CategorySigil categoryKey={category.key} />
-
-      {/* Texture overlay */}
-      <div
-        className="absolute inset-0 pointer-events-none rounded-2xl"
-        style={{
-          background: isLight
-            ? 'radial-gradient(circle at 30% 20%, rgba(255, 255, 255, 0.3) 0%, transparent 50%)'
-            : `radial-gradient(circle at 30% 20%, rgba(255, 255, 255, 0.02) 0%, transparent 50%),
-               repeating-linear-gradient(45deg, transparent, transparent 3px, rgba(0, 0, 0, 0.015) 3px, rgba(0, 0, 0, 0.015) 6px)`,
-          opacity: 0.7,
-        }}
-      />
-
-      {/* Inner glow */}
-      <div
-        className="absolute inset-0 pointer-events-none rounded-2xl"
-        style={{
-          background: `radial-gradient(circle at 50% 0%, ${isSelected ? "var(--accent-glow)15" : "var(--accent-glow)08"} 0%, transparent 60%)`,
-        }}
-      />
-
-      <div className="relative z-10">
-        <div className="mb-3">
-          <span
-            className="text-[12px] font-medium uppercase tracking-[0.08em] leading-tight"
-            style={{ color: "var(--accent-color)" }}
-          >
-            {category.label}
-          </span>
-        </div>
-        <div className="flex flex-col gap-1.5">
-          {category.symptoms.map((symptom, i) => (
-            <span
-              key={i}
-              className="text-[11px]"
-              style={{ color: symptomColor }}
-            >
-              {symptom}
-            </span>
-          ))}
-        </div>
-      </div>
-    </button>
-  );
-}
-
-// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 // MAIN COMPONENT
 // â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 export function WisdomSection() {
@@ -994,8 +686,8 @@ export function WisdomSection() {
   const colorScheme = useDisplayModeStore(s => s.colorScheme);
   const isLight = colorScheme === 'light';
 
-  const [activeTab, setActiveTab] = useState("Recommendations");
-  const [selectedCategory, setSelectedCategory] = useState(null);
+  // PROBE:wisdom-recommendations-removal:START
+  const [activeTab, setActiveTab] = useState("Treatise");
   const [expandedPart, setExpandedPart] = useState(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [modalChapter, setModalChapter] = useState(null);
@@ -1069,286 +761,6 @@ export function WisdomSection() {
   }, [contentLaunchContext, clearContentLaunchContext]);
 
   // â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-  // RECOMMENDATIONS VIEW - "The Compass" Radial Navigation
-  // â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-  const renderRecommendationsView = () => {
-    const currentCategory = selectedCategory
-      ? wisdomCategories[selectedCategory]
-      : null;
-
-    if (currentCategory) {
-      // Expanded view - show back button and recommendations
-      return (
-        <div className="space-y-5 im-card" data-card-id="wisdom:recommendationsPanel">
-          <button
-            onClick={() => setSelectedCategory(null)}
-            className="flex items-center gap-2 text-sm transition-all"
-            style={{ color: "var(--accent-color)" }}
-          >
-            <span>â—€</span>
-            <span className="uppercase tracking-[0.15em]">
-              {currentCategory.label}
-            </span>
-          </button>
-
-          <div
-            className="text-[14px] italic leading-relaxed"
-            style={{
-              color: THEME_CONFIG.textSub,
-              fontFamily: "var(--font-body)",
-            }}
-          >
-            {currentCategory.description}
-          </div>
-
-          <div className="border-t border-[var(--accent-15)] pt-5 space-y-4">
-            {currentCategory.chapters.map((rec, idx) => {
-              const chapter = getChapterById(rec.chapterRef);
-              const isBookmarked =
-                chapter && bookmarkedIds.includes(chapter.id);
-
-              return (
-                <div
-                  key={idx}
-                  data-card="true"
-                  data-card-id={`wisdomRec:${chapter?.id ?? idx}`}
-                  className="p-5 rounded-2xl border cursor-pointer transition-all group"
-                  style={{
-                    background: THEME_CONFIG.cardBg,
-                    border: `1px solid ${THEME_CONFIG.border}`,
-                    borderLeft: "3px solid var(--accent-30)",
-                  }}
-                  onClick={() => chapter && openChapterModal(chapter)}
-                >
-                  <div className="flex items-start justify-between gap-3 mb-3">
-                    <h3
-                      className="text-[15px] font-semibold group-hover:text-white transition-colors"
-                      style={{
-                        fontFamily: "var(--font-body)",
-                        color: THEME_CONFIG.textMain,
-                      }}
-                    >
-                      {sanitizeText(rec.title)}
-                    </h3>
-                    {chapter && (
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          toggleBookmark(chapter.id);
-                        }}
-                        style={{
-                          color: isBookmarked
-                            ? "var(--accent-color)"
-                            : "rgba(253,251,245,0.3)",
-                        }}
-                      >
-                        {isBookmarked ? "â˜…" : "â˜†"}
-                      </button>
-                    )}
-                  </div>
-                  <div
-                    className="text-[13px] leading-relaxed"
-                    style={{ color: THEME_CONFIG.textSub }}
-                  >
-                    <span style={{ color: "var(--accent-color)" }}>Why: </span>
-                    {sanitizeText(rec.reasoning)}
-                  </div>
-                  <div className="mt-3 text-right">
-                    <span
-                      className="text-[11px] uppercase tracking-[0.15em]"
-                      style={{ color: "var(--accent-color)" }}
-                    >
-                      Read Chapter â†’
-                    </span>
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        </div>
-      );
-    }
-    // If no category is selected, show the Compass
-    return renderCompassView();
-  };
-
-  // â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-  // COMPASS VIEW - Radial Navigation
-  // â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-  const renderCompassView = () => {
-    // Get categories
-    const categories = getAllCategories();
-    
-    // Archetypal icons for each category (image assets)
-    const categoryIcons = {
-      "focus-presence": `${import.meta.env.BASE_URL}icons/compass/eye.webp`,
-      "emotional-regulation": `${import.meta.env.BASE_URL}icons/compass/balance.webp`,
-      "shadow-integration": `${import.meta.env.BASE_URL}icons/compass/moon.webp`,
-      "heart-connection": `${import.meta.env.BASE_URL}icons/compass/heart.webp`,
-      "grounding-safety": `${import.meta.env.BASE_URL}icons/compass/mountain.webp`,
-      "expression-voice": `${import.meta.env.BASE_URL}icons/compass/wave.webp`,
-      "resonance-alignment": `${import.meta.env.BASE_URL}icons/compass/star.webp`,
-      "self-knowledge": `${import.meta.env.BASE_URL}icons/compass/fire.webp`,
-    };
-    
-    // Hardened Radial Layout Constants (no IIFE inside JSX)
-    const containerWidth = 320; // base fallback until a measured container is added
-    const containerHeight = 320; // base fallback until a measured container is added
-    const size = Math.min(containerWidth, containerHeight);
-    const center = size / 2;
-    const radius = size * 0.42;
-    const nodeDiameter = Math.max(36, Math.min(size * 0.12, 54));
-
-    return (
-      <div className="space-y-6 im-card" data-card-id="wisdom:recommendationsPanel">
-        {/* Central question */}
-        <div className="text-center mb-2">
-          <h2
-            className="text-[15px] uppercase tracking-[0.28em]"
-            style={{ color: "rgba(253,251,245,0.62)", letterSpacing: "0.28em" }}
-          >
-            What Do You Seek?
-          </h2>
-        </div>
-
-        {/* Compass container */}
-        <div
-          className="relative mx-auto rounded-full w-full"
-          style={{
-            width: `${size}px`,
-            height: `${size}px`,
-            maxWidth: "min(320px, 100vw)",
-            background: isLight
-              ? "radial-gradient(circle, rgba(250, 245, 235, 0.95) 0%, rgba(240, 230, 220, 0.98) 70%, rgba(230, 220, 210, 1) 100%)"
-              : "radial-gradient(circle, rgba(15,10,25,0.9) 0%, rgba(5,2,10,0.95) 70%, rgba(0,0,0,0.98) 100%)",
-            border: isLight
-              ? "1px solid rgba(180, 140, 100, 0.3)"
-              : "1px solid rgba(100,80,150,0.2)",
-            boxShadow: isLight
-              ? "0 0 60px rgba(180, 140, 100, 0.2), inset 0 0 40px rgba(255, 255, 255, 0.3)"
-              : "0 0 60px rgba(100,80,150,0.1), inset 0 0 40px rgba(0,0,0,0.3)",
-          }}
-        >
-          {/* Compass center point */}
-          <div
-            className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-12 h-12 rounded-full"
-            style={{
-              background:
-                "radial-gradient(circle, rgba(var(--accent-color-rgb),0.3) 0%, transparent 70%)",
-              border: "1px solid rgba(200,180,255,0.2)",
-            }}
-          >
-            <div
-              className="absolute inset-0 flex items-center justify-center text-xs"
-              style={{ color: "rgba(200,180,255,0.5)" }}
-            >
-              âœ§
-            </div>
-          </div>
-
-          {/* Compass rose lines */}
-          <svg
-            className="absolute inset-0 w-full h-full pointer-events-none"
-            style={{ zIndex: 0 }}
-          >
-            {[0, 45, 90, 135].map((angle) => (
-              <line
-                key={angle}
-                x1="50%"
-                y1="10%"
-                x2="50%"
-                y2="90%"
-                stroke="var(--accent-30)"
-                strokeWidth="1"
-                transform={`rotate(${angle} ${center} ${center})`}
-              />
-            ))}
-            {/* Concentric circles */}
-            <circle
-              cx="50%"
-              cy="50%"
-              r="35%"
-              fill="none"
-              stroke="var(--accent-20)"
-              strokeWidth="1"
-            />
-            <circle
-              cx="50%"
-              cy="50%"
-              r="25%"
-              fill="none"
-              stroke="var(--accent-15)"
-              strokeWidth="1"
-            />
-          </svg>
-
-          {/* Category nodes positioned radially */}
-          {categories.map((cat, index) => {
-            const total = categories.length;
-            const angle = (index / total) * 2 * Math.PI - Math.PI / 2;
-            const x = Math.cos(angle) * radius + center;
-            const y = Math.sin(angle) * radius + center;
-            const icon = categoryIcons[cat.key] || "â—†";
-
-            return (
-              <button
-                key={cat.key}
-                onClick={() => setSelectedCategory(cat.key)}
-                data-card="true"
-                data-card-id={`wisdomNode:${cat.key}`}
-                className="absolute flex flex-col items-center justify-center transition-all hover:scale-110 group"
-                style={{
-                  width: `${nodeDiameter}px`,
-                  height: `${nodeDiameter}px`,
-                  left: x - nodeDiameter / 2 + "px",
-                  top: y - nodeDiameter / 2 + "px",
-                  zIndex: 10,
-                }}
-              >
-                {/* Icon circle */}
-                <div
-                  className="w-full h-full rounded-full flex items-center justify-center mb-1 transition-all group-hover:shadow-lg overflow-hidden"
-                  style={{
-                    background:
-                      "radial-gradient(circle, rgba(30,20,50,0.9) 0%, rgba(15,10,25,1) 100%)",
-                    border: "1px solid var(--accent-30)",
-                    boxShadow: "0 0 15px var(--accent-10)",
-                  }}
-                >
-                  <img
-                    src={icon}
-                    alt={cat.label}
-                    className="w-3/4 h-3/4 object-contain transition-transform group-hover:scale-110"
-                    style={{
-                      filter: "drop-shadow(0 0 4px var(--accent-glow))",
-                    }}
-                  />
-                </div>
-
-                {/* Label on hover */}
-                <span
-                  className="absolute -bottom-5 text-[9px] uppercase tracking-wider opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap"
-                  style={{ color: "rgba(200,180,255,0.7)" }}
-                >
-                  {cat.label.split(" ")[0]}
-                </span>
-              </button>
-            );
-          })}
-        </div>
-
-        {/* Instruction text */}
-        <div
-          className="text-center text-[11px]"
-          style={{ color: "rgba(253,251,245,0.4)" }}
-        >
-          Tap a symbol to explore its wisdom
-        </div>
-      </div>
-    );
-  };
-
-  // â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   // TREATISE VIEW - Parts Accordion
   // â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   const renderTreatiseView = () => {
@@ -1371,10 +783,10 @@ export function WisdomSection() {
     // If searching, show flat results
     if (filteredChapters) {
       return (
-        <div
-          className="space-y-5 im-card"
-          data-card="true"
-          data-card-id="wisdom:treatisePanel"
+        <WisdomCardHousing
+          className="space-y-5"
+          cardId="wisdom:treatisePanel"
+          contentClassName="space-y-5 px-5 py-5 sm:px-6 sm:py-6"
         >
           {/* Search */}
           <div className="flex items-center gap-2">
@@ -1440,16 +852,16 @@ export function WisdomSection() {
               </button>
             ))}
           </div>
-        </div>
+        </WisdomCardHousing>
       );
     }
 
     // Normal view - Parts accordion
     return (
-      <div
-        className="space-y-5 im-card"
-        data-card="true"
-        data-card-id="wisdom:treatisePanel"
+      <WisdomCardHousing
+        className="space-y-5"
+        cardId="wisdom:treatisePanel"
+        contentClassName="space-y-5 px-5 py-5 sm:px-6 sm:py-6"
       >
         {/* Header */}
         <div className="text-center pb-5 border-b border-[var(--accent-10)]">
@@ -1508,7 +920,7 @@ export function WisdomSection() {
             );
           })}
         </div>
-      </div>
+      </WisdomCardHousing>
     );
   };
 
@@ -1523,14 +935,13 @@ export function WisdomSection() {
     // Empty state: Dark sky awaiting stars
     if (bookmarkedChapters.length === 0) {
       return (
-        <div
-          className="relative min-h-[300px] flex flex-col items-center justify-center rounded-2xl overflow-hidden im-card"
-          data-card="true"
-          data-card-id="wisdom:bookmarksPanel"
+        <WisdomCardHousing
+          className="min-h-[300px]"
+          cardId="wisdom:bookmarksPanel"
+          contentClassName="relative min-h-[300px] flex flex-col items-center justify-center rounded-2xl overflow-hidden"
           style={{
             background:
-              "radial-gradient(ellipse at center, rgba(10,5,20,0.95) 0%, rgba(5,2,10,1) 100%)",
-            border: "1px solid rgba(100,80,150,0.15)",
+              "radial-gradient(ellipse at center, rgba(8,14,24,0.96) 0%, rgba(4,8,15,0.98) 100%)",
           }}
         >
           {/* Distant stars background */}
@@ -1587,20 +998,19 @@ export function WisdomSection() {
               50% { opacity: 0.8; }
             }
           `}</style>
-        </div>
+        </WisdomCardHousing>
       );
     }
 
     // Constellation view: Stars with connecting lines
     return (
-      <div
-        className="relative min-h-[350px] rounded-2xl p-6 overflow-hidden im-card"
-        data-card="true"
-        data-card-id="wisdom:bookmarksPanel"
+      <WisdomCardHousing
+        className="min-h-[350px]"
+        cardId="wisdom:bookmarksPanel"
+        contentClassName="relative min-h-[350px] rounded-2xl p-6 overflow-hidden"
         style={{
           background:
-            "radial-gradient(ellipse at center top, rgba(15,10,30,0.95) 0%, rgba(5,2,10,1) 100%)",
-          border: "1px solid rgba(100,80,150,0.2)",
+            "radial-gradient(ellipse at center top, rgba(8,14,24,0.96) 0%, rgba(4,8,15,0.99) 100%)",
         }}
       >
         {/* Distant stars background */}
@@ -1726,7 +1136,7 @@ export function WisdomSection() {
           {bookmarkedChapters.length} star
           {bookmarkedChapters.length !== 1 ? "s" : ""} in your sky
         </div>
-      </div>
+      </WisdomCardHousing>
     );
   };
 
@@ -1734,12 +1144,12 @@ export function WisdomSection() {
   // VIDEOS VIEW - Now uses VideoLibrary component
   // â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   const renderVideosView = () => (
-    <div className="im-card" data-card-id="wisdom:videosPanel">
+    <WisdomCardHousing cardId="wisdom:videosPanel">
       <VideoLibrary
         initialVideoId={initialVideoId}
         initialVideoBudgetMin={initialVideoBudgetMin}
       />
-    </div>
+    </WisdomCardHousing>
   );
 
   // â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
@@ -1854,7 +1264,6 @@ export function WisdomSection() {
 
           {/* Content */}
           <section className="min-h-[400px] relative z-10">
-            {activeTab === "Recommendations" && renderRecommendationsView()}
             {activeTab === "Treatise" && renderTreatiseView()}
             {activeTab === "Bookmarks" && renderBookmarksView()}
             {activeTab === "Videos" && renderVideosView()}
@@ -1871,6 +1280,7 @@ export function WisdomSection() {
         onSelectTab={setActiveTab}
         bookmarksCount={bookmarkedIds.length}
       />
+      {/* PROBE:wisdom-recommendations-removal:END */}
     </>
   );
 }
