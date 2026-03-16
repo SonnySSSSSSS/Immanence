@@ -6,7 +6,6 @@ import { PathSelectionGrid } from './PathSelectionGrid.jsx';
 import { PathOverviewPanel } from './PathOverviewPanel.jsx';
 import { ActivePathState, PathLifecycleActions } from './ActivePathState.jsx';
 import { NavigationPathReport } from './navigation/NavigationPathReport.jsx';
-import { PathFinderCard } from './PathFinderCard.jsx';
 import { useDisplayModeStore } from '../state/displayModeStore.js';
 import { getPathById } from '../data/navigationData.js';
 import { AvatarV3 } from './avatarV3/AvatarV3.jsx';
@@ -53,15 +52,6 @@ export function NavigationSection({ currentStage, previewPath, onNavigate, isPra
     setOverlayPathId(null);
   };
 
-  const handlePathRecommended = (pathId) => {
-    if (pathId && pathGridRef.current) {
-      // Scroll to path grid with smooth behavior
-      pathGridRef.current.scrollIntoView({
-        behavior: 'smooth',
-        block: 'nearest'
-      });
-    }
-  };
 
   return (
     <div
@@ -85,56 +75,6 @@ export function NavigationSection({ currentStage, previewPath, onNavigate, isPra
           path={avatarPath}
         />
       </div>
-      <div className="flex justify-center px-4">
-        <div
-          className="text-center"
-          style={{
-            maxWidth: 'min(420px, 92vw)',
-          }}
-        >
-          <div
-            className="mx-auto h-px"
-            style={{
-              width: 'min(180px, 44vw)',
-              background: isLight
-                ? 'linear-gradient(90deg, transparent 0%, rgba(168, 128, 78, 0.34) 50%, transparent 100%)'
-                : 'linear-gradient(90deg, transparent 0%, rgba(139, 212, 224, 0.26) 50%, transparent 100%)',
-            }}
-          />
-          <div
-            className="mt-3 text-[13px] font-medium tracking-[0.04em] sm:text-[14px]"
-            style={{
-              color: isLight ? 'rgba(80, 64, 44, 0.72)' : 'rgba(239, 237, 229, 0.72)',
-              textShadow: isLight ? 'none' : '0 1px 6px rgba(0,0,0,0.24)',
-            }}
-          >
-            Choose your curriculum of practice
-          </div>
-        </div>
-      </div>
-      {/* The Threshold - Foundation & Path Finder (only show if no active path) */}
-      {!activePath && (
-        <div
-          style={{
-            display: 'flex',
-            flexDirection: 'column',
-            gap: '18px',
-            paddingTop: '12px',
-          }}
-        >
-          {/* Ornamental Divider */}
-          <div className="flex items-center justify-center py-2">
-            <div className="flex items-center gap-4" style={{ color: isLight ? 'rgba(180, 140, 90, 0.3)' : 'var(--accent-30)' }}>
-              <div className={`w-32 h-[1px] bg-gradient-to-r from-transparent ${isLight ? 'to-[rgba(180,140,90,0.4)]' : 'to-[var(--accent-30)]'}`} />
-              <div style={{ fontSize: '12px' }}>◆</div>
-              <div className={`w-32 h-[1px] bg-gradient-to-l from-transparent ${isLight ? 'to-[rgba(180,140,90,0.4)]' : 'to-[var(--accent-30)]'}`} />
-            </div>
-          </div>
-
-          {/* Path Finder Card */}
-          <PathFinderCard onPathRecommended={handlePathRecommended} selectedPathId={overlayPathId} />
-        </div>
-      )}
 
       {/* Active path actions (only when an active path exists) */}
       {activePath && (

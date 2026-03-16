@@ -105,25 +105,20 @@ export function PathFinderCard({ onPathRecommended, selectedPathId }) {
                 <div aria-hidden="true" className="absolute top-[10px] right-[10px] h-[14px] w-[14px] pointer-events-none" style={{ borderTop: '1px solid rgba(117, 231, 240, 0.48)', borderRight: '1px solid rgba(117, 231, 240, 0.48)' }} />
                 <button
                     onClick={() => setIsExpanded(true)}
-                    className="relative z-10 w-full text-center py-3 px-4 rounded-xl transition-all border"
+                    className="relative z-10 w-full text-center py-3 px-4 rounded-xl transition-all"
                     style={{
                         fontFamily: 'var(--font-body)',
                         fontSize: '13px',
                         fontWeight: 500,
                         letterSpacing: '0.01em',
                         color: isLight ? 'rgba(60, 52, 37, 0.95)' : 'rgba(253,251,245,0.95)',
-                        background: isLight
-                            ? 'rgba(180, 140, 90, 0.15)'
-                            : 'rgba(8, 18, 27, 0.28)',
-                        borderColor: isLight
-                            ? 'rgba(180, 140, 90, 0.3)'
-                            : 'rgba(101, 211, 224, 0.12)',
+                        background: 'transparent',
                         backdropFilter: 'blur(4px)',
                         WebkitBackdropFilter: 'blur(4px)',
                         margin: '10px',
                     }}
                 >
-                    ✨ For path guidance, click here...
+                    For path guidance, click here...
                 </button>
             </div>
         );

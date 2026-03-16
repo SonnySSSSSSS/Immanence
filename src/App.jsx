@@ -524,6 +524,13 @@ function App({ playgroundMode = false, playgroundBottomLayer = true }) {
   // }, [curriculumOnboardingComplete, isCurriculumComplete]);
 
 
+  // v3.27.276 - feat(navigation): apply arwes housing to inner cards and stage pill
+  // v3.27.275 - feat(navigation): apply arwes housing to program grid — outer chrome, inner plate, scan line, corner brackets
+  // v3.27.274 - feat(navigation): stage carousel — swipeable, dot selectors, per-stage program view
+  // v3.27.273 - feat(navigation): stage carousel — 5 lanes seedling→stellar, thought ritual→ember
+  // v3.27.272 - fix(navigation): remove PathFinderCard, frame instruction text
+  // v3.27.271 - fix(navigation): boost instruction prominence, remove Posted Notice badges
+  // v3.27.270 - fix(navigation): audit-driven legibility pass — reduce card chamfer, stack footer, drop emoji/double-border, boost instruction opacity
   // v3.27.269 - fix(precision-rail): constrain legend popup to rail width with 2-column layout
   // v3.27.268 - fix(dedup): remove duplicate restart/abandon buttons from active path state component
   // v3.27.267 - fix(legibility): add dark background container with white text for path actions
@@ -1004,7 +1011,7 @@ function App({ playgroundMode = false, playgroundBottomLayer = true }) {
                         }}
                         style={{ background: 'transparent' }}
                       >
-                        v3.27.269
+                        v3.27.276
                       </button>
                     </div>
                   </div>
