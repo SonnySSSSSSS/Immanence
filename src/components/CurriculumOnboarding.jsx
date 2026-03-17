@@ -730,7 +730,7 @@ export function CurriculumOnboarding({ onDismiss, onComplete }) {
                         opacity: 0.7,
                     }}
                 >
-                    I already understand
+                    Cancel
                 </button>
 
                 {/* Progress dots */}
