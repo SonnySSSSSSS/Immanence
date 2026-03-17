@@ -32,7 +32,7 @@ const SLIDE_IN_RIGHT = `
   to   { opacity: 1; transform: translateX(0); }
 }`;
 
-export function PathSelectionGrid({ onPathSelected, selectedPathId }) {
+export function PathSelectionGrid({ onPathSelected }) {
     const allPaths = getAllPaths();
     const activePath = useNavigationStore((state) => state.activePath);
     const abandonPath = useNavigationStore((state) => state.abandonPath);
@@ -233,10 +233,9 @@ export function PathSelectionGrid({ onPathSelected, selectedPathId }) {
                             animation: `${slideDir === 'left' ? 'slideInFromRight' : 'slideInFromLeft'} 0.25s ease`,
                         }}
                     >
-                        {stageEntries.map((entry, cardIndex) => {
+                        {stageEntries.map((entry) => {
                             const effectivePathId = activePath?.activePathId ?? resumablePathId;
                             const isActive = entry.isProgram ? entry.isActive : effectivePathId === entry.id;
-                            const isSelected = selectedPathId === entry.id;
                             const hasActivePathMatch = effectivePathId === entry.id;
                             const isPlaceholder = entry.placeholder;
                             const contract = getPathContract(entry);
