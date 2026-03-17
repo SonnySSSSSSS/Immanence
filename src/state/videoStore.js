@@ -4,9 +4,55 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 
+function normalizeUserId(userId) {
+    if (typeof userId !== 'string') return null;
+    const trimmed = userId.trim();
+    return trimmed || null;
+}
+
+function buildInitialVideoState() {
+    return {
+        byId: {},
+        currentVideoId: null,
+        lastWatchedId: null,
+    };
+}
+
 export const useVideoStore = create(
     persist(
         (set, get) => ({
+            ownerUserId: null,
+            activeUserId: null,
+            ...buildInitialVideoState(),
+
+            setActiveUserId: (userId) => {
+                const normalizedUserId = normalizeUserId(userId);
+                set((state) => {
+                    if (!normalizedUserId) {
+                        return { activeUserId: null };
+                    }
+
+                    if (state.ownerUserId === normalizedUserId) {
+                        return { activeUserId: normalizedUserId };
+                    }
+
+                    return {
+                        ...buildInitialVideoState(),
+                        ownerUserId: normalizedUserId,
+                        activeUserId: normalizedUserId,
+                    };
+                });
+            },
+
+            resetForIdentityBoundary: (userId = null) => {
+                const normalizedUserId = normalizeUserId(userId);
+                set({
+                    ...buildInitialVideoState(),
+                    ownerUserId: normalizedUserId,
+                    activeUserId: normalizedUserId,
+                });
+            },
+
             // ========================================
             // STATE
             // ========================================
@@ -22,18 +68,12 @@ export const useVideoStore = create(
              *   }
              * }
              */
-            byId: {},
-
             /**
              * Currently playing video ID
              */
-            currentVideoId: null,
-
             /**
              * Last watched video ID (for "continue watching")
              */
-            lastWatchedId: null,
-
             // ========================================
             // ACTIONS
             // ========================================
@@ -210,10 +250,34 @@ export const useVideoStore = create(
         }),
         {
             name: 'immanenceOS.videos',
-            version: 1,
+            version: 2,
+            partialize: (state) => ({
+                ownerUserId: normalizeUserId(state.ownerUserId),
+                byId: state.byId && typeof state.byId === 'object' ? state.byId : {},
+                currentVideoId: state.currentVideoId ?? null,
+                lastWatchedId: state.lastWatchedId ?? null,
+            }),
             migrate: (persistedState) => {
-                return persistedState;
-            }
+                const next = persistedState || {};
+                return {
+                    ...buildInitialVideoState(),
+                    ...next,
+                    ownerUserId: normalizeUserId(next.ownerUserId),
+                    byId: next.byId && typeof next.byId === 'object' ? next.byId : {},
+                    currentVideoId: next.currentVideoId ?? null,
+                    lastWatchedId: next.lastWatchedId ?? null,
+                };
+            },
+            merge: (persistedState, currentState) => ({
+                ...currentState,
+                ...buildInitialVideoState(),
+                ...(persistedState || {}),
+                ownerUserId: normalizeUserId(persistedState?.ownerUserId),
+                activeUserId: null,
+                byId: persistedState?.byId && typeof persistedState.byId === 'object' ? persistedState.byId : {},
+                currentVideoId: persistedState?.currentVideoId ?? null,
+                lastWatchedId: persistedState?.lastWatchedId ?? null,
+            }),
         }
     )
 );

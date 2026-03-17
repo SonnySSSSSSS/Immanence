@@ -9,6 +9,12 @@ import { CHAIN_STATES, MODE_SEQUENCE, ACTION_TYPES } from '../data/fourModes.js'
 // Generate unique chain ID
 const generateChainId = () => `chain_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
 
+function normalizeUserId(userId) {
+    if (typeof userId !== 'string') return null;
+    const trimmed = userId.trim();
+    return trimmed || null;
+}
+
 // Initial chain data structure
 const createEmptyChain = () => ({
     id: generateChainId(),
@@ -78,15 +84,50 @@ const createEmptyChain = () => ({
     },
 });
 
+function buildInitialChainState() {
+    return {
+        activeChain: null,
+        completedChains: [],
+    };
+}
+
 export const useChainStore = create(
     persist(
         (set, get) => ({
+            ownerUserId: null,
+            activeUserId: null,
+            ...buildInitialChainState(),
+
+            setActiveUserId: (userId) => {
+                const normalizedUserId = normalizeUserId(userId);
+                set((state) => {
+                    if (!normalizedUserId) {
+                        return { activeUserId: null };
+                    }
+
+                    if (state.ownerUserId === normalizedUserId) {
+                        return { activeUserId: normalizedUserId };
+                    }
+
+                    return {
+                        ...buildInitialChainState(),
+                        ownerUserId: normalizedUserId,
+                        activeUserId: normalizedUserId,
+                    };
+                });
+            },
+
+            resetForIdentityBoundary: (userId = null) => {
+                const normalizedUserId = normalizeUserId(userId);
+                set({
+                    ...buildInitialChainState(),
+                    ownerUserId: normalizedUserId,
+                    activeUserId: normalizedUserId,
+                });
+            },
+
             // Current active chain (only one active at a time)
-            activeChain: null,
-
             // History of completed chains
-            completedChains: [],
-
             // ══════════════════════════════════════════════════════════════════
             // CHAIN LIFECYCLE
             // ══════════════════════════════════════════════════════════════════
@@ -489,7 +530,31 @@ export const useChainStore = create(
         }),
         {
             name: 'immanence-chains',
-            version: 1,
+            version: 2,
+            partialize: (state) => ({
+                ownerUserId: normalizeUserId(state.ownerUserId),
+                activeChain: state.activeChain ?? null,
+                completedChains: Array.isArray(state.completedChains) ? state.completedChains : [],
+            }),
+            migrate: (persistedState) => {
+                const next = persistedState || {};
+                return {
+                    ...buildInitialChainState(),
+                    ...next,
+                    ownerUserId: normalizeUserId(next.ownerUserId),
+                    activeChain: next.activeChain ?? null,
+                    completedChains: Array.isArray(next.completedChains) ? next.completedChains : [],
+                };
+            },
+            merge: (persistedState, currentState) => ({
+                ...currentState,
+                ...buildInitialChainState(),
+                ...(persistedState || {}),
+                ownerUserId: normalizeUserId(persistedState?.ownerUserId),
+                activeUserId: null,
+                activeChain: persistedState?.activeChain ?? null,
+                completedChains: Array.isArray(persistedState?.completedChains) ? persistedState.completedChains : [],
+            }),
         }
     )
 );

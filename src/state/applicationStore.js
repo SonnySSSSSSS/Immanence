@@ -10,6 +10,12 @@ const clampNonNegative = (value) => Math.max(0, Number(value) || 0);
 
 const clampUnit = (value) => Math.min(1, Math.max(0, value));
 
+function normalizeUserId(userId) {
+    if (typeof userId !== 'string') return null;
+    const trimmed = userId.trim();
+    return trimmed || null;
+}
+
 const normalizeLabel = (label) => String(label || '').trim();
 
 const makeTrackerId = (label) => {
@@ -56,13 +62,49 @@ export const migrateApplicationStateV2 = (persistedState) => {
     };
 };
 
+function buildInitialApplicationState() {
+    return {
+        awarenessLogs: [],
+        trackerConfig: { items: [] },
+        trackerDaily: { byDate: {} },
+        intention: null,
+    };
+}
+
 export const useApplicationStore = create(
     persist(
         (set, get) => ({
-            // Awareness logs
-            awarenessLogs: [], // Array of { id, timestamp, category, note, respondedDifferently, pathId }
-            trackerConfig: { items: [] }, // max 4 items: { id, label, order }
-            trackerDaily: { byDate: {} }, // { [dateKey]: { [itemId]: { reacted, chose } } }
+            ownerUserId: null,
+            activeUserId: null,
+            ...buildInitialApplicationState(),
+
+            setActiveUserId: (userId) => {
+                const normalizedUserId = normalizeUserId(userId);
+                set((state) => {
+                    if (!normalizedUserId) {
+                        return { activeUserId: null };
+                    }
+
+                    if (state.ownerUserId === normalizedUserId) {
+                        return { activeUserId: normalizedUserId };
+                    }
+
+                    return {
+                        ...buildInitialApplicationState(),
+                        ownerUserId: normalizedUserId,
+                        activeUserId: normalizedUserId,
+                    };
+                });
+            },
+
+            resetForIdentityBoundary: (userId = null) => {
+                const normalizedUserId = normalizeUserId(userId);
+                set({
+                    ...buildInitialApplicationState(),
+                    ownerUserId: normalizedUserId,
+                    activeUserId: normalizedUserId,
+                });
+            },
 
             // Add a new awareness log
             logAwareness: (category, pathId) => {
@@ -340,13 +382,55 @@ export const useApplicationStore = create(
         }),
         {
             name: 'immanenceOS.applicationState',
-            version: 2,
+            version: 3,
+            partialize: (state) => ({
+                ownerUserId: normalizeUserId(state.ownerUserId),
+                awarenessLogs: Array.isArray(state.awarenessLogs) ? state.awarenessLogs : [],
+                trackerConfig: {
+                    items: normalizeTrackerItems(state.trackerConfig?.items || [], { keepOrder: true }),
+                },
+                trackerDaily: {
+                    byDate: state.trackerDaily?.byDate && typeof state.trackerDaily.byDate === 'object'
+                        ? state.trackerDaily.byDate
+                        : {},
+                },
+                intention: state.intention ?? null,
+            }),
             migrate: (persistedState, version) => {
-                if (version == null || version < 2) {
-                    return migrateApplicationStateV2(persistedState);
-                }
-                return migrateApplicationStateV2(persistedState);
-            }
+                const migratedBase = version == null || version < 2
+                    ? migrateApplicationStateV2(persistedState)
+                    : (persistedState || {});
+                const next = migrateApplicationStateV2(migratedBase);
+                return {
+                    ...buildInitialApplicationState(),
+                    ...next,
+                    ownerUserId: normalizeUserId(next.ownerUserId),
+                    trackerConfig: {
+                        items: normalizeTrackerItems(next?.trackerConfig?.items || [], { keepOrder: true }),
+                    },
+                    trackerDaily: {
+                        byDate: next?.trackerDaily?.byDate && typeof next.trackerDaily.byDate === 'object'
+                            ? next.trackerDaily.byDate
+                            : {},
+                    },
+                    intention: next.intention ?? null,
+                };
+            },
+            merge: (persistedState, currentState) => ({
+                ...currentState,
+                ...buildInitialApplicationState(),
+                ...(persistedState || {}),
+                ownerUserId: normalizeUserId(persistedState?.ownerUserId),
+                activeUserId: null,
+                trackerConfig: {
+                    items: normalizeTrackerItems(persistedState?.trackerConfig?.items || [], { keepOrder: true }),
+                },
+                trackerDaily: {
+                    byDate: persistedState?.trackerDaily?.byDate && typeof persistedState.trackerDaily.byDate === 'object'
+                        ? persistedState.trackerDaily.byDate
+                        : {},
+                },
+            }),
         }
     )
 );

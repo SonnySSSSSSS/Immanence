@@ -50,12 +50,54 @@ import { getDateKey } from '../utils/dateUtils';
  * }
  */
 
+function normalizeUserId(userId) {
+    if (typeof userId !== 'string') return null;
+    const trimmed = userId.trim();
+    return trimmed || null;
+}
+
+function buildInitialCircuitJournalState() {
+    return {
+        entries: [],
+    };
+}
+
 export const useCircuitJournalStore = create(
     persist(
         (set, get) => ({
-            // === Circuit Journal Entries ===
-            entries: [],
+            ownerUserId: null,
+            activeUserId: null,
+            ...buildInitialCircuitJournalState(),
 
+            setActiveUserId: (userId) => {
+                const normalizedUserId = normalizeUserId(userId);
+                set((state) => {
+                    if (!normalizedUserId) {
+                        return { activeUserId: null };
+                    }
+
+                    if (state.ownerUserId === normalizedUserId) {
+                        return { activeUserId: normalizedUserId };
+                    }
+
+                    return {
+                        ...buildInitialCircuitJournalState(),
+                        ownerUserId: normalizedUserId,
+                        activeUserId: normalizedUserId,
+                    };
+                });
+            },
+
+            resetForIdentityBoundary: (userId = null) => {
+                const normalizedUserId = normalizeUserId(userId);
+                set({
+                    ...buildInitialCircuitJournalState(),
+                    ownerUserId: normalizedUserId,
+                    activeUserId: normalizedUserId,
+                });
+            },
+
+            // === Circuit Journal Entries ===
             // ========================================
             // ACTIONS
             // ========================================
@@ -261,7 +303,28 @@ export const useCircuitJournalStore = create(
         }),
         {
             name: 'circuit-journal-store',
-            version: 1,
+            version: 2,
+            partialize: (state) => ({
+                ownerUserId: normalizeUserId(state.ownerUserId),
+                entries: Array.isArray(state.entries) ? state.entries : [],
+            }),
+            migrate: (persistedState) => {
+                const next = persistedState || {};
+                return {
+                    ...buildInitialCircuitJournalState(),
+                    ...next,
+                    ownerUserId: normalizeUserId(next.ownerUserId),
+                    entries: Array.isArray(next.entries) ? next.entries : [],
+                };
+            },
+            merge: (persistedState, currentState) => ({
+                ...currentState,
+                ...buildInitialCircuitJournalState(),
+                ...(persistedState || {}),
+                ownerUserId: normalizeUserId(persistedState?.ownerUserId),
+                activeUserId: null,
+                entries: Array.isArray(persistedState?.entries) ? persistedState.entries : [],
+            }),
         }
     )
 );

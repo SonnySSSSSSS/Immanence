@@ -1,5 +1,7 @@
 // src/reporting/pathReport.js
 
+import { useProgressStore } from '../state/progressStore.js';
+
 const STORAGE_KEY = 'immanenceOS.pathReports';
 
 const safeParse = (raw, fallback) => {
@@ -16,24 +18,66 @@ export const buildPathReportKey = (runId) => {
     return `run__${runId}`;
 };
 
+const normalizeUserId = (userId) => {
+    if (typeof userId !== 'string') return null;
+    const trimmed = userId.trim();
+    return trimmed || null;
+};
+
+const getActiveUserId = () => normalizeUserId(useProgressStore.getState?.().activeUserId);
+
+const buildReportsEnvelope = (raw) => {
+    const parsed = safeParse(raw, {});
+    const byUserId = parsed?.byUserId && typeof parsed.byUserId === 'object'
+        ? parsed.byUserId
+        : {};
+    const legacyUnscoped = parsed?.byUserId && typeof parsed.byUserId === 'object'
+        ? (parsed.legacyUnscoped && typeof parsed.legacyUnscoped === 'object' ? parsed.legacyUnscoped : {})
+        : (parsed && typeof parsed === 'object' ? parsed : {});
+    return {
+        byUserId,
+        legacyUnscoped,
+    };
+};
+
 export const loadPathReports = () => {
     if (typeof window === 'undefined') return {};
-    return safeParse(window.localStorage.getItem(STORAGE_KEY) || '{}', {});
+    const userId = getActiveUserId();
+    if (!userId) return {};
+    const envelope = buildReportsEnvelope(window.localStorage.getItem(STORAGE_KEY) || '{}');
+    const scopedReports = envelope.byUserId?.[userId];
+    return scopedReports && typeof scopedReports === 'object' ? scopedReports : {};
 };
 
 export const savePathReport = (report) => {
     if (typeof window === 'undefined' || !report) return null;
+    const userId = getActiveUserId();
+    if (!userId) return null;
     const key = buildPathReportKey(report.runId);
     if (!key) return null;
 
-    const reports = loadPathReports();
+    const envelope = buildReportsEnvelope(window.localStorage.getItem(STORAGE_KEY) || '{}');
+    const reports = {
+        ...(envelope.byUserId?.[userId] && typeof envelope.byUserId[userId] === 'object'
+            ? envelope.byUserId[userId]
+            : {}),
+    };
     // Guard: do not overwrite existing reports (one report per run)
     if (reports[key]) {
         console.warn('[savePathReport] Report already exists for runId:', report.runId);
         return key;
     }
     reports[key] = report;
-    window.localStorage.setItem(STORAGE_KEY, JSON.stringify(reports));
+    window.localStorage.setItem(
+        STORAGE_KEY,
+        JSON.stringify({
+            byUserId: {
+                ...envelope.byUserId,
+                [userId]: reports,
+            },
+            legacyUnscoped: envelope.legacyUnscoped,
+        })
+    );
     return key;
 };
 

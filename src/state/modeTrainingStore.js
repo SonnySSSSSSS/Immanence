@@ -15,24 +15,70 @@ export const PRACTICE_STATES = {
     END: 'end',
 };
 
+function normalizeUserId(userId) {
+    if (typeof userId !== 'string') return null;
+    const trimmed = userId.trim();
+    return trimmed || null;
+}
+
+function buildInitialModeStats() {
+    return {
+        mirror: { count: 0, lastUsed: null },
+        prism: { count: 0, lastUsed: null },
+        wave: { count: 0, lastUsed: null },
+        sword: { count: 0, lastUsed: null },
+        resonator: { count: 0, lastUsed: null },
+    };
+}
+
+function buildInitialModeTrainingState() {
+    return {
+        currentSession: null,
+        practiceState: PRACTICE_STATES.IDLE,
+        sessions: [],
+        modeStats: buildInitialModeStats(),
+    };
+}
+
 export const useModeTrainingStore = create(
     persist(
         (set, get) => ({
-            // Current session state
-            currentSession: null,
-            practiceState: PRACTICE_STATES.IDLE,
+            ownerUserId: null,
+            activeUserId: null,
+            ...buildInitialModeTrainingState(),
 
-            // Session history (quiet tracking - no gamification)
-            sessions: [],
+            setActiveUserId: (userId) => {
+                const normalizedUserId = normalizeUserId(userId);
+                set((state) => {
+                    if (!normalizedUserId) {
+                        return { activeUserId: null };
+                    }
 
-            // Exposure tracking (internal only - never shown to user)
-            modeStats: {
-                mirror: { count: 0, lastUsed: null },
-                prism: { count: 0, lastUsed: null },
-                wave: { count: 0, lastUsed: null },
-                sword: { count: 0, lastUsed: null },
-                resonator: { count: 0, lastUsed: null }, // Legacy support
+                    if (state.ownerUserId === normalizedUserId) {
+                        return { activeUserId: normalizedUserId };
+                    }
+
+                    return {
+                        ...buildInitialModeTrainingState(),
+                        ownerUserId: normalizedUserId,
+                        activeUserId: normalizedUserId,
+                    };
+                });
             },
+
+            resetForIdentityBoundary: (userId = null) => {
+                const normalizedUserId = normalizeUserId(userId);
+                set({
+                    ...buildInitialModeTrainingState(),
+                    ownerUserId: normalizedUserId,
+                    activeUserId: normalizedUserId,
+                });
+            },
+
+            // Current session state
+            // Session history (quiet tracking - no gamification)
+            // Exposure tracking (internal only - never shown to user)
+            // Legacy support for `resonator` stays in the initial state builder.
 
             // Start a new training session
             startSession: (mode, practiceType = 'default') => {
@@ -289,7 +335,37 @@ export const useModeTrainingStore = create(
         }),
         {
             name: 'immanence-mode-training',
-            version: 1,
+            version: 2,
+            partialize: (state) => ({
+                ownerUserId: normalizeUserId(state.ownerUserId),
+                currentSession: state.currentSession ?? null,
+                practiceState: state.practiceState || PRACTICE_STATES.IDLE,
+                sessions: Array.isArray(state.sessions) ? state.sessions : [],
+                modeStats: state.modeStats || buildInitialModeStats(),
+            }),
+            migrate: (persistedState) => {
+                const next = persistedState || {};
+                return {
+                    ...buildInitialModeTrainingState(),
+                    ...next,
+                    ownerUserId: normalizeUserId(next.ownerUserId),
+                    currentSession: next.currentSession ?? null,
+                    practiceState: next.practiceState || PRACTICE_STATES.IDLE,
+                    sessions: Array.isArray(next.sessions) ? next.sessions : [],
+                    modeStats: next.modeStats || buildInitialModeStats(),
+                };
+            },
+            merge: (persistedState, currentState) => ({
+                ...currentState,
+                ...buildInitialModeTrainingState(),
+                ...(persistedState || {}),
+                ownerUserId: normalizeUserId(persistedState?.ownerUserId),
+                activeUserId: null,
+                currentSession: persistedState?.currentSession ?? null,
+                practiceState: persistedState?.practiceState || PRACTICE_STATES.IDLE,
+                sessions: Array.isArray(persistedState?.sessions) ? persistedState.sessions : [],
+                modeStats: persistedState?.modeStats || buildInitialModeStats(),
+            }),
         }
     )
 );

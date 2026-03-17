@@ -26,6 +26,12 @@ import { useCurriculumStore } from "./state/curriculumStore.js";
 import { useNavigationStore } from "./state/navigationStore.js";
 import { useProgressStore } from "./state/progressStore.js";
 import { useLunarStore } from "./state/lunarStore.js";
+import { useApplicationStore } from "./state/applicationStore.js";
+import { useWisdomStore } from "./state/wisdomStore.js";
+import { useVideoStore } from "./state/videoStore.js";
+import { useModeTrainingStore } from "./state/modeTrainingStore.js";
+import { useChainStore } from "./state/chainStore.js";
+import { useCircuitJournalStore } from "./state/circuitJournalStore.js";
 import { useTempoAudioStore } from "./state/tempoAudioStore.js";
 import { useDevOverrideStore } from "./dev/devOverrideStore.js";
 import { ThemeProvider } from "./context/ThemeContext.jsx";
@@ -124,6 +130,12 @@ function App({ playgroundMode = false, playgroundBottomLayer = true }) {
   const resetCurriculumForIdentityBoundary = useCurriculumStore((s) => s.resetForIdentityBoundary);
   const setProgressActiveUserId = useProgressStore((s) => s.setActiveUserId);
   const setLunarActiveUserId = useLunarStore((s) => s.setActiveUserId);
+  const setApplicationActiveUserId = useApplicationStore((s) => s.setActiveUserId);
+  const setWisdomActiveUserId = useWisdomStore((s) => s.setActiveUserId);
+  const setVideoActiveUserId = useVideoStore((s) => s.setActiveUserId);
+  const setModeTrainingActiveUserId = useModeTrainingStore((s) => s.setActiveUserId);
+  const setChainActiveUserId = useChainStore((s) => s.setActiveUserId);
+  const setCircuitJournalActiveUserId = useCircuitJournalStore((s) => s.setActiveUserId);
   const resetUiLaunchContext = useUiStore((s) => s.resetLaunchContext);
   const practiceLaunchContext = useUiStore((s) => s.practiceLaunchContext);
   const onboardingComplete = useCurriculumStore((s) => s.onboardingComplete);
@@ -732,6 +744,12 @@ function App({ playgroundMode = false, playgroundBottomLayer = true }) {
       setCurriculumActiveUserId(null);
       setProgressActiveUserId(null);
       setLunarActiveUserId(null);
+      setApplicationActiveUserId(null);
+      setWisdomActiveUserId(null);
+      setVideoActiveUserId(null);
+      setModeTrainingActiveUserId(null);
+      setChainActiveUserId(null);
+      setCircuitJournalActiveUserId(null);
       stopUserStateSync();
       setShowSettings(false);
       setActiveSection(null);
@@ -745,6 +763,12 @@ function App({ playgroundMode = false, playgroundBottomLayer = true }) {
       setCurriculumActiveUserId(session?.user?.id ?? null);
       setProgressActiveUserId(session?.user?.id ?? null);
       setLunarActiveUserId(session?.user?.id ?? null);
+      setApplicationActiveUserId(session?.user?.id ?? null);
+      setWisdomActiveUserId(session?.user?.id ?? null);
+      setVideoActiveUserId(session?.user?.id ?? null);
+      setModeTrainingActiveUserId(session?.user?.id ?? null);
+      setChainActiveUserId(session?.user?.id ?? null);
+      setCircuitJournalActiveUserId(session?.user?.id ?? null);
       return;
     }
 
@@ -755,6 +779,12 @@ function App({ playgroundMode = false, playgroundBottomLayer = true }) {
       setCurriculumActiveUserId(session?.user?.id ?? null);
       setProgressActiveUserId(session?.user?.id ?? null);
       setLunarActiveUserId(session?.user?.id ?? null);
+      setApplicationActiveUserId(session?.user?.id ?? null);
+      setWisdomActiveUserId(session?.user?.id ?? null);
+      setVideoActiveUserId(session?.user?.id ?? null);
+      setModeTrainingActiveUserId(session?.user?.id ?? null);
+      setChainActiveUserId(session?.user?.id ?? null);
+      setCircuitJournalActiveUserId(session?.user?.id ?? null);
       stopUserStateSync();
       startUserStateSync(session);
       setShowSettings(false);
@@ -766,6 +796,12 @@ function App({ playgroundMode = false, playgroundBottomLayer = true }) {
     setNavigationActiveUserId,
     setProgressActiveUserId,
     setLunarActiveUserId,
+    setApplicationActiveUserId,
+    setWisdomActiveUserId,
+    setVideoActiveUserId,
+    setModeTrainingActiveUserId,
+    setChainActiveUserId,
+    setCircuitJournalActiveUserId,
     startUserStateSync,
     stopUserStateSync,
   ]);
@@ -780,6 +816,12 @@ function App({ playgroundMode = false, playgroundBottomLayer = true }) {
     setCurriculumActiveUserId(currentUserId);
     setProgressActiveUserId(currentUserId);
     setLunarActiveUserId(currentUserId);
+    setApplicationActiveUserId(currentUserId);
+    setWisdomActiveUserId(currentUserId);
+    setVideoActiveUserId(currentUserId);
+    setModeTrainingActiveUserId(currentUserId);
+    setChainActiveUserId(currentUserId);
+    setCircuitJournalActiveUserId(currentUserId);
 
     if (identityChanged) {
       resetUiLaunchContext();
@@ -797,6 +839,12 @@ function App({ playgroundMode = false, playgroundBottomLayer = true }) {
     setNavigationActiveUserId,
     setProgressActiveUserId,
     setLunarActiveUserId,
+    setApplicationActiveUserId,
+    setWisdomActiveUserId,
+    setVideoActiveUserId,
+    setModeTrainingActiveUserId,
+    setChainActiveUserId,
+    setCircuitJournalActiveUserId,
   ]);
   // PROBE:OFFLINE_FIRST_USER_STATE_SYNC:END
 

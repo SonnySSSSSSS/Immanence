@@ -5,20 +5,67 @@ import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import { usePathStore } from './pathStore';
 
+function normalizeUserId(userId) {
+    if (typeof userId !== 'string') return null;
+    const trimmed = userId.trim();
+    return trimmed || null;
+}
+
+function buildInitialWisdomState() {
+    return {
+        readingSessions: [],
+        bookmarks: [],
+        lastReadSection: null,
+        totalReadingTime: 0,
+        completedSections: {},
+        quizAttempts: [],
+        quizUnlocks: {},
+        flashcardState: {},
+        dueCardsCache: [],
+    };
+}
+
 export const useWisdomStore = create(
     persist(
         (set, get) => ({
+            ownerUserId: null,
+            activeUserId: null,
+            ...buildInitialWisdomState(),
+
+            setActiveUserId: (userId) => {
+                const normalizedUserId = normalizeUserId(userId);
+                set((state) => {
+                    if (!normalizedUserId) {
+                        return { activeUserId: null };
+                    }
+
+                    if (state.ownerUserId === normalizedUserId) {
+                        return { activeUserId: normalizedUserId };
+                    }
+
+                    return {
+                        ...buildInitialWisdomState(),
+                        ownerUserId: normalizedUserId,
+                        activeUserId: normalizedUserId,
+                    };
+                });
+            },
+
+            resetForIdentityBoundary: (userId = null) => {
+                const normalizedUserId = normalizeUserId(userId);
+                set({
+                    ...buildInitialWisdomState(),
+                    ownerUserId: normalizedUserId,
+                    activeUserId: normalizedUserId,
+                });
+            },
+
             // ========================================
             // READING PROGRESS
             // ========================================
-            readingSessions: [],
             // Each: { id, date, sectionId, timeSpent (seconds), scrollDepth (0-1) }
 
-            bookmarks: [],
             // Each: { id, date, sectionId, note, position }
-
-            lastReadSection: null,
-            totalReadingTime: 0, // seconds
 
             /**
              * Completed sections (chapters) by sectionId
@@ -26,24 +73,18 @@ export const useWisdomStore = create(
              *   [sectionId]: { completedAt: ISO string, scrollDepth: 0-1, source?: string }
              * }
              */
-            completedSections: {},
-
             // ========================================
             // QUIZ STATE (for future quiz system)
             // ========================================
-            quizAttempts: [],
             // Each: { id, date, quizId, score, answers[], passed }
 
-            quizUnlocks: {},
             // { sectionId: true } — sections unlocked by passing quizzes
 
             // ========================================
             // FLASHCARD SRS (for future spaced repetition)
             // ========================================
-            flashcardState: {},
             // { cardId: { interval, ease, nextReview, reviews } }
-
-            dueCardsCache: [], // IDs of cards due for review today
+            // `dueCardsCache` is persisted but currently only used as storage for future review flows.
 
             // ========================================
             // ACTIONS
@@ -336,12 +377,50 @@ export const useWisdomStore = create(
         }),
         {
             name: 'immanenceOS.wisdom',
-            version: 1,
+            version: 2,
+            partialize: (state) => ({
+                ownerUserId: normalizeUserId(state.ownerUserId),
+                readingSessions: Array.isArray(state.readingSessions) ? state.readingSessions : [],
+                bookmarks: Array.isArray(state.bookmarks) ? state.bookmarks : [],
+                lastReadSection: state.lastReadSection ?? null,
+                totalReadingTime: typeof state.totalReadingTime === 'number' ? state.totalReadingTime : 0,
+                completedSections: state.completedSections || {},
+                quizAttempts: Array.isArray(state.quizAttempts) ? state.quizAttempts : [],
+                quizUnlocks: state.quizUnlocks || {},
+                flashcardState: state.flashcardState || {},
+                dueCardsCache: Array.isArray(state.dueCardsCache) ? state.dueCardsCache : [],
+            }),
             migrate: (persistedState) => {
-                // Handle migrations between versions
-                // For version 1, just return the state as-is
-                return persistedState;
-            }
+                const next = persistedState || {};
+                return {
+                    ...buildInitialWisdomState(),
+                    ...next,
+                    ownerUserId: normalizeUserId(next.ownerUserId),
+                    readingSessions: Array.isArray(next.readingSessions) ? next.readingSessions : [],
+                    bookmarks: Array.isArray(next.bookmarks) ? next.bookmarks : [],
+                    totalReadingTime: typeof next.totalReadingTime === 'number' ? next.totalReadingTime : 0,
+                    completedSections: next.completedSections || {},
+                    quizAttempts: Array.isArray(next.quizAttempts) ? next.quizAttempts : [],
+                    quizUnlocks: next.quizUnlocks || {},
+                    flashcardState: next.flashcardState || {},
+                    dueCardsCache: Array.isArray(next.dueCardsCache) ? next.dueCardsCache : [],
+                };
+            },
+            merge: (persistedState, currentState) => ({
+                ...currentState,
+                ...buildInitialWisdomState(),
+                ...(persistedState || {}),
+                ownerUserId: normalizeUserId(persistedState?.ownerUserId),
+                activeUserId: null,
+                readingSessions: Array.isArray(persistedState?.readingSessions) ? persistedState.readingSessions : [],
+                bookmarks: Array.isArray(persistedState?.bookmarks) ? persistedState.bookmarks : [],
+                totalReadingTime: typeof persistedState?.totalReadingTime === 'number' ? persistedState.totalReadingTime : 0,
+                completedSections: persistedState?.completedSections || {},
+                quizAttempts: Array.isArray(persistedState?.quizAttempts) ? persistedState.quizAttempts : [],
+                quizUnlocks: persistedState?.quizUnlocks || {},
+                flashcardState: persistedState?.flashcardState || {},
+                dueCardsCache: Array.isArray(persistedState?.dueCardsCache) ? persistedState.dueCardsCache : [],
+            }),
         }
     )
 );
