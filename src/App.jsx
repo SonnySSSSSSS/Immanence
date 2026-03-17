@@ -24,6 +24,8 @@ import { useUserModeStore } from "./state/userModeStore.js";
 import { useUiStore } from "./state/uiStore.js";
 import { useCurriculumStore } from "./state/curriculumStore.js";
 import { useNavigationStore } from "./state/navigationStore.js";
+import { useProgressStore } from "./state/progressStore.js";
+import { useLunarStore } from "./state/lunarStore.js";
 import { useTempoAudioStore } from "./state/tempoAudioStore.js";
 import { useDevOverrideStore } from "./dev/devOverrideStore.js";
 import { ThemeProvider } from "./context/ThemeContext.jsx";
@@ -120,6 +122,8 @@ function App({ playgroundMode = false, playgroundBottomLayer = true }) {
   const curriculumOwnerUserId = useCurriculumStore((s) => s.ownerUserId);
   const setCurriculumActiveUserId = useCurriculumStore((s) => s.setActiveUserId);
   const resetCurriculumForIdentityBoundary = useCurriculumStore((s) => s.resetForIdentityBoundary);
+  const setProgressActiveUserId = useProgressStore((s) => s.setActiveUserId);
+  const setLunarActiveUserId = useLunarStore((s) => s.setActiveUserId);
   const resetUiLaunchContext = useUiStore((s) => s.resetLaunchContext);
   const practiceLaunchContext = useUiStore((s) => s.practiceLaunchContext);
   const onboardingComplete = useCurriculumStore((s) => s.onboardingComplete);
@@ -708,6 +712,7 @@ function App({ playgroundMode = false, playgroundBottomLayer = true }) {
       userStateSyncCleanupRef.current = initOfflineFirstUserStateSync({
         supabase,
         keys: OFFLINE_FIRST_USER_STATE_KEYS,
+        userId,
         debug: USER_STATE_SYNC_DEBUG,
       });
     } catch (e) {
@@ -725,6 +730,8 @@ function App({ playgroundMode = false, playgroundBottomLayer = true }) {
       setActiveUserModeUserId(null);
       setNavigationActiveUserId(null);
       setCurriculumActiveUserId(null);
+      setProgressActiveUserId(null);
+      setLunarActiveUserId(null);
       stopUserStateSync();
       setShowSettings(false);
       setActiveSection(null);
@@ -736,6 +743,8 @@ function App({ playgroundMode = false, playgroundBottomLayer = true }) {
       setActiveUserModeUserId(session?.user?.id ?? null);
       setNavigationActiveUserId(session?.user?.id ?? null);
       setCurriculumActiveUserId(session?.user?.id ?? null);
+      setProgressActiveUserId(session?.user?.id ?? null);
+      setLunarActiveUserId(session?.user?.id ?? null);
       return;
     }
 
@@ -744,6 +753,8 @@ function App({ playgroundMode = false, playgroundBottomLayer = true }) {
       setActiveUserModeUserId(session?.user?.id ?? null);
       setNavigationActiveUserId(session?.user?.id ?? null);
       setCurriculumActiveUserId(session?.user?.id ?? null);
+      setProgressActiveUserId(session?.user?.id ?? null);
+      setLunarActiveUserId(session?.user?.id ?? null);
       stopUserStateSync();
       startUserStateSync(session);
       setShowSettings(false);
@@ -753,6 +764,8 @@ function App({ playgroundMode = false, playgroundBottomLayer = true }) {
     setActiveUserModeUserId,
     setCurriculumActiveUserId,
     setNavigationActiveUserId,
+    setProgressActiveUserId,
+    setLunarActiveUserId,
     startUserStateSync,
     stopUserStateSync,
   ]);
@@ -765,6 +778,8 @@ function App({ playgroundMode = false, playgroundBottomLayer = true }) {
     setActiveUserModeUserId(currentUserId);
     setNavigationActiveUserId(currentUserId);
     setCurriculumActiveUserId(currentUserId);
+    setProgressActiveUserId(currentUserId);
+    setLunarActiveUserId(currentUserId);
 
     if (identityChanged) {
       resetUiLaunchContext();
@@ -780,6 +795,8 @@ function App({ playgroundMode = false, playgroundBottomLayer = true }) {
     setActiveUserModeUserId,
     setCurriculumActiveUserId,
     setNavigationActiveUserId,
+    setProgressActiveUserId,
+    setLunarActiveUserId,
   ]);
   // PROBE:OFFLINE_FIRST_USER_STATE_SYNC:END
 

@@ -6,43 +6,67 @@ import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import { STAGES, STAGE_THRESHOLDS, getStageForDays } from './stageConfig';
 
+function normalizeUserId(userId) {
+    if (typeof userId !== 'string') return null;
+    const trimmed = userId.trim();
+    return trimmed || null;
+}
+
+function buildInitialLunarState() {
+    return {
+        progress: 0,
+        totalPracticeDays: 0,
+        recentActivity: [],
+        ceilingCyclesCompleted: 0,
+        decayAccumulated: 0,
+        consecutiveDays: 0,
+        lastPracticeDate: null,
+        intention: {
+            text: null,
+            createdAt: null,
+            expiresAt: null,
+        },
+        vacationMode: false,
+        vacationStartDate: null,
+        moonSkin: 'default',
+        sparkleMode: 'static',
+    };
+}
+
 export const useLunarStore = create(
     persist(
         (set, get) => ({
-            // Progress within current stage (0.0 - 12.0)
-            // 12 segments = one full moon orbit = one stage completed
-            progress: 0,
+            ownerUserId: null,
+            activeUserId: null,
+            ...buildInitialLunarState(),
 
-            // Cumulative practice days (drives stage calculation)
-            totalPracticeDays: 0,
+            setActiveUserId: (userId) => {
+                const normalizedUserId = normalizeUserId(userId);
+                set((state) => {
+                    if (!normalizedUserId) {
+                        return { activeUserId: null };
+                    }
 
-            // Momentum tracking (last 7 entries for activity trail)
-            recentActivity: [], // [{ date: 'YYYY-MM-DD', completed: bool }]
+                    if (state.ownerUserId === normalizedUserId) {
+                        return { activeUserId: normalizedUserId };
+                    }
 
-            // Stellar cycles (only relevant at Stellar III ceiling)
-            ceilingCyclesCompleted: 0,
-
-            // Decay system
-            decayAccumulated: 0,   // fractional days lost to gaps (never negative)
-            consecutiveDays: 0,    // current practice streak for recovery multiplier
-            lastPracticeDate: null, // 'YYYY-MM-DD' — last recorded day
-
-            // Intention system
-            intention: {
-                text: null,
-                createdAt: null,
-                expiresAt: null,
+                    return {
+                        ...buildInitialLunarState(),
+                        ownerUserId: normalizedUserId,
+                        activeUserId: normalizedUserId,
+                    };
+                });
             },
 
-            // Vacation mode (pause tracking)
-            vacationMode: false,
-            vacationStartDate: null,
-
-            // Moon skin for future customization
-            moonSkin: 'default', // 'default' | future skins
-
-            // Moon sparkle trail style
-            sparkleMode: 'static', // 'none' | 'static' | 'floating'
+            resetForIdentityBoundary: (userId = null) => {
+                const normalizedUserId = normalizeUserId(userId);
+                set({
+                    ...buildInitialLunarState(),
+                    ownerUserId: normalizedUserId,
+                    activeUserId: normalizedUserId,
+                });
+            },
 
             // ═══════════════════════════════════════════════════════════════════
             // ACTIONS
@@ -349,29 +373,52 @@ export const useLunarStore = create(
                 set({ totalPracticeDays: totalPracticeDays + days });
             },
             _devReset: () => set({
-                progress: 0,
-                totalPracticeDays: 0,
-                recentActivity: [],
-                ceilingCyclesCompleted: 0,
-                intention: { text: null, createdAt: null, expiresAt: null },
-                vacationMode: false,
-                vacationStartDate: null,
+                ...buildInitialLunarState(),
             }),
         }),
         {
             name: 'immanence-lunar',
-            version: 2,
+            version: 3,
+            partialize: (state) => ({
+                ownerUserId: normalizeUserId(state.ownerUserId),
+                ...buildInitialLunarState(),
+                progress: state.progress ?? 0,
+                totalPracticeDays: state.totalPracticeDays ?? 0,
+                recentActivity: Array.isArray(state.recentActivity) ? state.recentActivity : [],
+                ceilingCyclesCompleted: state.ceilingCyclesCompleted ?? 0,
+                decayAccumulated: state.decayAccumulated ?? 0,
+                consecutiveDays: state.consecutiveDays ?? 0,
+                lastPracticeDate: state.lastPracticeDate ?? null,
+                intention: state.intention || buildInitialLunarState().intention,
+                vacationMode: Boolean(state.vacationMode),
+                vacationStartDate: state.vacationStartDate ?? null,
+                moonSkin: state.moonSkin || 'default',
+                sparkleMode: state.sparkleMode || 'static',
+            }),
             migrate: (persistedState, version) => {
                 if (version < 2) {
                     return {
+                        ...buildInitialLunarState(),
                         ...persistedState,
                         decayAccumulated: 0,
                         consecutiveDays: 0,
                         lastPracticeDate: null,
+                        ownerUserId: normalizeUserId(persistedState?.ownerUserId),
                     };
                 }
-                return persistedState;
+                return {
+                    ...buildInitialLunarState(),
+                    ...(persistedState || {}),
+                    ownerUserId: normalizeUserId(persistedState?.ownerUserId),
+                };
             },
+            merge: (persistedState, currentState) => ({
+                ...currentState,
+                ...buildInitialLunarState(),
+                ...(persistedState || {}),
+                ownerUserId: normalizeUserId(persistedState?.ownerUserId),
+                activeUserId: null,
+            }),
         }
     )
 );

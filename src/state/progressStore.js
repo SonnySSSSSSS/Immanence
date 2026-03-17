@@ -18,6 +18,43 @@ const IS_DEV =
 
 let hasWarnedLegacyOnly = false;
 
+function normalizeUserId(userId) {
+    if (typeof userId !== 'string') return null;
+    const trimmed = userId.trim();
+    return trimmed || null;
+}
+
+function buildInitialProgressState() {
+    return {
+        sessions: [],
+        sessionsV2: [],
+        honorLogs: [],
+        streak: {
+            lastPracticeDate: null,
+            longest: 0
+        },
+        vacation: {
+            active: false,
+            startDate: null,
+            frozenStreak: 0
+        },
+        displayPreference: 'lastUsed',
+        userSelectedDomain: null,
+        lastPracticeType: 'breathwork',
+        goals: {
+            breathwork: 30,
+            visualization: 20,
+            wisdom: 15,
+        },
+        durationConsistency: 0,
+        frequencyPattern: 'irregular',
+        practiceHistory: [],
+        annualRollups: [],
+        lifetimeMilestones: {},
+        exportVersion: 1,
+    };
+}
+
 function resolveSessionTimestamp(session) {
     const raw =
         session?.date ||
@@ -141,44 +178,42 @@ export const useProgressStore = create(
                 }
             }
             return {
-            // === Raw Events (source of truth) ===
-            sessions: [],
-            // Each session: { id, date, domain, duration, metadata }
-            // domain: 'breathwork' | 'visualization' | 'wisdom'
-            // metadata varies by domain
+            ownerUserId: null,
+            activeUserId: null,
+            ...buildInitialProgressState(),
 
-            sessionsV2: [],
-            // Each normalized session: { id, startedAt, endedAt, durationSec, practiceId, practiceMode, configSnapshot, completion, pathContext }
+            setActiveUserId: (userId) => {
+                const normalizedUserId = normalizeUserId(userId);
+                set((state) => {
+                    if (!normalizedUserId) {
+                        return { activeUserId: null };
+                    }
 
-            honorLogs: [],
-            // Each: { id, date, domain, duration, note }
+                    if (state.ownerUserId === normalizedUserId) {
+                        return { activeUserId: normalizedUserId };
+                    }
 
-            // === Streak (minimal stored state) ===
-            streak: {
-                lastPracticeDate: null,  // "YYYY-MM-DD"
-                longest: 0               // All-time record
+                    return {
+                        ...buildInitialProgressState(),
+                        ownerUserId: normalizedUserId,
+                        activeUserId: normalizedUserId,
+                    };
+                });
             },
 
-            // === Vacation ===
-            vacation: {
-                active: false,
-                startDate: null,
-                frozenStreak: 0
+            resetForIdentityBoundary: (userId = null) => {
+                const normalizedUserId = normalizeUserId(userId);
+                set({
+                    ...buildInitialProgressState(),
+                    ownerUserId: normalizedUserId,
+                    activeUserId: normalizedUserId,
+                });
             },
 
-            // === Display Preferences ===
-            displayPreference: 'lastUsed',  // 'lastUsed' | 'userSelected'
-            userSelectedDomain: null,
-            lastPracticeType: 'breathwork',
-
-            // === Goals (Daily Targets in minutes) ===
-            goals: {
-                breathwork: 30,
-                visualization: 20,
-                wisdom: 15,
+            isOwnedByActiveUser: () => {
+                const state = get();
+                return Boolean(state.activeUserId && state.ownerUserId && state.activeUserId === state.ownerUserId);
             },
-            durationConsistency: 0,
-            frequencyPattern: 'irregular', // 'daily' | 'flexible' | 'irregular'
 
             // ========================================
             // ACTIONS
@@ -876,12 +911,47 @@ export const useProgressStore = create(
         },
         {
             name: 'immanenceOS.progress',
-            version: 1,
+            version: 2,
+            partialize: (state) => ({
+                ownerUserId: normalizeUserId(state.ownerUserId),
+                sessions: Array.isArray(state.sessions) ? state.sessions : [],
+                sessionsV2: Array.isArray(state.sessionsV2) ? state.sessionsV2 : [],
+                honorLogs: Array.isArray(state.honorLogs) ? state.honorLogs : [],
+                streak: state.streak || buildInitialProgressState().streak,
+                vacation: state.vacation || buildInitialProgressState().vacation,
+                displayPreference: state.displayPreference || buildInitialProgressState().displayPreference,
+                userSelectedDomain: state.userSelectedDomain ?? null,
+                lastPracticeType: state.lastPracticeType || buildInitialProgressState().lastPracticeType,
+                goals: state.goals || buildInitialProgressState().goals,
+                durationConsistency: typeof state.durationConsistency === 'number' ? state.durationConsistency : 0,
+                frequencyPattern: state.frequencyPattern || buildInitialProgressState().frequencyPattern,
+                practiceHistory: Array.isArray(state.practiceHistory) ? state.practiceHistory : [],
+                annualRollups: Array.isArray(state.annualRollups) ? state.annualRollups : [],
+                lifetimeMilestones: state.lifetimeMilestones || {},
+                exportVersion: state.exportVersion || 1,
+            }),
             migrate: (persistedState) => {
-                // Handle migrations between versions
-                // For version 1, just return the state as-is
-                return persistedState;
-            }
+                const next = persistedState || {};
+                return {
+                    ...buildInitialProgressState(),
+                    ...next,
+                    ownerUserId: normalizeUserId(next.ownerUserId),
+                    sessions: Array.isArray(next.sessions) ? next.sessions : [],
+                    sessionsV2: Array.isArray(next.sessionsV2) ? next.sessionsV2 : [],
+                    honorLogs: Array.isArray(next.honorLogs) ? next.honorLogs : [],
+                    practiceHistory: Array.isArray(next.practiceHistory) ? next.practiceHistory : [],
+                    annualRollups: Array.isArray(next.annualRollups) ? next.annualRollups : [],
+                    lifetimeMilestones: next.lifetimeMilestones || {},
+                    exportVersion: next.exportVersion || 1,
+                };
+            },
+            merge: (persistedState, currentState) => ({
+                ...currentState,
+                ...buildInitialProgressState(),
+                ...(persistedState || {}),
+                ownerUserId: normalizeUserId(persistedState?.ownerUserId),
+                activeUserId: null,
+            }),
         }
     )
 );

@@ -6,6 +6,24 @@ const LAST_ENQUEUED_HASH_KEY = 'immanence-sync-last-enqueued-hash-v1';
 const LAST_PUSHED_HASH_KEY = 'immanence-sync-last-pushed-hash-v1';
 const LAST_APPLIED_REMOTE_AT_KEY = 'immanence-sync-last-applied-remote-at-v1';
 
+function normalizeUserId(userId) {
+  if (typeof userId !== 'string') return null;
+  const trimmed = userId.trim();
+  return trimmed || null;
+}
+
+function buildScopedSyncStorageKeys(userId) {
+  const normalizedUserId = normalizeUserId(userId);
+  if (!normalizedUserId) return null;
+
+  return {
+    outbox: `${OUTBOX_KEY}.${normalizedUserId}`,
+    lastEnqueuedHash: `${LAST_ENQUEUED_HASH_KEY}.${normalizedUserId}`,
+    lastPushedHash: `${LAST_PUSHED_HASH_KEY}.${normalizedUserId}`,
+    lastAppliedRemoteAt: `${LAST_APPLIED_REMOTE_AT_KEY}.${normalizedUserId}`,
+  };
+}
+
 function isBrowser() {
   return typeof window !== 'undefined' && !!window?.localStorage;
 }
@@ -135,18 +153,50 @@ function computeBundleContentHash(bundle, keys) {
   return djb2Hash(stableStringify(payload));
 }
 
-function readOutbox() {
-  return readJsonFromLocalStorage(OUTBOX_KEY, []);
+function stampProgressBundleOwner(bundle, userId) {
+  const normalizedUserId = normalizeUserId(userId);
+  if (!bundle || typeof bundle !== 'object' || !normalizedUserId) return bundle;
+
+  const progressEntry = bundle?.keys?.['immanenceOS.progress'];
+  if (!progressEntry || typeof progressEntry !== 'object') return bundle;
+
+  const parsed = progressEntry.parseOk && progressEntry.parsed && typeof progressEntry.parsed === 'object'
+    ? progressEntry.parsed
+    : null;
+  if (!parsed) return bundle;
+  if (normalizeUserId(parsed.ownerUserId)) return bundle;
+
+  const nextParsed = {
+    ...parsed,
+    ownerUserId: normalizedUserId,
+  };
+
+  return {
+    ...bundle,
+    keys: {
+      ...(bundle.keys || {}),
+      'immanenceOS.progress': {
+        ...progressEntry,
+        raw: JSON.stringify(nextParsed),
+        parsed: nextParsed,
+        parseOk: true,
+      },
+    },
+  };
 }
 
-function writeOutbox(outbox) {
-  writeJsonToLocalStorage(OUTBOX_KEY, Array.isArray(outbox) ? outbox : []);
+function readOutbox(storageKeys) {
+  return readJsonFromLocalStorage(storageKeys?.outbox, []);
 }
 
-function appendOutboxIntent(intent) {
-  const outbox = readOutbox();
+function writeOutbox(storageKeys, outbox) {
+  writeJsonToLocalStorage(storageKeys?.outbox, Array.isArray(outbox) ? outbox : []);
+}
+
+function appendOutboxIntent(storageKeys, intent) {
+  const outbox = readOutbox(storageKeys);
   outbox.push(intent);
-  writeOutbox(outbox);
+  writeOutbox(storageKeys, outbox);
 }
 
 async function bestEffortRehydrateAfterApply() {
@@ -201,11 +251,15 @@ function canAttemptNetwork() {
   return navigator.onLine !== false;
 }
 
-export function initOfflineFirstUserStateSync({ supabase, keys, debug = false }) {
+export function initOfflineFirstUserStateSync({ supabase, keys, userId, debug = false }) {
   if (!supabase) return () => {};
   if (typeof window === 'undefined') return () => {};
 
+  const scopedUserId = normalizeUserId(userId);
+  if (!scopedUserId) return () => {};
+
   const deviceId = getOrCreateDeviceId();
+  const storageKeys = buildScopedSyncStorageKeys(scopedUserId);
   const logOnce = new Set();
 
   const logDebug = (...args) => {
@@ -228,19 +282,19 @@ export function initOfflineFirstUserStateSync({ supabase, keys, debug = false })
     const bundle = captureUserStateBundle(keys);
     const currentHash = computeBundleContentHash(bundle, keys);
 
-    const lastPushedHash = readTextFromLocalStorage(LAST_PUSHED_HASH_KEY);
-    if (!lastPushedHash) writeTextToLocalStorage(LAST_PUSHED_HASH_KEY, currentHash);
+    const lastPushedHash = readTextFromLocalStorage(storageKeys.lastPushedHash);
+    if (!lastPushedHash) writeTextToLocalStorage(storageKeys.lastPushedHash, currentHash);
 
-    const lastEnqueuedHash = readTextFromLocalStorage(LAST_ENQUEUED_HASH_KEY);
-    if (!lastEnqueuedHash) writeTextToLocalStorage(LAST_ENQUEUED_HASH_KEY, currentHash);
+    const lastEnqueuedHash = readTextFromLocalStorage(storageKeys.lastEnqueuedHash);
+    if (!lastEnqueuedHash) writeTextToLocalStorage(storageKeys.lastEnqueuedHash, currentHash);
   };
 
   const enqueueIfChanged = () => {
     const bundle = captureUserStateBundle(keys);
     const currentHash = computeBundleContentHash(bundle, keys);
 
-    const lastEnqueuedHash = readTextFromLocalStorage(LAST_ENQUEUED_HASH_KEY);
-    const lastPushedHash = readTextFromLocalStorage(LAST_PUSHED_HASH_KEY);
+    const lastEnqueuedHash = readTextFromLocalStorage(storageKeys.lastEnqueuedHash);
+    const lastPushedHash = readTextFromLocalStorage(storageKeys.lastPushedHash);
 
     if (currentHash === lastEnqueuedHash || currentHash === lastPushedHash) {
       return { bundle, currentHash, enqueued: false };
@@ -255,16 +309,16 @@ export function initOfflineFirstUserStateSync({ supabase, keys, debug = false })
       device_id: deviceId,
     };
 
-    appendOutboxIntent(intent);
-    writeTextToLocalStorage(LAST_ENQUEUED_HASH_KEY, currentHash);
-    logDebug('enqueued', { hash: currentHash, outboxSize: readOutbox().length });
+    appendOutboxIntent(storageKeys, intent);
+    writeTextToLocalStorage(storageKeys.lastEnqueuedHash, currentHash);
+    logDebug('enqueued', { hash: currentHash, outboxSize: readOutbox(storageKeys).length });
 
     return { bundle, currentHash, enqueued: true };
   };
 
   const pushOutbox = async (userId) => {
     if (!canAttemptNetwork()) return;
-    const outbox = readOutbox();
+    const outbox = readOutbox(storageKeys);
     if (!Array.isArray(outbox) || outbox.length === 0) return;
 
     let index = 0;
@@ -303,12 +357,12 @@ export function initOfflineFirstUserStateSync({ supabase, keys, debug = false })
       }
 
       const pushedHash = computeBundleContentHash(intent.bundle, keys);
-      writeTextToLocalStorage(LAST_PUSHED_HASH_KEY, pushedHash);
-      writeTextToLocalStorage(LAST_ENQUEUED_HASH_KEY, pushedHash);
+      writeTextToLocalStorage(storageKeys.lastPushedHash, pushedHash);
+      writeTextToLocalStorage(storageKeys.lastEnqueuedHash, pushedHash);
 
       // Remove acked intent and continue.
       outbox.splice(index, 1);
-      writeOutbox(outbox);
+      writeOutbox(storageKeys, outbox);
       logDebug('pushed', { hash: pushedHash, remaining: outbox.length });
     }
   };
@@ -319,6 +373,7 @@ export function initOfflineFirstUserStateSync({ supabase, keys, debug = false })
     let query = supabase
       .from('user_documents')
       .select('doc')
+      .eq('user_id', userId)
       .eq('doc_key', 'progress_bundle_v1');
 
     let result;
@@ -341,19 +396,19 @@ export function initOfflineFirstUserStateSync({ supabase, keys, debug = false })
       return;
     }
 
-    const remoteBundle = result?.data?.doc ?? null;
+    const remoteBundle = stampProgressBundleOwner(result?.data?.doc ?? null, userId);
     if (!remoteBundle || remoteBundle.schema !== 'progress_bundle_v1') return;
 
     const remoteCapturedAtMs = parseIsoToMs(remoteBundle.capturedAt);
     if (!remoteCapturedAtMs) return;
 
-    const lastAppliedRemoteAtMs = parseIsoToMs(readTextFromLocalStorage(LAST_APPLIED_REMOTE_AT_KEY)) ?? 0;
+    const lastAppliedRemoteAtMs = parseIsoToMs(readTextFromLocalStorage(storageKeys.lastAppliedRemoteAt)) ?? 0;
     if (remoteCapturedAtMs <= lastAppliedRemoteAtMs) return;
 
     // Conservative overwrite rule: only apply remote if local hasn't changed since last "synced" baseline.
     const localBundle = captureUserStateBundle(keys);
     const localHash = computeBundleContentHash(localBundle, keys);
-    const lastPushedHash = readTextFromLocalStorage(LAST_PUSHED_HASH_KEY);
+    const lastPushedHash = readTextFromLocalStorage(storageKeys.lastPushedHash);
     if (!lastPushedHash || localHash !== lastPushedHash) {
       logDebug('skip apply (local diverged)', { localHash, lastPushedHash });
       return;
@@ -363,9 +418,9 @@ export function initOfflineFirstUserStateSync({ supabase, keys, debug = false })
     await bestEffortRehydrateAfterApply();
 
     const appliedHash = computeBundleContentHash(remoteBundle, keys);
-    writeTextToLocalStorage(LAST_APPLIED_REMOTE_AT_KEY, remoteBundle.capturedAt);
-    writeTextToLocalStorage(LAST_PUSHED_HASH_KEY, appliedHash);
-    writeTextToLocalStorage(LAST_ENQUEUED_HASH_KEY, appliedHash);
+    writeTextToLocalStorage(storageKeys.lastAppliedRemoteAt, remoteBundle.capturedAt);
+    writeTextToLocalStorage(storageKeys.lastPushedHash, appliedHash);
+    writeTextToLocalStorage(storageKeys.lastEnqueuedHash, appliedHash);
 
     logDebug('applied remote', { capturedAt: remoteBundle.capturedAt, hash: appliedHash, userId });
   };
@@ -390,6 +445,7 @@ export function initOfflineFirstUserStateSync({ supabase, keys, debug = false })
       const session = data?.session ?? null;
       const userId = session?.user?.id ?? null;
       if (!userId) return;
+      if (userId !== scopedUserId) return;
 
       // Change detection always writes locally first; enqueue intent for later push.
       enqueueIfChanged();
@@ -422,7 +478,7 @@ export function initOfflineFirstUserStateSync({ supabase, keys, debug = false })
     // ignore
   }
 
-  logDebug('started', { deviceId, userIdKey: 'auth.uid()', keysCount: Array.isArray(keys) ? keys.length : 0 });
+  logDebug('started', { deviceId, userId: scopedUserId, keysCount: Array.isArray(keys) ? keys.length : 0 });
 
   return () => {
     stopped = true;
