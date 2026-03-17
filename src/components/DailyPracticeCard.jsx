@@ -1277,8 +1277,8 @@ export function DailyPracticeCard({ onStartPractice, onViewCurriculum, onNavigat
                                 }} />
 
                                 {!activePathObj ? (
-                                    <div className="flex flex-col justify-center flex-1">
-                                        <div style={{ textShadow: isLight ? '0 1px 1px rgba(255,255,255,0.2)' : '0 1px 8px rgba(0,0,0,0.7)' }}>
+                                    <div className="flex flex-col justify-center items-center flex-1">
+                                        <div className="text-center" style={{ textShadow: isLight ? '0 1px 1px rgba(255,255,255,0.2)' : '0 1px 8px rgba(0,0,0,0.7)' }}>
                                             <div className="text-[10px] font-black uppercase tracking-[0.32em] opacity-60" style={{ color: isLight ? 'rgba(60, 50, 35, 0.6)' : 'rgba(253,251,245,0.6)' }}>
                                                 Today's Practice
                                             </div>
@@ -1306,7 +1306,7 @@ export function DailyPracticeCard({ onStartPractice, onViewCurriculum, onNavigat
                                         </div>
 
                                         {setupArtworkSrc && (
-                                            <div className="mt-6 w-full">
+                                            <div className="mt-6 rounded-xl overflow-hidden" style={{ maxWidth: '340px', width: '100%' }}>
                                                 <img
                                                     src={setupArtworkSrc}
                                                     alt="Temple entrance illustration"
@@ -1319,9 +1319,10 @@ export function DailyPracticeCard({ onStartPractice, onViewCurriculum, onNavigat
                                                     }}
                                                     style={{
                                                         width: '100%',
-                                                        maxHeight: '180px',
-                                                        objectFit: 'contain',
+                                                        height: '180px',
+                                                        objectFit: 'cover',
                                                         opacity: isLight ? 0.82 : 0.72,
+                                                        display: 'block',
                                                     }}
                                                 />
                                             </div>
