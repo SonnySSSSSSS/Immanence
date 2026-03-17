@@ -21,6 +21,8 @@ Canonical doc map for `immanence-os`, refreshed on 2026-03-09.
 - [AVATAR_SYSTEM.md](AVATAR_SYSTEM.md) - avatar rendering, stages, and related visuals
 - [CYCLE_SYSTEM.md](CYCLE_SYSTEM.md) - cycle and consistency concepts
 - [PERSISTENCE_AUDIT.md](PERSISTENCE_AUDIT.md) - persistence ownership and audits
+- [TUTORIAL_SYSTEM.md](TUTORIAL_SYSTEM.md) - tutorial runtime architecture, ownership split, and storage
+- [TUTORIAL_AUTHORING.md](TUTORIAL_AUTHORING.md) - how to author, anchor, and test tutorials
 - [TRACKING_SPECIFICATION.md](TRACKING_SPECIFICATION.md) - tracking model details
 - [PARTICLE_SYSTEM_PROTECTION.md](PARTICLE_SYSTEM_PROTECTION.md) - guard rails for `IndrasNet`
 - [CRITICAL_FLOWS.md](CRITICAL_FLOWS.md) - important user and system flows

@@ -1,346 +1,428 @@
-// src/tutorials/tutorialRegistry.js
-// Tutorial media format: { key: string, alt: string, caption?: string }
-// Keys must be filenames under /public/tutorial/ (no path traversal)
+import { useSettingsStore } from '../state/settingsStore.js';
+import { ANCHORS, GUIDE_STEPS, guideStepSelector, tutorialSelector } from './anchorIds.js';
+
+function setPhoticGuideStep(activeGuideStep) {
+  const settings = useSettingsStore.getState();
+  settings.setPhoticSetting('beginnerMode', true);
+  settings.setPhoticSetting('activeGuideStep', activeGuideStep);
+}
+
+function resetPhoticGuide() {
+  const settings = useSettingsStore.getState();
+  settings.setPhoticSetting('activeGuideStep', null);
+  settings.setPhoticSetting('beginnerMode', false);
+}
 
 export const TUTORIALS = {
-  "page:home": {
-    title: "Home Hub",
+  'page:home': {
+    title: 'Home Hub',
     steps: [
       {
-        title: "Daily Practice",
-        body: "Your daily practice card shows your schedule and progress. Click to start a practice session.",
-        target: '[data-tutorial="home-daily-card"]',
-        placement: "bottom",
+        id: 'home-daily-card',
+        title: 'Daily Practice',
+        body: 'Your daily practice card shows the next session, your recent progress, and the fastest way back into training.',
+        target: tutorialSelector(ANCHORS.HOME_DAILY_CARD),
+        placement: 'bottom',
       },
       {
-        title: "Curriculum & Path",
-        body: "Click 'Path →' to view your curriculum progress, set up a new path, or track your journey.",
-        target: '[data-tutorial="home-curriculum-card"]',
-        placement: "left",
+        id: 'home-navigation-card',
+        title: 'Curriculum And Path',
+        body: 'Open **Navigation** to manage your path, review stage options, and begin or resume a structured run.',
+        target: tutorialSelector(ANCHORS.HOME_CURRICULUM_CARD),
+        placement: 'left',
       },
       {
-        title: "Help Anytime",
-        body: "This button opens tutorials on any page. Click it whenever you need guidance.",
-        target: '[data-tutorial="global-tutorial-button"]',
-        placement: "left",
+        id: 'home-global-help',
+        title: 'Help Anytime',
+        body: 'This button launches the page-level tutorial from the app shell. Use it whenever you need a guided pass through the current surface.',
+        target: tutorialSelector(ANCHORS.GLOBAL_TUTORIAL_BUTTON),
+        placement: 'left',
       },
     ],
   },
 
-  "page:practice": {
-    title: "Practice Section",
+  'page:practice': {
+    title: 'Practice Section',
     steps: [
       {
-        title: "Choose Your Practice",
-        body: "Select a practice type from the selector: Breath, Circuit, Awareness, and more.",
-        target: '[data-tutorial="practice-selector"]',
-        placement: "bottom",
+        id: 'practice-selector',
+        title: 'Choose Your Practice',
+        body: 'Select the practice family here: Breath, Circuit, Awareness, Resonance, Perception, and more.',
+        target: tutorialSelector(ANCHORS.PRACTICE_SELECTOR),
+        placement: 'bottom',
       },
       {
-        title: "Tempo Sync (Optional)",
-        body: "Enable Tempo Sync to match your breathing to music. Configure BPM and audio settings here.",
-        target: '[data-tutorial="tempo-sync-panel"]',
-        placement: "top",
+        id: 'practice-tempo-sync',
+        title: 'Tempo Sync',
+        body: 'Tempo Sync lets breath sessions follow a loaded track. Use it when you want pacing to stay locked to audio.',
+        target: tutorialSelector(ANCHORS.PRACTICE_TEMPO_SYNC_PANEL),
+        placement: 'top',
       },
       {
-        title: "Tutorial Access",
-        body: "Each practice has its own tutorial. Click the Tutorial button in the practice menu for guidance.",
-        target: '[data-tutorial="tutorial-button"]',
-        placement: "left",
+        id: 'practice-local-help',
+        title: 'Practice Tutorials',
+        body: 'Each practice menu keeps its own tutorial entry point. Open this button whenever you need mode-specific guidance.',
+        target: tutorialSelector(ANCHORS.PRACTICE_TUTORIAL_BUTTON),
+        placement: 'left',
       },
     ],
   },
 
-  "page:wisdom": {
-    title: "Wisdom Section",
+  'page:wisdom': {
+    title: 'Wisdom Section',
     steps: [
       {
-        title: "Explore Wisdom",
-        body: "Browse recommendations, treatise chapters, bookmarks, videos, and self-knowledge tools. Use the tabs to navigate.",
-        target: '[data-tutorial="wisdom-root"]',
-        placement: "bottom",
+        id: 'wisdom-root',
+        title: 'Explore Wisdom',
+        body: 'Browse treatises, bookmarks, videos, and self-knowledge tools from this surface.',
+        target: tutorialSelector(ANCHORS.WISDOM_SECTION_ROOT),
+        placement: 'bottom',
       },
       {
-        title: "Tutorial Button",
-        body: "Access this tutorial anytime from the header button.",
-        target: '[data-tutorial="global-tutorial-button"]',
-        placement: "left",
+        id: 'wisdom-global-help',
+        title: 'Tutorial Button',
+        body: 'You can reopen this tutorial from the global help button without leaving the section.',
+        target: tutorialSelector(ANCHORS.GLOBAL_TUTORIAL_BUTTON),
+        placement: 'left',
       },
     ],
   },
 
-  "page:application": {
-    title: "Application Section",
+  'page:application': {
+    title: 'Application Section',
     steps: [
       {
-        title: "Apply Your Practice",
-        body: "Track moments of awareness and seal intentions. This is where practice meets daily life.",
-        target: '[data-tutorial="application-root"]',
-        placement: "top",
+        id: 'application-root',
+        title: 'Apply Your Practice',
+        body: 'Use this section to record lived moments, intentions, and application signals from the rest of the system.',
+        target: tutorialSelector(ANCHORS.APPLICATION_SECTION_ROOT),
+        placement: 'top',
       },
       {
-        title: "Get Help",
-        body: "Click the tutorial button anytime to review guidance.",
-        target: '[data-tutorial="global-tutorial-button"]',
-        placement: "left",
+        id: 'application-global-help',
+        title: 'Get Help',
+        body: 'The global tutorial button stays available here too.',
+        target: tutorialSelector(ANCHORS.GLOBAL_TUTORIAL_BUTTON),
+        placement: 'left',
       },
     ],
   },
 
-  "page:navigation": {
-    title: "Navigation Section",
+  'page:navigation': {
+    title: 'Navigation Section',
     steps: [
       {
-        title: "Choose Your Path",
-        body: "Browse structured learning paths. Use the Path Finder to get recommendations, then select a path to begin your journey.",
-        target: '[data-tutorial="navigation-root"]',
-        placement: "top",
+        id: 'navigation-root',
+        title: 'Choose Your Path',
+        body: 'Navigation is where stage lanes, path selection, and curriculum entry all converge.',
+        target: tutorialSelector(ANCHORS.NAVIGATION_SECTION_ROOT),
+        placement: 'top',
       },
       {
-        title: "Tutorial Access",
-        body: "Access tutorials from the header button on any page.",
-        target: '[data-tutorial="global-tutorial-button"]',
-        placement: "left",
+        id: 'navigation-global-help',
+        title: 'Tutorial Access',
+        body: 'Use the global help button whenever you want to revisit this section guide.',
+        target: tutorialSelector(ANCHORS.GLOBAL_TUTORIAL_BUTTON),
+        placement: 'left',
       },
     ],
   },
 
-  "page:photic-beginner": {
-    title: "Photonic Beginner Guide",
+  'page:photic-beginner': {
+    title: 'Photonic Beginner Guide',
+    onOpen: () => setPhoticGuideStep(GUIDE_STEPS.PHOTIC_PROTOCOL),
+    onClose: () => resetPhoticGuide(),
     steps: [
       {
-        title: "Protocol",
-        body: "Set the pulse rate and timing style. If alternating, adjust the gap until it feels comfortable.",
-        target: '[data-guide-step="protocol"]',
-        placement: "right",
+        id: 'photic-protocol',
+        title: 'Protocol',
+        body: 'Start with rate and timing. Find a pulse that feels stable before adjusting anything else.',
+        target: guideStepSelector(GUIDE_STEPS.PHOTIC_PROTOCOL),
+        placement: 'right',
+        allowInteraction: true,
+        onEnter: () => setPhoticGuideStep(GUIDE_STEPS.PHOTIC_PROTOCOL),
       },
       {
-        title: "Intensity",
-        body: "Set brightness to a comfortable level. Add glow only if it helps stability without strain.",
-        target: '[data-guide-step="intensity"]',
-        placement: "right",
+        id: 'photic-intensity',
+        title: 'Intensity',
+        body: 'Raise brightness only until the circles are clear and comfortable. If strain appears, reduce intensity and keep the pattern simple.',
+        target: guideStepSelector(GUIDE_STEPS.PHOTIC_INTENSITY),
+        placement: 'right',
+        allowInteraction: true,
+        waitFor: {
+          target: guideStepSelector(GUIDE_STEPS.PHOTIC_INTENSITY),
+          timeoutMs: 1500,
+          intervalMs: 50,
+          optional: true,
+        },
+        media: [
+          {
+            id: 'photic-intensity-reference',
+            kind: 'image',
+            src: 'tutorial/breath and stillness/intensity 1.webp',
+            alt: 'Reference image for comfortable beginner photic intensity',
+            caption: 'Keep the circles readable first. Stronger intensity is optional.',
+          },
+        ],
+        actions: [
+          {
+            id: 'open-practice-photic',
+            label: 'Open the full photic tutorial',
+            intent: 'openTutorial',
+            tutorialId: 'practice:photic',
+            variant: 'secondary',
+          },
+        ],
+        onEnter: () => setPhoticGuideStep(GUIDE_STEPS.PHOTIC_INTENSITY),
       },
       {
-        title: "Geometry",
-        body: "Set radius and spacing so both circles are clear and balanced in your visual field.",
-        target: '[data-guide-step="geometry"]',
-        placement: "right",
+        id: 'photic-geometry',
+        title: 'Geometry',
+        body: 'Adjust radius and spacing until both circles stay balanced inside your field of view.',
+        target: guideStepSelector(GUIDE_STEPS.PHOTIC_GEOMETRY),
+        placement: 'right',
+        allowInteraction: true,
+        onEnter: () => setPhoticGuideStep(GUIDE_STEPS.PHOTIC_GEOMETRY),
       },
       {
-        title: "Color",
-        body: "Choose a comfortable color. Link colors if you want symmetry. When satisfied, exit Beginner Mode.",
-        target: '[data-guide-step="color"]',
-        placement: "right",
+        id: 'photic-color',
+        title: 'Color',
+        body: 'Pick a comfortable color pair. Linked colors are the simplest starting point; unlink them only when you want asymmetry.',
+        target: guideStepSelector(GUIDE_STEPS.PHOTIC_COLOR),
+        placement: 'right',
+        allowInteraction: true,
+        onEnter: () => setPhoticGuideStep(GUIDE_STEPS.PHOTIC_COLOR),
       },
     ],
   },
 
-  "practice:breath": {
-    title: "Breath Practice",
+  'practice:breath': {
+    title: 'Breath Practice',
     steps: [
       {
-        title: "Practice selector",
-        body: "Choose Breath here.",
-        target: '[data-tutorial="practice-selector"]',
-        placement: "right",
+        id: 'breath-selector',
+        title: 'Practice Selector',
+        body: 'Breath starts here. Use the selector to return to it from any other practice family.',
+        target: tutorialSelector(ANCHORS.PRACTICE_SELECTOR),
+        placement: 'right',
       },
       {
-        title: "Tempo sync",
-        body: "Enable tempo matching to sync breathing to music.",
-        target: '[data-tutorial="tempo-sync-panel"]',
-        placement: "left",
+        id: 'breath-tempo-sync',
+        title: 'Tempo Sync',
+        body: 'Enable Tempo Sync when you want your cycle timing to follow the loaded track.',
+        target: tutorialSelector(ANCHORS.PRACTICE_TEMPO_SYNC_PANEL),
+        placement: 'left',
       },
     ],
   },
 
-  "practice:stillness": {
-    title: "Stillness Practice",
+  'practice:stillness': {
+    title: 'Stillness Practice',
     steps: [
       {
-        title: "Stillness options",
-        body: "Adjust the stillness timer and session options here.",
+        id: 'stillness-options',
+        title: 'Stillness Options',
+        body: 'Configure focus intensity, timing, and stillness session options here.',
         target: '[data-tutorial="stillness-options"]',
-        placement: "left",
+        placement: 'left',
       },
     ],
   },
 
-  "practice:circuit": {
-    title: "Circuit Mode",
+  'practice:circuit': {
+    title: 'Circuit Mode',
     steps: [
       {
-        title: "Circuit exercises",
-        body: "Design a multi-practice circuit combining different meditation techniques in sequence.",
-        target: '[data-tutorial="practice-selector"]',
-        placement: "bottom",
+        id: 'circuit-selector',
+        title: 'Circuit Exercises',
+        body: 'Circuit mode lets you sequence multiple practices into one run.',
+        target: tutorialSelector(ANCHORS.PRACTICE_SELECTOR),
+        placement: 'bottom',
       },
       {
-        title: "Exercise duration",
-        body: "Set the duration for each exercise in your circuit.",
-        target: '[data-tutorial="circuit-duration"]',
-        placement: "left",
+        id: 'circuit-config',
+        title: 'Exercise Duration',
+        body: 'Adjust durations and sequence details from this circuit configuration surface.',
+        target: tutorialSelector(ANCHORS.PRACTICE_CIRCUIT_DURATION),
+        placement: 'left',
       },
     ],
   },
 
-  "practice:integration": {
-    title: "Ritual Integration",
+  'practice:integration': {
+    title: 'Ritual Integration',
     steps: [
       {
-        title: "Select a ritual",
-        body: "Choose from guided ritual practices designed to integrate awareness into daily life.",
-        target: '[data-tutorial="practice-selector"]',
-        placement: "bottom",
+        id: 'integration-selector',
+        title: 'Select A Ritual',
+        body: 'Ritual Integration starts from the main selector, then moves into the ritual deck below.',
+        target: tutorialSelector(ANCHORS.PRACTICE_SELECTOR),
+        placement: 'bottom',
       },
       {
-        title: "Follow the steps",
-        body: "Each ritual has structured steps with timed segments for reflection and integration.",
-        target: '[data-tutorial="ritual-steps"]',
-        placement: "left",
+        id: 'integration-steps',
+        title: 'Ritual Steps',
+        body: 'Choose the invocation or ritual flow you want to run from this deck.',
+        target: tutorialSelector(ANCHORS.PRACTICE_RITUAL_STEPS),
+        placement: 'left',
       },
     ],
   },
 
-  "practice:awareness": {
-    title: "Awareness Practice",
+  'practice:awareness': {
+    title: 'Awareness Practice',
     steps: [
       {
-        title: "Awareness modes",
-        body: "Choose from cognitive observation, somatic body scanning, or emotional awareness practice.",
-        target: '[data-tutorial="practice-selector"]',
-        placement: "bottom",
+        id: 'awareness-selector',
+        title: 'Awareness Modes',
+        body: 'Awareness practice keeps all observation modes under one family entry.',
+        target: tutorialSelector(ANCHORS.PRACTICE_SELECTOR),
+        placement: 'bottom',
       },
       {
-        title: "Observation technique",
-        body: "Select your awareness observation method: insight meditation, body scan, or feeling practice.",
-        target: '[data-tutorial="awareness-mode-selector"]',
-        placement: "left",
+        id: 'awareness-submodes',
+        title: 'Observation Technique',
+        body: 'Use these sub-mode buttons to move between cognitive, somatic, and emotional observation styles.',
+        target: tutorialSelector(ANCHORS.PRACTICE_AWARENESS_MODE_SELECTOR),
+        placement: 'top',
       },
     ],
   },
 
-  "practice:cognitive_vipassana": {
-    title: "Insight Meditation",
+  'practice:cognitive_vipassana': {
+    title: 'Insight Meditation',
     steps: [
       {
-        title: "Cognitive observation",
-        body: "Practice neutral observation of thoughts and mental patterns without judgment.",
-        target: '[data-tutorial="practice-selector"]',
-        placement: "bottom",
+        id: 'cognitive-selector',
+        title: 'Cognitive Observation',
+        body: 'Insight mode focuses on observing thought patterns without forcing them away.',
+        target: tutorialSelector(ANCHORS.PRACTICE_AWARENESS_MODE_SELECTOR),
+        placement: 'top',
       },
     ],
   },
 
-  "practice:somatic_vipassana": {
-    title: "Body Scan",
+  'practice:somatic_vipassana': {
+    title: 'Body Scan',
     steps: [
       {
-        title: "Somatic awareness",
-        body: "Progressively scan and observe physical sensations throughout your body.",
-        target: '[data-tutorial="practice-selector"]',
-        placement: "bottom",
+        id: 'somatic-selector',
+        title: 'Somatic Awareness',
+        body: 'Body Scan uses the awareness sub-mode controls to switch into sensation-focused observation.',
+        target: tutorialSelector(ANCHORS.PRACTICE_AWARENESS_MODE_SELECTOR),
+        placement: 'top',
       },
     ],
   },
 
-  "practice:feeling": {
-    title: "Emotional Awareness",
+  'practice:feeling': {
+    title: 'Emotional Awareness',
     steps: [
       {
-        title: "Emotional practice",
-        body: "Cultivate awareness and capacity for the full range of emotional experience.",
-        target: '[data-tutorial="practice-selector"]',
-        placement: "bottom",
+        id: 'feeling-selector',
+        title: 'Emotional Practice',
+        body: 'Feeling practice lives inside the same awareness family and uses the same sub-mode controls.',
+        target: tutorialSelector(ANCHORS.PRACTICE_AWARENESS_MODE_SELECTOR),
+        placement: 'top',
       },
     ],
   },
 
-  "practice:resonance": {
-    title: "Resonance & Vibration",
+  'practice:resonance': {
+    title: 'Resonance And Vibration',
     steps: [
       {
-        title: "Sound modes",
-        body: "Choose from solfeggio frequencies, cymatics visualization, or binaural beats.",
-        target: '[data-tutorial="practice-selector"]',
-        placement: "bottom",
+        id: 'resonance-selector',
+        title: 'Sound Modes',
+        body: 'Start in the main selector, then tune the current sound mode from the configuration surface.',
+        target: tutorialSelector(ANCHORS.PRACTICE_SELECTOR),
+        placement: 'bottom',
       },
       {
-        title: "Adjust parameters",
-        body: "Fine-tune frequency, intensity, and session duration to your preference.",
-        target: '[data-tutorial="resonance-config"]',
-        placement: "left",
+        id: 'resonance-config',
+        title: 'Adjust Parameters',
+        body: 'This configuration area owns the current resonance settings for frequency, intensity, and duration.',
+        target: tutorialSelector(ANCHORS.PRACTICE_RESONANCE_CONFIG),
+        placement: 'left',
       },
     ],
   },
 
-  "practice:sound": {
-    title: "Sound Bath",
+  'practice:sound': {
+    title: 'Sound Bath',
     steps: [
       {
-        title: "Solfeggio frequencies",
-        body: "Experience healing frequencies from 100-500Hz for relaxation and alignment.",
-        target: '[data-tutorial="practice-selector"]',
-        placement: "bottom",
+        id: 'sound-config',
+        title: 'Solfeggio Frequencies',
+        body: 'Sound Bath is configured from the resonance settings surface.',
+        target: tutorialSelector(ANCHORS.PRACTICE_RESONANCE_CONFIG),
+        placement: 'left',
       },
     ],
   },
 
-  "practice:cymatics": {
-    title: "Cymatics Visualization",
+  'practice:cymatics': {
+    title: 'Cymatics Visualization',
     steps: [
       {
-        title: "Visual harmonics",
-        body: "Watch sacred geometric patterns respond to sound frequencies in real-time.",
-        target: '[data-tutorial="practice-selector"]',
-        placement: "bottom",
+        id: 'cymatics-config',
+        title: 'Visual Harmonics',
+        body: 'Cymatics runs from the resonance configuration panel and changes the visual response to sound.',
+        target: tutorialSelector(ANCHORS.PRACTICE_RESONANCE_CONFIG),
+        placement: 'left',
       },
     ],
   },
 
-  "practice:perception": {
-    title: "Perception & Vision",
+  'practice:perception': {
+    title: 'Perception And Vision',
     steps: [
       {
-        title: "Visual practices",
-        body: "Choose from sacred geometry visualization, photonic flicker, or visual exploration.",
-        target: '[data-tutorial="practice-selector"]',
-        placement: "bottom",
+        id: 'perception-selector',
+        title: 'Visual Practices',
+        body: 'Perception groups the visual practices into one family entry.',
+        target: tutorialSelector(ANCHORS.PRACTICE_SELECTOR),
+        placement: 'bottom',
       },
       {
-        title: "Configure visuals",
-        body: "Adjust visual parameters like speed, color, and intensity.",
-        target: '[data-tutorial="perception-config"]',
-        placement: "left",
+        id: 'perception-config',
+        title: 'Configure Visuals',
+        body: 'Adjust visual parameters like speed, color, and intensity from this configuration surface.',
+        target: tutorialSelector(ANCHORS.PRACTICE_PERCEPTION_CONFIG),
+        placement: 'left',
       },
     ],
   },
 
-  "practice:visualization": {
-    title: "Sacred Geometry",
+  'practice:visualization': {
+    title: 'Sacred Geometry',
     steps: [
       {
-        title: "Geometric forms",
-        body: "Meditate on sacred geometric patterns: Flower of Life, Sri Yantra, and more.",
-        target: '[data-tutorial="practice-selector"]',
-        placement: "bottom",
+        id: 'visualization-config',
+        title: 'Geometric Forms',
+        body: 'Sacred Geometry uses the shared perception configuration surface.',
+        target: tutorialSelector(ANCHORS.PRACTICE_PERCEPTION_CONFIG),
+        placement: 'left',
       },
     ],
   },
 
-  "practice:photic": {
-    title: "Photonic Practice",
+  'practice:photic': {
+    title: 'Photonic Practice',
     steps: [
       {
-        title: "Light frequency",
-        body: "Adjust pulse rate and flicker pattern for visual entrainment.",
-        target: '[data-tutorial="photic-controls"]',
-        placement: "left",
+        id: 'photic-controls',
+        title: 'Light Frequency',
+        body: 'Use the photic controls to set rate and timing before the session begins.',
+        target: tutorialSelector(ANCHORS.PRACTICE_PHOTIC_CONTROLS),
+        placement: 'left',
       },
       {
-        title: "Intensity & color",
-        body: "Set brightness and color to a comfortable level for your practice.",
-        target: '[data-tutorial="photic-intensity"]',
-        placement: "left",
+        id: 'photic-intensity-panel',
+        title: 'Intensity And Color',
+        body: 'Brightness and color live in this section of the photic controls.',
+        target: tutorialSelector(ANCHORS.PRACTICE_PHOTIC_INTENSITY),
+        placement: 'left',
       },
     ],
   },

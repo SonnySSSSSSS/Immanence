@@ -4,7 +4,7 @@ import { useSettingsStore } from '../../state/settingsStore';
 
 /**
  * Resolves tutorial pick data from a click event.
- * Scans the entire elementsFromPoint stack to find the first element with a data-tutorial ancestor.
+ * Scans the entire elementsFromPoint stack to find the first element with a tutorial anchor ancestor.
  * This approach naturally skips all overlays (scrim, tooltip, etc.) without complex filtering.
  */
 function resolveTutorialPickFromEvent(e, overlayRef, debugMode = true) {
@@ -24,6 +24,7 @@ function resolveTutorialPickFromEvent(e, overlayRef, debugMode = true) {
       id: n.id || null,
       hasPickIgnore: n.getAttribute?.('data-pick-ignore'),
       hasTutorial: n.getAttribute?.('data-tutorial'),
+      hasGuideStep: n.getAttribute?.('data-guide-step'),
       computedPosition: window.getComputedStyle(n).position,
       rect: {
         width: Math.round(n.getBoundingClientRect().width),
@@ -32,24 +33,40 @@ function resolveTutorialPickFromEvent(e, overlayRef, debugMode = true) {
     })));
   }
 
-  // Helper: find nearest ancestor with data-tutorial
+  // Helper: find nearest ancestor with tutorial anchor metadata
   const findAnchor = (node) => {
     let cur = node;
     while (cur && cur !== document.documentElement) {
       if (cur instanceof HTMLElement) {
-        const v = cur.getAttribute("data-tutorial");
-        if (v) return { anchorEl: cur, anchorId: v };
+        const tutorialAnchor = cur.getAttribute("data-tutorial");
+        if (tutorialAnchor) {
+          return {
+            anchorEl: cur,
+            anchorId: tutorialAnchor,
+            selector: `[data-tutorial="${tutorialAnchor}"]`,
+          };
+        }
+
+        const guideStepAnchor = cur.getAttribute("data-guide-step");
+        if (guideStepAnchor) {
+          return {
+            anchorEl: cur,
+            anchorId: guideStepAnchor,
+            selector: `[data-guide-step="${guideStepAnchor}"]`,
+          };
+        }
       }
       cur = cur.parentElement;
     }
     return null;
   };
 
-  // Scan the stack for the FIRST element that yields a data-tutorial anchor.
+  // Scan the stack for the first element that yields a tutorial anchor.
   // This ignores all overlays naturally (unless the overlay itself has data-tutorial).
   let bestHit = null;
   let anchorEl = null;
   let anchorId = null;
+  let anchorSelector = null;
 
   for (const node of stack) {
     if (!(node instanceof HTMLElement)) continue;
@@ -64,12 +81,15 @@ function resolveTutorialPickFromEvent(e, overlayRef, debugMode = true) {
     if (node.closest?.('[data-tutorial-overlay="true"]')) continue;
     if (node.closest?.('[data-pick-ignore="true"]')) continue;
     if (node.classList?.contains("tutorial-scrim")) continue;
+    if (node.closest?.('.driver-overlay')) continue;
+    if (node.closest?.('.driver-popover')) continue;
 
     const found = findAnchor(node);
     if (found) {
       bestHit = node;
       anchorEl = found.anchorEl;
       anchorId = found.anchorId;
+      anchorSelector = found.selector;
       break;
     }
 
@@ -85,6 +105,7 @@ function resolveTutorialPickFromEvent(e, overlayRef, debugMode = true) {
     x,
     y,
     anchorId: anchorId || null,
+    anchorSelector: anchorSelector || null,
     hit: bestHit
       ? {
           tag: bestHit.tagName,
@@ -107,7 +128,7 @@ function resolveTutorialPickFromEvent(e, overlayRef, debugMode = true) {
 /**
  * Generic coordinate helper wrapper.
  * When showCoordinateHelper is active, wraps children with a click-tracking overlay.
- * Now also includes Tutorial Pick mode for capturing data-tutorial anchors.
+ * Now also includes Tutorial Pick mode for capturing tutorial selectors.
  */
 export function CoordinateHelper({ children, className = "", label = "" }) {
     const showCoordinateHelper = useSettingsStore(s => s.showCoordinateHelper);
@@ -209,6 +230,7 @@ export function CoordinateHelper({ children, className = "", label = "" }) {
                 >
                     <div>x: {lastTutorialPick.x}, y: {lastTutorialPick.y}</div>
                     <div>anchor: {lastTutorialPick.anchorId || "(none)"}</div>
+                    <div>selector: {lastTutorialPick.anchorSelector || "(none)"}</div>
                 </div>
             )}
 
@@ -318,10 +340,11 @@ export function CoordinateHelper({ children, className = "", label = "" }) {
                                     }
                                 }
 
+                                const selector = lastTutorialPick.anchorSelector || `[data-tutorial="${lastTutorialPick.anchorId}"]`;
                                 const snippet = `{
   title: "TODO",
   body: "TODO",
-  target: '[data-tutorial="${lastTutorialPick.anchorId}"]',
+  target: '${selector}',
   placement: "${placement}",
 },`;
                                 navigator.clipboard?.writeText(snippet);

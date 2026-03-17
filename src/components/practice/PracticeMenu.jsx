@@ -27,6 +27,15 @@ const CONFIG_COMPONENTS = {
   EmotionConfig,
 };
 
+function getTutorialAnchorId(practiceId, isConfigPhotic) {
+  if (practiceId === 'circuit') return 'circuit-duration';
+  if (practiceId === 'integration') return 'ritual-steps';
+  if (practiceId === 'resonance') return 'resonance-config';
+  if (practiceId === 'perception') return 'perception-config';
+  if (practiceId === 'photic' || isConfigPhotic) return 'photic-controls';
+  return null;
+}
+
 function PracticeMenu({
   containerKey,
   showRitualSubtitle,
@@ -61,6 +70,7 @@ function PracticeMenu({
   const showQuickStart = isIntegration && hasDefaultRitual;
   const isDirectPhoticConfig = ConfigComponent === PhoticControlPanel;
   const isSubmodePhoticConfig = ActiveSubModeConfig === PhoticControlPanel;
+  const tutorialAnchorId = getTutorialAnchorId(practice?.id, isDirectPhoticConfig || isSubmodePhoticConfig);
   return (
     <div 
       key={containerKey} 
@@ -72,7 +82,7 @@ function PracticeMenu({
     <PracticeMenuHeader
       title={undefined}
       tutorialId={`practice:${practice?.id || 'breath'}`}
-      showTutorial={false}
+      showTutorial={true}
       marginBottom={showRitualSubtitle ? '8px' : '0px'}
     >
       {/* Inline subtitle for ritual */}
@@ -84,7 +94,11 @@ function PracticeMenu({
     </PracticeMenuHeader>
 
     {/* Dynamic Config Panel */}
-    <div className="min-h-[100px]" style={{ marginBottom: configPanelMarginBottom }}>
+    <div
+      className="min-h-[100px]"
+      style={{ marginBottom: configPanelMarginBottom }}
+      {...(tutorialAnchorId ? { 'data-tutorial': tutorialAnchorId } : {})}
+    >
       {hasSubModes ? (
         <div>
           {/* Sub-mode Toggle - Now rendered as glass buttons outside card */}

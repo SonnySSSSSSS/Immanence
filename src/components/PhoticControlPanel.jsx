@@ -174,20 +174,8 @@ export function PhoticControlPanel({ isRunning, onToggleRunning, onClose, isEmbe
                             : 'none',
                     }}
                     data-guide-step="protocol"
+                    data-tutorial="photic-controls"
                 >
-                    {/* Invisible anchor for intensity tutorial step */}
-                    <div
-                        data-guide-step="intensity"
-                        style={{
-                            position: 'absolute',
-                            width: 1,
-                            height: 1,
-                            overflow: 'hidden',
-                            pointerEvents: 'none',
-                            opacity: 0,
-                        }}
-                    />
-
                     {/* Rate Slider - Horizontal */}
                     <div style={controlRowStyle}>
                         <label style={controlLabelStyle}>Rate</label>
@@ -265,7 +253,13 @@ export function PhoticControlPanel({ isRunning, onToggleRunning, onClose, isEmbe
                     </div>
 
                     {/* Brightness Slider - Horizontal */}
-                    <div style={controlRowStyle}>
+                    <div
+                        style={controlRowStyle}
+                        data-tutorial="photic-intensity"
+                        {...(tutorialIsPhoticOpen && photic.activeGuideStep === 'intensity'
+                            ? { 'data-guide-step': 'intensity' }
+                            : {})}
+                    >
                         <label style={controlLabelStyle}>Bright</label>
                         <input
                             type="range"

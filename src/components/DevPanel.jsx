@@ -92,7 +92,7 @@ function TutorialAnchorCountReadout() {
     const [count, setCount] = useState(0);
 
     useEffect(() => {
-        const update = () => setCount(document.querySelectorAll('[data-tutorial]').length);
+        const update = () => setCount(document.querySelectorAll('[data-tutorial], [data-guide-step]').length);
         update();
         const interval = setInterval(update, 1000);
         return () => clearInterval(interval);

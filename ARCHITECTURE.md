@@ -11,6 +11,7 @@ This is the canonical top-level system map. Use [docs/DOCS_INDEX.md](docs/DOCS_I
 - State: Zustand stores across [src/state](src/state), with a mix of persisted and transient state. `userModeStore`, `curriculumStore`, and `navigationStore` now all enforce per-user ownership boundaries through `ownerUserId` and `activeUserId`.
 - Auth and sync: Supabase browser auth in [src/lib/supabaseClient.js](src/lib/supabaseClient.js) and offline-first sync helpers in [src/state/offlineFirstUserStateSync.js](src/state/offlineFirstUserStateSync.js).
 - Shared shell chrome: practice housing primitives in [src/components/practice/practiceHousing.jsx](src/components/practice/practiceHousing.jsx) are now reused by practice cards directly and by wisdom through [src/components/wisdom/WisdomCardHousing.jsx](src/components/wisdom/WisdomCardHousing.jsx). Navigation and application now mirror the same Arwes-style shell pattern in-place.
+- Tutorials: app-owned tutorial IDs, schema, and progress state now feed a Driver.js presentation runtime through [src/components/tutorial/TutorialOverlay.jsx](src/components/tutorial/TutorialOverlay.jsx) and [src/tutorials/driverAdapter.js](src/tutorials/driverAdapter.js).
 - Local AI integration: Vite proxies `/api/ollama` to the local Ollama service in [vite.config.js](vite.config.js).
 
 ## Boot And Shell
@@ -171,6 +172,19 @@ Do not collapse these into one gate by accident.
 - post-session summaries and journaling
 - instrumentation hooks
 
+### Tutorial Runtime
+
+The tutorial system is now split across:
+
+- registry definitions in [src/tutorials/tutorialRegistry.js](src/tutorials/tutorialRegistry.js)
+- schema normalization in [src/tutorials/tutorialSchema.js](src/tutorials/tutorialSchema.js)
+- override and target resolution in [src/tutorials/tutorialRuntime.js](src/tutorials/tutorialRuntime.js)
+- persisted launch and completion state in [src/state/tutorialStore.js](src/state/tutorialStore.js)
+- the Driver bridge in [src/tutorials/driverAdapter.js](src/tutorials/driverAdapter.js)
+- the mounted runtime surface in [src/components/tutorial/TutorialOverlay.jsx](src/components/tutorial/TutorialOverlay.jsx)
+
+Driver is presentation only. Tutorial IDs, step order, completion state, and authoring data remain app-owned.
+
 Completed sessions funnel through [src/services/sessionRecorder.js](src/services/sessionRecorder.js), which writes normalized records to `progressStore`, computes `pathContext`, captures schedule-match snapshots used by curriculum reporting, and then asks [src/state/navigationStore.js](src/state/navigationStore.js) to recompute the persisted `activePath.progress` snapshot from canonical completed sessions.
 
 Practice shell chrome is now centralized in [src/components/practice/practiceHousing.jsx](src/components/practice/practiceHousing.jsx) and consumed directly by at least:
@@ -238,3 +252,5 @@ Treat avatar stage as session-derived unless a component explicitly reads anothe
 - LLM integration: [docs/LLM_INTEGRATION.md](docs/LLM_INTEGRATION.md)
 - Avatar specifics: [docs/AVATAR_SYSTEM.md](docs/AVATAR_SYSTEM.md)
 - Persistence audit: [docs/PERSISTENCE_AUDIT.md](docs/PERSISTENCE_AUDIT.md)
+- Tutorial architecture: [docs/TUTORIAL_SYSTEM.md](docs/TUTORIAL_SYSTEM.md)
+- Tutorial authoring: [docs/TUTORIAL_AUTHORING.md](docs/TUTORIAL_AUTHORING.md)

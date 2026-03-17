@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { TUTORIALS } from '../../tutorials/tutorialRegistry.js';
+import { TUTORIAL_OVERRIDE_STORAGE_KEY } from '../../tutorials/tutorialRuntime.js';
+import { validateTutorialDefinition } from '../../tutorials/tutorialSchema.js';
 import {
   ONBOARDING_CONTENT_CHANGE_EVENT,
   ONBOARDING_CURRICULUM_STEP_OPTIONS,
@@ -10,15 +12,13 @@ import {
   writeOnboardingCurriculumContent,
 } from '../../data/onboardingCurriculumContent.js';
 
-const STORAGE_KEY = 'immanence.tutorial.overrides';
+const STORAGE_KEY = TUTORIAL_OVERRIDE_STORAGE_KEY;
 
-// Whitelisted tutorial images (add more as needed)
 const TUTORIAL_IMAGE_CHOICES = [
-  { key: 'breath-01.webp', label: 'Breath 01' },
-  { key: 'breath-02.webp', label: 'Breath 02' },
-  { key: 'stillness-01.webp', label: 'Stillness 01' },
-  { key: 'practice-01.webp', label: 'Practice 01' },
-  { key: 'awareness-01.webp', label: 'Awareness 01' },
+  { key: 'tutorial/breath and stillness/breath tutorial 1.webp', label: 'Breath Tutorial 1' },
+  { key: 'tutorial/breath and stillness/breath tutorial 2.webp', label: 'Breath Tutorial 2' },
+  { key: 'tutorial/breath and stillness/intensity 1.webp', label: 'Intensity 1' },
+  { key: 'tutorial/breath and stillness/intensity 2.webp', label: 'Intensity 2' },
 ];
 
 function cloneValue(value) {
@@ -27,62 +27,6 @@ function cloneValue(value) {
 
 function isSameValue(left, right) {
   return JSON.stringify(left) === JSON.stringify(right);
-}
-
-// Validation helper for tutorial structure
-function validateTutorial(obj) {
-  const errors = [];
-
-  if (!obj || typeof obj !== 'object') {
-    errors.push('Must be an object');
-    return errors;
-  }
-
-  if (typeof obj.title !== 'string') {
-    errors.push('Missing or invalid "title" (must be string)');
-  }
-
-  if (!Array.isArray(obj.steps)) {
-    errors.push('Missing or invalid "steps" (must be array)');
-    return errors;
-  }
-
-  obj.steps.forEach((step, i) => {
-    if (typeof step.title !== 'string') {
-      errors.push(`Step ${i + 1}: missing or invalid "title"`);
-    }
-    if (typeof step.body !== 'string') {
-      errors.push(`Step ${i + 1}: missing or invalid "body"`);
-    }
-    if (step.placement && !['top', 'right', 'bottom', 'left', 'center'].includes(step.placement)) {
-      errors.push(`Step ${i + 1}: invalid "placement" (must be top|right|bottom|left|center)`);
-    }
-    if (step.target !== null && typeof step.target !== 'string') {
-      errors.push(`Step ${i + 1}: invalid "target" (must be null or string)`);
-    }
-    // Validate media if present
-    if (step.media !== undefined) {
-      if (!Array.isArray(step.media)) {
-        errors.push(`Step ${i + 1}: invalid "media" (must be array)`);
-      } else if (step.media.length > 1) {
-        errors.push(`Step ${i + 1}: max 1 image allowed per step`);
-      } else if (step.media.length === 1) {
-        const m = step.media[0];
-        if (!m.key || typeof m.key !== 'string') {
-          errors.push(`Step ${i + 1}: media missing or invalid "key"`);
-        } else if (!/^[a-zA-Z0-9._-]+\.(png|jpg|jpeg|webp)$/.test(m.key)) {
-          errors.push(`Step ${i + 1}: media key must match ^[a-zA-Z0-9._-]+\\.(png|jpg|jpeg|webp)$`);
-        } else if (m.key.includes('/')) {
-          errors.push(`Step ${i + 1}: media key contains "/" (path traversal not allowed)`);
-        }
-        if (!m.alt || typeof m.alt !== 'string' || m.alt.length < 3) {
-          errors.push(`Step ${i + 1}: media "alt" required, min 3 chars`);
-        }
-      }
-    }
-  });
-
-  return errors;
 }
 
 function DefaultValueNote({ value }) {
@@ -254,7 +198,7 @@ export function TutorialEditor() {
   const handleValidate = () => {
     try {
       const parsed = JSON.parse(jsonText);
-      const errors = validateTutorial(parsed);
+      const errors = validateTutorialDefinition(selectedId || 'tutorial', parsed);
       setValidationErrors(errors);
       if (errors.length === 0) {
         setStatusMessage('✓ Valid tutorial JSON');
@@ -276,7 +220,7 @@ export function TutorialEditor() {
     
     try {
       const parsed = JSON.parse(jsonText);
-      const errors = validateTutorial(parsed);
+      const errors = validateTutorialDefinition(selectedId || 'tutorial', parsed);
       if (errors.length > 0) {
         setValidationErrors(errors);
         setStatusMessage('Cannot save: validation failed');
@@ -370,7 +314,7 @@ export function TutorialEditor() {
 
           {/* Media helper section */}
           <div className="text-[10px] text-white/60 space-y-2 bg-black/30 p-2 rounded border border-white/10">
-            <div className="font-semibold">📸 Whitelisted Tutorial Images:</div>
+            <div className="font-semibold">📸 Tutorial Media Examples:</div>
             <div className="grid grid-cols-3 gap-1">
               {TUTORIAL_IMAGE_CHOICES.map((img) => (
                 <div key={img.key} className="text-[9px] bg-black/50 p-1 rounded">
@@ -382,7 +326,7 @@ export function TutorialEditor() {
               <div className="font-semibold">Media JSON format (add to step):</div>
               <code className="block text-[9px] whitespace-pre-wrap break-words bg-black/50 p-1 rounded mt-1">
 {`"media": [{
-  "key": "breath-01.webp",
+  "src": "tutorial/breath and stillness/intensity 1.webp",
   "alt": "Breath practice diagram",
   "caption": "Optional caption"
 }]`}

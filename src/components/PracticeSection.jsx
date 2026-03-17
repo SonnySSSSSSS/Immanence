@@ -51,7 +51,6 @@ import PracticeHeader from "./practice/PracticeHeader.jsx";
 import BreathPracticeCard from "./practice/BreathPracticeCard.jsx";
 import { SessionControls } from "./practice/SessionControls.jsx";
 import { StillnessRingSession } from "./practice/StillnessRingSession.jsx";
-import PracticeMenu from "./practice/PracticeMenu.jsx";
 import { PracticeOptionsCard } from "./practice/PracticeOptionsCard.jsx";
 import { InstructionVideoPanel } from "./InstructionVideoPanel.jsx";
 import { GlassIconButton, SUB_MODE_ICON_MAP } from "./GlassIconButton.jsx";
@@ -3872,6 +3871,7 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
           return (
             <div
               className="flex items-center justify-center w-full"
+              {...(practiceId === 'awareness' ? { 'data-tutorial': 'awareness-mode-selector' } : {})}
               style={{
                 marginTop: '16px',
                 marginBottom: '16px',
@@ -3959,7 +3959,6 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
         />
 
         <style>{`
-          .practiceMenuHeader .tutorialButtonWrap { display: none !important; }
           .custom-scrollbar::-webkit-scrollbar { width: 4px; }
           .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
           .custom-scrollbar::-webkit-scrollbar-thumb { background: ${isLight ? 'rgba(60,50,35,0.1)' : 'rgba(255,255,255,0.1)'}; border-radius: 2px; }

@@ -11,16 +11,17 @@ export function isTutorialAdminMode() {
   }
 }
 
+const INITIAL_TUTORIAL_STATE = {
+  isOpen: false,
+  tutorialId: null,
+  stepIndex: 0,
+  completedTutorials: new Set(),
+};
+
 export const useTutorialStore = create(
   persist(
     (set, get) => ({
-      // Active tutorial state
-      isOpen: false,
-      tutorialId: null,
-      stepIndex: 0,
-      
-      // Completed tutorials tracking
-      completedTutorials: new Set(),
+      ...INITIAL_TUTORIAL_STATE,
       
       // Actions
       openTutorial: (tutorialId) => {
@@ -62,6 +63,13 @@ export const useTutorialStore = create(
       isCompleted: (tutorialId) => {
         return get().completedTutorials.has(tutorialId);
       },
+
+      resetTutorialProgress: () => {
+        set({
+          ...INITIAL_TUTORIAL_STATE,
+          completedTutorials: new Set(),
+        });
+      },
     }),
     {
       name: 'immanence.tutorial',
@@ -76,3 +84,11 @@ export const useTutorialStore = create(
     }
   )
 );
+
+export function clearTutorialPersistedState() {
+  useTutorialStore.persist?.clearStorage?.();
+  useTutorialStore.setState({
+    ...INITIAL_TUTORIAL_STATE,
+    completedTutorials: new Set(),
+  });
+}
