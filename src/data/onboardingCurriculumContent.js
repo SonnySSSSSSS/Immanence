@@ -82,25 +82,25 @@ const DEFAULT_ONBOARDING_CURRICULUM_CONTENT = Object.freeze({
         intro: 'Both breathwork and stillness depend on the same principle: an upright spine that feels stable, grounded, and not rigid.',
         imageCards: [
             {
-                src: '/tutorial/breath and stillness/breath tutorial 1.webp',
+                src: `${import.meta.env.BASE_URL}tutorial/breath and stillness/breath tutorial 1.webp`,
                 alt: 'Standing breath posture with a long spine and relaxed shoulders',
                 label: '',
                 caption: 'Find a corner protruding wall.',
             },
             {
-                src: '/tutorial/breath and stillness/breath tutorial 3.webp',
+                src: `${import.meta.env.BASE_URL}tutorial/breath and stillness/breath tutorial 3.webp`,
                 alt: 'Seated stillness posture with an upright but relaxed spine',
                 label: '',
                 caption: 'Find a straight stick that is at least long as your spine.',
             },
             {
-                src: '/tutorial/breath and stillness/breath tutorial 2.webp',
+                src: `${import.meta.env.BASE_URL}tutorial/breath and stillness/breath tutorial 2.webp`,
                 alt: 'Balanced standing posture with neutral head and easy neck',
                 label: '',
                 caption: 'Sit cross legged with your spine along the straight wall.',
             },
             {
-                src: '/tutorial/breath and stillness/breath tutorial 4.webp',
+                src: `${import.meta.env.BASE_URL}tutorial/breath and stillness/breath tutorial 4.webp`,
                 alt: 'Aligned posture example showing relaxed shoulders and upright alignment',
                 label: '',
                 caption: 'Lie down with your back aligned to the stick so you can feel it.',
@@ -129,21 +129,21 @@ const DEFAULT_ONBOARDING_CURRICULUM_CONTENT = Object.freeze({
         ],
         imageCards: [
             {
-                src: '/tutorial/breath and stillness/intensity 1.webp',
+                src: `${import.meta.env.BASE_URL}tutorial/breath and stillness/intensity 1.webp`,
                 alt: 'Two people speaking in a quiet room to represent light focus intensity',
                 label: 'Light Focus',
                 caption: 'Like a 1-on-1 conversation in a quiet room.',
                 description: 'Low distraction load. Hold attention gently, then release fully during rest.',
             },
             {
-                src: '/tutorial/breath and stillness/intensity 2.webp',
+                src: `${import.meta.env.BASE_URL}tutorial/breath and stillness/intensity 2.webp`,
                 alt: 'Two people speaking in a crowded bar to represent medium focus intensity',
                 label: 'Medium Focus',
                 caption: 'Like a 1-on-1 conversation in a crowded bar.',
                 description: 'More filtering is required. Keep the target clear without hardening the body.',
             },
             {
-                src: '/tutorial/breath and stillness/intensity 3.webp',
+                src: `${import.meta.env.BASE_URL}tutorial/breath and stillness/intensity 3.webp`,
                 alt: 'Two workers speaking beside a construction site to represent high focus intensity',
                 label: 'High Focus',
                 caption: 'Like a 1-on-1 conversation beside a construction site.',
@@ -203,6 +203,17 @@ function mergeContent(defaultValue, overrideValue) {
     return overrideValue === undefined ? defaultValue : overrideValue;
 }
 
+function stripSrcFields(obj) {
+    if (!obj || typeof obj !== 'object') return obj;
+    if (Array.isArray(obj)) return obj.map(stripSrcFields);
+    const result = {};
+    Object.keys(obj).forEach(key => {
+        if (key === 'src') return; // src is code-owned, not user-overridable
+        result[key] = stripSrcFields(obj[key]);
+    });
+    return result;
+}
+
 function dispatchChangeEvent() {
     if (typeof window === 'undefined') return;
     window.dispatchEvent(new CustomEvent(ONBOARDING_CONTENT_CHANGE_EVENT));
@@ -226,7 +237,7 @@ export function readOnboardingCurriculumContent() {
     try {
         const raw = window.localStorage.getItem(ONBOARDING_CONTENT_STORAGE_KEY);
         if (!raw) return defaults;
-        const overrides = JSON.parse(raw);
+        const overrides = stripSrcFields(JSON.parse(raw));
         return mergeContent(defaults, overrides);
     } catch {
         return defaults;

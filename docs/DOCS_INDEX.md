@@ -27,6 +27,10 @@ Canonical doc map for `immanence-os`, refreshed on 2026-03-09.
 - [PARTICLE_SYSTEM_PROTECTION.md](PARTICLE_SYSTEM_PROTECTION.md) - guard rails for `IndrasNet`
 - [CRITICAL_FLOWS.md](CRITICAL_FLOWS.md) - important user and system flows
 
+## Active Task Specs
+
+- [TASK-2026-03-17-A.md](TASK-2026-03-17-A.md) - fix onboarding tutorial image paths for GitHub Pages (URL construction + missing assets + localStorage guard)
+
 ## Operational And Historical Docs
 
 - [CHANGELOG.md](CHANGELOG.md) - change history

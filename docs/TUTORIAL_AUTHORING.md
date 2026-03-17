@@ -96,12 +96,35 @@ Bad:
 
 Media is app-owned content. Driver does not know anything about it.
 
+### Driver-backed tutorial steps
+
+`TutorialOverlay` owns the URL construction. In step schema, store the file path relative to `public/tutorial/` in the `key` field (not `src`). The overlay prepends `import.meta.env.BASE_URL + 'tutorial/'` at render time.
+
 Current convention:
 
 - store tutorial images under `public/tutorial/**`
-- reference them with `src` values like `tutorial/breath and stillness/intensity 1.webp`
+- reference them with `key` values like `breath and stillness/intensity 1.webp` (no leading slash, no `tutorial/` prefix)
 - include `alt`
 - keep captions short
+
+### Media path rule (mandatory, applies to all tutorial and onboarding media)
+
+**Never use root-relative `/...` paths for static assets.** A leading `/` bypasses Vite's `base` config and resolves from the domain root. On GitHub Pages, the app is served from `/Immanence/`, so `/tutorial/...` returns 404 while `/Immanence/tutorial/...` works.
+
+The correct construction depends on which system owns the URL:
+
+| System | Who prepends `BASE_URL` | What to write in the data/schema |
+| --- | --- | --- |
+| Driver-backed tutorial (`TutorialOverlay`) | The overlay component | Relative key like `breath and stillness/intensity 1.webp` |
+| Onboarding curriculum (`onboardingCurriculumContent.js`) | Nobody — rendered as `<img src={image.src}>` directly | Full base-aware path: `` `${import.meta.env.BASE_URL}tutorial/breath and stillness/breath tutorial 1.webp` `` |
+
+When adding new tutorial media, verify which system will render it before writing the path.
+
+### `localStorage` override policy for media `src`
+
+Media `src` values are **code-owned and not user-overridable**. `readOnboardingCurriculumContent` must strip `src` fields from any `localStorage` override before merging, so that compiled defaults always win for media paths. This prevents a deploy from being silently undermined by a cached stale path in a user's browser.
+
+Do not store media `src` values in `localStorage`. Do not expose them through user-facing configuration.
 
 ## Custom Actions
 
