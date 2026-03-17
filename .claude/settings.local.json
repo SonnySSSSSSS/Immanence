@@ -46,7 +46,10 @@
       "Bash(pkill -f \"npm run dev\")",
       "Bash(python3 -c:*)",
       "Bash(del \"D:\\\\Unity Apps\\\\immanence-os\\\\fix_ritual_icons.py\")",
-      "Bash(xargs grep:*)"
+      "Bash(xargs grep:*)",
+      "Bash(grep -r \"seedling\\\\|ember\\\\|flame\\\\|stage\" 'd:/Unity Apps/immanence-os/src/data' --include=*.js -l)",
+      "Bash(grep -r \"seedling\\\\|ember\\\\|flame\" 'd:/Unity Apps/immanence-os/src/state' --include=*.js -l)",
+      "Bash(npm run:*)"
     ]
   },
   "mcpServers": {
