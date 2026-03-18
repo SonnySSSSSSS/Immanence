@@ -473,7 +473,7 @@ function HomeHub({ onSelectSection, activeSection = null, currentStage, previewP
     width: '100%',
     height: '2px',
     borderRadius: '999px',
-    background: isLight ? 'rgba(55, 112, 126, 0.62)' : 'rgba(138, 228, 236, 0.48)',
+    background: isLight ? 'var(--accent-60)' : 'var(--accent-50)',
   };
   const sidePanelTileContentBaseStyle = {
     width: '100%',
@@ -521,7 +521,7 @@ function HomeHub({ onSelectSection, activeSection = null, currentStage, previewP
     minHeight: `calc(${U} * 1.65)`,
     justifyContent: 'center',
   };
-  const sidePanelHousingGlowColor = isLight ? 'rgba(76, 199, 214, 0.12)' : 'rgba(76, 219, 235, 0.18)';
+  const sidePanelHousingGlowColor = isLight ? 'var(--accent-10)' : 'var(--accent-20)';
   const sidePanelHousingOuterStyle = {
     position: 'absolute',
     inset: 0,
@@ -529,10 +529,10 @@ function HomeHub({ onSelectSection, activeSection = null, currentStage, previewP
     background: isLight
       ? 'linear-gradient(180deg, rgba(230, 246, 250, 0.76) 0%, rgba(201, 228, 235, 0.56) 100%)'
       : 'linear-gradient(180deg, rgba(6, 16, 24, 0.92) 0%, rgba(3, 10, 18, 0.9) 100%)',
-    border: `1px solid ${isLight ? 'rgba(97, 177, 190, 0.38)' : 'rgba(112, 233, 242, 0.28)'}`,
+    border: `1px solid ${isLight ? 'var(--accent-40)' : 'var(--accent-30)'}`,
     boxShadow: isLight
       ? 'inset 0 1px 0 rgba(255,255,255,0.58), inset 0 -10px 24px rgba(18,40,52,0.08)'
-      : `inset 0 1px 0 rgba(168, 241, 248, 0.12), inset 0 -16px 28px rgba(0, 0, 0, 0.4), 0 0 0 1px rgba(38, 88, 98, 0.22), 0 0 14px ${sidePanelHousingGlowColor}`,
+      : `inset 0 1px 0 var(--accent-10), inset 0 -16px 28px rgba(0, 0, 0, 0.4), 0 0 0 1px var(--accent-20), 0 0 14px ${sidePanelHousingGlowColor}`,
     pointerEvents: 'none',
   };
   const sidePanelHousingInnerStyle = {
@@ -542,7 +542,7 @@ function HomeHub({ onSelectSection, activeSection = null, currentStage, previewP
     background: isLight
       ? 'linear-gradient(180deg, rgba(241, 250, 252, 0.7) 0%, rgba(214, 234, 239, 0.5) 100%)'
       : 'linear-gradient(180deg, rgba(5, 12, 20, 0.88) 0%, rgba(9, 20, 29, 0.8) 48%, rgba(4, 9, 16, 0.92) 100%)',
-    border: `1px solid ${isLight ? 'rgba(91, 165, 177, 0.22)' : 'rgba(101, 211, 224, 0.16)'}`,
+    border: `1px solid ${isLight ? 'var(--accent-20)' : 'var(--accent-15)'}`,
     boxShadow: isLight
       ? 'inset 0 1px 0 rgba(255,255,255,0.55)'
       : 'inset 0 0 0 1px rgba(8, 39, 46, 0.65), inset 0 12px 26px rgba(0, 0, 0, 0.28)',
@@ -554,8 +554,8 @@ function HomeHub({ onSelectSection, activeSection = null, currentStage, previewP
     right: `calc(${U} * 0.5)`,
     height: '1px',
     background: isLight
-      ? 'linear-gradient(90deg, transparent, rgba(52, 139, 152, 0.42) 16%, rgba(52, 139, 152, 0.12) 84%, transparent)'
-      : 'linear-gradient(90deg, transparent, rgba(117, 231, 240, 0.52) 18%, rgba(117, 231, 240, 0.14) 84%, transparent)',
+      ? `linear-gradient(90deg, transparent, var(--accent-40) 16%, var(--accent-10) 84%, transparent)`
+      : `linear-gradient(90deg, transparent, var(--accent-50) 18%, var(--accent-15) 84%, transparent)`,
     opacity: 0.9,
     pointerEvents: 'none',
   };
@@ -563,11 +563,11 @@ function HomeHub({ onSelectSection, activeSection = null, currentStage, previewP
     position: 'absolute',
     width: `calc(${U} * 0.72)`,
     height: `calc(${U} * 0.72)`,
-    borderColor: isLight ? 'rgba(59, 144, 156, 0.62)' : 'rgba(117, 231, 240, 0.72)',
+    borderColor: isLight ? 'var(--accent-60)' : 'var(--accent-70)',
     pointerEvents: 'none',
   };
   const sidePanelTextShadow = isLight ? '0 1px 2px rgba(240,248,250,0.35)' : '0 1px 6px rgba(0,0,0,0.9)';
-  const sidePanelAccentTextShadow = isLight ? '0 1px 2px rgba(240,248,250,0.2)' : '0 0 10px rgba(72, 208, 220, 0.18)';
+  const sidePanelAccentTextShadow = isLight ? '0 1px 2px rgba(240,248,250,0.2)' : '0 0 10px var(--accent-20)';
   const sidePanelTileExpandedMaxHeight = `calc(${panelH} - ((${panelPad}) * 0.9) - 12px)`;
   const sidePanelTileRolledMaxHeight = `calc(${U} * 1.6)`;
   const PANEL_EXPANDED_H = panelH;
@@ -588,7 +588,32 @@ function HomeHub({ onSelectSection, activeSection = null, currentStage, previewP
 
 
   return (
-    <div className="w-full flex flex-col items-center relative overflow-visible">
+    <div className="hub-root w-full flex flex-col items-center relative overflow-visible">
+      <style>{`
+        .hub-root .hub-report-btn {
+          font-size: 8px;
+          letter-spacing: 0.15em;
+          padding: 2px 8px;
+          opacity: 0.55;
+          border-color: rgba(255,255,255,0.1);
+          color: var(--text-dim);
+          background: transparent;
+          box-shadow: none;
+          transition: opacity 0.2s;
+        }
+        .hub-root .hub-report-btn:hover {
+          opacity: 1;
+          color: var(--stage-primary);
+          border-color: var(--stage-30);
+          background: var(--stage-10);
+        }
+        .hub-root .hub-penalty-label {
+          font-size: 10px;
+          opacity: 0.7;
+          letter-spacing: 0.1em;
+          color: var(--text-dim);
+        }
+      `}</style>
       {/* Background is handled by Background.jsx globally */}
 
       {/* ──────────────────────────────────────────────────────────────────────
@@ -623,7 +648,6 @@ function HomeHub({ onSelectSection, activeSection = null, currentStage, previewP
           >
             <div style={sidePanelHousingOuterStyle} />
             <div style={sidePanelHousingInnerStyle} />
-            <div style={{ ...sidePanelHousingLineStyle, top: `calc(${U} * 0.7)` }} />
             <div style={{ ...sidePanelHousingLineStyle, bottom: `calc(${U} * 0.82)` }} />
             <div style={{ ...sidePanelHousingCornerStyle, top: `calc(${U} * 0.3)`, left: `calc(${U} * 0.34)`, borderTopWidth: '1px', borderLeftWidth: '1px', borderTopStyle: 'solid', borderLeftStyle: 'solid' }} />
             <div style={{ ...sidePanelHousingCornerStyle, top: `calc(${U} * 0.3)`, right: `calc(${U} * 0.34)`, borderTopWidth: '1px', borderRightWidth: '1px', borderTopStyle: 'solid', borderRightStyle: 'solid' }} />
@@ -725,7 +749,6 @@ function HomeHub({ onSelectSection, activeSection = null, currentStage, previewP
           >
             <div style={sidePanelHousingOuterStyle} />
             <div style={sidePanelHousingInnerStyle} />
-            <div style={{ ...sidePanelHousingLineStyle, top: `calc(${U} * 0.7)` }} />
             <div style={{ ...sidePanelHousingLineStyle, bottom: `calc(${U} * 0.82)` }} />
             <div style={{ ...sidePanelHousingCornerStyle, top: `calc(${U} * 0.3)`, left: `calc(${U} * 0.34)`, borderTopWidth: '1px', borderLeftWidth: '1px', borderTopStyle: 'solid', borderLeftStyle: 'solid' }} />
             <div style={{ ...sidePanelHousingCornerStyle, top: `calc(${U} * 0.3)`, right: `calc(${U} * 0.34)`, borderTopWidth: '1px', borderRightWidth: '1px', borderTopStyle: 'solid', borderRightStyle: 'solid' }} />
@@ -759,7 +782,7 @@ function HomeHub({ onSelectSection, activeSection = null, currentStage, previewP
                   textAlign: 'center',
                   letterSpacing: '0.10em',
                 }}>
-                  → {nextStageName}
+                  {nextStageName}
                 </div>
 
                 {/* Days remaining — large number */}
@@ -792,16 +815,16 @@ function HomeHub({ onSelectSection, activeSection = null, currentStage, previewP
                     width: '100%',
                     height: '3px',
                     borderRadius: '2px',
-                    background: isLight ? 'rgba(56, 122, 133, 0.14)' : 'rgba(92, 177, 188, 0.12)',
+                    background: isLight ? 'var(--accent-15)' : 'var(--accent-10)',
                   }}>
                     <div style={{
                       height: '100%',
                       width: `${stageProgressPct}%`,
                       borderRadius: '2px',
                       background: isLight
-                        ? 'linear-gradient(90deg, rgba(44, 172, 189, 0.68), rgba(100, 226, 236, 0.42))'
-                        : 'linear-gradient(90deg, rgba(87, 222, 236, 0.88), rgba(124, 240, 248, 0.52))',
-                      boxShadow: isLight ? '0 0 4px rgba(44, 172, 189, 0.18)' : '0 0 6px rgba(87, 222, 236, 0.32)',
+                        ? `linear-gradient(90deg, var(--accent-70), var(--accent-40))`
+                        : `linear-gradient(90deg, var(--accent-80), var(--accent-50))`,
+                      boxShadow: isLight ? '0 0 4px var(--accent-20)' : '0 0 6px var(--accent-30)',
                       transition: 'width 600ms ease',
                     }} />
                   </div>
@@ -809,7 +832,7 @@ function HomeHub({ onSelectSection, activeSection = null, currentStage, previewP
 
                 {/* Decay rate — hover for full info */}
                 <div
-                  className="type-label"
+                  className="hub-penalty-label type-label"
                   title={[
                     `Decay: −${decayInfo.decayPerMissedDay.toFixed(2)} effective days per missed day`,
                     `Accumulated loss: ${decayInfo.decayAccumulated} days`,
@@ -838,7 +861,7 @@ function HomeHub({ onSelectSection, activeSection = null, currentStage, previewP
                 <button
                   type="button"
                   onClick={(e) => { e.stopPropagation(); openArchive(ARCHIVE_TABS.REPORTS); }}
-                  className="type-label rounded-full font-bold transition-all hover:scale-105"
+                  className="hub-report-btn type-label rounded-full font-bold transition-all hover:scale-105"
                   style={{
                     ...sidePanelTileReportButtonStyle,
                     background: isLight
