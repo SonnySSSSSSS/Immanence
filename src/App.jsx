@@ -146,6 +146,7 @@ function App({ playgroundMode = false, playgroundBottomLayer = true }) {
     ? 'linear-gradient(135deg, #F5F0E6 0%, #EDE5D8 100%)'
     : '#000';
   const APP_FRAME_WIDTH = 'min(100vw, calc(100dvh * 1080 / 1920))';
+  const entryHeroSrc = `${import.meta.env.BASE_URL}open meditation.webp`;
   // Single, authoritative content rail width. Individual cards can be narrower, but sections
   // should not invent their own viewport widths.
   const UI_RAIL_MAX_WIDTH = 'min(430px, 94vw)';
@@ -1133,54 +1134,12 @@ function App({ playgroundMode = false, playgroundBottomLayer = true }) {
                         style={{
                           height: 'clamp(68px, 12vw, 220px)',
                           borderColor: isLight ? 'rgba(124, 104, 78, 0.16)' : 'rgba(255,255,255,0.08)',
-                          background: isLight
-                            ? 'linear-gradient(135deg, rgba(233,223,205,0.92) 0%, rgba(216,205,184,0.76) 42%, rgba(193,206,191,0.58) 100%)'
-                            : 'linear-gradient(135deg, rgba(10,18,31,0.98) 0%, rgba(17,34,54,0.9) 45%, rgba(38,58,48,0.74) 100%)',
                         }}
                       >
-                        <div
-                          className="absolute inset-0"
-                          style={{
-                            background: isLight
-                              ? 'radial-gradient(circle at 50% 42%, rgba(255,247,220,0.92) 0%, rgba(255,240,196,0.34) 20%, rgba(255,255,255,0) 48%)'
-                              : 'radial-gradient(circle at 50% 42%, rgba(244,219,149,0.32) 0%, rgba(122,198,255,0.14) 24%, rgba(0,0,0,0) 54%)',
-                          }}
-                        />
-                        <div
-                          className="absolute left-1/2 top-1/2 rounded-full hidden sm:block"
-                          style={{
-                            width: 'clamp(132px, 22vw, 188px)',
-                            height: 'clamp(132px, 22vw, 188px)',
-                            transform: 'translate(-50%, -50%)',
-                            border: isLight
-                              ? '1px solid rgba(120, 96, 62, 0.20)'
-                              : '1px solid rgba(255,255,255,0.12)',
-                            boxShadow: isLight
-                              ? '0 0 0 14px rgba(255,255,255,0.14), inset 0 0 24px rgba(255,255,255,0.28)'
-                              : '0 0 0 14px rgba(255,255,255,0.04), inset 0 0 28px rgba(255,255,255,0.08)',
-                          }}
-                        />
-                        <div
-                          className="absolute left-1/2 top-1/2 rounded-full hidden sm:block"
-                          style={{
-                            width: 'clamp(78px, 13vw, 116px)',
-                            height: 'clamp(78px, 13vw, 116px)',
-                            transform: 'translate(-50%, -50%)',
-                            border: isLight
-                              ? '1px solid rgba(120, 96, 62, 0.24)'
-                              : '1px solid rgba(255,255,255,0.16)',
-                            background: isLight
-                              ? 'radial-gradient(circle, rgba(255,252,244,0.94) 0%, rgba(252,240,213,0.34) 54%, rgba(255,255,255,0) 100%)'
-                              : 'radial-gradient(circle, rgba(255,240,204,0.18) 0%, rgba(255,255,255,0.06) 56%, rgba(255,255,255,0) 100%)',
-                          }}
-                        />
-                        <div
-                          className="absolute inset-x-0 bottom-0 h-20"
-                          style={{
-                            background: isLight
-                              ? 'linear-gradient(180deg, rgba(255,255,255,0) 0%, rgba(243,234,222,0.78) 100%)'
-                              : 'linear-gradient(180deg, rgba(3,7,12,0) 0%, rgba(3,7,12,0.82) 100%)',
-                          }}
+                        <img
+                          src={entryHeroSrc}
+                          alt=""
+                          className="h-full w-full object-cover object-center"
                         />
                       </div>
 
@@ -1195,19 +1154,19 @@ function App({ playgroundMode = false, playgroundBottomLayer = true }) {
                           className="mb-1 text-2xl font-semibold leading-[1.05] sm:mb-3 sm:text-4xl sm:leading-tight"
                           style={{ color: isLight ? '#3D3425' : 'rgba(255,255,255,0.96)' }}
                         >
-                          A spiritual dojo for efficiency, efficacy, and evolution of training of the mind.
+                          A spiritual dojo for the serious practitioner.
                         </h1>
                         <p
                           className="mx-auto mb-3 max-w-3xl text-sm leading-[1.35] sm:mb-4 sm:text-base sm:leading-6"
                           style={{ color: isLight ? 'rgba(61,52,37,0.76)' : 'rgba(255,255,255,0.74)' }}
                         >
-                          Here you will find traditional practices remixed with modern-day practice theories and learn about the mind and spiritual concepts that are focused on living well, resilience under strain, and self control through the training of the nervous system and the mind.
+                          Traditional practices, modern frameworks — applied to living well, resilience, and self-mastery through training the mind and nervous system.
                         </p>
                         <p
                           className="mx-auto mb-3 max-w-2xl text-sm leading-[1.35] sm:mb-8 sm:text-base sm:leading-6"
                           style={{ color: isLight ? 'rgba(61,52,37,0.76)' : 'rgba(255,255,255,0.74)' }}
                         >
-                          Choose your preferred method of engagement.
+                          Choose your path.
                         </p>
                       </div>
 
