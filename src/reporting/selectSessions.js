@@ -52,15 +52,17 @@ export function selectSessions(options = {}) {
 
     const progressState = useProgressStore.getState();
     const navState = useNavigationStore.getState();
+    const resolvedRunId = scope === 'runId'
+        ? (activeRunId || navState.activePath?.runId || null)
+        : null;
 
     // Get all sessions (V2 only, authoritative source)
     let sessions = [...(progressState.sessionsV2 || [])];
 
     // SCOPE filtering
     if (scope === 'runId') {
-        const runId = activeRunId || navState.activePath?.runId;
-        if (runId) {
-            sessions = sessions.filter(s => s.pathContext?.runId === runId);
+        if (resolvedRunId) {
+            sessions = sessions.filter(s => s.pathContext?.runId === resolvedRunId);
         } else {
             return []; // No active run
         }
@@ -100,7 +102,8 @@ export function selectSessions(options = {}) {
     }
 
     // ADD honor logs as synthetic sessions (if requested)
-    if (includeHonor && progressState.honorLogs && progressState.honorLogs.length > 0) {
+    // Honor logs are off-path and have no runId, so they must not leak into run-scoped curriculum tiles.
+    if (includeHonor && scope !== 'runId' && progressState.honorLogs && progressState.honorLogs.length > 0) {
         const honorSessions = progressState.honorLogs
             .filter(h => new Date(h.date).getTime() >= cutoffMs)
             .map(h => ({
