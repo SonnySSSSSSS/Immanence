@@ -91,6 +91,18 @@ const GUIDANCE_LOOP_WRAP_EPSILON_SEC = 0.75;
 const GUIDANCE_LOOP_END_WINDOW_SEC = 1.25;
 const GUIDANCE_FALLBACK_SUBTITLE_MS = 6000;
 const BREATH_CYCLE_BOUNDARY_EPSILON_MS = 180;
+const PRE_DELAY_INSTRUCTION_LINES = Object.freeze({
+  breathing: [
+    "Keep attention on both the breath and the guidance.",
+    "Prioritize the breathing more than the guidance.",
+    "This trains the mind to track two systems at once.",
+  ],
+  stillness: [
+    "Apply focus as prompted.",
+    "Light = normal conversation. Medium = conversation in a crowded room. High = conversation at a concert.",
+    "This trains the purposeful gathering of attention and focus.",
+  ],
+});
 
 function normalizeSeconds(value, fallback, min = 0, max = 600) {
   const n = Number(value);
@@ -1269,6 +1281,11 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
   }, [breathSubmode, practiceParams]);
 
   const tutorialPracticeId = resolveTutorialPracticeId(practiceId);
+  const preDelayInstructionLines = practiceId === "breath"
+    ? (breathSubmode === "stillness"
+        ? PRE_DELAY_INSTRUCTION_LINES.stillness
+        : PRE_DELAY_INSTRUCTION_LINES.breathing)
+    : null;
 
   useEffect(() => {
     if (isRunning) return;
@@ -3729,6 +3746,32 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
           >
             Get Ready...
           </div>
+          {preDelayInstructionLines && (
+            <div
+              className="type-body text-center mt-6"
+              style={{
+                width: 'min(440px, calc(100vw - 48px))',
+                display: 'flex',
+                flexDirection: 'column',
+                gap: '10px',
+                color: 'rgba(255, 255, 255, 0.82)',
+                fontSize: 'clamp(15px, 3.8vw, 17px)',
+                lineHeight: 1.45,
+                textWrap: 'balance',
+              }}
+            >
+              {preDelayInstructionLines.map((line) => (
+                <div
+                  key={line}
+                  style={{
+                    textShadow: '0 2px 12px rgba(0, 0, 0, 0.45)',
+                  }}
+                >
+                  {line}
+                </div>
+              ))}
+            </div>
+          )}
           {/* Next practice info for circuit transitions */}
           {activeCircuitId && circuitConfig && circuitExerciseIndex < circuitConfig.exercises.length && (
             <div
