@@ -1195,13 +1195,19 @@ function App({ playgroundMode = false, playgroundBottomLayer = true }) {
                           className="mb-1 text-2xl font-semibold leading-[1.05] sm:mb-3 sm:text-4xl sm:leading-tight"
                           style={{ color: isLight ? '#3D3425' : 'rgba(255,255,255,0.96)' }}
                         >
-                          Choose how you want to enter
+                          A spiritual dojo for efficiency, efficacy, and evolution of training of the mind.
                         </h1>
+                        <p
+                          className="mx-auto mb-3 max-w-3xl text-sm leading-[1.35] sm:mb-4 sm:text-base sm:leading-6"
+                          style={{ color: isLight ? 'rgba(61,52,37,0.76)' : 'rgba(255,255,255,0.74)' }}
+                        >
+                          Here you will find traditional practices remixed with modern-day practice theories and learn about the mind and spiritual concepts that are focused on living well, resilience under strain, and self control through the training of the nervous system and the mind.
+                        </p>
                         <p
                           className="mx-auto mb-3 max-w-2xl text-sm leading-[1.35] sm:mb-8 sm:text-base sm:leading-6"
                           style={{ color: isLight ? 'rgba(61,52,37,0.76)' : 'rgba(255,255,255,0.74)' }}
                         >
-                          Student mode guides you through the curriculum with fewer choices. Explorer mode opens the full system from the start.
+                          Choose your preferred method of engagement.
                         </p>
                       </div>
 
