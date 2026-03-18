@@ -27,6 +27,7 @@ import { getLocalDateKey } from '../utils/dateUtils.js';
 import { computeScheduleAnchorStartAt, normalizeAndSortTimeSlots } from '../utils/scheduleUtils.js';
 import { useBreathBenchmarkStore } from '../state/breathBenchmarkStore.js';
 import { BreathBenchmark } from './BreathBenchmark.jsx';
+import { preloadImages } from '../utils/imagePreloader.js';
 
 const DAY_LABELS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 const TOTAL_STEPS = 8;
@@ -679,6 +680,27 @@ export function CurriculumOnboarding({ onDismiss, onComplete }) {
             window.removeEventListener('storage', syncContent);
         };
     }, []);
+
+    useEffect(() => {
+        const tutorialImagePaths = [
+            ...(onboardingContent?.postureGuidance?.imageCards || []),
+            ...(onboardingContent?.stillnessFocusIntensity?.imageCards || []),
+        ]
+            .map((image) => image?.src)
+            .filter(Boolean)
+            .map((src) => {
+                if (src.startsWith(import.meta.env.BASE_URL)) {
+                    return src.slice(import.meta.env.BASE_URL.length);
+                }
+                return src.startsWith('/') ? src.slice(1) : src;
+            });
+
+        if (tutorialImagePaths.length === 0) return;
+
+        preloadImages([...new Set(tutorialImagePaths)], import.meta.env.BASE_URL).catch(() => {
+            // Preload is best-effort only and must not affect onboarding flow.
+        });
+    }, [onboardingContent]);
 
     const handleSelectedDaysChange = (days) => {
         setSelectedDays(days);

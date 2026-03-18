@@ -23,6 +23,7 @@ export function CircuitInsightsView() {
     const textColor = isLight ? 'rgba(35, 20, 10, 0.95)' : 'rgba(253, 251, 245, 0.95)';
     const borderColor = isLight ? 'rgba(180, 120, 40, 0.15)' : 'rgba(255, 255, 255, 0.1)';
     const gridColor = isLight ? 'rgba(180, 120, 40, 0.1)' : 'rgba(255, 255, 255, 0.05)';
+    const lineColor = isLight ? 'rgba(180, 120, 40, 0.9)' : 'rgba(125, 211, 252, 0.9)';
 
     // Use memoized calculations instead of manual useMemo
     const attentionData = useAttentionTrendMemo(entries);
@@ -53,7 +54,7 @@ export function CircuitInsightsView() {
                     Attention Quality Trend
                 </h3>
                 {attentionData.length > 0 ? (
-                    <LineChart data={attentionData} height={200} gridColor={gridColor} textColor={textColor} />
+                    <LineChart data={attentionData} height={200} gridColor={gridColor} textColor={textColor} lineColor={lineColor} />
                 ) : (
                     <p style={{ opacity: 0.6, margin: 0 }}>No data yet</p>
                 )}
@@ -100,7 +101,7 @@ export function CircuitInsightsView() {
 /**
  * LineChart: Attention quality over time
  */
-function LineChart({ data, height, gridColor, textColor }) {
+function LineChart({ data, height, gridColor, textColor, lineColor }) {
     if (data.length === 0) return null;
 
     const width = 600;
@@ -165,7 +166,7 @@ function LineChart({ data, height, gridColor, textColor }) {
             {/* Line path */}
             <path
                 d={pathD}
-                stroke={accentColor}
+                stroke={lineColor}
                 strokeWidth={2}
                 fill="none"
                 strokeLinecap="round"
