@@ -14,11 +14,11 @@ const SWIPE_THRESHOLD = 48;
 
 // Stage definitions — ordered seedling → stellar
 const STAGE_SECTIONS = [
-    { id: 'seedling', label: 'Seedling', glyph: '🌱', accentDark: 'rgba(110, 210, 150, 0.88)', accentLight: 'rgba(45, 130, 78, 0.85)' },
-    { id: 'ember',    label: 'Ember',    glyph: '🔥', accentDark: 'rgba(225, 162, 72, 0.92)',  accentLight: 'rgba(175, 95, 25, 0.85)' },
-    { id: 'flame',    label: 'Flame',    glyph: '🕯',  accentDark: 'rgba(220, 108, 68, 0.90)',  accentLight: 'rgba(180, 62, 35, 0.85)' },
-    { id: 'beacon',   label: 'Beacon',   glyph: '◈',  accentDark: 'rgba(130, 222, 234, 0.90)', accentLight: 'rgba(30, 135, 160, 0.85)' },
-    { id: 'stellar',  label: 'Stellar',  glyph: '✦',  accentDark: 'rgba(185, 148, 232, 0.90)', accentLight: 'rgba(115, 72, 195, 0.82)' },
+    { id: 'seedling', label: 'Seedling', glyph: '🌱', accent: 'rgba(110, 210, 150, 0.88)' },
+    { id: 'ember',    label: 'Ember',    glyph: '🔥', accent: 'rgba(225, 162, 72, 0.92)'  },
+    { id: 'flame',    label: 'Flame',    glyph: '🕯',  accent: 'rgba(220, 108, 68, 0.90)'  },
+    { id: 'beacon',   label: 'Beacon',   glyph: '◈',  accent: 'rgba(130, 222, 234, 0.90)' },
+    { id: 'stellar',  label: 'Stellar',  glyph: '✦',  accent: 'rgba(185, 148, 232, 0.90)' },
 ];
 
 const SLIDE_IN_LEFT = `
@@ -31,6 +31,62 @@ const SLIDE_IN_RIGHT = `
   from { opacity: 0; transform: translateX(28px); }
   to   { opacity: 1; transform: translateX(0); }
 }`;
+
+const PSG_STYLES = `
+@keyframes psgFadeUp {
+  from { opacity: 0; transform: translateY(12px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+@keyframes psgSweepLine {
+  0%   { background-position: -200% 0; }
+  100% { background-position: 300% 0; }
+}
+.psg-root {
+  animation: psgFadeUp 0.35s ease forwards;
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  /* FIX 1: vertical presence — min-height may be overridden by parent in NavigationSection.jsx;
+     if panel still collapses, that constraint must be addressed in a separate spec */
+  min-height: 60vh;
+  display: flex;
+  flex-direction: column;
+}
+.psg-card-grid {
+  flex: 1;
+  align-content: start;
+}
+.psg-card {
+  /* FIX 2: card floor — prevents single card from collapsing to content height */
+  min-height: 180px;
+}
+.psg-card-title {
+  /* FIX 4: override inherited serif — match geometric sans used on chooser */
+  font-family: 'Rajdhani', sans-serif;
+  font-style: normal;
+  font-weight: 700;
+}
+.psg-card::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  opacity: 0.032;
+  pointer-events: none;
+  z-index: 0;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='200' height='200' filter='url(%23n)'/%3E%3C/svg%3E");
+  background-size: 180px 180px;
+}
+.psg-card::after {
+  content: '';
+  position: absolute;
+  left: 0; top: 0; right: 0; height: 1px;
+  background-image: linear-gradient(90deg, transparent 0%, var(--psg-sweep, rgba(130,222,234,0.85)) 42%, transparent 100%);
+  background-size: 200% 100%;
+  background-position: -200% 0;
+  animation: psgSweepLine 7s ease-in-out var(--psg-sweep-delay, 0.9s) infinite;
+  pointer-events: none;
+  z-index: 2;
+}
+`;
 
 export function PathSelectionGrid({ onPathSelected }) {
     const allPaths = getAllPaths();
@@ -98,23 +154,23 @@ export function PathSelectionGrid({ onPathSelected }) {
     };
 
     const activeStage = STAGE_SECTIONS[activeStageIndex];
-    const stageAccent = isLight ? activeStage.accentLight : activeStage.accentDark;
+    const stageAccent = activeStage.accent;
     const stageEntries = allEntries.filter((e) => (e.stage || 'seedling') === activeStage.id);
 
     const cornerColor = isLight ? 'rgba(59, 144, 156, 0.56)' : 'rgba(117, 231, 240, 0.62)';
 
     return (
         <div className="w-full" data-testid="path-grid-root">
-            <style>{SLIDE_IN_LEFT}{SLIDE_IN_RIGHT}</style>
+            <style>{SLIDE_IN_LEFT}{SLIDE_IN_RIGHT}{PSG_STYLES}</style>
             <div
-                className="relative overflow-hidden border"
+                className="psg-root relative overflow-hidden border"
                 data-card="true"
                 data-card-id="pathGrid"
                 style={{
                     clipPath: 'polygon(20px 0, calc(100% - 20px) 0, 100% 20px, 100% calc(100% - 20px), calc(100% - 20px) 100%, 20px 100%, 0 calc(100% - 20px), 0 20px)',
                     background: isLight
                         ? 'linear-gradient(180deg, rgba(228, 244, 248, 0.88) 0%, rgba(210, 235, 240, 0.72) 100%)'
-                        : 'linear-gradient(180deg, rgba(7, 16, 24, 0.96) 0%, rgba(4, 10, 18, 0.94) 100%)',
+                        : 'rgba(4, 8, 15, 0.96)',
                     borderColor: isLight ? 'rgba(97, 177, 190, 0.34)' : 'rgba(112, 233, 242, 0.22)',
                     boxShadow: isLight
                         ? 'inset 0 1px 0 rgba(255,255,255,0.62), inset 0 -10px 24px rgba(18,40,52,0.08), 0 18px 38px rgba(30, 60, 70, 0.10)'
@@ -142,10 +198,10 @@ export function PathSelectionGrid({ onPathSelected }) {
                 <div aria-hidden="true" className="absolute bottom-[12px] left-[12px] h-[14px] w-[14px] pointer-events-none" style={{ borderBottom: '1px solid', borderLeft: '1px solid', borderColor: cornerColor }} />
                 <div aria-hidden="true" className="absolute bottom-[12px] right-[12px] h-[14px] w-[14px] pointer-events-none" style={{ borderBottom: '1px solid', borderRight: '1px solid', borderColor: cornerColor }} />
 
-                {/* Content */}
-                <div className="relative z-10 px-4 py-4 sm:px-5 sm:py-5">
+                {/* Content — flex column so psg-card-grid can flex: 1 to fill panel height */}
+                <div className="relative z-10 px-4 py-4 sm:px-5 sm:py-5" style={{ display: 'flex', flexDirection: 'column', flex: 1 }}>
                 {/* Header row: heading + dots */}
-                <div className="mb-4 flex items-start justify-between gap-3">
+                <div className="mb-3 flex items-start justify-between gap-3">
                     <div>
                         <div
                             className="text-[10px] font-semibold uppercase tracking-[0.22em]"
@@ -168,7 +224,6 @@ export function PathSelectionGrid({ onPathSelected }) {
                     {/* Stage indicator dots */}
                     <div className="flex items-center gap-[7px] pt-1" style={{ flexShrink: 0 }}>
                         {STAGE_SECTIONS.map((s, i) => {
-                            const dotAccent = isLight ? s.accentLight : s.accentDark;
                             const isActive = i === activeStageIndex;
                             return (
                                 <button
@@ -179,8 +234,8 @@ export function PathSelectionGrid({ onPathSelected }) {
                                         width: isActive ? '10px' : '7px',
                                         height: isActive ? '10px' : '7px',
                                         borderRadius: '50%',
-                                        background: dotAccent.replace(/[\d.]+\)$/, isActive ? '1)' : '0.28)'),
-                                        boxShadow: isActive ? `0 0 8px ${dotAccent.replace(/[\d.]+\)$/, '0.60)')}` : 'none',
+                                        background: s.accent.replace(/[\d.]+\)$/, isActive ? '1)' : '0.28)'),
+                                        boxShadow: isActive ? `0 0 8px ${s.accent.replace(/[\d.]+\)$/, '0.60)')}` : 'none',
                                         transition: 'all 0.22s ease',
                                         flexShrink: 0,
                                         padding: 0,
@@ -191,6 +246,23 @@ export function PathSelectionGrid({ onPathSelected }) {
                             );
                         })}
                     </div>
+                </div>
+
+                {/* HUD telemetry divider */}
+                <div aria-hidden="true" className="mb-3 flex items-center gap-2" style={{ opacity: isLight ? 0.28 : 0.36 }}>
+                    <div style={{ flex: 1, height: '1px', background: isLight ? 'rgba(59,144,156,0.5)' : 'rgba(117,231,240,0.5)' }} />
+                    <div className="flex items-center gap-[3px]">
+                        {[0,1,2,3,4].map(i => (
+                            <span key={i} style={{ display: 'inline-block', width: '1px', height: i === 2 ? '6px' : '3px', background: isLight ? 'rgba(59,144,156,0.8)' : 'rgba(117,231,240,0.8)' }} />
+                        ))}
+                    </div>
+                    <span style={{ fontSize: '7px', fontFamily: 'monospace', letterSpacing: '0.18em', color: isLight ? 'rgba(59,144,156,0.7)' : 'rgba(117,231,240,0.7)' }}>◆</span>
+                    <div className="flex items-center gap-[3px]">
+                        {[0,1,2,3,4].map(i => (
+                            <span key={i} style={{ display: 'inline-block', width: '1px', height: i === 2 ? '6px' : '3px', background: isLight ? 'rgba(59,144,156,0.8)' : 'rgba(117,231,240,0.8)' }} />
+                        ))}
+                    </div>
+                    <div style={{ flex: 1, height: '1px', background: isLight ? 'rgba(59,144,156,0.5)' : 'rgba(117,231,240,0.5)' }} />
                 </div>
 
                 {/* Active stage label — swipeable content area */}
@@ -228,12 +300,12 @@ export function PathSelectionGrid({ onPathSelected }) {
                     {/* Program cards for this stage */}
                     <div
                         key={`cards-${activeStageIndex}`}
-                        className="grid grid-cols-2 gap-3"
+                        className="psg-card-grid grid grid-cols-2 gap-3"
                         style={{
                             animation: `${slideDir === 'left' ? 'slideInFromRight' : 'slideInFromLeft'} 0.25s ease`,
                         }}
                     >
-                        {stageEntries.map((entry) => {
+                        {stageEntries.map((entry, entryIdx) => {
                             const effectivePathId = activePath?.activePathId ?? resumablePathId;
                             const isActive = entry.isProgram ? entry.isActive : effectivePathId === entry.id;
                             const hasActivePathMatch = effectivePathId === entry.id;
@@ -265,7 +337,7 @@ export function PathSelectionGrid({ onPathSelected }) {
                                         }
                                     }}
                                     disabled={isPlaceholder}
-                                    className="relative border px-3 py-4 text-left overflow-hidden transition-all"
+                                    className="psg-card relative border px-3 py-4 text-left overflow-hidden transition-all"
                                     style={{
                                         clipPath: PATH_CARD_CLIP,
                                         background: isLight
@@ -280,6 +352,8 @@ export function PathSelectionGrid({ onPathSelected }) {
                                             : `0 12px 28px rgba(0,0,0,0.44), 0 0 ${hasActivePathMatch ? '18px' : '8px'} ${stageAccent.replace(/[\d.]+\)$/, hasActivePathMatch ? '0.16)' : '0.06)')}, inset 0 1px 0 rgba(168, 241, 248, 0.07)`,
                                         opacity: isPlaceholder ? 0.38 : 1,
                                         cursor: isPlaceholder ? 'not-allowed' : 'pointer',
+                                        '--psg-sweep': stageAccent.replace(/[\d.]+\)$/, '0.85)'),
+                                        '--psg-sweep-delay': `${0.9 + entryIdx * 3.5}s`,
                                     }}
                                     onMouseEnter={(e) => {
                                         if (!isPlaceholder) {
@@ -328,8 +402,8 @@ export function PathSelectionGrid({ onPathSelected }) {
                                         <div className="mb-3 flex justify-end">
                                             <div className="type-h1 transition-colors" style={{ color: stageAccent, lineHeight: 1 }}>{entry.glyph}</div>
                                         </div>
-                                        <h3 className="mb-2 leading-tight transition-colors"
-                                            style={{ fontFamily: 'var(--font-display)', fontSize: '13px', fontWeight: 600, letterSpacing: 'var(--tracking-normal)', color: isLight ? 'rgba(60, 52, 37, 0.92)' : 'rgba(253,251,245,0.94)', overflowWrap: 'break-word' }}
+                                        <h3 className="psg-card-title mb-2 leading-tight transition-colors"
+                                            style={{ fontFamily: "'Rajdhani', sans-serif", fontStyle: 'normal', fontSize: '13px', fontWeight: 700, letterSpacing: 'var(--tracking-normal)', color: isLight ? 'rgba(60, 52, 37, 0.92)' : 'rgba(253,251,245,0.94)', overflowWrap: 'break-word' }}
                                         >
                                             {entry.title}
                                         </h3>

@@ -398,6 +398,8 @@ export function CurriculumPrecisionRail() {
                     ref={gridRef}
                     onMouseEnter={handleGridMouseEnter}
                     onMouseLeave={handleGridMouseLeave}
+                    onTouchStart={handleGridMouseEnter}
+                    onTouchEnd={handleGridMouseLeave}
                     style={{
                         display: 'grid',
                         gridTemplateColumns: 'repeat(14, 1fr)',
@@ -415,6 +417,8 @@ export function CurriculumPrecisionRail() {
                             key={`rail-day-${index}`}
                             onMouseEnter={e => handleMouseEnter(index, e)}
                             onMouseLeave={handleMouseLeave}
+                            onTouchStart={e => handleMouseEnter(index, e)}
+                            onTouchEnd={handleMouseLeave}
                             style={{
                                 ...dayStyle,
                                 opacity: 0.9,

@@ -133,7 +133,7 @@ function VerticalMeter({ label, valueText, progressRatio, isLight, progressBarCo
 
                 <div
                     style={{
-                        fontFamily: 'var(--font-display)',
+                        fontFamily: 'var(--font-ui)',
                         fontWeight: 800,
                         fontSize: 11,
                         lineHeight: 1,
@@ -820,6 +820,9 @@ export function DailyPracticeCard({ onStartPractice, onViewCurriculum, onNavigat
         boxShadow: isLight
             ? '0 6px 18px rgba(120, 90, 60, 0.1)'
             : '0 10px 30px rgba(0,0,0,0.45)',
+        paddingTop: '14px',
+        paddingBottom: '14px',
+        alignItems: 'center',
         opacity,
     }), [isLight]);
 
@@ -833,7 +836,7 @@ export function DailyPracticeCard({ onStartPractice, onViewCurriculum, onNavigat
                     backgroundSize: 'auto 100%',
                     backgroundRepeat: 'no-repeat',
                     backgroundPosition: 'left center',
-                    opacity: 0.35,
+                    opacity: 0.48,
                 }}
             />
             <div
@@ -842,7 +845,7 @@ export function DailyPracticeCard({ onStartPractice, onViewCurriculum, onNavigat
                     width: '52%',
                     background: isLight
                         ? 'linear-gradient(90deg, rgba(255,255,255,0.62) 0%, rgba(255,255,255,0.46) 42%, rgba(255,255,255,0) 100%)'
-                        : 'linear-gradient(90deg, rgba(18,15,24,0.64) 0%, rgba(18,15,24,0.42) 42%, rgba(18,15,24,0) 100%)',
+                        : 'linear-gradient(90deg, rgba(8,14,24,0.80) 0%, rgba(8,14,24,0.48) 42%, rgba(8,14,24,0) 100%)',
                 }}
             />
         </>
@@ -1282,7 +1285,7 @@ export function DailyPracticeCard({ onStartPractice, onViewCurriculum, onNavigat
                                             <div className="text-[10px] font-black uppercase tracking-[0.32em] opacity-60" style={{ color: isLight ? 'rgba(60, 50, 35, 0.6)' : 'rgba(253,251,245,0.6)' }}>
                                                 Today's Practice
                                             </div>
-                                            <div className="text-lg font-black tracking-wide" style={{ color: isLight ? '#3c3020' : '#fdfbf5', fontFamily: 'var(--font-display)' }}>
+                                            <div className="text-lg font-black tracking-wide" style={{ color: isLight ? '#3c3020' : '#fdfbf5', fontFamily: 'var(--font-ui)' }}>
                                                 Setup required
                                             </div>
                                             <div className="text-[12px] opacity-80 leading-snug mt-3" style={{ color: isLight ? '#3c3020' : '#fdfbf5' }}>
@@ -1331,7 +1334,7 @@ export function DailyPracticeCard({ onStartPractice, onViewCurriculum, onNavigat
                                 ) : missState.broken ? (
                                     <div className="text-center">
                                         <div className="text-xs opacity-70" style={{ color: isLight ? 'rgba(60, 50, 35, 0.6)' : 'rgba(253,251,245,0.6)' }}>PATH STATUS</div>
-                                        <div className="mt-4 text-lg font-semibold" style={{ color: isLight ? '#3c3020' : '#fdfbf5', fontFamily: 'var(--font-display)' }}>Path Broken</div>
+                                        <div className="mt-4 text-lg font-semibold" style={{ color: isLight ? '#3c3020' : '#fdfbf5', fontFamily: 'var(--font-ui)' }}>Path Broken</div>
                                         <div className="mt-2 text-sm opacity-70" style={{ color: isLight ? '#3c3020' : '#fdfbf5' }}>Missed {missState.consecutiveMissedDays} consecutive days.</div>
                                         <div className="mt-6 flex flex-col gap-3">
                                             <button
@@ -1368,7 +1371,7 @@ export function DailyPracticeCard({ onStartPractice, onViewCurriculum, onNavigat
                                     </div>
                                 ) : allDone ? (
                                     <div className="text-center">
-                                        <div className="text-lg font-semibold" style={{ color: isLight ? '#3c3020' : '#fdfbf5', fontFamily: 'var(--font-display)' }}>Schedule complete</div>
+                                        <div className="text-lg font-semibold" style={{ color: isLight ? '#3c3020' : '#fdfbf5', fontFamily: 'var(--font-ui)' }}>Schedule complete</div>
                                         <div className="mt-2 text-sm opacity-70" style={{ color: isLight ? '#3c3020' : '#fdfbf5' }}>Great job on your {completedCount} session{completedCount !== 1 ? 's' : ''}!</div>
                                     </div>
                                 ) : times.length > 0 ? (
@@ -1383,7 +1386,7 @@ export function DailyPracticeCard({ onStartPractice, onViewCurriculum, onNavigat
 
                                         {/* Path title - matches curriculum "Test Program" style */}
                                         <div className="mt-2 text-xl font-bold tracking-tight" style={{
-                                            fontFamily: 'var(--font-display)',
+                                            fontFamily: 'var(--font-ui)',
                                             color: isLight ? '#3c3020' : 'var(--accent-color)',
                                         }}>
                                             {activePathObj.title}
@@ -1456,7 +1459,7 @@ export function DailyPracticeCard({ onStartPractice, onViewCurriculum, onNavigat
                                                 return (
                                                     <div
                                                         key={row.key}
-                                                        className="rounded-2xl border p-4 flex items-center gap-3 transition-all"
+                                                        className="rounded border p-4 flex items-center gap-3 transition-all"
                                                         style={getSessionRowStyle(isInfoRow ? 1 : (row.isDone ? 0.7 : 1))}
                                                     >
                                                         {renderSessionRowWallpaper()}
@@ -1482,7 +1485,7 @@ export function DailyPracticeCard({ onStartPractice, onViewCurriculum, onNavigat
                                                             <div className="text-[11px] leading-snug" style={{ color: isLight ? 'rgba(60, 50, 35, 0.7)' : 'rgba(253,251,245,0.55)' }}>
                                                                 {row.eyebrow}
                                                             </div>
-                                                            <div className="text-sm font-bold leading-tight mt-1" style={{ color: isLight ? '#3c3020' : '#fdfbf5', fontFamily: 'var(--font-display)' }}>
+                                                            <div className="text-sm font-bold leading-tight mt-1" style={{ color: isLight ? '#3c3020' : '#fdfbf5', fontFamily: 'var(--font-ui)' }}>
                                                                 {row.title}
                                                             </div>
                                                             {isInfoRow && (
@@ -1564,7 +1567,7 @@ export function DailyPracticeCard({ onStartPractice, onViewCurriculum, onNavigat
                                                                         data-ui="practice-button"
                                                                         data-practice-type={row.slot?.practiceId === 'perception' ? 'visual' : (row.slot?.practiceId === 'resonance' ? 'sound' : (row.slot?.practiceId || undefined))}
                                                                         data-practice-id={row.slot?.practiceId ? `daily-slot:${row.idx}:${row.slot.practiceId}` : undefined}
-                                                                        className="px-4 py-2 rounded-full text-[10px] font-black uppercase tracking-wider transition-all hover:scale-105 disabled:opacity-60 disabled:cursor-not-allowed"
+                                                                        className="px-4 py-2 rounded-sm text-[10px] font-black uppercase tracking-wider transition-all hover:scale-105 disabled:opacity-60 disabled:cursor-not-allowed"
                                                                         style={actionStyle}
                                                                     >
                                                                         {row.actionLabel}
@@ -1578,7 +1581,7 @@ export function DailyPracticeCard({ onStartPractice, onViewCurriculum, onNavigat
                                                                 </div>
                                                                 <div style={{
                                                                     fontSize: '9px',
-                                                                    fontFamily: 'var(--font-display)',
+                                                                    fontFamily: 'var(--font-ui)',
                                                                     fontWeight: 600,
                                                                     color: 'var(--accent-color)',
                                                                     opacity: 0.8,
@@ -1595,7 +1598,7 @@ export function DailyPracticeCard({ onStartPractice, onViewCurriculum, onNavigat
                                 ) : (
                                     <div>
                                         <div className="text-xs opacity-70" style={{ color: isLight ? 'rgba(60, 50, 35, 0.6)' : 'rgba(253,251,245,0.6)' }}>TODAY'S PRACTICE</div>
-                                        <div className="mt-2 text-lg font-semibold" style={{ color: isLight ? '#3c3020' : '#fdfbf5', fontFamily: 'var(--font-display)' }}>{activePathObj.title}</div>
+                                        <div className="mt-2 text-lg font-semibold" style={{ color: isLight ? '#3c3020' : '#fdfbf5', fontFamily: 'var(--font-ui)' }}>{activePathObj.title}</div>
                                         <div className="mt-2 text-sm opacity-80" style={{ color: isLight ? '#3c3020' : '#fdfbf5' }}>No practice times scheduled for today</div>
                                     </div>
                                 )}
@@ -1718,7 +1721,7 @@ export function DailyPracticeCard({ onStartPractice, onViewCurriculum, onNavigat
 
                 <div className="glassCardContent relative z-10 p-8 text-center">
                     <div className="text-4xl mb-4">ðŸ†</div>
-                    <h3 className="text-xl font-bold mb-2" style={{ color: config.textMain, fontFamily: 'var(--font-display)' }}>
+                    <h3 className="text-xl font-bold mb-2" style={{ color: config.textMain, fontFamily: 'var(--font-ui)' }}>
                         Curriculum Complete!
                     </h3>
                     <p className="mb-6 opacity-70" style={{ color: config.textSub }}>
@@ -1734,7 +1737,7 @@ export function DailyPracticeCard({ onStartPractice, onViewCurriculum, onNavigat
                                 background: 'var(--accent-color)',
                                 color: isLight ? '#fff' : '#000',
                                 boxShadow: '0 4px 20px var(--accent-30)',
-                                fontFamily: 'var(--font-display)',
+                                fontFamily: 'var(--font-ui)',
                             }}
                         >
                             View Report
@@ -1752,7 +1755,7 @@ export function DailyPracticeCard({ onStartPractice, onViewCurriculum, onNavigat
                                     background: isLight ? 'rgba(60,50,35,0.08)' : 'rgba(255,255,255,0.08)',
                                     border: isLight ? '1px solid rgba(60,50,35,0.15)' : '1px solid rgba(255,255,255,0.15)',
                                     color: config.textMain,
-                                    fontFamily: 'var(--font-display)',
+                                    fontFamily: 'var(--font-ui)',
                                 }}
                             >
                                 Reset Program
@@ -1765,7 +1768,7 @@ export function DailyPracticeCard({ onStartPractice, onViewCurriculum, onNavigat
                                     background: isLight ? 'rgba(60,50,35,0.08)' : 'rgba(255,255,255,0.08)',
                                     border: isLight ? '1px solid rgba(60,50,35,0.15)' : '1px solid rgba(255,255,255,0.15)',
                                     color: config.textMain,
-                                    fontFamily: 'var(--font-display)',
+                                    fontFamily: 'var(--font-ui)',
                                 }}
                             >
                                 New Curriculum
@@ -1967,13 +1970,14 @@ export function DailyPracticeCard({ onStartPractice, onViewCurriculum, onNavigat
     return (
             <div
                 data-tutorial="home-daily-card"
-                className={`w-full relative transition-all duration-700 ease-in-out${isTutorialTarget ? ' tutorial-target' : ''}`}
+                className={`dpc-root w-full relative transition-all duration-700 ease-in-out${isTutorialTarget ? ' tutorial-target' : ''}`}
                 style={{
                     width: '100%',
                     maxWidth: 'var(--ui-rail-max, min(430px, 94vw))',
                     margin: '0 auto',
                 }}
             >
+            <style>{`.dpc-root { outline: 3px solid blue; }`}</style>
             {/* OUTER: Frame with Shadow */}
             <div
                 className="w-full relative"
@@ -2108,7 +2112,7 @@ export function DailyPracticeCard({ onStartPractice, onViewCurriculum, onNavigat
                                         Today's Practice
                                     </div>
                                     <div className="flex items-center justify-between gap-3">
-                                        <div className="text-xl font-bold tracking-tight" style={{ color: isLight ? '#3c3020' : '#fdfbf5', fontFamily: 'var(--font-display)' }}>
+                                        <div className="text-xl font-bold tracking-tight" style={{ color: isLight ? '#3c3020' : '#fdfbf5', fontFamily: 'var(--font-ui)' }}>
                                             {todaysPractice.title || `Day ${dayNumber}`}
                                         </div>
                                         <div className="flex flex-col items-end gap-1">
@@ -2163,7 +2167,7 @@ export function DailyPracticeCard({ onStartPractice, onViewCurriculum, onNavigat
                                         return (
                                             <div
                                                 key={`${dayNumber}-${leg.legNumber}`}
-                                                className="rounded-2xl border p-4 flex items-center gap-3 transition-all"
+                                                className="rounded border p-4 flex items-center gap-3 transition-all"
                                                 style={getSessionRowStyle(isLockedLeg ? 0.5 : ((expired || tooEarly) ? 0.75 : 1))}
                                             >
                                                 {renderSessionRowWallpaper()}
@@ -2185,7 +2189,7 @@ export function DailyPracticeCard({ onStartPractice, onViewCurriculum, onNavigat
                                                 {/* Leg Details */}
                                                 <div className="relative z-10 flex-1 min-w-0">
                                                     <div className="flex items-center justify-between gap-3">
-                                                        <div className="text-sm font-bold leading-tight" style={{ color: isLight ? '#3c3020' : '#fdfbf5', fontFamily: 'var(--font-display)' }}>
+                                                        <div className="text-sm font-bold leading-tight" style={{ color: isLight ? '#3c3020' : '#fdfbf5', fontFamily: 'var(--font-ui)' }}>
                                                             {leg.label || leg.practiceType}
                                                         </div>
                                                     </div>
@@ -2245,7 +2249,7 @@ export function DailyPracticeCard({ onStartPractice, onViewCurriculum, onNavigat
                                                                 data-ui-role-group="dailyPractice"
                                                                 data-ui-id="dailyPractice:legStatusPill"
                                                                 data-ui-fx-surface="true"
-                                                                className="px-4 py-2 rounded-full text-[10px] font-black uppercase tracking-wider transition-all hover:scale-105 disabled:opacity-60 disabled:cursor-not-allowed"
+                                                                className="px-4 py-2 rounded-sm text-[10px] font-black uppercase tracking-wider transition-all hover:scale-105 disabled:opacity-60 disabled:cursor-not-allowed"
                                                                 style={{
                                                                     background: (isLockedLeg || isSoftLocked)
                                                                         ? (isLight ? 'rgba(60,50,35,0.06)' : 'rgba(255,255,255,0.08)')
@@ -2275,7 +2279,7 @@ export function DailyPracticeCard({ onStartPractice, onViewCurriculum, onNavigat
                                                         {showPerLegCompletion && (
                                                             <div style={{
                                                                 fontSize: '9px',
-                                                                fontFamily: 'var(--font-display)',
+                                                                fontFamily: 'var(--font-ui)',
                                                                 fontWeight: 600,
                                                                 color: 'var(--accent-color)',
                                                                 opacity: 0.8,

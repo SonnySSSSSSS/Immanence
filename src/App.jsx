@@ -1107,196 +1107,570 @@ function App({ playgroundMode = false, playgroundBottomLayer = true }) {
               inert={isMinimized ? "" : undefined}
             >
               {!hasChosenUserMode ? (
-                <div className="w-full min-h-full flex items-center justify-center px-4 py-4 sm:px-6 sm:py-8">
-                  <div
-                    className="w-full max-w-4xl overflow-hidden rounded-[28px] border"
-                    style={{
-                      background: isLight
-                        ? 'linear-gradient(180deg, rgba(248,242,233,0.96) 0%, rgba(236,228,216,0.94) 100%)'
-                        : 'linear-gradient(180deg, rgba(8,12,20,0.94) 0%, rgba(6,8,15,0.98) 100%)',
-                      borderColor: isLight ? 'rgba(124, 104, 78, 0.20)' : 'rgba(255,255,255,0.10)',
-                      boxShadow: isLight
-                        ? '0 22px 70px rgba(65, 50, 30, 0.16)'
-                        : '0 28px 90px rgba(0,0,0,0.42)',
-                    }}
-                  >
-                    <div
-                      className="relative overflow-hidden px-4 pb-4 pt-4 sm:px-8 sm:pb-8 sm:pt-7"
-                      style={{
-                        background: isLight
-                          ? 'linear-gradient(180deg, rgba(255,255,255,0.18) 0%, rgba(255,255,255,0) 100%)'
-                          : 'linear-gradient(180deg, rgba(255,255,255,0.04) 0%, rgba(255,255,255,0) 100%)',
-                      }}
-                    >
-                      <div
-                        aria-hidden="true"
-                        className="relative mb-3 overflow-hidden rounded-[18px] border sm:mb-8 sm:rounded-[22px]"
-                        style={{
-                          height: 'clamp(68px, 12vw, 220px)',
-                          borderColor: isLight ? 'rgba(124, 104, 78, 0.16)' : 'rgba(255,255,255,0.08)',
-                        }}
-                      >
-                        <img
-                          src={entryHeroSrc}
-                          alt=""
-                          className="h-full w-full object-cover object-center"
-                        />
-                      </div>
-
-                      <div className="mx-auto max-w-3xl text-center">
-                        <div
-                          className="type-label mb-1 uppercase tracking-[0.14em] sm:mb-3 sm:tracking-[0.22em]"
-                          style={{ color: isLight ? 'rgba(90,77,60,0.62)' : 'rgba(255,255,255,0.54)' }}
-                        >
-                          IMMANENCE OS
+                <div className="imm-chooser">
+                  <style>{`
+                    .imm-chooser {
+                      --amber: #c8832a;
+                      --amber-bright: #f0a840;
+                      --amber-glow: rgba(200,131,42,0.4);
+                      --teal: #2a8fa0;
+                      --teal-bright: #40d0e8;
+                      --teal-glow: rgba(42,143,160,0.4);
+                      --bg-deep: #04080f;
+                      --bg-card: #080e18;
+                      --text-primary: #d8e8f0;
+                      --text-secondary: #7a9ab0;
+                      --text-dim: #3a5568;
+                      background: #04080f;
+                      min-height: 100%;
+                      width: 100%;
+                      color: var(--text-primary);
+                      position: relative;
+                      overflow: hidden;
+                    }
+                    .imm-chooser .ic-col {
+                      max-width: 520px;
+                      margin: 0 auto;
+                      padding: 32px 20px 48px;
+                      position: relative;
+                      z-index: 1;
+                    }
+                    .imm-chooser .ic-hero {
+                      position: relative;
+                      border: 1px solid rgba(42,143,160,0.28);
+                      border-radius: 4px;
+                      overflow: hidden;
+                      aspect-ratio: 21/9;
+                      margin-bottom: 28px;
+                      animation: immFadeUp 0.5s ease forwards, immHeroGlow 5s ease-in-out 0.6s infinite;
+                    }
+                    .imm-chooser .ic-hero::before {
+                      content: '';
+                      position: absolute;
+                      top: 6px; left: 6px;
+                      width: 20px; height: 20px;
+                      border-top: 2px solid var(--teal-bright);
+                      border-left: 2px solid var(--teal-bright);
+                      box-shadow: var(--teal-glow);
+                      z-index: 3;
+                      pointer-events: none;
+                    }
+                    .imm-chooser .ic-hero::after {
+                      content: '';
+                      position: absolute;
+                      top: 6px; right: 6px;
+                      width: 20px; height: 20px;
+                      border-top: 2px solid var(--teal-bright);
+                      border-right: 2px solid var(--teal-bright);
+                      box-shadow: var(--teal-glow);
+                      z-index: 3;
+                      pointer-events: none;
+                    }
+                    .imm-chooser .hc-bl {
+                      position: absolute;
+                      bottom: 6px; left: 6px;
+                      width: 20px; height: 20px;
+                      border-bottom: 2px solid var(--teal-bright);
+                      border-left: 2px solid var(--teal-bright);
+                      box-shadow: var(--teal-glow);
+                      z-index: 3;
+                      pointer-events: none;
+                    }
+                    .imm-chooser .hc-br {
+                      position: absolute;
+                      bottom: 6px; right: 6px;
+                      width: 20px; height: 20px;
+                      border-bottom: 2px solid var(--teal-bright);
+                      border-right: 2px solid var(--teal-bright);
+                      box-shadow: var(--teal-glow);
+                      z-index: 3;
+                      pointer-events: none;
+                    }
+                    .imm-chooser .ic-hero-veil {
+                      position: absolute;
+                      inset: 0;
+                      background: linear-gradient(to bottom, rgba(64,208,232,0.05) 0%, transparent 25%, transparent 70%, rgba(4,8,15,0.5) 100%);
+                      pointer-events: none;
+                      z-index: 2;
+                    }
+                    .imm-chooser .ic-hero img {
+                      position: absolute;
+                      inset: 0;
+                      width: 100%;
+                      height: 100%;
+                      object-fit: cover;
+                      object-position: center;
+                    }
+                    .imm-chooser .ic-text {
+                      text-align: center;
+                      padding: 0 8px;
+                      margin-bottom: 12px;
+                      opacity: 0;
+                      animation: immFadeUp 0.5s 0.15s ease forwards;
+                    }
+                    .imm-chooser .ic-overline {
+                      font-size: 11px;
+                      letter-spacing: 0.32em;
+                      text-transform: uppercase;
+                      color: var(--text-dim);
+                      margin-bottom: 10px;
+                    }
+                    .imm-chooser .ic-h1 {
+                      font-size: 28px;
+                      font-weight: 700;
+                      line-height: 1.15;
+                      color: #e8f0f8;
+                      text-shadow: 0 0 40px rgba(64,208,232,0.12);
+                      margin-bottom: 14px;
+                    }
+                    .imm-chooser .ic-body {
+                      font-size: 13px;
+                      font-weight: 300;
+                      line-height: 1.65;
+                      color: var(--text-secondary);
+                      margin: 0 auto 18px;
+                      max-width: 420px;
+                    }
+                    .imm-chooser-divider {
+                      display: flex;
+                      align-items: center;
+                      gap: 6px;
+                      margin: 0 auto 16px;
+                      max-width: 320px;
+                      opacity: 0.35;
+                    }
+                    .imm-chooser-divider-line {
+                      flex: 1;
+                      height: 1px;
+                      background: linear-gradient(90deg, transparent, var(--teal-bright));
+                    }
+                    .imm-chooser-divider-line:last-of-type {
+                      background: linear-gradient(90deg, var(--teal-bright), transparent);
+                    }
+                    .imm-chooser-divider-ticks {
+                      display: flex;
+                      align-items: flex-end;
+                      gap: 3px;
+                    }
+                    .imm-chooser-divider-ticks span {
+                      display: block;
+                      width: 1px;
+                      background: var(--teal-bright);
+                    }
+                    .imm-chooser-divider-ticks span:nth-child(1) { height: 4px; }
+                    .imm-chooser-divider-ticks span:nth-child(2) { height: 7px; }
+                    .imm-chooser-divider-ticks span:nth-child(3) { height: 10px; }
+                    .imm-chooser-divider-ticks span:nth-child(4) { height: 7px; }
+                    .imm-chooser-divider-ticks span:nth-child(5) { height: 4px; }
+                    .imm-chooser-divider-diamond {
+                      font-size: 8px;
+                      color: var(--teal-bright);
+                      line-height: 1;
+                    }
+                    .imm-chooser .ic-cta-label {
+                      font-size: 13px;
+                      font-weight: 600;
+                      letter-spacing: 0.22em;
+                      text-transform: uppercase;
+                      color: var(--teal-bright);
+                    }
+                    .imm-chooser .ic-cards {
+                      display: grid;
+                      grid-template-columns: 1fr 1fr;
+                      gap: 12px;
+                      align-items: stretch;
+                      margin-bottom: 20px;
+                      opacity: 0;
+                      animation: immFadeUp 0.5s 0.3s ease forwards;
+                    }
+                    @media (max-width: 480px) {
+                      .imm-chooser .ic-cards {
+                        grid-template-columns: 1fr;
+                      }
+                    }
+                    .imm-chooser .ic-card {
+                      position: relative;
+                      border-radius: 4px;
+                      overflow: hidden;
+                      display: flex;
+                      flex-direction: column;
+                    }
+                    .imm-chooser .ic-card-student {
+                      background: #0d1526;
+                      border: 1px solid rgba(200,131,42,0.22);
+                      box-shadow: inset 0 1px 0 rgba(255,255,255,0.04), 0 4px 24px rgba(0,0,0,0.4), 0 0 20px rgba(200,131,42,0.05);
+                    }
+                    .imm-chooser .ic-card-student::after {
+                      content: '';
+                      position: absolute;
+                      top: 0; left: 0; right: 0;
+                      height: 1px;
+                      background-image: linear-gradient(90deg, transparent, var(--amber), transparent);
+                      background-size: 200% 100%;
+                      opacity: 0.5;
+                      z-index: 1;
+                      animation: immSweepLine 7s ease-in-out 1s infinite;
+                    }
+                    .imm-chooser .ic-card-explorer {
+                      background: #0d1526;
+                      border: 1px solid rgba(42,143,160,0.25);
+                      box-shadow: inset 0 1px 0 rgba(255,255,255,0.04), 0 4px 24px rgba(0,0,0,0.4), 0 0 20px rgba(42,143,160,0.06);
+                    }
+                    .imm-chooser .ic-card-explorer::after {
+                      content: '';
+                      position: absolute;
+                      top: 0; left: 0; right: 0;
+                      height: 1px;
+                      background-image: linear-gradient(90deg, transparent, var(--teal-bright), transparent);
+                      background-size: 200% 100%;
+                      opacity: 0.4;
+                      z-index: 1;
+                      animation: immSweepLine 7s ease-in-out 3.5s infinite;
+                    }
+                    .imm-chooser .c-tl,
+                    .imm-chooser .c-tr,
+                    .imm-chooser .c-bl,
+                    .imm-chooser .c-br {
+                      position: absolute;
+                      width: 13px;
+                      height: 13px;
+                      pointer-events: none;
+                      z-index: 2;
+                    }
+                    .imm-chooser .c-tl { top: 5px; left: 5px; }
+                    .imm-chooser .c-tr { top: 5px; right: 5px; }
+                    .imm-chooser .c-bl { bottom: 5px; left: 5px; }
+                    .imm-chooser .c-br { bottom: 5px; right: 5px; }
+                    .imm-chooser .ic-card-student .c-tl { border-top: 2px solid var(--amber-bright); border-left: 2px solid var(--amber-bright); box-shadow: var(--amber-glow); }
+                    .imm-chooser .ic-card-student .c-tr { border-top: 2px solid var(--amber-bright); border-right: 2px solid var(--amber-bright); box-shadow: var(--amber-glow); }
+                    .imm-chooser .ic-card-student .c-bl { border-bottom: 2px solid var(--amber-bright); border-left: 2px solid var(--amber-bright); box-shadow: var(--amber-glow); }
+                    .imm-chooser .ic-card-student .c-br { border-bottom: 2px solid var(--amber-bright); border-right: 2px solid var(--amber-bright); box-shadow: var(--amber-glow); }
+                    .imm-chooser .ic-card-explorer .c-tl { border-top: 2px solid var(--teal-bright); border-left: 2px solid var(--teal-bright); box-shadow: var(--teal-glow); }
+                    .imm-chooser .ic-card-explorer .c-tr { border-top: 2px solid var(--teal-bright); border-right: 2px solid var(--teal-bright); box-shadow: var(--teal-glow); }
+                    .imm-chooser .ic-card-explorer .c-bl { border-bottom: 2px solid var(--teal-bright); border-left: 2px solid var(--teal-bright); box-shadow: var(--teal-glow); }
+                    .imm-chooser .ic-card-explorer .c-br { border-bottom: 2px solid var(--teal-bright); border-right: 2px solid var(--teal-bright); box-shadow: var(--teal-glow); }
+                    .imm-chooser .ic-content {
+                      position: relative;
+                      z-index: 1;
+                      padding: 16px 14px 14px;
+                      display: flex;
+                      flex-direction: column;
+                      flex: 1;
+                    }
+                    .imm-chooser .ic-card-label {
+                      font-size: 9px;
+                      letter-spacing: 0.28em;
+                      text-transform: uppercase;
+                      margin-bottom: 4px;
+                      font-family: monospace;
+                    }
+                    .imm-chooser .ic-card-title {
+                      font-size: 22px;
+                      font-weight: 700;
+                      color: #e8f0f8;
+                      margin-bottom: 12px;
+                    }
+                    .imm-chooser .ic-features {
+                      list-style: none;
+                      padding: 0;
+                      margin: 0 0 16px;
+                    }
+                    .imm-chooser .ic-features li {
+                      position: relative;
+                      padding: 3px 0 3px 14px;
+                      border-bottom: 1px solid rgba(255,255,255,0.025);
+                      font-size: 11px;
+                      font-weight: 300;
+                      line-height: 1.5;
+                      color: var(--text-secondary);
+                    }
+                    .imm-chooser .ic-features li:last-child {
+                      border-bottom: none;
+                    }
+                    .imm-chooser .ic-bullet {
+                      position: absolute;
+                      left: 0;
+                      top: 4px;
+                      font-size: 9px;
+                    }
+                    .imm-chooser .ic-btn {
+                      margin-top: auto;
+                      width: 100%;
+                      padding: 10px 8px;
+                      font-size: 11px;
+                      font-weight: 700;
+                      letter-spacing: 0.16em;
+                      text-transform: uppercase;
+                      border-radius: 3px;
+                      cursor: pointer;
+                      font-family: monospace;
+                      transition: background 0.15s ease, box-shadow 0.15s ease;
+                    }
+                    .imm-chooser .ic-btn-student {
+                      background: rgba(200,131,42,0.1);
+                      border: 1px solid rgba(200,131,42,0.45);
+                      color: var(--amber-bright);
+                      box-shadow: 0 0 10px rgba(200,131,42,0.08);
+                    }
+                    .imm-chooser .ic-btn-student:hover {
+                      background: rgba(200,131,42,0.2);
+                      box-shadow: 0 0 22px rgba(200,131,42,0.22);
+                    }
+                    .imm-chooser .ic-btn-explorer {
+                      background: rgba(42,143,160,0.1);
+                      border: 1px solid rgba(64,208,232,0.38);
+                      color: var(--teal-bright);
+                      box-shadow: 0 0 10px rgba(42,143,160,0.08);
+                    }
+                    .imm-chooser .ic-btn-explorer:hover {
+                      background: rgba(42,143,160,0.2);
+                      box-shadow: 0 0 22px rgba(42,143,160,0.22);
+                    }
+                    .imm-chooser .ic-bottom {
+                      font-family: monospace;
+                      font-size: 10px;
+                      color: var(--text-dim);
+                      text-align: center;
+                      margin: 0;
+                      opacity: 0;
+                      animation: immFadeUp 0.5s 0.42s ease forwards;
+                    }
+                    .imm-chooser::before {
+                      content: '';
+                      position: absolute;
+                      top: 0;
+                      left: 0;
+                      width: 1px;
+                      height: 1px;
+                      pointer-events: none;
+                      z-index: 0;
+                      box-shadow:
+                        12px 87px 0 0 rgba(255,255,255,0.20),
+                        67px 234px 0 0 rgba(255,255,255,0.18),
+                        145px 412px 0 0 rgba(255,255,255,0.22),
+                        289px 56px 0 0 rgba(255,255,255,0.17),
+                        456px 178px 0 0 rgba(255,255,255,0.15),
+                        601px 334px 0 0 rgba(255,255,255,0.19),
+                        712px 567px 0 0 rgba(255,255,255,0.21),
+                        34px 689px 0 0 rgba(255,255,255,0.16),
+                        178px 812px 0 0 rgba(255,255,255,0.22),
+                        523px 945px 0 0 rgba(255,255,255,0.18),
+                        668px 1067px 0 0 rgba(255,255,255,0.25),
+                        90px 1134px 0 0 rgba(255,255,255,0.28),
+                        234px 1267px 0 0 rgba(255,255,255,0.26),
+                        378px 1389px 0 0 rgba(255,255,255,0.23),
+                        545px 145px 0 0 rgba(255,255,255,0.27),
+                        700px 289px 0 0 rgba(255,255,255,0.24),
+                        156px 523px 0 0 rgba(255,255,255,0.29),
+                        412px 667px 0 0 rgba(255,255,255,0.22),
+                        589px 890px 0 0 rgba(255,255,255,0.26),
+                        23px 1023px 0 0 rgba(255,255,255,0.28),
+                        312px 189px 0 0 rgba(255,255,255,0.35),
+                        467px 345px 0 0 rgba(255,255,255,0.32),
+                        78px 478px 0 0 rgba(255,255,255,0.38),
+                        634px 612px 0 0 rgba(255,255,255,0.33),
+                        189px 745px 0 0 rgba(255,255,255,0.36),
+                        501px 868px 0 0 rgba(255,255,255,0.31),
+                        267px 1000px 0 0 rgba(255,255,255,0.37),
+                        712px 1112px 0 0 rgba(255,255,255,0.34),
+                        45px 1234px 0 0 rgba(255,255,255,0.39),
+                        400px 1367px 0 0 rgba(255,255,255,0.33),
+                        123px 23px 0 0 rgba(255,255,255,0.45),
+                        567px 156px 0 0 rgba(255,255,255,0.42),
+                        234px 312px 0 0 rgba(255,255,255,0.47),
+                        689px 445px 0 0 rgba(255,255,255,0.41),
+                        345px 578px 0 0 rgba(255,255,255,0.44),
+                        56px 711px 0 0 rgba(255,255,255,0.48),
+                        489px 834px 0 0 rgba(255,255,255,0.43),
+                        678px 978px 0 0 rgba(255,255,255,0.46),
+                        156px 1089px 0 0 rgba(255,255,255,0.41),
+                        423px 1212px 0 0 rgba(255,255,255,0.49),
+                        89px 367px 0 0 rgba(255,255,255,0.44),
+                        534px 500px 0 0 rgba(255,255,255,0.42),
+                        278px 634px 0 0 rgba(255,255,255,0.46),
+                        612px 756px 0 0 rgba(255,255,255,0.43),
+                        167px 889px 0 0 rgba(255,255,255,0.47),
+                        456px 1012px 0 0 rgba(255,255,255,0.44),
+                        701px 1145px 0 0 rgba(255,255,255,0.41),
+                        312px 1278px 0 0 rgba(255,255,255,0.48),
+                        23px 145px 0 0 rgba(255,255,255,0.43),
+                        578px 267px 0 0 rgba(255,255,255,0.46),
+                        89px 412px 0 0 rgba(255,255,255,0.55),
+                        434px 545px 0 0 rgba(255,255,255,0.52),
+                        623px 678px 0 0 rgba(255,255,255,0.57),
+                        178px 823px 0 0 rgba(255,255,255,0.54),
+                        512px 956px 0 0 rgba(255,255,255,0.51),
+                        267px 1089px 0 0 rgba(255,255,255,0.56),
+                        689px 1222px 0 0 rgba(255,255,255,0.53),
+                        34px 1345px 0 0 rgba(255,255,255,0.58),
+                        345px 67px 0 0 rgba(255,255,255,0.52),
+                        600px 200px 0 0 rgba(255,255,255,0.55),
+                        156px 456px 0 0 rgba(255,255,255,0.57),
+                        489px 589px 0 0 rgba(255,255,255,0.54),
+                        712px 734px 0 0 rgba(255,255,255,0.59),
+                        234px 867px 0 0 rgba(255,255,255,0.52),
+                        556px 1000px 0 0 rgba(255,255,255,0.56),
+                        89px 1112px 0 0 rgba(255,255,255,0.53),
+                        423px 1245px 0 0 rgba(255,255,255,0.58),
+                        668px 1378px 0 0 rgba(255,255,255,0.51),
+                        312px 34px 0 0 rgba(255,255,255,0.55),
+                        45px 289px 0 0 rgba(255,255,255,0.57),
+                        234px 523px 0 0 rgba(255,255,255,0.65),
+                        567px 645px 0 0 rgba(255,255,255,0.62),
+                        123px 778px 0 0 rgba(255,255,255,0.68),
+                        456px 912px 0 0 rgba(255,255,255,0.63),
+                        700px 1045px 0 0 rgba(255,255,255,0.66),
+                        278px 1167px 0 0 rgba(255,255,255,0.61),
+                        612px 1300px 0 0 rgba(255,255,255,0.69),
+                        67px 78px 0 0 rgba(255,255,255,0.64),
+                        400px 212px 0 0 rgba(255,255,255,0.67),
+                        556px 456px 0 0 rgba(255,255,255,0.62),
+                        89px 623px 0 0 rgba(255,255,255,0.65),
+                        434px 756px 0 0 rgba(255,255,255,0.70),
+                        678px 889px 0 0 rgba(255,255,255,0.63),
+                        156px 1023px 0 0 rgba(255,255,255,0.68),
+                        512px 1156px 0 0 rgba(255,255,255,0.65),
+                        267px 1289px 0 0 rgba(255,255,255,0.71),
+                        23px 345px 0 0 rgba(255,255,255,0.64),
+                        601px 478px 0 0 rgba(255,255,255,0.67),
+                        312px 600px 0 0 rgba(255,255,255,0.62),
+                        712px 123px 0 0 rgba(255,255,255,0.66),
+                        178px 367px 0 0 rgba(255,255,255,0.38),
+                        523px 501px 0 0 rgba(255,255,255,0.42),
+                        345px 712px 0 0 rgba(255,255,255,0.29),
+                        89px 934px 0 0 rgba(255,255,255,0.51),
+                        456px 1112px 0 0 rgba(255,255,255,0.35),
+                        623px 1267px 0 0 rgba(255,255,255,0.44),
+                        234px 89px 0 0 rgba(255,255,255,0.33),
+                        567px 78px 0 0 rgba(255,255,255,0.48),
+                        112px 1389px 0 0 rgba(255,255,255,0.21),
+                        689px 712px 0 0 rgba(255,255,255,0.56),
+                        45px 512px 0 0 rgba(255,255,255,0.39),
+                        401px 289px 0 0 rgba(255,255,255,0.26),
+                        634px 1023px 0 0 rgba(255,255,255,0.47),
+                        178px 167px 0 0 rgba(255,255,255,0.60),
+                        512px 823px 0 0 rgba(255,255,255,0.33),
+                        267px 1145px 0 0 rgba(255,255,255,0.52),
+                        700px 456px 0 0 rgba(255,255,255,0.28),
+                        123px 678px 0 0 rgba(255,255,255,0.64),
+                        389px 934px 0 0 rgba(255,255,255,0.41),
+                        567px 1189px 0 0 rgba(255,255,255,0.35),
+                        345px 178px 0 0 rgba(255,255,255,0.85),
+                        578px 734px 0 0 rgba(255,255,255,0.90),
+                        123px 512px 0 0 rgba(255,255,255,0.80),
+                        456px 1089px 0 0 rgba(255,255,255,0.88),
+                        701px 267px 0 0 rgba(255,255,255,0.82),
+                        89px 956px 0 0 rgba(255,255,255,0.95),
+                        312px 1345px 0 0 rgba(255,255,255,0.83),
+                        634px 89px 0 0 rgba(255,255,255,0.87),
+                        200px 600px 0 0 rgba(255,255,255,0.91),
+                        445px 400px 0 0 rgba(255,255,255,0.86);
+                      animation: starfieldDrift 60s linear infinite;
+                    }
+                    .imm-chooser::after {
+                      content: '';
+                      position: absolute;
+                      inset: 0;
+                      pointer-events: none;
+                      z-index: 0;
+                      background:
+                        radial-gradient(ellipse 70% 40% at 25% 60%, rgba(20,55,85,0.25) 0%, transparent 70%),
+                        radial-gradient(ellipse 50% 35% at 78% 35%, rgba(15,40,70,0.2) 0%, transparent 70%),
+                        radial-gradient(ellipse 40% 30% at 55% 80%, rgba(30,20,60,0.15) 0%, transparent 70%);
+                      animation: nebulaDrift 40s ease-in-out infinite;
+                    }
+                    .imm-chooser .ic-card-student::before,
+                    .imm-chooser .ic-card-explorer::before {
+                      content: '';
+                      position: absolute;
+                      inset: 0;
+                      pointer-events: none;
+                      z-index: 0;
+                      opacity: 0.4;
+                      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.08'/%3E%3C/svg%3E");
+                      background-size: 200px 200px;
+                      border-radius: 4px;
+                    }
+                    @keyframes immFadeUp {
+                      from { opacity: 0; transform: translateY(14px); }
+                      to   { opacity: 1; transform: translateY(0); }
+                    }
+                    @keyframes immHeroGlow {
+                      0%,100% { box-shadow: 0 0 0 1px rgba(64,208,232,0.08), 0 0 18px rgba(42,143,160,0.1); }
+                      50%     { box-shadow: 0 0 0 1px rgba(64,208,232,0.22), 0 0 40px rgba(42,143,160,0.22); }
+                    }
+                    @keyframes immSweepLine {
+                      0%   { background-position: -200% 0; }
+                      100% { background-position: 300% 0; }
+                    }
+                    @keyframes starfieldDrift {
+                      from { transform: translateY(0); }
+                      to   { transform: translateY(40px); }
+                    }
+                    @keyframes nebulaDrift {
+                      0%   { opacity: 0.6; transform: scale(1) translateX(0); }
+                      33%  { opacity: 0.8; transform: scale(1.02) translateX(8px); }
+                      66%  { opacity: 0.65; transform: scale(0.98) translateX(-6px); }
+                      100% { opacity: 0.6; transform: scale(1) translateX(0); }
+                    }
+                  `}</style>
+                  <div className="ic-col">
+                    <div className="ic-hero" aria-hidden="true">
+                      <div className="ic-hero-veil" />
+                      <div className="hc-bl" />
+                      <div className="hc-br" />
+                      <img src={entryHeroSrc} alt="" />
+                    </div>
+                    <div className="ic-text">
+                      <div className="ic-overline">IMMANENCE OS</div>
+                      <h1 className="ic-h1">A spiritual dojo for the serious practitioner.</h1>
+                      <p className="ic-body">Traditional practices, modern frameworks — applied to living well, resilience, and self-mastery through training the mind and nervous system.</p>
+                      <div className="imm-chooser-divider">
+                        <div className="imm-chooser-divider-line" />
+                        <div className="imm-chooser-divider-ticks">
+                          <span /><span /><span /><span /><span />
                         </div>
-                        <h1
-                          className="mb-1 text-2xl font-semibold leading-[1.05] sm:mb-3 sm:text-4xl sm:leading-tight"
-                          style={{ color: isLight ? '#3D3425' : 'rgba(255,255,255,0.96)' }}
-                        >
-                          A spiritual dojo for the serious practitioner.
-                        </h1>
-                        <p
-                          className="mx-auto mb-3 max-w-3xl text-sm leading-[1.35] sm:mb-4 sm:text-base sm:leading-6"
-                          style={{ color: isLight ? 'rgba(61,52,37,0.76)' : 'rgba(255,255,255,0.74)' }}
-                        >
-                          Traditional practices, modern frameworks — applied to living well, resilience, and self-mastery through training the mind and nervous system.
-                        </p>
-                        <p
-                          className="mx-auto mb-3 max-w-2xl text-sm leading-[1.35] sm:mb-8 sm:text-base sm:leading-6"
-                          style={{ color: isLight ? 'rgba(61,52,37,0.76)' : 'rgba(255,255,255,0.74)' }}
-                        >
-                          Choose your path.
-                        </p>
+                        <div className="imm-chooser-divider-diamond">◆</div>
+                        <div className="imm-chooser-divider-ticks">
+                          <span /><span /><span /><span /><span />
+                        </div>
+                        <div className="imm-chooser-divider-line" />
                       </div>
-
-                      <div className="grid grid-cols-1 gap-3 md:grid-cols-2 md:gap-4">
-                        <section
-                          className="rounded-[20px] border p-4 sm:rounded-[24px] sm:p-6"
-                          style={{
-                            borderColor: isLight ? 'rgba(124, 101, 66, 0.20)' : 'rgba(255,255,255,0.10)',
-                            background: isLight
-                              ? 'linear-gradient(180deg, rgba(255,252,247,0.92) 0%, rgba(247,240,230,0.86) 100%)'
-                              : 'linear-gradient(180deg, rgba(19,24,33,0.94) 0%, rgba(13,17,25,0.96) 100%)',
-                            boxShadow: isLight
-                              ? 'inset 0 1px 0 rgba(255,255,255,0.56)'
-                              : 'inset 0 1px 0 rgba(255,255,255,0.04)',
-                          }}
-                        >
-                          <div className="mb-3 sm:mb-5">
-                            <div
-                              className="mb-1 text-[11px] font-medium uppercase tracking-[0.14em] sm:mb-2 sm:text-xs sm:tracking-[0.18em]"
-                              style={{ color: isLight ? 'rgba(112,86,50,0.68)' : 'rgba(214,194,145,0.76)' }}
-                            >
-                              Guided practice
-                            </div>
-                            <h2
-                              className="text-xl font-semibold sm:text-2xl"
-                              style={{ color: isLight ? '#3D3425' : 'rgba(255,255,255,0.96)' }}
-                            >
-                              Student
-                            </h2>
-                          </div>
-                          <ul
-                            className="mb-4 space-y-2 text-sm leading-5 sm:mb-6 sm:space-y-3 sm:leading-6"
-                            style={{ color: isLight ? 'rgba(61,52,37,0.76)' : 'rgba(255,255,255,0.76)' }}
-                          >
-                            <li className="flex items-start gap-3">
-                              <span aria-hidden="true" className="mt-1.5 h-2 w-2 rounded-full" style={{ background: isLight ? '#8B6A3F' : '#D9B76D' }} />
-                              <span>Start with curriculum flow</span>
-                            </li>
-                            <li className="flex items-start gap-3">
-                              <span aria-hidden="true" className="mt-1.5 h-2 w-2 rounded-full" style={{ background: isLight ? '#8B6A3F' : '#D9B76D' }} />
-                              <span>Fewer sections until setup</span>
-                            </li>
-                            <li className="flex items-start gap-3">
-                              <span aria-hidden="true" className="mt-1.5 h-2 w-2 rounded-full" style={{ background: isLight ? '#8B6A3F' : '#D9B76D' }} />
-                              <span>Best for structured progression</span>
-                            </li>
+                      <div className="ic-cta-label">CHOOSE YOUR PATH</div>
+                    </div>
+                    <div className="ic-cards">
+                      <div className="ic-card ic-card-student">
+                        <div className="c-tl" /><div className="c-tr" /><div className="c-bl" /><div className="c-br" />
+                        <div className="ic-content">
+                          <div className="ic-card-label" style={{ color: 'var(--amber)' }}>GUIDED PRACTICE</div>
+                          <div className="ic-card-title">Student</div>
+                          <ul className="ic-features">
+                            <li><span className="ic-bullet" style={{ color: 'var(--amber)' }}>▸</span>Start with curriculum flow</li>
+                            <li><span className="ic-bullet" style={{ color: 'var(--amber)' }}>▸</span>Fewer sections until setup</li>
+                            <li><span className="ic-bullet" style={{ color: 'var(--amber)' }}>▸</span>Best for structured progression</li>
                           </ul>
-                          <button
-                            type="button"
-                            onClick={handleChooseStudentMode}
-                            className="w-full rounded-full px-4 py-2.5 text-sm font-semibold transition-transform duration-150 hover:scale-[1.01] active:scale-[0.99] sm:py-3"
-                            style={{
-                              background: isLight
-                                ? 'linear-gradient(135deg, #8A9B8C 0%, #708C81 100%)'
-                                : 'linear-gradient(135deg, rgba(128,162,146,0.96) 0%, rgba(91,124,113,0.96) 100%)',
-                              color: '#F8F5EF',
-                              boxShadow: isLight
-                                ? '0 12px 28px rgba(112,140,129,0.24)'
-                                : '0 12px 28px rgba(62,100,88,0.32)',
-                            }}
-                          >
+                          <button type="button" className="ic-btn ic-btn-student" onClick={handleChooseStudentMode}>
                             Enter as Student
                           </button>
-                        </section>
-
-                        <section
-                          className="rounded-[20px] border p-4 sm:rounded-[24px] sm:p-6"
-                          style={{
-                            borderColor: isLight ? 'rgba(82,109,126,0.24)' : 'rgba(122,198,255,0.18)',
-                            background: isLight
-                              ? 'linear-gradient(180deg, rgba(248,252,255,0.94) 0%, rgba(236,244,249,0.90) 100%)'
-                              : 'linear-gradient(180deg, rgba(14,22,38,0.96) 0%, rgba(10,16,28,0.98) 100%)',
-                            boxShadow: isLight
-                              ? 'inset 0 1px 0 rgba(255,255,255,0.68)'
-                              : 'inset 0 1px 0 rgba(255,255,255,0.05)',
-                          }}
-                        >
-                          <div className="mb-3 sm:mb-5">
-                            <div
-                              className="mb-1 text-[11px] font-medium uppercase tracking-[0.14em] sm:mb-2 sm:text-xs sm:tracking-[0.18em]"
-                              style={{ color: isLight ? 'rgba(72,101,125,0.72)' : 'rgba(143,204,255,0.78)' }}
-                            >
-                              Full access
-                            </div>
-                            <h2
-                              className="text-xl font-semibold sm:text-2xl"
-                              style={{ color: isLight ? '#243647' : 'rgba(255,255,255,0.96)' }}
-                            >
-                              Explorer
-                            </h2>
-                          </div>
-                          <ul
-                            className="mb-4 space-y-2 text-sm leading-5 sm:mb-6 sm:space-y-3 sm:leading-6"
-                            style={{ color: isLight ? 'rgba(48,66,83,0.80)' : 'rgba(255,255,255,0.78)' }}
-                          >
-                            <li className="flex items-start gap-3">
-                              <span aria-hidden="true" className="mt-1.5 h-2 w-2 rounded-full" style={{ background: isLight ? '#557E9A' : '#79BFFF' }} />
-                              <span>Full section access immediately</span>
-                            </li>
-                            <li className="flex items-start gap-3">
-                              <span aria-hidden="true" className="mt-1.5 h-2 w-2 rounded-full" style={{ background: isLight ? '#557E9A' : '#79BFFF' }} />
-                              <span>Move freely across the app</span>
-                            </li>
-                            <li className="flex items-start gap-3">
-                              <span aria-hidden="true" className="mt-1.5 h-2 w-2 rounded-full" style={{ background: isLight ? '#557E9A' : '#79BFFF' }} />
-                              <span>Best for self-directed use</span>
-                            </li>
+                        </div>
+                      </div>
+                      <div className="ic-card ic-card-explorer">
+                        <div className="c-tl" /><div className="c-tr" /><div className="c-bl" /><div className="c-br" />
+                        <div className="ic-content">
+                          <div className="ic-card-label" style={{ color: 'var(--teal-bright)' }}>FULL ACCESS</div>
+                          <div className="ic-card-title">Explorer</div>
+                          <ul className="ic-features">
+                            <li><span className="ic-bullet" style={{ color: 'var(--teal-bright)' }}>▸</span>Full section access immediately</li>
+                            <li><span className="ic-bullet" style={{ color: 'var(--teal-bright)' }}>▸</span>Move freely across the app</li>
+                            <li><span className="ic-bullet" style={{ color: 'var(--teal-bright)' }}>▸</span>Best for self-directed use</li>
                           </ul>
-                          <button
-                            type="button"
-                            onClick={handleChooseExplorerMode}
-                            aria-disabled="true"
-                            className="w-full rounded-full px-4 py-2.5 text-sm font-semibold transition-transform duration-150 hover:scale-[1.01] active:scale-[0.99] sm:py-3"
-                            style={{
-                              background: isLight
-                                ? 'linear-gradient(135deg, #5D819A 0%, #3C627B 100%)'
-                                : 'linear-gradient(135deg, rgba(99,156,198,0.98) 0%, rgba(58,100,133,0.98) 100%)',
-                              color: '#F8FAFC',
-                              boxShadow: isLight
-                                ? '0 12px 28px rgba(70,110,138,0.24)'
-                                : '0 12px 28px rgba(39,76,108,0.32)',
-                              opacity: 0.68,
-                              cursor: 'not-allowed',
-                            }}
-                          >
-                            Shift+Click for Explorer
+                          <button type="button" className="ic-btn ic-btn-explorer" onClick={handleChooseExplorerMode}>
+                            Enter as Explorer
                           </button>
-                        </section>
+                        </div>
                       </div>
                     </div>
+                    <p className="ic-bottom">· Learn the difference ·</p>
                   </div>
                 </div>
               ) : (isHub || playgroundMode) ? (

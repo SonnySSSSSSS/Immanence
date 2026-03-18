@@ -49,7 +49,8 @@
       "Bash(xargs grep:*)",
       "Bash(grep -r \"seedling\\\\|ember\\\\|flame\\\\|stage\" 'd:/Unity Apps/immanence-os/src/data' --include=*.js -l)",
       "Bash(grep -r \"seedling\\\\|ember\\\\|flame\" 'd:/Unity Apps/immanence-os/src/state' --include=*.js -l)",
-      "Bash(npm run:*)"
+      "Bash(npm run:*)",
+      "Bash(echo 'No tutorial dir' find 'd:/Unity Apps/immanence-os/public' -name *.webp)"
     ]
   },
   "mcpServers": {

@@ -13,6 +13,7 @@ export function AvatarV3({
   stage,
   modeWeights,
   path = null,
+  size = 'default',
   onTap,
   showDetailsOnTap = true,
 }) {
@@ -34,7 +35,7 @@ export function AvatarV3({
   return (
     <>
       <div
-        className="avatar-v3 avatar-v3--default"
+        className={`avatar-v3 avatar-v3--${size}`}
         role="img"
         aria-label={ariaLabel}
         onClick={handleTap}

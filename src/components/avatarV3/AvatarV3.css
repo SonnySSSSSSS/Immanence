@@ -12,6 +12,11 @@
   height: min(48vw, 195px);
 }
 
+.avatar-v3--hearth {
+  width: min(36vw, 155px);
+  height: min(36vw, 155px);
+}
+
 .avatar-v3__drift {
   position: relative;
   width: 100%;
