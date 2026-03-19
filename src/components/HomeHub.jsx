@@ -1021,6 +1021,7 @@ function HomeHub({ onSelectSection, activeSection = null, currentStage, previewP
                 icon="navigation"
                 isActive={activeSection === 'navigation'}
                 className="im-nav-pill"
+                data-tutorial="home-curriculum-card"
                 data-nav-pill-id="home:navigation"
               />
             </div>

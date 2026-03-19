@@ -62,7 +62,12 @@ export const TUTORIALS = {
         id: 'home-navigation-card',
         title: 'Navigation And Path',
         body: 'Open **Navigation** to manage your path, review stage lanes, and begin or resume a structured run.',
-        target: tutorialSelector(ANCHORS.HOME_CURRICULUM_CARD),
+        target: () =>
+          (typeof document === 'undefined'
+            ? null
+            : (document.querySelector(tutorialSelector(ANCHORS.HOME_CURRICULUM_CARD))
+              || document.querySelector('[data-nav-pill-id="home:navigation"]')
+              || document.querySelector('[data-ui-id="homeHub:mode:navigation"]'))),
         placement: 'top',
         allowInteraction: true,
       },
