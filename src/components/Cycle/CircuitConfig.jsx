@@ -2,6 +2,7 @@
 // Circuit configuration UI - Refined as "digital talisman"
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { ANCHORS } from '../../tutorials/anchorIds.js';
 
 void motion;
 
@@ -149,9 +150,10 @@ export function CircuitConfig({ value, onChange, isLight = false }) {
     const displaySeconds = totalDurationSec % 60;
 
     return (
-        <div className="space-y-5">
+        <div className="space-y-5" data-tutorial={ANCHORS.CIRCUIT_ROOT}>
             {/* Total Duration - Hero Number with Pulse */}
             <div
+                data-tutorial={ANCHORS.CIRCUIT_TOTAL_DURATION}
                 className="p-4 rounded relative"
                 style={{
                     background: 'hsla(var(--accent-h), var(--accent-s), var(--accent-l), 0.08)',
@@ -248,6 +250,7 @@ export function CircuitConfig({ value, onChange, isLight = false }) {
                         {/* Break Between */}
                         <div style={{ display: 'flex', alignItems: 'flex-end', justifySelf: 'end', minWidth: '90px' }}>
                             <input
+                                data-tutorial={ANCHORS.CIRCUIT_BREAK_BETWEEN}
                                 type="text"
                                     value={`0:${intervalBreakSec.toString().padStart(2, '0')}`}
                                     onChange={(e) => {
@@ -307,7 +310,7 @@ export function CircuitConfig({ value, onChange, isLight = false }) {
             </div>
 
             {/* Swipable Exercise Carousel */}
-            <div className="relative group">
+            <div className="relative group" data-tutorial={ANCHORS.CIRCUIT_PRACTICE_PICKER}>
                 <div
                     className="text-xs text-white/40 mb-4 uppercase tracking-[0.15em] flex justify-between font-medium px-1"
                     style={{ fontFamily: 'var(--font-body)' }}
@@ -432,7 +435,7 @@ export function CircuitConfig({ value, onChange, isLight = false }) {
 
             {/* Circuit Sequence - Energy Pathway */}
             {selectedExercises.length > 0 && (
-                <div style={{ marginBottom: '10px' }}>
+                <div style={{ marginBottom: '10px' }} data-tutorial={ANCHORS.CIRCUIT_SEQUENCE}>
                     {circuitError && (
                         <div
                             className="mb-3 px-3 py-2 rounded text-[11px] font-medium uppercase tracking-[0.15em]"
@@ -519,6 +522,7 @@ export function CircuitConfig({ value, onChange, isLight = false }) {
                                     {/* Right Zone: Duration Input + Remove Button */}
                                     <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: '6px', width: '110px', minWidth: '110px' }}>
                                         <input
+                                            data-tutorial={ANCHORS.CIRCUIT_EXERCISE_DURATION}
                                             type="number"
                                             min="1"
                                             max="60"

@@ -324,7 +324,11 @@ export const TUTORIALS = {
         id: 'breath-selector',
         title: 'Practice Selector',
         body: 'Breath starts here. Use the selector to return to it from any other practice family.',
-        target: tutorialSelector(ANCHORS.PRACTICE_SELECTOR),
+        target: () =>
+          (typeof document === 'undefined'
+            ? null
+            : (document.querySelector(tutorialSelector(ANCHORS.PRACTICE_SELECTOR))
+              || document.querySelector('[data-ui-id="practice:dropdown:method"]'))),
         placement: 'right',
       },
       {
@@ -355,7 +359,7 @@ export const TUTORIALS = {
       {
         id: 'breath-traditional-ratios',
         title: 'Traditional Ratios',
-        body: 'Traditional mode offers ratio presets (inhale, hold, exhale, hold) drawn from established patterns. Pick one to load it into the cycle.',
+        body: 'In Traditional mode, ratio presets load classic inhale-hold-exhale patterns. Switch to Traditional, then pick one to load it into the cycle.',
         target: tutorialAnchorTarget(
           ANCHORS.FOUNDATIONS_TRADITIONAL_RATIOS,
           ANCHORS.FOUNDATIONS_BREATH_METHOD,
@@ -367,7 +371,7 @@ export const TUTORIALS = {
       {
         id: 'breath-traditional-cadence',
         title: 'Cadence (Advanced)',
-        body: 'Cadence scales the selected ratio slower or faster without changing its structure. Open Advanced to adjust cadence.',
+        body: 'In Traditional mode, Cadence scales a ratio slower or faster without changing its structure. Open Advanced to adjust cadence.',
         target: tutorialAnchorTarget(
           ANCHORS.FOUNDATIONS_TRADITIONAL_CADENCE,
           ANCHORS.FOUNDATIONS_TRADITIONAL_RATIOS,
@@ -527,17 +531,85 @@ export const TUTORIALS = {
     steps: [
       {
         id: 'circuit-selector',
-        title: 'Circuit Exercises',
-        body: 'Circuit mode lets you sequence multiple practices into one run.',
-        target: tutorialSelector(ANCHORS.PRACTICE_SELECTOR),
-        placement: 'bottom',
+        title: 'Practice Selector',
+        body: 'Select Circuit to build a multi-exercise session.',
+        target: () =>
+          (typeof document === 'undefined'
+            ? null
+            : (document.querySelector(tutorialSelector(ANCHORS.PRACTICE_SELECTOR))
+              || document.querySelector('[data-ui-id="practice:dropdown:method"]'))),
+        placement: 'right',
       },
       {
-        id: 'circuit-config',
-        title: 'Exercise Duration',
-        body: 'Adjust durations and sequence details from this circuit configuration surface.',
-        target: tutorialSelector(ANCHORS.PRACTICE_CIRCUIT_DURATION),
+        id: 'circuit-root',
+        title: 'Circuit Builder',
+        body: 'A circuit is a sequence of practices you will run back-to-back. Build the sequence here.',
+        target: tutorialAnchorTarget(
+          ANCHORS.CIRCUIT_ROOT,
+          ANCHORS.PRACTICE_CIRCUIT_DURATION
+        ),
+        placement: 'top',
+        waitFor: 1200,
+      },
+      {
+        id: 'circuit-pick-practices',
+        title: 'Select Practices',
+        body: 'Tap practices to add them to the circuit. Avoid placing the same type back-to-back.',
+        target: tutorialAnchorTarget(
+          ANCHORS.CIRCUIT_PRACTICE_PICKER,
+          ANCHORS.CIRCUIT_ROOT
+        ),
+        placement: 'top',
+        waitFor: 1200,
+        allowInteraction: true,
+      },
+      {
+        id: 'circuit-sequence',
+        title: 'Energy Pathway',
+        body: 'This is your circuit sequence. You can adjust durations per exercise and remove items.',
+        target: tutorialAnchorTarget(
+          ANCHORS.CIRCUIT_SEQUENCE,
+          ANCHORS.CIRCUIT_ROOT
+        ),
+        placement: 'top',
+        waitFor: 1200,
+      },
+      {
+        id: 'circuit-exercise-duration',
+        title: 'Per-Exercise Duration',
+        body: 'Set how many minutes each practice should run for. This changes the circuit total.',
+        target: tutorialAnchorTarget(
+          ANCHORS.CIRCUIT_EXERCISE_DURATION,
+          ANCHORS.CIRCUIT_SEQUENCE,
+          ANCHORS.CIRCUIT_ROOT
+        ),
         placement: 'left',
+        waitFor: 1200,
+        allowInteraction: true,
+      },
+      {
+        id: 'circuit-break-between',
+        title: 'Break Between',
+        body: 'Set the rest time between exercises. Keep it short unless you want full resets.',
+        target: tutorialAnchorTarget(
+          ANCHORS.CIRCUIT_BREAK_BETWEEN,
+          ANCHORS.CIRCUIT_TOTAL_DURATION,
+          ANCHORS.CIRCUIT_ROOT
+        ),
+        placement: 'left',
+        waitFor: 1200,
+        allowInteraction: true,
+      },
+      {
+        id: 'circuit-begin',
+        title: 'Begin Circuit',
+        body: 'Start the circuit run when you are ready.',
+        target: () =>
+          (typeof document === 'undefined'
+            ? null
+            : (document.querySelector('[data-ui-id="practice:cta:begin"]')
+              || document.querySelector(tutorialSelector(ANCHORS.CIRCUIT_ROOT)))),
+        placement: 'top',
       },
     ],
   },

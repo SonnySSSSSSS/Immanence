@@ -43,6 +43,13 @@ export const ANCHORS = {
 
   FOUNDATIONS_TRADITIONAL_RATIOS: 'foundations-traditional-ratios',
   FOUNDATIONS_TRADITIONAL_CADENCE: 'foundations-traditional-cadence',
+
+  CIRCUIT_ROOT: 'circuit-root',
+  CIRCUIT_TOTAL_DURATION: 'circuit-total-duration',
+  CIRCUIT_BREAK_BETWEEN: 'circuit-break-between',
+  CIRCUIT_PRACTICE_PICKER: 'circuit-practice-picker',
+  CIRCUIT_SEQUENCE: 'circuit-sequence',
+  CIRCUIT_EXERCISE_DURATION: 'circuit-exercise-duration',
 };
 
 export const GUIDE_STEPS = {
