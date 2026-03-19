@@ -251,6 +251,110 @@ function canAttemptNetwork() {
   return navigator.onLine !== false;
 }
 
+// PROBE:SUPABASE_CORS:START
+const SUPABASE_CORS_PROBE_DEFAULT = true;
+
+function sanitizeProbeUserId(userId) {
+  if (typeof userId !== 'string' || userId.length < 10) return null;
+  return `${userId.slice(0, 8)}...${userId.slice(-4)}`;
+}
+
+function sanitizeProbeError(error) {
+  if (!error) return null;
+  return {
+    name: error.name || null,
+    message: error.message || null,
+    code: error.code || null,
+    details: error.details || null,
+    hint: error.hint || null,
+    status: error.status || null,
+    causeMessage: error.cause?.message || null,
+  };
+}
+
+function classifySupabaseSyncError(error) {
+  const status = Number.isFinite(Number(error?.status)) ? Number(error.status) : null;
+  const code = String(error?.code || error?.details || '').toLowerCase();
+  const message = String(error?.message || '').toLowerCase();
+  const causeMessage = String(error?.cause?.message || '').toLowerCase();
+  const combined = `${message} ${causeMessage}`;
+
+  const looksTransportFailure =
+    status == null &&
+    (
+      combined.includes('failed to fetch') ||
+      combined.includes('networkerror') ||
+      combined.includes('network request failed') ||
+      combined.includes('load failed') ||
+      combined.includes('err_failed') ||
+      combined.includes('cors request did not succeed')
+    );
+
+  if (looksTransportFailure) {
+    return {
+      category: 'transport-or-browser-block',
+      hint: 'Browser could not complete the request (network/proxy/VPN/extension/CORS-like transport failure).',
+    };
+  }
+
+  if (status === 401 || status === 403 || code.includes('42501')) {
+    return {
+      category: 'auth-or-rls-policy',
+      hint: 'Session token or RLS policy likely blocked the request.',
+    };
+  }
+
+  if (status === 404 || code.includes('42p01')) {
+    return {
+      category: 'schema-or-table',
+      hint: 'Expected table/view may be missing in Supabase.',
+    };
+  }
+
+  if (status != null && status >= 500) {
+    return {
+      category: 'supabase-server',
+      hint: 'Supabase returned a server error; retry later.',
+    };
+  }
+
+  return {
+    category: 'unknown-sync-error',
+    hint: 'Check error code/message for project URL, auth, policy, and connectivity clues.',
+  };
+}
+
+function buildSyncErrorDebugPayload(error) {
+  const classification = classifySupabaseSyncError(error);
+  return {
+    ...classification,
+    status: error?.status ?? null,
+    code: error?.code ?? null,
+    message: error?.message ?? null,
+    details: error?.details ?? null,
+  };
+}
+
+function emitSupabaseCorsProbe(event, payload = {}) {
+  if (typeof window === 'undefined') return;
+  const enabled = window.__IMMANENCE_SUPABASE_CORS_PROBE__ ?? SUPABASE_CORS_PROBE_DEFAULT;
+  if (!enabled) return;
+
+  const stamp =
+    typeof performance !== 'undefined' && typeof performance.now === 'function'
+      ? Number(performance.now().toFixed(2))
+      : Date.now();
+
+  console.log('[PROBE:SUPABASE_CORS]', {
+    stamp,
+    event,
+    origin: window.location?.origin || null,
+    path: '/rest/v1/user_documents',
+    ...payload,
+  });
+}
+// PROBE:SUPABASE_CORS:END
+
 export function initOfflineFirstUserStateSync({ supabase, keys, userId, debug = false }) {
   if (!supabase) return () => {};
   if (typeof window === 'undefined') return () => {};
@@ -339,18 +443,49 @@ export function initOfflineFirstUserStateSync({ supabase, keys, userId, debug = 
 
       let result;
       try {
+        emitSupabaseCorsProbe('push:start', {
+          op: 'upsert',
+          userId: sanitizeProbeUserId(userId),
+          docKey: intent.doc_key,
+        });
+
         result = await supabase
           .from('user_documents')
           .upsert(row, { onConflict: 'user_id,doc_key' });
       } catch (e) {
+        emitSupabaseCorsProbe('push:throw', {
+          op: 'upsert',
+          userId: sanitizeProbeUserId(userId),
+          docKey: intent.doc_key,
+          error: sanitizeProbeError(e),
+        });
         result = { error: e };
       }
 
+      if (!result?.error) {
+        emitSupabaseCorsProbe('push:success', {
+          op: 'upsert',
+          userId: sanitizeProbeUserId(userId),
+          docKey: intent.doc_key,
+        });
+      }
+
       if (result?.error) {
+        const errorDetails = buildSyncErrorDebugPayload(result.error);
+        emitSupabaseCorsProbe('push:error', {
+          op: 'upsert',
+          userId: sanitizeProbeUserId(userId),
+          docKey: intent.doc_key,
+          classification: errorDetails.category,
+          hint: errorDetails.hint,
+          error: sanitizeProbeError(result.error),
+        });
+
         // Most common MVP failure: table missing / RLS misconfigured / no auth.
         logDebugOnce(
           'supabase_push_error',
           'push failed (local-only mode continues)',
+          errorDetails,
           result.error
         );
         return;
@@ -370,6 +505,13 @@ export function initOfflineFirstUserStateSync({ supabase, keys, userId, debug = 
   const pullAndApplyIfSafe = async (userId) => {
     if (!canAttemptNetwork()) return;
 
+    emitSupabaseCorsProbe('pull:query:build', {
+      op: 'select',
+      userId: sanitizeProbeUserId(userId),
+      docKey: 'progress_bundle_v1',
+      select: 'doc',
+    });
+
     let query = supabase
       .from('user_documents')
       .select('doc')
@@ -378,12 +520,42 @@ export function initOfflineFirstUserStateSync({ supabase, keys, userId, debug = 
 
     let result;
     try {
+      emitSupabaseCorsProbe('pull:start', {
+        op: 'select',
+        userId: sanitizeProbeUserId(userId),
+        docKey: 'progress_bundle_v1',
+      });
+
       result = await (typeof query.maybeSingle === 'function' ? query.maybeSingle() : query.single());
     } catch (e) {
+      emitSupabaseCorsProbe('pull:throw', {
+        op: 'select',
+        userId: sanitizeProbeUserId(userId),
+        docKey: 'progress_bundle_v1',
+        error: sanitizeProbeError(e),
+      });
       result = { error: e };
     }
 
+    if (!result?.error) {
+      emitSupabaseCorsProbe('pull:success', {
+        op: 'select',
+        userId: sanitizeProbeUserId(userId),
+        docKey: 'progress_bundle_v1',
+      });
+    }
+
     if (result?.error) {
+      const errorDetails = buildSyncErrorDebugPayload(result.error);
+      emitSupabaseCorsProbe('pull:error', {
+        op: 'select',
+        userId: sanitizeProbeUserId(userId),
+        docKey: 'progress_bundle_v1',
+        classification: errorDetails.category,
+        hint: errorDetails.hint,
+        error: sanitizeProbeError(result.error),
+      });
+
       // PGRST116 is "Results contain 0 rows" for .single(); treat as empty.
       const code = result.error?.code || result.error?.details || '';
       if (String(code).includes('PGRST116')) return;
@@ -391,6 +563,7 @@ export function initOfflineFirstUserStateSync({ supabase, keys, userId, debug = 
       logDebugOnce(
         'supabase_pull_error',
         'pull failed (local-only mode continues)',
+        errorDetails,
         result.error
       );
       return;
@@ -440,10 +613,25 @@ export function initOfflineFirstUserStateSync({ supabase, keys, userId, debug = 
     inFlight = true;
 
     try {
+      emitSupabaseCorsProbe('tick:session:start', {
+        scopedUserId: sanitizeProbeUserId(scopedUserId),
+      });
+
       const { data, error } = await supabase.auth.getSession();
-      if (error) return;
+      if (error) {
+        emitSupabaseCorsProbe('tick:session:error', {
+          scopedUserId: sanitizeProbeUserId(scopedUserId),
+          error: sanitizeProbeError(error),
+        });
+        return;
+      }
+
       const session = data?.session ?? null;
       const userId = session?.user?.id ?? null;
+      emitSupabaseCorsProbe('tick:session:resolved', {
+        scopedUserId: sanitizeProbeUserId(scopedUserId),
+        sessionUserId: sanitizeProbeUserId(userId),
+      });
       if (!userId) return;
       if (userId !== scopedUserId) return;
 

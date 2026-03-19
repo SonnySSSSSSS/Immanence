@@ -541,6 +541,9 @@ function App({ playgroundMode = false, playgroundBottomLayer = true }) {
   // }, [curriculumOnboardingComplete, isCurriculumComplete]);
 
 
+  // v3.27.279 - chore(sync): classify Supabase sync failures with transport/auth diagnostics
+  // v3.27.278 - chore(tutorial): remove temporary unmount probe instrumentation
+  // v3.27.277 - fix(tutorial): defer nested root unmount to avoid render-time race warning
   // v3.27.276 - feat(navigation): apply arwes housing to inner cards and stage pill
   // v3.27.275 - feat(navigation): apply arwes housing to program grid — outer chrome, inner plate, scan line, corner brackets
   // v3.27.274 - feat(navigation): stage carousel — swipeable, dot selectors, per-stage program view
@@ -1077,7 +1080,7 @@ function App({ playgroundMode = false, playgroundBottomLayer = true }) {
                         }}
                         style={{ background: 'transparent' }}
                       >
-                        v3.27.276
+                        v3.27.279
                       </button>
                     </div>
                   </div>

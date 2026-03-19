@@ -17,6 +17,15 @@ const BODY_MAX_CHARS = 2000;
 const POPOVER_SAFE_MARGIN_PX = 12;
 const POPOVER_TARGET_GAP_PX = 14;
 
+function scheduleMicrotask(callback) {
+  if (typeof queueMicrotask === 'function') {
+    queueMicrotask(callback);
+    return;
+  }
+
+  Promise.resolve().then(callback);
+}
+
 function rectsIntersect(a, b) {
   return !(a.right <= b.left || a.left >= b.right || a.bottom <= b.top || a.top >= b.bottom);
 }
@@ -450,8 +459,16 @@ export function TutorialOverlay() {
 
   const teardownDriver = useCallback(() => {
     if (rootRef.current) {
-      rootRef.current.unmount();
+      const rootToUnmount = rootRef.current;
       rootRef.current = null;
+
+      scheduleMicrotask(() => {
+        try {
+          rootToUnmount.unmount();
+        } catch {
+          // ignore
+        }
+      });
     }
 
     if (mountNodeRef.current) {
