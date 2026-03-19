@@ -2,10 +2,10 @@
 const BASE_PATH = `${import.meta.env.BASE_URL}awareness/body-scan`;
 
 export const AWARENESS_ASSETS = {
-    upper: `${BASE_PATH}/upper.png`,
-    middle: `${BASE_PATH}/middle.png`,
-    lower: `${BASE_PATH}/lower.png`,
-    full: `${BASE_PATH}/full.png`,
+    upper: `${BASE_PATH}/upper.webp`,
+    middle: `${BASE_PATH}/middle.webp`,
+    lower: `${BASE_PATH}/lower.webp`,
+    full: `${BASE_PATH}/full.webp`,
 };
 
 export const AWARENESS_REGIONS = ['upper', 'middle', 'lower', 'full'];
