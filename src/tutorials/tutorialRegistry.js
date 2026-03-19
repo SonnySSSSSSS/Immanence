@@ -13,6 +13,18 @@ function resetPhoticGuide() {
   settings.setPhoticSetting('beginnerMode', false);
 }
 
+function tutorialAnchorTarget(...anchorIds) {
+  return () => {
+    if (typeof document === 'undefined') return null;
+    for (const anchorId of anchorIds) {
+      if (!anchorId) continue;
+      const el = document.querySelector(tutorialSelector(anchorId));
+      if (el) return el;
+    }
+    return null;
+  };
+}
+
 export const TUTORIALS = {
   'page:home': {
     title: 'Home Hub',
@@ -319,7 +331,11 @@ export const TUTORIALS = {
         id: 'breath-edit',
         title: 'Edit To Explore',
         body: 'Start in Focus mode for simplicity. Tap Edit when you want the full configuration surface.',
-        target: tutorialSelector(ANCHORS.FOUNDATIONS_EDIT),
+        target: tutorialAnchorTarget(
+          ANCHORS.FOUNDATIONS_EDIT,
+          ANCHORS.FOUNDATIONS_COLLAPSE,
+          ANCHORS.FOUNDATIONS_ROOT
+        ),
         placement: 'bottom',
         allowInteraction: true,
       },
@@ -327,86 +343,90 @@ export const TUTORIALS = {
         id: 'breath-method',
         title: 'Traditional vs Expansion',
         body: 'Traditional is lineage-defined breathing. Expansion is our technique lab: smooth ramps, deliberate holds, and experiment-driven patterns.',
-        target: tutorialSelector(ANCHORS.FOUNDATIONS_BREATH_METHOD),
+        target: tutorialAnchorTarget(
+          ANCHORS.FOUNDATIONS_BREATH_METHOD,
+          ANCHORS.FOUNDATIONS_EDIT,
+          ANCHORS.FOUNDATIONS_COLLAPSE,
+          ANCHORS.FOUNDATIONS_ROOT
+        ),
         placement: 'top',
-        waitFor: {
-          target: tutorialSelector(ANCHORS.FOUNDATIONS_BREATH_METHOD),
-          timeoutMs: 1200,
-          intervalMs: 50,
-          optional: true,
-        },
+        waitFor: 1200,
       },
       {
         id: 'breath-waveform',
         title: 'Breath Preview',
         body: 'This preview shows the shape of the cycle you are building. Use it to feel the pattern visually before you run it.',
-        target: tutorialSelector(ANCHORS.FOUNDATIONS_BREATH_WAVEFORM),
+        target: tutorialAnchorTarget(
+          ANCHORS.FOUNDATIONS_BREATH_WAVEFORM,
+          ANCHORS.FOUNDATIONS_BREATH_METHOD,
+          ANCHORS.FOUNDATIONS_EDIT,
+          ANCHORS.FOUNDATIONS_COLLAPSE,
+          ANCHORS.FOUNDATIONS_ROOT
+        ),
         placement: 'top',
-        waitFor: {
-          target: tutorialSelector(ANCHORS.FOUNDATIONS_BREATH_WAVEFORM),
-          timeoutMs: 1200,
-          intervalMs: 50,
-          optional: true,
-        },
+        waitFor: 1200,
       },
       {
         id: 'breath-cycle',
         title: 'Cycle Inputs',
         body: 'Configure inhale, holds, and exhale. Expansion mode is not about fixed ratios, it is about intentional control of pacing and breath holds.',
-        target: tutorialSelector(ANCHORS.FOUNDATIONS_BREATH_CYCLE),
+        target: tutorialAnchorTarget(
+          ANCHORS.FOUNDATIONS_BREATH_CYCLE,
+          ANCHORS.FOUNDATIONS_BREATH_METHOD,
+          ANCHORS.FOUNDATIONS_EDIT,
+          ANCHORS.FOUNDATIONS_COLLAPSE,
+          ANCHORS.FOUNDATIONS_ROOT
+        ),
         placement: 'top',
-        waitFor: {
-          target: tutorialSelector(ANCHORS.FOUNDATIONS_BREATH_CYCLE),
-          timeoutMs: 1200,
-          intervalMs: 50,
-          optional: true,
-        },
+        waitFor: 1200,
       },
       {
         id: 'breath-duration',
         title: 'Duration',
         body: 'Set how long you want to practice for this run.',
-        target: tutorialSelector(ANCHORS.FOUNDATIONS_BREATH_DURATION),
+        target: tutorialAnchorTarget(
+          ANCHORS.FOUNDATIONS_BREATH_DURATION,
+          ANCHORS.FOUNDATIONS_EDIT,
+          ANCHORS.FOUNDATIONS_COLLAPSE,
+          ANCHORS.FOUNDATIONS_ROOT
+        ),
         placement: 'top',
-        waitFor: {
-          target: tutorialSelector(ANCHORS.FOUNDATIONS_BREATH_DURATION),
-          timeoutMs: 1200,
-          intervalMs: 50,
-          optional: true,
-        },
+        waitFor: 1200,
       },
       {
         id: 'breath-tempo-sync',
         title: 'Tempo Sync (Advanced)',
         body: 'Tempo Sync is for advanced practitioners: align breath timing with a song so the emotional contour of the music can shape the session.',
-        target: tutorialSelector(ANCHORS.FOUNDATIONS_BREATH_TEMPO_TOGGLE),
+        target: tutorialAnchorTarget(
+          ANCHORS.FOUNDATIONS_BREATH_TEMPO_TOGGLE,
+          ANCHORS.FOUNDATIONS_EDIT,
+          ANCHORS.FOUNDATIONS_COLLAPSE,
+          ANCHORS.FOUNDATIONS_ROOT
+        ),
         placement: 'top',
-        waitFor: {
-          target: tutorialSelector(ANCHORS.FOUNDATIONS_BREATH_TEMPO_TOGGLE),
-          timeoutMs: 1200,
-          intervalMs: 50,
-          optional: true,
-        },
+        waitFor: 1200,
       },
       {
         id: 'breath-begin',
         title: 'Begin Practice',
         body: 'Launch the run when you are ready.',
-        target: tutorialSelector(ANCHORS.FOUNDATIONS_BEGIN),
+        target: tutorialAnchorTarget(
+          ANCHORS.FOUNDATIONS_BEGIN,
+          ANCHORS.FOUNDATIONS_ROOT
+        ),
         placement: 'top',
       },
       {
         id: 'breath-trajectory',
         title: 'Trajectory',
         body: 'Toggle the Trajectory panel when you want a higher-level view of where your breathing practice is heading over time.',
-        target: tutorialSelector(ANCHORS.FOUNDATIONS_TRAJECTORY_TOGGLE),
+        target: tutorialAnchorTarget(
+          ANCHORS.FOUNDATIONS_TRAJECTORY_TOGGLE,
+          ANCHORS.FOUNDATIONS_BEGIN,
+          ANCHORS.FOUNDATIONS_ROOT
+        ),
         placement: 'top',
-        waitFor: {
-          target: tutorialSelector(ANCHORS.FOUNDATIONS_TRAJECTORY_TOGGLE),
-          timeoutMs: 1200,
-          intervalMs: 50,
-          optional: true,
-        },
+        waitFor: 1200,
       },
     ],
   },
@@ -418,7 +438,11 @@ export const TUTORIALS = {
         id: 'stillness-options',
         title: 'Edit To Explore',
         body: 'Stillness starts simple. Tap Edit to access intensity, timing, and duration controls.',
-        target: tutorialSelector(ANCHORS.FOUNDATIONS_EDIT),
+        target: tutorialAnchorTarget(
+          ANCHORS.FOUNDATIONS_EDIT,
+          ANCHORS.FOUNDATIONS_COLLAPSE,
+          ANCHORS.FOUNDATIONS_ROOT
+        ),
         placement: 'bottom',
         allowInteraction: true,
       },
@@ -426,46 +450,49 @@ export const TUTORIALS = {
         id: 'stillness-intensity',
         title: 'Focus Intensity',
         body: 'Choose how strong your stillness focus should be. This sets the tone of the session.',
-        target: tutorialSelector(ANCHORS.FOUNDATIONS_STILLNESS_INTENSITY),
+        target: tutorialAnchorTarget(
+          ANCHORS.FOUNDATIONS_STILLNESS_INTENSITY,
+          ANCHORS.FOUNDATIONS_EDIT,
+          ANCHORS.FOUNDATIONS_COLLAPSE,
+          ANCHORS.FOUNDATIONS_ROOT
+        ),
         placement: 'top',
-        waitFor: {
-          target: tutorialSelector(ANCHORS.FOUNDATIONS_STILLNESS_INTENSITY),
-          timeoutMs: 1200,
-          intervalMs: 50,
-          optional: true,
-        },
+        waitFor: 1200,
       },
       {
         id: 'stillness-timing',
         title: 'Timing',
         body: 'Set focus, rest, and pre-delay. You are defining the rhythm of your stillness set.',
-        target: tutorialSelector(ANCHORS.FOUNDATIONS_STILLNESS_TIMING),
+        target: tutorialAnchorTarget(
+          ANCHORS.FOUNDATIONS_STILLNESS_TIMING,
+          ANCHORS.FOUNDATIONS_EDIT,
+          ANCHORS.FOUNDATIONS_COLLAPSE,
+          ANCHORS.FOUNDATIONS_ROOT
+        ),
         placement: 'top',
-        waitFor: {
-          target: tutorialSelector(ANCHORS.FOUNDATIONS_STILLNESS_TIMING),
-          timeoutMs: 1200,
-          intervalMs: 50,
-          optional: true,
-        },
+        waitFor: 1200,
       },
       {
         id: 'stillness-duration',
         title: 'Duration',
         body: 'Set how long you want to practice for this run.',
-        target: tutorialSelector(ANCHORS.FOUNDATIONS_STILLNESS_DURATION),
+        target: tutorialAnchorTarget(
+          ANCHORS.FOUNDATIONS_STILLNESS_DURATION,
+          ANCHORS.FOUNDATIONS_EDIT,
+          ANCHORS.FOUNDATIONS_COLLAPSE,
+          ANCHORS.FOUNDATIONS_ROOT
+        ),
         placement: 'top',
-        waitFor: {
-          target: tutorialSelector(ANCHORS.FOUNDATIONS_STILLNESS_DURATION),
-          timeoutMs: 1200,
-          intervalMs: 50,
-          optional: true,
-        },
+        waitFor: 1200,
       },
       {
         id: 'stillness-begin',
         title: 'Begin Practice',
         body: 'Launch the run when you are ready.',
-        target: tutorialSelector(ANCHORS.FOUNDATIONS_BEGIN),
+        target: tutorialAnchorTarget(
+          ANCHORS.FOUNDATIONS_BEGIN,
+          ANCHORS.FOUNDATIONS_ROOT
+        ),
         placement: 'top',
       },
     ],

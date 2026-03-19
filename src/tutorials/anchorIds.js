@@ -27,6 +27,8 @@ export const ANCHORS = {
   NAVIGATION_PROGRAM_SUMMARY: 'navigation-program-summary',
 
   FOUNDATIONS_EDIT: 'foundations-edit',
+  FOUNDATIONS_ROOT: 'foundations-root',
+  FOUNDATIONS_COLLAPSE: 'foundations-collapse',
   FOUNDATIONS_BREATH_METHOD: 'foundations-breath-method',
   FOUNDATIONS_BREATH_WAVEFORM: 'foundations-breath-waveform',
   FOUNDATIONS_BREATH_CYCLE: 'foundations-breath-cycle',

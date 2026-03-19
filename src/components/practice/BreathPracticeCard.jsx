@@ -151,7 +151,7 @@ function BreathPracticeCard({
   );
 
   return (
-    <div className="relative px-4 sm:px-8 animate-in fade-in duration-300">
+    <div className="relative px-4 sm:px-8 animate-in fade-in duration-300" data-tutorial={ANCHORS.FOUNDATIONS_ROOT}>
       {/* HEADER - using shared component */}
       <PracticeMenuHeader
         title={practiceId === 'breath' ? undefined : label}
@@ -183,6 +183,7 @@ function BreathPracticeCard({
             <button
               type="button"
               onClick={() => setMode("focus")}
+              data-tutorial={ANCHORS.FOUNDATIONS_COLLAPSE}
               style={{
                 width: '100%',
                 padding: '6px 12px',
