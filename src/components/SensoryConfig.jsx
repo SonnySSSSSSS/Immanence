@@ -1,9 +1,10 @@
 // src/components/SensoryConfig.jsx
 // Cognitive Submode Menu - Awareness Practice Configuration
 // Displays Sakshi I & II practice cards with scene selector
-import React from 'react';
+import React, { useEffect } from 'react';
 import { useAwarenessSceneStore } from '../state/awarenessSceneStore.js';
 import { useSessionOverrideStore } from '../state/sessionOverrideStore.js';
+import { preloadAwarenessImages } from '../utils/preloadAwarenessImages.js';
 
 export const SENSORY_TYPES = [
     { id: 'bodyScan', label: 'Body Scan', description: 'Progressive body awareness' },
@@ -56,6 +57,9 @@ export function SensoryConfig({
         setSakshiVersionBase(version);
     };
     const baseUrl = import.meta.env.BASE_URL;
+
+    // Safety-net: if images weren't preloaded earlier, start now
+    useEffect(() => { preloadAwarenessImages(); }, []);
 
     return (
         <div className="sensory-config space-y-7">

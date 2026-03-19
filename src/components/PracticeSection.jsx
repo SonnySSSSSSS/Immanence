@@ -16,6 +16,7 @@ import { BreathConfig } from "./BreathConfig.jsx";
 import { BREATH_PRESETS } from "./breathPresets.js";
 import { BreathBenchmark } from "./BreathBenchmark.jsx";
 import { SensoryConfig, SENSORY_TYPES } from "./SensoryConfig.jsx";
+import { preloadAwarenessImages } from '../utils/preloadAwarenessImages.js';
 import { VisualizationConfig } from "./VisualizationConfig.jsx";
 import { CymaticsConfig } from "./CymaticsConfig.jsx";
 import { SOLFEGGIO_SET, FREQUENCY_SETS } from "../utils/frequencyLibrary.js";
@@ -748,6 +749,7 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
     pathGuidanceWasPausedRef.current = false;
     pathGuidanceRanRef.current = false;
     resetGuidanceCompletionState();
+    if (id === 'awareness') preloadAwarenessImages();
     setPracticeId(id);
     // Save immediately with current state
     savePreferences({
