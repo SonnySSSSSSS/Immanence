@@ -665,7 +665,7 @@ export function DailyPracticeCard({ onStartPractice, onViewCurriculum, onNavigat
     // NEVER CHANGE THIS: if the first scheduled path day is still in the future,
     // the visible day meter must stay at 0 until that date actually arrives.
     const pathDayIndexDisplay = Number.isFinite(Number(metrics?.dayIndex))
-        ? (isBeforePathStart ? 0 : Number(displayDayIndex))
+        ? (isBeforePathStart ? 0 : Number(metrics.dayIndex))
         : 1;
 
     const pathDayProgressRatio = metrics.durationDays > 0 ? pathDayIndexDisplay / metrics.durationDays : 0;
