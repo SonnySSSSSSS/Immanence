@@ -29,8 +29,6 @@ function AvatarCompositeSection({
     prodGuarded = false,
     prodArmed = false,
 }) {
-    const DEFAULTS_START_MARKER = '// AVATAR_DEFAULTS:START';
-    const DEFAULTS_END_MARKER = '// AVATAR_DEFAULTS:END';
     const avatarComposite = useDevPanelStore(s => s.avatarComposite);
     const setAvatarCompositeEnabled = useDevPanelStore(s => s.setAvatarCompositeEnabled);
     const setAvatarCompositeDebugOverlay = useDevPanelStore(s => s.setAvatarCompositeDebugOverlay);
@@ -46,7 +44,6 @@ function AvatarCompositeSection({
     const getAvatarCompositeSettingsJSON = useDevPanelStore(s => s.getAvatarCompositeSettingsJSON);
     const setAvatarCompositeSettingsJSON = useDevPanelStore(s => s.setAvatarCompositeSettingsJSON);
     const getAvatarCompositeAllStagesJSON = useDevPanelStore(s => s.getAvatarCompositeAllStagesJSON);
-    const getAvatarCompositeDefaultsSnippet = useDevPanelStore(s => s.getAvatarCompositeDefaultsSnippet);
 
     const [layerExpanded, setLayerExpanded] = useState({
         bg: true,
@@ -118,102 +115,6 @@ function AvatarCompositeSection({
         setJsonStatus('Copied all stages JSON to editor field.');
     };
 
-    const copyDefaultsSnippet = async () => {
-        const snippet = getAvatarCompositeDefaultsSnippet();
-        setJsonDraft(snippet);
-        if (typeof navigator !== 'undefined' && navigator.clipboard?.writeText) {
-            try {
-                await navigator.clipboard.writeText(snippet);
-                setJsonStatus('Copied defaults snippet to clipboard. Paste into createDefaultAvatarComposite().');
-                return;
-            } catch {
-                // Fallback handled below.
-            }
-        }
-        setJsonStatus('Copied defaults snippet to editor field.');
-    };
-
-    const writeDefaultsToDevPanelStoreFile = async () => {
-        const fallbackCopySnippet = async () => {
-            const snippet = getAvatarCompositeDefaultsSnippet();
-            setJsonDraft(snippet);
-            if (typeof navigator !== 'undefined' && navigator.clipboard?.writeText) {
-                try {
-                    await navigator.clipboard.writeText(snippet);
-                    return true;
-                } catch {
-                    return false;
-                }
-            }
-            return false;
-        };
-
-        if (typeof window === 'undefined' || typeof window.showOpenFilePicker !== 'function') {
-            const copied = await fallbackCopySnippet();
-            const message = copied
-                ? 'This browser does not support file picker write. Defaults snippet was copied to clipboard. Paste it into createDefaultAvatarComposite() in src/state/devPanelStore.js.'
-                : 'This browser does not support file picker write. Use Copy Defaults Snippet and paste into createDefaultAvatarComposite() in src/state/devPanelStore.js.';
-            setJsonStatus(message);
-            if (typeof window !== 'undefined' && typeof window.alert === 'function') {
-                window.alert(message);
-            }
-            return;
-        }
-
-        try {
-            const [fileHandle] = await window.showOpenFilePicker({
-                multiple: false,
-                types: [
-                    {
-                        description: 'JavaScript',
-                        accept: { 'text/javascript': ['.js'] }
-                    }
-                ]
-            });
-
-            if (!fileHandle) {
-                setJsonStatus('File selection canceled.');
-                return;
-            }
-
-            const file = await fileHandle.getFile();
-            const source = await file.text();
-
-            const startIndex = source.indexOf(DEFAULTS_START_MARKER);
-            const endIndex = source.indexOf(DEFAULTS_END_MARKER);
-
-            if (startIndex === -1 || endIndex === -1 || endIndex <= startIndex) {
-                setJsonStatus('Could not find avatar defaults markers in selected file.');
-                return;
-            }
-
-            const blockStart = source.lastIndexOf('\n', startIndex) + 1;
-            const blockEndLine = source.indexOf('\n', endIndex);
-            const blockEnd = blockEndLine === -1 ? source.length : blockEndLine;
-
-            const snippet = getAvatarCompositeDefaultsSnippet();
-            const indentedSnippet = snippet
-                .split('\n')
-                .map((line) => `    ${line}`)
-                .join('\n');
-            const replacementBlock = `    ${DEFAULTS_START_MARKER}\n${indentedSnippet}\n    ${DEFAULTS_END_MARKER}`;
-
-            const nextSource = `${source.slice(0, blockStart)}${replacementBlock}${source.slice(blockEnd)}`;
-
-            const writable = await fileHandle.createWritable();
-            await writable.write(nextSource);
-            await writable.close();
-
-            setJsonStatus('Updated src/state/devPanelStore.js defaults. Now run git add/commit/push.');
-        } catch {
-            const copied = await fallbackCopySnippet();
-            const message = copied
-                ? 'File write canceled/failed. Defaults snippet was copied to clipboard.'
-                : 'File write canceled/failed. Use Copy Defaults Snippet.';
-            setJsonStatus(message);
-        }
-    };
-
     const applySettings = () => {
         const result = setAvatarCompositeSettingsJSON(normalizedEditingStageKey, jsonDraft);
         setJsonStatus(result?.ok ? 'Settings applied.' : `Paste failed: ${result?.error || 'Unknown error'}`);
@@ -251,6 +152,9 @@ function AvatarCompositeSection({
             </div>
             <div className="text-[11px] text-white/70 mb-3">
                 Editing stage: <span className="font-semibold text-white/90">{editingStageLabel}</span>
+            </div>
+            <div className="text-[11px] text-white/55 mb-3">
+                `Save Stage Default` is the only runtime save path. JSON tools below are draft import/export only.
             </div>
 
             <div className="grid grid-cols-2 gap-2 mb-3">
@@ -337,18 +241,6 @@ function AvatarCompositeSection({
                     className="rounded-lg px-3 py-2 text-xs bg-white/5 border border-white/15 text-white/70 hover:bg-white/10 transition-all"
                 >
                     Copy All Stages JSON
-                </button>
-                <button
-                    onClick={copyDefaultsSnippet}
-                    className="rounded-lg px-3 py-2 text-xs bg-white/5 border border-white/15 text-white/70 hover:bg-white/10 transition-all"
-                >
-                    Copy Defaults Snippet
-                </button>
-                <button
-                    onClick={writeDefaultsToDevPanelStoreFile}
-                    className="rounded-lg px-3 py-2 text-xs bg-white/5 border border-white/15 text-white/70 hover:bg-white/10 transition-all"
-                >
-                    Write Defaults To File
                 </button>
             </div>
             {destructiveLocked && (
