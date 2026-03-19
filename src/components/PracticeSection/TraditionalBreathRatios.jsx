@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { ANCHORS } from "../../tutorials/anchorIds.js";
 
 const TRADITIONAL_RATIOS = [
   {
@@ -66,6 +67,7 @@ export function TraditionalBreathRatios({ onSelectRatio }) {
 
   return (
     <div
+      data-tutorial={ANCHORS.FOUNDATIONS_TRADITIONAL_RATIOS}
       className="space-y-3"
       style={{
         background:
@@ -170,7 +172,10 @@ export function TraditionalBreathRatios({ onSelectRatio }) {
         </button>
 
         {showAdvanced && (
-          <div style={{ marginTop: "12px", paddingTop: "12px", borderTop: "1px solid rgba(255, 255, 255, 0.08)" }}>
+          <div
+            data-tutorial={ANCHORS.FOUNDATIONS_TRADITIONAL_CADENCE}
+            style={{ marginTop: "12px", paddingTop: "12px", borderTop: "1px solid rgba(255, 255, 255, 0.08)" }}
+          >
             <label
               style={{
                 display: "block",

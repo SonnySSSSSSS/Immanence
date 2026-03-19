@@ -353,6 +353,30 @@ export const TUTORIALS = {
         waitFor: 1200,
       },
       {
+        id: 'breath-traditional-ratios',
+        title: 'Traditional Ratios',
+        body: 'Traditional mode offers ratio presets (inhale, hold, exhale, hold) drawn from established patterns. Pick one to load it into the cycle.',
+        target: tutorialAnchorTarget(
+          ANCHORS.FOUNDATIONS_TRADITIONAL_RATIOS,
+          ANCHORS.FOUNDATIONS_BREATH_METHOD,
+          ANCHORS.FOUNDATIONS_ROOT
+        ),
+        placement: 'top',
+        waitFor: 1200,
+      },
+      {
+        id: 'breath-traditional-cadence',
+        title: 'Cadence (Advanced)',
+        body: 'Cadence scales the selected ratio slower or faster without changing its structure. Open Advanced to adjust cadence.',
+        target: tutorialAnchorTarget(
+          ANCHORS.FOUNDATIONS_TRADITIONAL_CADENCE,
+          ANCHORS.FOUNDATIONS_TRADITIONAL_RATIOS,
+          ANCHORS.FOUNDATIONS_ROOT
+        ),
+        placement: 'top',
+        waitFor: 1200,
+      },
+      {
         id: 'breath-waveform',
         title: 'Breath Preview',
         body: 'This preview shows the shape of the cycle you are building. Use it to feel the pattern visually before you run it.',

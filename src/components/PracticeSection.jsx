@@ -279,12 +279,13 @@ function PracticeSelector({ selectedId, onSelect }) {
   }, []);
 
   return (
-    <CircuitTrainingSelector 
-      data-tutorial="practice-selector"
-      items={items}
-      value={selectedId}
-      onChange={onSelect}
-    />
+    <div data-tutorial="practice-selector">
+      <CircuitTrainingSelector
+        items={items}
+        value={selectedId}
+        onChange={onSelect}
+      />
+    </div>
   );
 }
 

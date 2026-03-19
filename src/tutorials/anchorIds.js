@@ -40,6 +40,9 @@ export const ANCHORS = {
   FOUNDATIONS_STILLNESS_INTENSITY: 'foundations-stillness-intensity',
   FOUNDATIONS_STILLNESS_TIMING: 'foundations-stillness-timing',
   FOUNDATIONS_STILLNESS_DURATION: 'foundations-stillness-duration',
+
+  FOUNDATIONS_TRADITIONAL_RATIOS: 'foundations-traditional-ratios',
+  FOUNDATIONS_TRADITIONAL_CADENCE: 'foundations-traditional-cadence',
 };
 
 export const GUIDE_STEPS = {
