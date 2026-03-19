@@ -136,7 +136,6 @@ export function AvatarComposite({ stage, size }) {
   const getAvatarCompositeRoleTransform = useDevPanelStore((s) => s.getAvatarCompositeRoleTransform);
   const defaultsByStage = useAvatarStageDefaultsStore((s) => s.defaultsByStage);
   const ensureStageDefault = useAvatarStageDefaultsStore((s) => s.ensureStageDefault);
-  const isDev = import.meta.env.DEV;
   const stageAssets = getStageAssets(normalizedStage);
 
   const backgroundSrc = resolvePublicAssetUrl(stageAssets.background);
@@ -155,9 +154,6 @@ export function AvatarComposite({ stage, size }) {
     ensureStageDefault(normalizedStage);
   }, [ensureStageDefault, normalizedStage]);
 
-  // Dev-only visual probe to confirm AvatarComposite is re-rendering from store updates.
-  const PROBE = isDev ? (useDraftTransforms ? 'red' : 'blue') : null;
-
   const baseLayers = useDraftTransforms
     ? buildAvatarDraftLayers(getAvatarCompositeRoleTransform, normalizedStage)
     : (
@@ -175,8 +171,7 @@ export function AvatarComposite({ stage, size }) {
 
   const bgStyle = getDevStyleForLayer('bg', effectiveLayers.bg);
   const stageStyle = getDevStyleForLayer('stage', effectiveLayers.stage);
-  const glassProbeStyle = PROBE ? { border: `3px solid ${PROBE}` } : undefined;
-  const glassStyle = { ...getDevStyleForLayer('glass', effectiveLayers.glass), ...glassProbeStyle };
+  const glassStyle = getDevStyleForLayer('glass', effectiveLayers.glass);
   const ringStyle = getDevStyleForLayer('ring', effectiveLayers.ring);
 
   return (
