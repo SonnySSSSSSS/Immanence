@@ -5,6 +5,7 @@ import BreathWaveform from "../BreathWaveform.jsx";
 import { TraditionalBreathRatios } from "../PracticeSection/TraditionalBreathRatios.jsx";
 import { PracticeMenuHeader } from "./PracticeMenuHeader.jsx";
 import { STILLNESS_INTENSITY_META } from "../../data/stillnessIntensityMeta.js";
+import { ANCHORS } from "../../tutorials/anchorIds.js";
 
 function BreathPracticeCard({
   practiceId,
@@ -115,6 +116,7 @@ function BreathPracticeCard({
         ref={editButtonRef}
         type="button"
         onMouseDown={handleEditClick}
+        data-tutorial={ANCHORS.FOUNDATIONS_EDIT}
         disabled={breathSubmode === 'stillness' && isStillnessLocked}
         style={{
           width: '100%',
@@ -215,7 +217,11 @@ function BreathPracticeCard({
         {breathSubmode === 'breath' && !isFocusMode && (
           <>
             {/* Expansion vs Traditional Toggle - first after header */}
-            <div className="flex items-center justify-center gap-2" style={{ marginBottom: '18px' }}>
+            <div
+              data-tutorial={ANCHORS.FOUNDATIONS_BREATH_METHOD}
+              className="flex items-center justify-center gap-2"
+              style={{ marginBottom: '18px' }}
+            >
               {[
                 { id: 'expansion', label: 'Expansion' },
                 { id: 'traditional', label: 'Traditional' }
@@ -247,6 +253,7 @@ function BreathPracticeCard({
 
             {/* Waveform - always visible in breath mode */}
             <div
+              data-tutorial={ANCHORS.FOUNDATIONS_BREATH_WAVEFORM}
               className="breath-wave-glow"
               style={{
                 background: 'linear-gradient(135deg, rgba(212, 175, 55, 0.08) 0%, rgba(255, 255, 255, 0.03) 50%, rgba(0, 0, 0, 0.1) 100%)',
@@ -262,7 +269,7 @@ function BreathPracticeCard({
             </div>
 
             {/* Breath Cycle Header and Input Controls */}
-            <div style={{ marginTop: '24px', marginBottom: '16px' }}>
+            <div data-tutorial={ANCHORS.FOUNDATIONS_BREATH_CYCLE} style={{ marginTop: '24px', marginBottom: '16px' }}>
               <div
                 style={{
                   fontSize: '10px',
@@ -481,6 +488,7 @@ function BreathPracticeCard({
 
             <div style={{ marginBottom: '18px' }}>
               <div
+                data-tutorial={ANCHORS.FOUNDATIONS_STILLNESS_INTENSITY}
                 style={{
                   fontSize: '10px',
                   letterSpacing: '0.12em',
@@ -536,7 +544,11 @@ function BreathPracticeCard({
               </div>
             </div>
 
-            <div className="flex justify-center gap-6" style={{ marginBottom: '18px' }}>
+            <div
+              data-tutorial={ANCHORS.FOUNDATIONS_STILLNESS_TIMING}
+              className="flex justify-center gap-6"
+              style={{ marginBottom: '18px' }}
+            >
               {[
                 { label: 'Focus', key: 'focusSec', value: focusSec, min: 5, max: 300 },
                 { label: 'Rest', key: 'restSec', value: restSec, min: 3, max: 180 },
@@ -592,6 +604,7 @@ function BreathPracticeCard({
         <div style={{ marginBottom: '20px' }}>
           <button
             onClick={onToggleTempoSync}
+            data-tutorial={ANCHORS.FOUNDATIONS_BREATH_TEMPO_TOGGLE}
           style={{
             width: '100%',
             padding: '12px 16px',
@@ -651,7 +664,7 @@ function BreathPracticeCard({
       {supportsDuration && practiceId !== 'circuit' && !(practiceId === 'breath' && isFocusMode) && (
         <div
           style={{ marginBottom: practiceId === 'breath' ? '24px' : '32px' }}
-          data-tutorial={breathSubmode === 'stillness' ? 'stillness-options' : undefined}
+          data-tutorial={breathSubmode === 'stillness' ? ANCHORS.FOUNDATIONS_STILLNESS_DURATION : ANCHORS.FOUNDATIONS_BREATH_DURATION}
         >
           <SacredTimeSlider
             value={duration}
@@ -666,6 +679,7 @@ function BreathPracticeCard({
         <div className="flex flex-col items-center" style={{ marginTop: '24px', marginBottom: '14px' }}>
           <button
             onClick={handleStart}
+            data-tutorial={ANCHORS.FOUNDATIONS_BEGIN}
             className="group transition-all duration-300 relative overflow-hidden begin-button"
             style={{
               width: '100%',
@@ -750,6 +764,7 @@ function BreathPracticeCard({
               <button
                 type="button"
                 onClick={onToggleTrajectory}
+                data-tutorial={ANCHORS.FOUNDATIONS_TRAJECTORY_TOGGLE}
                 className="w-full text-[10px] font-black uppercase tracking-[0.32em] transition-opacity"
                 style={{
                   fontFamily: 'var(--font-display)',

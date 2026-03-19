@@ -25,6 +25,19 @@ export const ANCHORS = {
   NAVIGATION_STAGE_DOTS: 'navigation-stage-dots',
   NAVIGATION_ACTIVE_PATH_ACTIONS: 'navigation-active-path-actions',
   NAVIGATION_PROGRAM_SUMMARY: 'navigation-program-summary',
+
+  FOUNDATIONS_EDIT: 'foundations-edit',
+  FOUNDATIONS_BREATH_METHOD: 'foundations-breath-method',
+  FOUNDATIONS_BREATH_WAVEFORM: 'foundations-breath-waveform',
+  FOUNDATIONS_BREATH_CYCLE: 'foundations-breath-cycle',
+  FOUNDATIONS_BREATH_TEMPO_TOGGLE: 'foundations-breath-tempo-toggle',
+  FOUNDATIONS_BREATH_DURATION: 'foundations-breath-duration',
+  FOUNDATIONS_BEGIN: 'foundations-begin',
+  FOUNDATIONS_TRAJECTORY_TOGGLE: 'foundations-trajectory-toggle',
+
+  FOUNDATIONS_STILLNESS_INTENSITY: 'foundations-stillness-intensity',
+  FOUNDATIONS_STILLNESS_TIMING: 'foundations-stillness-timing',
+  FOUNDATIONS_STILLNESS_DURATION: 'foundations-stillness-duration',
 };
 
 export const GUIDE_STEPS = {
