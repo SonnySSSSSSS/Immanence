@@ -179,7 +179,13 @@ export function PracticeOptionsCard({ practiceId, duration, onDurationChange, on
           {/* Practice Title & Icon - or Title-Tabs for subMode practices */}
           {hasSubModes ? (
             // Title-tabs for practices with subModes (Awareness, Perception, Resonance)
-            <div className="flex items-center justify-center gap-2" style={{ marginTop: '20px', marginBottom: '24px', flexWrap: 'nowrap', overflow: 'hidden' }}>
+            <div
+              className="flex items-center justify-center gap-2"
+              {...(resolvedId === 'awareness'
+                ? { 'data-tutorial': 'awareness-mode-tabs' }
+                : (resolvedId === 'resonance' ? { 'data-tutorial': 'resonance-mode-tabs' } : {}))}
+              style={{ marginTop: '20px', marginBottom: '24px', flexWrap: 'nowrap', overflow: 'hidden' }}
+            >
               {Object.entries(p.subModes).map(([modeKey, modeConfig], idx) => {
                 const isActive = activeMode === modeKey;
                 return (
@@ -635,4 +641,3 @@ export function PracticeOptionsCard({ practiceId, duration, onDurationChange, on
     </div>
   );
 }
-

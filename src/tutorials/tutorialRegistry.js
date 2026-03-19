@@ -647,8 +647,43 @@ export const TUTORIALS = {
       {
         id: 'awareness-submodes',
         title: 'Observation Technique',
-        body: 'Use these sub-mode buttons to move between cognitive, somatic, and emotional observation styles.',
-        target: tutorialSelector(ANCHORS.PRACTICE_AWARENESS_MODE_SELECTOR),
+        body: 'Use these sub-mode controls to move between cognitive, somatic, and emotional observation styles.',
+        target: tutorialAnchorTarget(
+          ANCHORS.PRACTICE_AWARENESS_MODE_TABS,
+          ANCHORS.PRACTICE_AWARENESS_MODE_SELECTOR,
+          ANCHORS.PRACTICE_SELECTOR
+        ),
+        placement: 'top',
+        allowInteraction: true,
+        actions: [
+          {
+            label: 'Cognitive tour',
+            intent: 'openTutorial',
+            tutorialId: 'practice:cognitive_vipassana',
+            variant: 'secondary',
+          },
+          {
+            label: 'Somatic tour',
+            intent: 'openTutorial',
+            tutorialId: 'practice:somatic_vipassana',
+            variant: 'secondary',
+          },
+          {
+            label: 'Emotion tour',
+            intent: 'openTutorial',
+            tutorialId: 'practice:feeling',
+            variant: 'secondary',
+          },
+        ],
+      },
+      {
+        id: 'awareness-begin',
+        title: 'Begin Practice',
+        body: 'Launch the run when you are ready.',
+        target: () =>
+          (typeof document === 'undefined'
+            ? null
+            : document.querySelector('[data-ui-id="practice:cta:begin"]')),
         placement: 'top',
       },
     ],
@@ -659,9 +694,60 @@ export const TUTORIALS = {
     steps: [
       {
         id: 'cognitive-selector',
-        title: 'Cognitive Observation',
-        body: 'Insight mode focuses on observing thought patterns without forcing them away.',
-        target: tutorialSelector(ANCHORS.PRACTICE_AWARENESS_MODE_SELECTOR),
+        title: 'Select Cognitive',
+        body: 'Cognitive observation focuses on witnessing thought patterns without forcing them away.',
+        target: tutorialAnchorTarget(
+          ANCHORS.PRACTICE_AWARENESS_MODE_TABS,
+          ANCHORS.PRACTICE_AWARENESS_MODE_SELECTOR,
+          ANCHORS.PRACTICE_SELECTOR
+        ),
+        placement: 'top',
+        allowInteraction: true,
+      },
+      {
+        id: 'cognitive-sakshi-1',
+        title: 'Sakshi I',
+        body: 'Witnessing Presence: observe the self as it moves through life. Thoughts arise. Thoughts dissolve.',
+        target: tutorialAnchorTarget(
+          ANCHORS.AWARENESS_SAKSHI_1,
+          ANCHORS.PRACTICE_AWARENESS_MODE_TABS,
+          ANCHORS.PRACTICE_AWARENESS_MODE_SELECTOR
+        ),
+        placement: 'top',
+        waitFor: 1200,
+      },
+      {
+        id: 'cognitive-sakshi-2',
+        title: 'Sakshi II',
+        body: 'Noticing and labeling: watch the mind through a reflective lens and return to silence.',
+        target: tutorialAnchorTarget(
+          ANCHORS.AWARENESS_SAKSHI_2,
+          ANCHORS.AWARENESS_SAKSHI_1,
+          ANCHORS.PRACTICE_AWARENESS_MODE_TABS
+        ),
+        placement: 'top',
+        waitFor: 1200,
+      },
+      {
+        id: 'cognitive-scene',
+        title: 'Scene',
+        body: 'Pick the scene for the Sakshi portal. Use it to set the emotional tone of the witness state.',
+        target: tutorialAnchorTarget(
+          ANCHORS.AWARENESS_SCENE_GRID,
+          ANCHORS.AWARENESS_SAKSHI_1,
+          ANCHORS.PRACTICE_AWARENESS_MODE_TABS
+        ),
+        placement: 'top',
+        waitFor: 1200,
+      },
+      {
+        id: 'cognitive-begin',
+        title: 'Begin Practice',
+        body: 'Launch the run when you are ready.',
+        target: () =>
+          (typeof document === 'undefined'
+            ? null
+            : document.querySelector('[data-ui-id="practice:cta:begin"]')),
         placement: 'top',
       },
     ],
@@ -672,9 +758,48 @@ export const TUTORIALS = {
     steps: [
       {
         id: 'somatic-selector',
-        title: 'Somatic Awareness',
-        body: 'Body Scan uses the awareness sub-mode controls to switch into sensation-focused observation.',
-        target: tutorialSelector(ANCHORS.PRACTICE_AWARENESS_MODE_SELECTOR),
+        title: 'Select Somatic',
+        body: 'Somatic awareness is sensation-first: use the body field to stabilize attention.',
+        target: tutorialAnchorTarget(
+          ANCHORS.PRACTICE_AWARENESS_MODE_TABS,
+          ANCHORS.PRACTICE_AWARENESS_MODE_SELECTOR,
+          ANCHORS.PRACTICE_SELECTOR
+        ),
+        placement: 'top',
+        allowInteraction: true,
+      },
+      {
+        id: 'somatic-rail',
+        title: 'Body Regions',
+        body: 'Choose a region rail to focus your scan: upper, middle, lower, or full field.',
+        target: tutorialAnchorTarget(
+          ANCHORS.AWARENESS_BODY_RAIL,
+          ANCHORS.PRACTICE_AWARENESS_MODE_TABS,
+          ANCHORS.PRACTICE_AWARENESS_MODE_SELECTOR
+        ),
+        placement: 'top',
+        waitFor: 1200,
+      },
+      {
+        id: 'somatic-scans',
+        title: 'Scan Options',
+        body: 'Pick the scan variation within the active region. This sets the route your attention will follow.',
+        target: tutorialAnchorTarget(
+          ANCHORS.AWARENESS_BODY_SCANS,
+          ANCHORS.AWARENESS_BODY_RAIL,
+          ANCHORS.PRACTICE_AWARENESS_MODE_TABS
+        ),
+        placement: 'top',
+        waitFor: 1200,
+      },
+      {
+        id: 'somatic-begin',
+        title: 'Begin Practice',
+        body: 'Launch the run when you are ready.',
+        target: () =>
+          (typeof document === 'undefined'
+            ? null
+            : document.querySelector('[data-ui-id="practice:cta:begin"]')),
         placement: 'top',
       },
     ],
@@ -685,9 +810,60 @@ export const TUTORIALS = {
     steps: [
       {
         id: 'feeling-selector',
-        title: 'Emotional Practice',
-        body: 'Feeling practice lives inside the same awareness family and uses the same sub-mode controls.',
-        target: tutorialSelector(ANCHORS.PRACTICE_AWARENESS_MODE_SELECTOR),
+        title: 'Select Emotion',
+        body: 'Emotional awareness trains you to hold feeling without flinching and without chasing.',
+        target: tutorialAnchorTarget(
+          ANCHORS.PRACTICE_AWARENESS_MODE_TABS,
+          ANCHORS.PRACTICE_AWARENESS_MODE_SELECTOR,
+          ANCHORS.PRACTICE_SELECTOR
+        ),
+        placement: 'top',
+        allowInteraction: true,
+      },
+      {
+        id: 'feeling-modes',
+        title: 'Emotion Modes',
+        body: 'Choose the emotion domain you want to practice with. Each one has its own training frame.',
+        target: tutorialAnchorTarget(
+          ANCHORS.AWARENESS_EMOTION_MODES,
+          ANCHORS.PRACTICE_AWARENESS_MODE_TABS,
+          ANCHORS.PRACTICE_AWARENESS_MODE_SELECTOR
+        ),
+        placement: 'top',
+        waitFor: 1200,
+      },
+      {
+        id: 'feeling-frame',
+        title: 'The Frame',
+        body: 'This is the current frame: what you hold your attention on while the feeling rises, shifts, and fades.',
+        target: tutorialAnchorTarget(
+          ANCHORS.AWARENESS_EMOTION_FRAME,
+          ANCHORS.AWARENESS_EMOTION_MODES,
+          ANCHORS.PRACTICE_AWARENESS_MODE_TABS
+        ),
+        placement: 'top',
+        waitFor: 1200,
+      },
+      {
+        id: 'feeling-prompts',
+        title: 'Prompt Style',
+        body: 'Minimal stays silent. Guided offers more structured prompting. Pick what matches your current level.',
+        target: tutorialAnchorTarget(
+          ANCHORS.AWARENESS_EMOTION_PROMPTS,
+          ANCHORS.AWARENESS_EMOTION_FRAME,
+          ANCHORS.PRACTICE_AWARENESS_MODE_TABS
+        ),
+        placement: 'top',
+        waitFor: 1200,
+      },
+      {
+        id: 'feeling-begin',
+        title: 'Begin Practice',
+        body: 'Launch the run when you are ready.',
+        target: () =>
+          (typeof document === 'undefined'
+            ? null
+            : document.querySelector('[data-ui-id="practice:cta:begin"]')),
         placement: 'top',
       },
     ],
@@ -704,24 +880,152 @@ export const TUTORIALS = {
         placement: 'bottom',
       },
       {
+        id: 'resonance-tabs',
+        title: 'Choose A Mode',
+        body: 'Resonance is the entrainment family: sound and vibration used to tune your nervous system. Use these mode tabs to choose the current instrument.',
+        target: tutorialAnchorTarget(
+          ANCHORS.PRACTICE_RESONANCE_MODE_TABS,
+          ANCHORS.PRACTICE_RESONANCE_CONFIG,
+          ANCHORS.PRACTICE_SELECTOR
+        ),
+        placement: 'bottom',
+        allowInteraction: true,
+        actions: [
+          {
+            label: 'Sound (Entrainment)',
+            intent: 'openTutorial',
+            tutorialId: 'practice:sound',
+            variant: 'secondary',
+          },
+          {
+            label: 'Cymatics',
+            intent: 'openTutorial',
+            tutorialId: 'practice:cymatics',
+            variant: 'secondary',
+          },
+        ],
+      },
+      {
         id: 'resonance-config',
-        title: 'Adjust Parameters',
-        body: 'This configuration area owns the current resonance settings for frequency, intensity, and duration.',
-        target: tutorialSelector(ANCHORS.PRACTICE_RESONANCE_CONFIG),
+        title: 'Configure Parameters',
+        body: 'This surface owns your resonance settings. You are defining the entrainment target and the sound texture that carries it.',
+        target: tutorialAnchorTarget(
+          ANCHORS.PRACTICE_RESONANCE_CONFIG,
+          ANCHORS.SOUND_ROOT,
+          ANCHORS.PRACTICE_SELECTOR
+        ),
         placement: 'left',
+        waitFor: 1200,
+      },
+      {
+        id: 'resonance-begin',
+        title: 'Begin Practice',
+        body: 'Launch the run when you are ready.',
+        target: () =>
+          (typeof document === 'undefined'
+            ? null
+            : document.querySelector('[data-ui-id="practice:cta:begin"]')),
+        placement: 'top',
       },
     ],
   },
 
   'practice:sound': {
-    title: 'Sound Bath',
+    title: 'Sound (Entrainment)',
     steps: [
       {
-        id: 'sound-config',
-        title: 'Solfeggio Frequencies',
-        body: 'Sound Bath is configured from the resonance settings surface.',
-        target: tutorialSelector(ANCHORS.PRACTICE_RESONANCE_CONFIG),
-        placement: 'left',
+        id: 'sound-selector',
+        title: 'Select Sound',
+        body: 'Sound is the entrainment instrument: choose it when you want frequency to shape your state directly.',
+        target: tutorialAnchorTarget(
+          ANCHORS.PRACTICE_RESONANCE_MODE_TABS,
+          ANCHORS.PRACTICE_RESONANCE_CONFIG,
+          ANCHORS.PRACTICE_SELECTOR
+        ),
+        placement: 'bottom',
+        allowInteraction: true,
+      },
+      {
+        id: 'sound-engine',
+        title: 'Entrainment Engine',
+        body: 'Pick the engine: **Binaural** (difference tone), **Isochronic** (pulses), **Mantra/Nature** (support), or **Silence** (baseline).',
+        target: tutorialAnchorTarget(
+          ANCHORS.SOUND_TYPE_GRID,
+          ANCHORS.SOUND_ROOT,
+          ANCHORS.PRACTICE_RESONANCE_CONFIG
+        ),
+        placement: 'top',
+        waitFor: 1200,
+      },
+      {
+        id: 'sound-exact-hz',
+        title: 'Exact Frequency (Hz)',
+        body: 'This is the entrainment target. Adjusting it shifts the training frequency directly, and it becomes a Custom preset when you do.',
+        target: tutorialAnchorTarget(
+          ANCHORS.SOUND_EXACT_FREQUENCY,
+          ANCHORS.SOUND_ROOT,
+          ANCHORS.PRACTICE_RESONANCE_CONFIG
+        ),
+        placement: 'top',
+        waitFor: 1200,
+      },
+      {
+        id: 'sound-binaural',
+        title: 'Binaural Beats',
+        body: 'Binaural entrainment uses two close tones; the perceived difference is the target Hz.',
+        target: tutorialAnchorTarget(
+          ANCHORS.SOUND_BINAURAL_PANEL,
+          ANCHORS.SOUND_EXACT_FREQUENCY,
+          ANCHORS.SOUND_ROOT
+        ),
+        placement: 'top',
+        waitFor: 1200,
+      },
+      {
+        id: 'sound-isochronic',
+        title: 'Isochronic Tones',
+        body: 'Isochronic entrainment uses a pulse. Presets quickly set the pulse Hz, and you can still dial in Custom frequency.',
+        target: tutorialAnchorTarget(
+          ANCHORS.SOUND_ISOCHRONIC_PANEL,
+          ANCHORS.SOUND_EXACT_FREQUENCY,
+          ANCHORS.SOUND_ROOT
+        ),
+        placement: 'top',
+        waitFor: 1200,
+      },
+      {
+        id: 'sound-advanced',
+        title: 'Advanced Controls',
+        body: 'Use Advanced to shape texture without changing the entrainment target. Carrier changes tone color (not Hz). Reverb and chorus add comfort and depth.',
+        target: tutorialAnchorTarget(
+          ANCHORS.SOUND_ADVANCED_TOGGLE,
+          ANCHORS.SOUND_ADVANCED_CONTROLS,
+          ANCHORS.SOUND_ROOT
+        ),
+        placement: 'top',
+        allowInteraction: true,
+        waitFor: 1200,
+      },
+      {
+        id: 'sound-volume',
+        title: 'Volume',
+        body: 'Keep volume comfortable. Entrainment is about consistency, not intensity.',
+        target: tutorialAnchorTarget(
+          ANCHORS.SOUND_VOLUME,
+          ANCHORS.SOUND_ROOT
+        ),
+        placement: 'top',
+        waitFor: 1200,
+      },
+      {
+        id: 'sound-begin',
+        title: 'Begin Practice',
+        body: 'Launch the run when you are ready.',
+        target: () =>
+          (typeof document === 'undefined'
+            ? null
+            : document.querySelector('[data-ui-id="practice:cta:begin"]')),
+        placement: 'top',
       },
     ],
   },

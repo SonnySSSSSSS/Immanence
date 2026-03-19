@@ -116,7 +116,7 @@ export function SoundConfig({
     }, [soundType, isochronicPreset?.hz, binauralPreset?.hz]);
 
     return (
-        <div className="sound-config space-y-6">
+        <div className="sound-config space-y-6" data-tutorial="sound-root">
 
             {/* CARD 1 — SOUNDSCAPE */}
             <div
@@ -127,7 +127,7 @@ export function SoundConfig({
             >
                 {/* Sound Type Selection */}
                 <div>
-                    <div className="grid grid-cols-2 gap-2">
+                    <div className="grid grid-cols-2 gap-2" data-tutorial="sound-type-grid">
                         {['Binaural Beats', 'Isochronic Tones', 'Mantra', 'Nature'].map((type) => (
                             <button
                                 key={type}
@@ -161,7 +161,7 @@ export function SoundConfig({
             >
                 {/* Exact Frequency (Hz) - Only show for frequency-tunable types */}
                 {(soundType === 'Binaural Beats' || soundType === 'Isochronic Tones') && (
-                <div className="space-y-2">
+                <div className="space-y-2" data-tutorial="sound-exact-frequency">
                     <div
                         className="flex items-center justify-between"
                         style={{
@@ -221,14 +221,14 @@ export function SoundConfig({
                 )}
                 {/* Binaural Beats Options */}
                 {soundType === 'Binaural Beats' && (
-                    <div className="animate-fade-in">
+                    <div className="animate-fade-in" data-tutorial="sound-binaural-panel">
                         <BinauralTrainerPanel isLight={isLight} deltaFOverride={exactHz} />
                     </div>
                 )}
 
                 {/* Isochronic Tones Options */}
                 {soundType === 'Isochronic Tones' && (
-                    <div className="animate-fade-in space-y-4">
+                    <div className="animate-fade-in space-y-4" data-tutorial="sound-isochronic-panel">
                         <IsochronicTrainerPanel
                             pulseHz={exactHz}
                             volume={volumeValue}
@@ -401,7 +401,11 @@ export function SoundConfig({
 
                 {/* Volume Slider (for all except Silence) */}
                 {soundType !== 'Silence' && (
-                    <div className="mt-4 pt-4 border-t" style={{ borderColor: isLight ? 'var(--light-border)' : 'rgba(255,255,255,0.10)' }}>
+                    <div
+                        className="mt-4 pt-4 border-t"
+                        data-tutorial="sound-volume"
+                        style={{ borderColor: isLight ? 'var(--light-border)' : 'rgba(255,255,255,0.10)' }}
+                    >
                         <div
                             className="mb-2 flex items-center justify-between"
                             style={{
@@ -467,6 +471,7 @@ export function SoundConfig({
                         type="button"
                         onClick={() => setShowAdvanced(!showAdvanced)}
                         className="flex items-center gap-2 w-full py-2 transition-colors"
+                        data-tutorial="sound-advanced-toggle"
                         style={{
                             fontFamily: "var(--font-display)",
                             fontSize: "11px",
@@ -491,6 +496,7 @@ export function SoundConfig({
 
                     {/* Collapsible Advanced Section */}
                     <div
+                        data-tutorial="sound-advanced-controls"
                         style={{
                             maxHeight: showAdvanced ? "800px" : "0px",
                             overflow: "hidden",

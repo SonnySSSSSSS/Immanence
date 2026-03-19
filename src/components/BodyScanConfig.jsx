@@ -198,7 +198,7 @@ export function BodyScanConfig({
             </div>
 
             {/* Swipeable Region Rail Cards + Vertical Rail */}
-            <div style={{ position: 'relative', marginBottom: '20px' }}>
+            <div data-tutorial="awareness-body-rail" style={{ position: 'relative', marginBottom: '20px' }}>
                 {/* Region rail (docked) */}
                 <div
                     data-testid="region-rail"
@@ -366,6 +366,7 @@ export function BodyScanConfig({
 
             {/* Options for selected rail */}
             <div
+                data-tutorial="awareness-body-scans"
                 style={{
                     borderRadius: '16px',
                     padding: '12px 8px',

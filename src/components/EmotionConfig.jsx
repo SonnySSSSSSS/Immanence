@@ -46,6 +46,7 @@ export function EmotionConfig({
       <div>
         <div
           className="grid grid-cols-2 gap-2"
+          data-tutorial="awareness-emotion-modes"
           style={{
             maxWidth: '100%',
           }}
@@ -92,6 +93,7 @@ export function EmotionConfig({
       {currentPractice && (
         <div
           className="rounded-lg p-3"
+          data-tutorial="awareness-emotion-frame"
           style={{
             background: isLight ? 'rgba(60,50,35,0.05)' : 'rgba(0,0,0,0.2)',
             border: isLight ? '1px solid rgba(60,50,35,0.1)' : '1px solid rgba(255,255,255,0.1)',
@@ -109,7 +111,7 @@ export function EmotionConfig({
 
       {/* Prompt Mode Selector */}
       <div>
-        <div className="flex gap-2 justify-center">
+        <div className="flex gap-2 justify-center" data-tutorial="awareness-emotion-prompts">
           {PROMPT_MODES.map((pMode) => {
             const isActive = promptMode === pMode.id;
             return (

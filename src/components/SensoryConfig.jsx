@@ -63,6 +63,7 @@ export function SensoryConfig({
             <div className="space-y-4">
                 {/* Sakshi I - Witnessing Presence */}
                 <button
+                    data-tutorial="awareness-sakshi-1"
                     onClick={() => setSakshiVersion(1)}
                     className="relative rounded-2xl overflow-hidden border transition-all duration-300 cursor-pointer hover:shadow-lg text-left w-full"
                     style={{
@@ -159,6 +160,7 @@ export function SensoryConfig({
 
                 {/* Sakshi II - Noticing & Labeling (Reflection/Control Panel) */}
                 <button
+                    data-tutorial="awareness-sakshi-2"
                     onClick={() => setSakshiVersion(2)}
                     className="relative rounded-2xl overflow-hidden border transition-all duration-300 cursor-pointer hover:shadow-lg text-left w-full"
                     style={{
@@ -271,7 +273,7 @@ export function SensoryConfig({
                 </div>
 
                 {/* Scene thumbnails grid */}
-                <div className="grid grid-cols-3 gap-3">
+                <div className="grid grid-cols-3 gap-3" data-tutorial="awareness-scene-grid">
                     {AWARENESS_SCENES.map((scene) => (
                         <button
                             key={scene.id}

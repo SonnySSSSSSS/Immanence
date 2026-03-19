@@ -21,6 +21,7 @@ const DEFAULT_ITEMS = ["breath", "integration", "circuit", "awareness", "resonan
   id,
   label: PRACTICE_REGISTRY[id]?.label || id,
   rail: getRailColor(id),
+  descriptor: PRACTICE_REGISTRY[id]?.descriptor || '',
 }));
 
 export function CircuitTrainingSelector({
@@ -219,6 +220,9 @@ export function CircuitTrainingSelector({
                       ? "bg-white/8"
                       : "hover:bg-white/5 active:bg-white/8")
                   }
+                  style={{
+                    borderLeft: item.id === activeId ? `2px solid ${item.rail}` : '2px solid transparent',
+                  }}
                 >
                   <div className="flex items-center gap-3">
                     {/* Color pill */}
@@ -242,18 +246,25 @@ export function CircuitTrainingSelector({
                           maxWidth: '100%',
                         }}
                       >
-                        <div
-                          className={
-                            "text-sm truncate " +
-                            (item.id === activeId ? "font-medium" : "")
-                          }
-                          style={{
-                            fontFamily: 'var(--font-display)',
-                            color: item.id === activeId ? item.rail : 'rgba(255, 255, 255, 0.82)',
-                            lineHeight: 1,
-                          }}
-                        >
-                          {item.label}
+                        <div className="flex flex-col">
+                          <div
+                            className={
+                              "text-sm truncate " +
+                              (item.id === activeId ? "font-medium" : "")
+                            }
+                            style={{
+                              fontFamily: 'var(--font-display)',
+                              color: item.id === activeId ? item.rail : 'rgba(255, 255, 255, 0.82)',
+                              lineHeight: 1,
+                            }}
+                          >
+                            {item.label}
+                          </div>
+                          {item.descriptor && (
+                            <div style={{ fontSize: '9px', color: item.id === activeId ? `${item.rail}` : 'rgba(255,255,255,0.45)', letterSpacing: '0.06em', marginTop: '1px', opacity: item.id === activeId ? 0.8 : 1 }}>
+                              {item.descriptor}
+                            </div>
+                          )}
                         </div>
                       </div>
                     </div>
