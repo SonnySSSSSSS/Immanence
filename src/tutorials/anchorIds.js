@@ -3,6 +3,9 @@ export const ANCHORS = {
 
   HOME_DAILY_CARD: 'home-daily-card',
   HOME_CURRICULUM_CARD: 'home-curriculum-card',
+  HOME_SESSIONS_PANEL: 'home-sessions-panel',
+  HOME_AVATAR_RING: 'home-avatar-ring',
+  HOME_STAGE_PANEL: 'home-stage-panel',
 
   PRACTICE_SELECTOR: 'practice-selector',
   PRACTICE_TUTORIAL_BUTTON: 'tutorial-button',

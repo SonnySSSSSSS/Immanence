@@ -38,6 +38,7 @@ import { useTutorialStore } from "../state/tutorialStore.js";
 import { getProgramDefinition, getProgramLauncher } from "../data/programRegistry.js";
 import { ARCHIVE_TABS, REPORT_DOMAINS } from "./tracking/archiveLinkConstants.js";
 import { TUTORIALS } from "../tutorials/tutorialRegistry.js";
+import { ANCHORS } from "../tutorials/anchorIds.js";
 import { AvatarV3 } from "./avatarV3/AvatarV3.jsx";
 import { useAvatarV3State } from "../state/avatarV3Store.js";
 import { usePathStore } from "../state/pathStore.js";
@@ -639,6 +640,7 @@ function HomeHub({ onSelectSection, activeSection = null, currentStage, previewP
           {/* PROBE:HOMEHUB_SIDE_PANELS_ROLLUP_V1 */}
           {/* LEFT PANEL - Sessions + Active Days */}
           <div
+            data-tutorial={ANCHORS.HOME_SESSIONS_PANEL}
             style={{
               ...sidePanelFramePrimaryRowStyle,
               height: leftRolled ? PANEL_COLLAPSED_H : PANEL_EXPANDED_H,
@@ -699,7 +701,11 @@ function HomeHub({ onSelectSection, activeSection = null, currentStage, previewP
           </div>
 
           {/* CENTER - Bloom Halo + Avatar */}
-          <div className="relative flex items-center justify-center overflow-visible" style={{ flex: '1 1 auto', minWidth: 0 }}>
+          <div
+            data-tutorial={ANCHORS.HOME_AVATAR_RING}
+            className="relative flex items-center justify-center overflow-visible"
+            style={{ flex: '1 1 auto', minWidth: 0 }}
+          >
             {/* Bloom halo - EXPANDED in Sanctuary mode to fill space */}
             <div
               className="absolute transition-all duration-500"
@@ -740,6 +746,7 @@ function HomeHub({ onSelectSection, activeSection = null, currentStage, previewP
 
           {/* RIGHT PANEL - Completion + On-Time + View Report */}
           <div
+            data-tutorial={ANCHORS.HOME_STAGE_PANEL}
             style={{
               ...sidePanelFramePrimaryRowStyle,
               height: rightRolled ? PANEL_COLLAPSED_H : PANEL_EXPANDED_H,
@@ -1020,19 +1027,21 @@ function HomeHub({ onSelectSection, activeSection = null, currentStage, previewP
             </div>
           )}
           <div className="w-full">
-            <DailyPracticeCard
-              onStartPractice={handleStartPractice}
-              onViewCurriculum={openCurriculumHub}
-              onNavigate={handleSelectSection}
-              hasPersistedCurriculumData={hasPersistedCurriculumData}
-              onboardingComplete={curriculumOnboardingComplete}
-              practiceTimeSlots={practiceTimeSlots}
-              onStartSetup={handleOpenCurriculumSetup}
-              isTutorialTarget={isDailyCardTutorialTarget}
-              showPerLegCompletion={false}
-              showDailyCompletionNotice={true}
-              showSessionMeter={false}
-            />
+            <div data-tutorial={ANCHORS.HOME_DAILY_CARD}>
+              <DailyPracticeCard
+                onStartPractice={handleStartPractice}
+                onViewCurriculum={openCurriculumHub}
+                onNavigate={handleSelectSection}
+                hasPersistedCurriculumData={hasPersistedCurriculumData}
+                onboardingComplete={curriculumOnboardingComplete}
+                practiceTimeSlots={practiceTimeSlots}
+                onStartSetup={handleOpenCurriculumSetup}
+                isTutorialTarget={isDailyCardTutorialTarget}
+                showPerLegCompletion={false}
+                showDailyCompletionNotice={true}
+                showSessionMeter={false}
+              />
+            </div>
           </div>
         </div>
 

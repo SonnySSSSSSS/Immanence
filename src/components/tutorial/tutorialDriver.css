@@ -13,6 +13,41 @@
   color: rgba(245, 247, 250, 0.96);
 }
 
+/* Spotlight: make the active target feel undimmed and clearly focused. */
+.driver-active-element {
+  position: relative !important;
+  z-index: 10001 !important; /* driver overlay is 10000 */
+  outline: 3px solid rgba(160, 255, 230, 0.40);
+  outline-offset: 6px;
+  box-shadow:
+    0 26px 90px rgba(0, 0, 0, 0.55),
+    0 0 0 1px rgba(255, 255, 255, 0.10),
+    0 0 34px rgba(120, 255, 210, 0.30);
+  filter: brightness(1.28) contrast(1.10) saturate(1.12);
+}
+
+.driver-active-element,
+.driver-active-element * {
+  transition:
+    filter 200ms ease,
+    outline-color 200ms ease,
+    box-shadow 200ms ease;
+}
+
+/* Optional plate behind the active element to counter translucent/blur cards that still look dim. */
+.driver-active-element::before {
+  content: "";
+  position: absolute;
+  inset: -10px;
+  border-radius: inherit;
+  pointer-events: none;
+  z-index: -1;
+  background: rgba(6, 10, 14, 0.28);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.06);
+}
+
 .immanence-driver-popover .driver-popover-arrow,
 .immanence-driver-popover .driver-popover-title,
 .immanence-driver-popover .driver-popover-footer {

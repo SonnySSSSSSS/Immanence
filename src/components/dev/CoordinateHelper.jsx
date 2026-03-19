@@ -11,8 +11,47 @@ function resolveTutorialPickFromEvent(e, overlayRef, debugMode = true) {
   const x = e.clientX;
   const y = e.clientY;
 
-  const stack = document.elementsFromPoint(x, y);
   const overlayEl = overlayRef?.current;
+
+  // Robustness: when a full-screen pick overlay is active, some browsers will only return that
+  // overlay (and its ancestors) from elementsFromPoint because it participates in hit-testing.
+  // Temporarily removing the overlay from hit-testing ensures we can see underlying anchors.
+  const resolveElementsFromPoint = () => {
+    if (!(overlayEl instanceof HTMLElement)) {
+      return document.elementsFromPoint(x, y);
+    }
+
+    const prevPointerEvents = overlayEl.style.pointerEvents;
+    const prevVisibility = overlayEl.style.visibility;
+    overlayEl.style.pointerEvents = 'none';
+    try {
+      overlayEl.style.visibility = 'hidden';
+      return document.elementsFromPoint(x, y);
+    } finally {
+      overlayEl.style.pointerEvents = prevPointerEvents;
+      overlayEl.style.visibility = prevVisibility;
+    }
+  };
+
+  const stack = resolveElementsFromPoint();
+  const anchorCount = document.querySelectorAll('[data-tutorial], [data-guide-step]').length;
+  const anchorsInDomSample = (() => {
+    const sample = [];
+    const push = (kind, value) => {
+      if (!value) return;
+      if (sample.length >= 8) return;
+      sample.push(`${kind}:${value}`);
+    };
+
+    document.querySelectorAll('[data-tutorial]').forEach((el) => {
+      push('tutorial', el.getAttribute('data-tutorial'));
+    });
+    document.querySelectorAll('[data-guide-step]').forEach((el) => {
+      push('guide', el.getAttribute('data-guide-step'));
+    });
+
+    return sample;
+  })();
 
   // Debug instrumentation: log what we're seeing at this point
   if (debugMode) {
@@ -69,7 +108,7 @@ function resolveTutorialPickFromEvent(e, overlayRef, debugMode = true) {
   let anchorSelector = null;
 
   for (const node of stack) {
-    if (!(node instanceof HTMLElement)) continue;
+    if (!(node instanceof Element)) continue;
 
     // Skip our own pick overlay
     if (overlayEl) {
@@ -97,6 +136,48 @@ function resolveTutorialPickFromEvent(e, overlayRef, debugMode = true) {
     if (!bestHit) bestHit = node;
   }
 
+  // Fallback: if we couldn't find an anchor from the hit-test stack, search all known anchors by
+  // bounding box. This is slower but more reliable across browsers/stacking quirks.
+  if (!anchorId) {
+    const candidates = [];
+
+    const considerCandidate = (el, attrName) => {
+      if (!(el instanceof Element)) return;
+      const value = el.getAttribute(attrName);
+      if (!value) return;
+
+      const rect = el.getBoundingClientRect();
+      if (!Number.isFinite(rect.left) || !Number.isFinite(rect.top)) return;
+      if (rect.width <= 0 || rect.height <= 0) return;
+
+      if (x < rect.left || x > rect.right || y < rect.top || y > rect.bottom) return;
+
+      const selector =
+        attrName === 'data-guide-step'
+          ? `[data-guide-step="${value}"]`
+          : `[data-tutorial="${value}"]`;
+
+      candidates.push({
+        anchorEl: el,
+        anchorId: value,
+        selector,
+        area: rect.width * rect.height,
+      });
+    };
+
+    document.querySelectorAll('[data-tutorial]').forEach((el) => considerCandidate(el, 'data-tutorial'));
+    document.querySelectorAll('[data-guide-step]').forEach((el) => considerCandidate(el, 'data-guide-step'));
+
+    candidates.sort((a, b) => a.area - b.area);
+    const picked = candidates[0] || null;
+
+    if (picked) {
+      anchorEl = picked.anchorEl;
+      anchorId = picked.anchorId;
+      anchorSelector = picked.selector;
+    }
+  }
+
   const rect = anchorEl ? anchorEl.getBoundingClientRect() : null;
 
   return {
@@ -106,6 +187,9 @@ function resolveTutorialPickFromEvent(e, overlayRef, debugMode = true) {
     y,
     anchorId: anchorId || null,
     anchorSelector: anchorSelector || null,
+    anchorCount,
+    anchorsInDomSample,
+    stackDepth: Array.isArray(stack) ? stack.length : 0,
     hit: bestHit
       ? {
           tag: bestHit.tagName,
@@ -231,6 +315,9 @@ export function CoordinateHelper({ children, className = "", label = "" }) {
                     <div>x: {lastTutorialPick.x}, y: {lastTutorialPick.y}</div>
                     <div>anchor: {lastTutorialPick.anchorId || "(none)"}</div>
                     <div>selector: {lastTutorialPick.anchorSelector || "(none)"}</div>
+                    <div>anchors in DOM: {typeof lastTutorialPick.anchorCount === 'number' ? lastTutorialPick.anchorCount : '(n/a)'}</div>
+                    <div>anchors sample: {Array.isArray(lastTutorialPick.anchorsInDomSample) && lastTutorialPick.anchorsInDomSample.length > 0 ? lastTutorialPick.anchorsInDomSample.join(', ') : '(none)'}</div>
+                    <div>stack depth: {typeof lastTutorialPick.stackDepth === 'number' ? lastTutorialPick.stackDepth : '(n/a)'}</div>
                 </div>
             )}
 

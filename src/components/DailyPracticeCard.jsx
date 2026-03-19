@@ -1784,7 +1784,6 @@ export function DailyPracticeCard({ onStartPractice, onViewCurriculum, onNavigat
     if (!todaysPractice) {
         return (
             <div
-                data-tutorial="home-daily-card"
                 className={`w-full relative transition-all duration-700 ease-in-out${isTutorialTarget ? ' tutorial-target' : ''}`}
                 style={{
                     width: '100%',
@@ -1969,7 +1968,6 @@ export function DailyPracticeCard({ onStartPractice, onViewCurriculum, onNavigat
 
     return (
             <div
-                data-tutorial="home-daily-card"
                 className={`dpc-root w-full relative transition-all duration-700 ease-in-out${isTutorialTarget ? ' tutorial-target' : ''}`}
                 style={{
                     width: '100%',
