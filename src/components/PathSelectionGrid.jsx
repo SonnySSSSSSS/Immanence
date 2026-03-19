@@ -164,6 +164,7 @@ export function PathSelectionGrid({ onPathSelected }) {
             <style>{SLIDE_IN_LEFT}{SLIDE_IN_RIGHT}{PSG_STYLES}</style>
             <div
                 className="psg-root relative overflow-hidden border"
+                data-tutorial="navigation-programs-panel"
                 data-card="true"
                 data-card-id="pathGrid"
                 style={{
@@ -222,7 +223,11 @@ export function PathSelectionGrid({ onPathSelected }) {
                     </div>
 
                     {/* Stage indicator dots */}
-                    <div className="flex items-center gap-[7px] pt-1" style={{ flexShrink: 0 }}>
+                    <div
+                        data-tutorial="navigation-stage-dots"
+                        className="flex items-center gap-[7px] pt-1"
+                        style={{ flexShrink: 0 }}
+                    >
                         {STAGE_SECTIONS.map((s, i) => {
                             const isActive = i === activeStageIndex;
                             return (

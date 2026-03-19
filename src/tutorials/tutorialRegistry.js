@@ -143,11 +143,96 @@ export const TUTORIALS = {
         placement: 'top',
       },
       {
+        id: 'navigation-programs-panel',
+        title: 'Programs',
+        body: 'Programs are guided practice schedules. Pick one to commit to a cadence and let the system structure your next sessions.',
+        target: tutorialSelector(ANCHORS.NAVIGATION_PROGRAMS_PANEL),
+        placement: 'top',
+      },
+      {
+        id: 'navigation-stage-dots',
+        title: 'Program Levels',
+        body: 'These dots switch the level of programs you are viewing. Move through Seedling to Stellar to find what matches your current capacity.',
+        target: tutorialSelector(ANCHORS.NAVIGATION_STAGE_DOTS),
+        placement: 'left',
+      },
+      {
+        id: 'navigation-active-path-actions',
+        title: 'Restart Or Abandon',
+        body: 'Restart re-begins the current path from day 1. Abandon clears it entirely so you can choose a different program.',
+        target: tutorialSelector(ANCHORS.NAVIGATION_ACTIVE_PATH_ACTIONS),
+        placement: 'bottom',
+        waitFor: {
+          target: tutorialSelector(ANCHORS.NAVIGATION_ACTIVE_PATH_ACTIONS),
+          timeoutMs: 800,
+          intervalMs: 50,
+          optional: true,
+        },
+      },
+      {
+        id: 'navigation-program-summary',
+        title: 'Program Summary',
+        body: 'This block summarizes your active program schedule and today’s status: active days, times, legs per day, and what is next.',
+        target: tutorialSelector(ANCHORS.NAVIGATION_PROGRAM_SUMMARY),
+        placement: 'top',
+        waitFor: {
+          target: tutorialSelector(ANCHORS.NAVIGATION_PROGRAM_SUMMARY),
+          timeoutMs: 800,
+          intervalMs: 50,
+          optional: true,
+        },
+      },
+      {
         id: 'navigation-global-help',
         title: 'Tutorial Access',
         body: 'Use the global help button whenever you want to revisit this section guide.',
         target: tutorialSelector(ANCHORS.GLOBAL_TUTORIAL_BUTTON),
         placement: 'left',
+      },
+    ],
+  },
+
+  'navigation:programs': {
+    title: 'Programs',
+    steps: [
+      {
+        id: 'navigation-programs-panel',
+        title: 'Programs',
+        body: 'Programs are guided practice schedules. Pick one to commit to a cadence and let the system structure your next sessions.',
+        target: tutorialSelector(ANCHORS.NAVIGATION_PROGRAMS_PANEL),
+        placement: 'top',
+      },
+    ],
+  },
+
+  'navigation:stage-dots': {
+    title: 'Program Levels',
+    steps: [
+      {
+        id: 'navigation-stage-dots',
+        title: 'Program Levels',
+        body: 'These dots switch the level of programs you are viewing. Move through Seedling to Stellar to find what matches your current capacity.',
+        target: tutorialSelector(ANCHORS.NAVIGATION_STAGE_DOTS),
+        placement: 'left',
+      },
+    ],
+  },
+
+  'navigation:active-path-actions': {
+    title: 'Active Path Actions',
+    steps: [
+      {
+        id: 'navigation-active-path-actions',
+        title: 'Restart Or Abandon',
+        body: 'Restart re-begins the current path from day 1. Abandon clears it entirely so you can choose a different program.',
+        target: tutorialSelector(ANCHORS.NAVIGATION_ACTIVE_PATH_ACTIONS),
+        placement: 'bottom',
+        waitFor: {
+          target: tutorialSelector(ANCHORS.NAVIGATION_ACTIVE_PATH_ACTIONS),
+          timeoutMs: 800,
+          intervalMs: 50,
+          optional: true,
+        },
       },
     ],
   },

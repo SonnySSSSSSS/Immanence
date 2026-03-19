@@ -79,6 +79,7 @@ export function NavigationSection({ currentStage, previewPath, onNavigate, isPra
       {/* Active path actions (only when an active path exists) */}
       {activePath && (
         <div
+          data-tutorial="navigation-active-path-actions"
           className="flex flex-col items-center px-4 py-3 rounded-2xl"
           style={{
             gap: '6px',

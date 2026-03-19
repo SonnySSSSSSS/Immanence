@@ -269,6 +269,7 @@ export function ActivePathState() {
             </div>
 
             <div
+                data-tutorial="navigation-program-summary"
                 className="border rounded-2xl p-4 space-y-2"
                 style={{
                     background: isLight ? 'rgba(180, 140, 90, 0.08)' : 'var(--accent-10)',

@@ -21,6 +21,10 @@ export const ANCHORS = {
   WISDOM_SECTION_ROOT: 'wisdom-root',
   APPLICATION_SECTION_ROOT: 'application-root',
   NAVIGATION_SECTION_ROOT: 'navigation-root',
+  NAVIGATION_PROGRAMS_PANEL: 'navigation-programs-panel',
+  NAVIGATION_STAGE_DOTS: 'navigation-stage-dots',
+  NAVIGATION_ACTIVE_PATH_ACTIONS: 'navigation-active-path-actions',
+  NAVIGATION_PROGRAM_SUMMARY: 'navigation-program-summary',
 };
 
 export const GUIDE_STEPS = {
