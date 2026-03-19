@@ -1,4 +1,5 @@
 import React, { useState, useRef, useCallback } from "react";
+import { useDisplayModeStore } from "../../state/displayModeStore.js";
 import { SacredTimeSlider } from "../SacredTimeSlider.jsx";
 import { TrajectoryCard } from "../TrajectoryCard.jsx";
 import BreathWaveform from "../BreathWaveform.jsx";
@@ -32,10 +33,7 @@ function BreathPracticeCard({
   onToggleTrajectory,
   onOpenTrajectory,
 }) {
-  // Sub-method for breath mode: expansion (sliders) vs traditional (presets)
   const [breathMethod, setBreathMethod] = useState("expansion");
-
-  // Focus / Explore progressive disclosure
   const [mode, setMode] = useState("focus");
   const isFocusMode = mode === "focus";
   const editButtonRef = useRef(null);
@@ -43,79 +41,97 @@ function BreathPracticeCard({
   const restSec = Number(stillnessConfig?.restSec) || 15;
   const stillnessPreDelaySec = Number(stillnessConfig?.preDelaySec) || 0;
   const stillnessIntensity = String(stillnessConfig?.focusIntensity || "medium").toLowerCase();
-  // Label and prompt text sourced from src/data/stillnessIntensityMeta.js (single source of truth).
   const stillnessIntensityMeta = STILLNESS_INTENSITY_META[stillnessIntensity] || STILLNESS_INTENSITY_META.medium;
   const stillnessIntensityLabel = stillnessIntensityMeta.label;
   const stillnessPrompt = stillnessIntensityMeta.prompt;
 
-  // Determine tutorial ID based on current submode
+  // Light/dark mode awareness (2A)
+  const colorScheme = useDisplayModeStore(s => s.colorScheme);
+  const isLight = colorScheme === 'light';
+
+  // Derived color tokens (2A)
+  const surfaceBg = isLight ? 'rgba(0,0,0,0.04)' : 'rgba(255,255,255,0.03)';
+  const surfaceBorder = isLight ? 'rgba(0,0,0,0.10)' : 'rgba(255,255,255,0.1)';
+  const labelColor = isLight ? 'rgba(60,40,0,0.50)' : 'rgba(255,255,255,0.4)';
+  const valueColor = isLight ? 'rgba(30,20,0,0.85)' : 'rgba(255,255,255,0.9)';
+  const amberBg = isLight ? 'rgba(140,100,0,0.12)' : 'rgba(212,175,55,0.12)';
+  const amberBgHover = isLight ? 'rgba(140,100,0,0.20)' : 'rgba(212,175,55,0.20)';
+  const amberBorder = isLight ? 'rgba(140,100,0,0.30)' : 'rgba(212,175,55,0.3)';
+  const amberBorderHover = isLight ? 'rgba(140,100,0,0.50)' : 'rgba(212,175,55,0.5)';
+  const amberColor = isLight ? 'rgba(100,65,0,0.90)' : 'rgba(212,175,55,0.9)';
+  const amberInputColor = isLight ? 'rgba(100,65,0,0.85)' : 'rgba(212,175,55,0.8)';
+  const amberActiveBg = isLight ? 'rgba(140,100,0,0.18)' : 'rgba(212,175,55,0.18)';
+  const amberActiveBorder = isLight ? 'rgba(140,100,0,0.50)' : 'rgba(212,175,55,0.5)';
+  const amberActiveColor = isLight ? 'rgba(100,65,0,0.95)' : 'rgba(212,175,55,0.95)';
+  const inactiveBorder = isLight ? 'rgba(0,0,0,0.15)' : 'rgba(255,255,255,0.18)';
+  const inactiveColor = isLight ? 'rgba(60,40,0,0.70)' : 'rgba(255,255,255,0.65)';
+  const inactiveBg = isLight ? 'rgba(0,0,0,0.02)' : 'rgba(255,255,255,0.03)';
+  const promptColor = isLight ? 'rgba(30,20,0,0.75)' : 'rgba(255,255,255,0.78)';
+  const lockedColor = isLight ? 'rgba(60,40,0,0.60)' : 'rgba(255,255,255,0.6)';
+  const stepperDisabledColor = isLight ? 'rgba(0,0,0,0.15)' : 'rgba(255,255,255,0.2)';
+
   const tutorialId = breathSubmode === 'stillness' ? 'practice:stillness' : 'practice:breath';
 
-  // Wrapped start handler: reset mode to focus, then call onStart
   const handleStart = () => {
     setMode("focus");
     onStart?.();
   };
 
-  // Imperative edit handler using ref to bypass event capture issues
+  // 2B: onClick instead of onMouseDown, with pointer stop propagation
   const handleEditClick = useCallback(() => {
     setMode("explore");
   }, []);
 
-  // Collapsed summary component (focus mode)
+  // Collapsed summary (focus mode)
   const CollapsedSummary = () => (
     <div style={{
-      background: 'rgba(255, 255, 255, 0.03)',
-      border: '1px solid rgba(255, 255, 255, 0.1)',
+      background: surfaceBg,
+      border: `1px solid ${surfaceBorder}`,
       borderRadius: '12px',
       padding: '12px',
       marginBottom: '12px',
     }}>
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '10px', marginBottom: '10px' }}>
-        {/* Method */}
         <div>
-          <div style={{ fontSize: '9px', color: 'rgba(255, 255, 255, 0.4)', marginBottom: '4px', textTransform: 'uppercase', letterSpacing: '0.08em' }}>Method</div>
-          <div style={{ fontSize: '12px', color: 'rgba(255, 255, 255, 0.9)', fontWeight: 500 }}>
+          <div style={{ fontSize: '9px', color: labelColor, marginBottom: '4px', textTransform: 'uppercase', letterSpacing: '0.08em' }}>Method</div>
+          <div style={{ fontSize: '12px', color: valueColor, fontWeight: 500 }}>
             {breathSubmode === 'stillness' ? 'Stillness' : (breathMethod === 'expansion' ? 'Expansion' : 'Traditional')}
           </div>
         </div>
-        {/* Cycle */}
         <div>
-          <div style={{ fontSize: '9px', color: 'rgba(255, 255, 255, 0.4)', marginBottom: '4px', textTransform: 'uppercase', letterSpacing: '0.08em' }}>
+          <div style={{ fontSize: '9px', color: labelColor, marginBottom: '4px', textTransform: 'uppercase', letterSpacing: '0.08em' }}>
             {breathSubmode === 'stillness' ? 'Focus/Rest' : 'Cycle'}
           </div>
-          <div style={{ fontSize: '12px', color: 'rgba(255, 255, 255, 0.9)', fontWeight: 500 }}>
+          <div style={{ fontSize: '12px', color: valueColor, fontWeight: 500 }}>
             {breathSubmode === 'stillness'
               ? `${focusSec}s / ${restSec}s`
               : `${pattern?.inhale ?? 4}–${pattern?.hold1 ?? 0}–${pattern?.exhale ?? 4}–${pattern?.hold2 ?? 0}`}
           </div>
         </div>
-        {/* Duration */}
         <div>
-          <div style={{ fontSize: '9px', color: 'rgba(255, 255, 255, 0.4)', marginBottom: '4px', textTransform: 'uppercase', letterSpacing: '0.08em' }}>
+          <div style={{ fontSize: '9px', color: labelColor, marginBottom: '4px', textTransform: 'uppercase', letterSpacing: '0.08em' }}>
             {breathSubmode === 'stillness' ? 'Intensity' : 'Duration'}
           </div>
-          <div style={{ fontSize: '12px', color: 'rgba(255, 255, 255, 0.9)', fontWeight: 500 }}>
+          <div style={{ fontSize: '12px', color: valueColor, fontWeight: 500 }}>
             {breathSubmode === 'stillness' ? stillnessIntensityLabel : `${duration} min`}
           </div>
         </div>
       </div>
       {breathSubmode === 'stillness' && (
-        <div
-          style={{
-            fontSize: '11px',
-            color: 'rgba(255,255,255,0.68)',
-            marginBottom: '10px',
-          }}
-        >
+        <div style={{
+          fontSize: '11px',
+          color: isLight ? 'rgba(30,20,0,0.65)' : 'rgba(255,255,255,0.68)',
+          marginBottom: '10px',
+        }}>
           Pre-delay {stillnessPreDelaySec}s
         </div>
       )}
-      {/* Edit Button - use onMouseDown to bypass capture-phase click interception */}
+      {/* Edit Button — 2B: onClick + onPointerDown stop */}
       <button
         ref={editButtonRef}
         type="button"
-        onMouseDown={handleEditClick}
+        onClick={handleEditClick}
+        onPointerDown={(e) => e.stopPropagation()}
         data-tutorial={ANCHORS.FOUNDATIONS_EDIT}
         disabled={breathSubmode === 'stillness' && isStillnessLocked}
         style={{
@@ -125,10 +141,10 @@ function BreathPracticeCard({
           fontWeight: 600,
           letterSpacing: '0.08em',
           textTransform: 'uppercase',
-          background: 'rgba(212, 175, 55, 0.12)',
-          border: '1px solid rgba(212, 175, 55, 0.3)',
+          background: amberBg,
+          border: `1px solid ${amberBorder}`,
           borderRadius: '8px',
-          color: 'rgba(212, 175, 55, 0.9)',
+          color: amberColor,
           cursor: breathSubmode === 'stillness' && isStillnessLocked ? 'not-allowed' : 'pointer',
           fontFamily: 'var(--font-display)',
           transition: 'all 200ms',
@@ -137,12 +153,12 @@ function BreathPracticeCard({
           opacity: breathSubmode === 'stillness' && isStillnessLocked ? 0.5 : 1,
         }}
         onMouseEnter={(e) => {
-          e.currentTarget.style.background = 'rgba(212, 175, 55, 0.2)';
-          e.currentTarget.style.borderColor = 'rgba(212, 175, 55, 0.5)';
+          e.currentTarget.style.background = amberBgHover;
+          e.currentTarget.style.borderColor = amberBorderHover;
         }}
         onMouseLeave={(e) => {
-          e.currentTarget.style.background = 'rgba(212, 175, 55, 0.12)';
-          e.currentTarget.style.borderColor = 'rgba(212, 175, 55, 0.3)';
+          e.currentTarget.style.background = amberBg;
+          e.currentTarget.style.borderColor = amberBorder;
         }}
       >
         Edit
@@ -152,32 +168,23 @@ function BreathPracticeCard({
 
   return (
     <div className="relative px-4 sm:px-8 animate-in fade-in duration-300" data-tutorial={ANCHORS.FOUNDATIONS_ROOT}>
-      {/* HEADER - using shared component */}
       <PracticeMenuHeader
         title={practiceId === 'breath' ? undefined : label}
         tutorialId={tutorialId}
         showTutorial={true}
         marginBottom={practiceId === 'breath' ? '0px' : '24px'}
       >
-        {/* Top Level: Breath vs Stillness - Now rendered as glass buttons outside card */}
       </PracticeMenuHeader>
 
-      {/* Dynamic Config Panel */}
       <div className="min-h-[100px]" style={{ marginBottom: practiceId === 'breath' ? '20px' : '32px' }}>
         {/* Focus Mode: Collapsed Summary */}
         {isFocusMode && practiceId === 'breath' && (
-          <div
-            className="relative z-20"
-            style={{
-              marginBottom: '20px',
-              pointerEvents: "auto",
-            }}
-          >
+          <div className="relative z-20" style={{ marginBottom: '20px', pointerEvents: "auto" }}>
             <CollapsedSummary />
           </div>
         )}
 
-        {/* Explore Mode: Full Config UI */}
+        {/* Explore Mode: Collapse button */}
         {!isFocusMode && practiceId === 'breath' && (
           <div style={{ marginBottom: '12px' }}>
             <button
@@ -191,22 +198,22 @@ function BreathPracticeCard({
                 fontWeight: 600,
                 letterSpacing: '0.08em',
                 textTransform: 'uppercase',
-                background: 'rgba(212, 175, 55, 0.1)',
-                border: '1px solid rgba(212, 175, 55, 0.25)',
+                background: isLight ? 'rgba(140,100,0,0.10)' : 'rgba(212,175,55,0.1)',
+                border: `1px solid ${isLight ? 'rgba(140,100,0,0.25)' : 'rgba(212,175,55,0.25)'}`,
                 borderRadius: '8px',
-                color: 'rgba(212, 175, 55, 0.85)',
+                color: isLight ? 'rgba(100,65,0,0.85)' : 'rgba(212,175,55,0.85)',
                 cursor: 'pointer',
                 fontFamily: 'var(--font-display)',
                 transition: 'all 200ms',
                 marginBottom: '16px',
               }}
               onMouseEnter={(e) => {
-                e.currentTarget.style.background = 'rgba(212, 175, 55, 0.2)';
-                e.currentTarget.style.borderColor = 'rgba(212, 175, 55, 0.5)';
+                e.currentTarget.style.background = amberBgHover;
+                e.currentTarget.style.borderColor = amberBorderHover;
               }}
               onMouseLeave={(e) => {
-                e.currentTarget.style.background = 'rgba(212, 175, 55, 0.12)';
-                e.currentTarget.style.borderColor = 'rgba(212, 175, 55, 0.3)';
+                e.currentTarget.style.background = isLight ? 'rgba(140,100,0,0.10)' : 'rgba(212,175,55,0.1)';
+                e.currentTarget.style.borderColor = isLight ? 'rgba(140,100,0,0.25)' : 'rgba(212,175,55,0.25)';
               }}
             >
               <svg aria-hidden="true" width="10" height="6" viewBox="0 0 10 6" fill="none" style={{ display: 'inline', marginRight: '5px', verticalAlign: 'middle' }}>
@@ -220,7 +227,7 @@ function BreathPracticeCard({
         {/* Breath Mode Content */}
         {breathSubmode === 'breath' && !isFocusMode && (
           <>
-            {/* Expansion vs Traditional Toggle - first after header */}
+            {/* Expansion vs Traditional Toggle */}
             <div
               data-tutorial={ANCHORS.FOUNDATIONS_BREATH_METHOD}
               className="flex items-center justify-center gap-2"
@@ -243,10 +250,10 @@ function BreathPracticeCard({
                       fontWeight: 700,
                       letterSpacing: '0.12em',
                       textTransform: 'uppercase',
-                      color: isActive ? 'rgba(212, 175, 55, 0.95)' : 'rgba(245, 230, 211, 0.45)',
-                      background: isActive ? 'rgba(212, 175, 55, 0.18)' : 'rgba(255, 255, 255, 0.04)',
-                      border: isActive ? '1px solid rgba(212, 175, 55, 0.5)' : '1px solid rgba(255, 255, 255, 0.12)',
-                      boxShadow: isActive ? '0 0 12px rgba(212, 175, 55, 0.2)' : 'none'
+                      color: isActive ? amberActiveColor : inactiveColor,
+                      background: isActive ? amberActiveBg : inactiveBg,
+                      border: isActive ? `1px solid ${amberActiveBorder}` : `1px solid ${inactiveBorder}`,
+                      boxShadow: isActive ? `0 0 12px ${isLight ? 'rgba(140,100,0,0.20)' : 'rgba(212,175,55,0.2)'}` : 'none',
                     }}
                   >
                     {item.label}
@@ -255,121 +262,217 @@ function BreathPracticeCard({
               })}
             </div>
 
-            {/* Waveform - always visible in breath mode */}
+            {/* Waveform */}
             <div
               data-tutorial={ANCHORS.FOUNDATIONS_BREATH_WAVEFORM}
               className="breath-wave-glow"
               style={{
-                background: 'linear-gradient(135deg, rgba(212, 175, 55, 0.08) 0%, rgba(255, 255, 255, 0.03) 50%, rgba(0, 0, 0, 0.1) 100%)',
+                background: isLight
+                  ? 'linear-gradient(135deg, rgba(140,100,0,0.06) 0%, rgba(0,0,0,0.02) 50%, rgba(0,0,0,0.04) 100%)'
+                  : 'linear-gradient(135deg, rgba(212,175,55,0.08) 0%, rgba(255,255,255,0.03) 50%, rgba(0,0,0,0.1) 100%)',
                 backdropFilter: 'blur(32px) saturate(160%)',
                 WebkitBackdropFilter: 'blur(32px) saturate(160%)',
                 borderRadius: '16px',
                 padding: '16px',
-                border: '1px solid rgba(212, 175, 55, 0.15)',
-                boxShadow: '0 8px 32px rgba(0, 0, 0, 0.4), 0 2px 12px rgba(212, 175, 55, 0.15), inset 0 1px 0 rgba(255, 255, 255, 0.12)',
+                border: `1px solid ${isLight ? 'rgba(140,100,0,0.12)' : 'rgba(212,175,55,0.15)'}`,
+                boxShadow: isLight
+                  ? '0 8px 32px rgba(0,0,0,0.08), 0 2px 12px rgba(140,100,0,0.10)'
+                  : '0 8px 32px rgba(0,0,0,0.4), 0 2px 12px rgba(212,175,55,0.15), inset 0 1px 0 rgba(255,255,255,0.12)',
               }}
             >
               <BreathWaveform pattern={pattern} />
             </div>
 
-            {/* Breath Cycle Header and Input Controls */}
+            {/* Breath Cycle — 2G: stepper inputs */}
             <div data-tutorial={ANCHORS.FOUNDATIONS_BREATH_CYCLE} style={{ marginTop: '24px', marginBottom: '16px' }}>
-              <div
-                style={{
-                  fontSize: '10px',
-                  letterSpacing: '0.12em',
-                  color: 'rgba(255,255,255,0.4)',
-                  marginBottom: '10px',
-                  fontFamily: 'var(--font-display)',
-                  fontWeight: 600,
-                  textTransform: 'uppercase',
-                  textAlign: 'center'
-                }}
-              >
+              <div style={{
+                fontSize: '10px',
+                letterSpacing: '0.12em',
+                color: labelColor,
+                marginBottom: '10px',
+                fontFamily: 'var(--font-display)',
+                fontWeight: 600,
+                textTransform: 'uppercase',
+                textAlign: 'center',
+              }}>
                 Breath Cycle (seconds)
               </div>
-              <div className="flex justify-center gap-6">
+              <div className="flex flex-wrap justify-center" style={{ gap: '8px 10px' }}>
                 {[
-                  { label: 'INHALE', key: 'inhale', min: 1 },
-                  { label: 'HOLD 1', key: 'hold1', min: 0 },
-                  { label: 'EXHALE', key: 'exhale', min: 1 },
-                  { label: 'HOLD 2', key: 'hold2', min: 0 }
-                ].map((phase) => (
-                  <div key={phase.key} className="flex flex-col items-center">
-                    <input
-                      type="number"
-                      min={phase.min}
-                      max="60"
-                      value={pattern?.[phase.key] ?? (phase.min === 1 ? 4 : 0)}
-                      onChange={(e) => {
-                        const val = Math.max(phase.min, Math.min(60, parseInt(e.target.value) || 0));
-                        onPatternChange?.((prev) => ({ ...prev, [phase.key]: val }));
-                      }}
-                      className="breath-input"
-                      style={{
-                        background: 'rgba(255,255,255,0.03)',
-                        border: '1px solid rgba(255,255,255,0.1)',
-                        borderRadius: '6px',
-                        padding: '6px 0',
-                        width: '44px',
-                        color: 'rgba(212, 175, 55, 0.8)',
-                        textAlign: 'center',
-                        fontSize: '16px',
-                        fontWeight: 700,
+                  { label: 'Inhale', key: 'inhale', min: 1, max: 60 },
+                  { label: 'Hold 1', key: 'hold1', min: 0, max: 60 },
+                  { label: 'Exhale', key: 'exhale', min: 1, max: 60 },
+                  { label: 'Hold 2', key: 'hold2', min: 0, max: 60 },
+                ].map((phase) => {
+                  const val = pattern?.[phase.key] ?? (phase.min === 1 ? 4 : 0);
+                  return (
+                    <div key={phase.key} className="flex flex-col items-center">
+                      <label style={{
+                        fontSize: '9px',
+                        color: labelColor,
+                        marginBottom: '4px',
                         fontFamily: 'var(--font-display)',
-                        outline: 'none',
-                        transition: 'all 200ms'
-                      }}
-                    />
-                  </div>
-                ))}
+                        fontWeight: 600,
+                        textTransform: 'uppercase',
+                        letterSpacing: '0.08em',
+                      }}>
+                        {phase.label}
+                      </label>
+                      <div className="flex flex-row items-center">
+                        <button
+                          type="button"
+                          disabled={val <= phase.min}
+                          onClick={() => onPatternChange?.((prev) => ({ ...prev, [phase.key]: Math.max(phase.min, val - 1) }))}
+                          style={{
+                            width: '28px', height: '44px',
+                            border: `1px solid ${surfaceBorder}`,
+                            borderRadius: '6px 0 0 6px',
+                            background: surfaceBg,
+                            color: val <= phase.min ? stepperDisabledColor : amberInputColor,
+                            cursor: val <= phase.min ? 'not-allowed' : 'pointer',
+                            fontSize: '16px', fontWeight: 700,
+                            opacity: val <= phase.min ? 0.35 : 1,
+                          }}
+                        >−</button>
+                        <input
+                          type="number"
+                          min={phase.min}
+                          max={phase.max}
+                          value={val}
+                          onChange={(e) => {
+                            onPatternChange?.((prev) => ({ ...prev, [phase.key]: parseInt(e.target.value, 10) || phase.min }));
+                          }}
+                          onBlur={(e) => {
+                            const clamped = Math.max(phase.min, Math.min(phase.max, parseInt(e.target.value, 10) || phase.min));
+                            onPatternChange?.((prev) => ({ ...prev, [phase.key]: clamped }));
+                          }}
+                          className="breath-input"
+                          style={{
+                            background: surfaceBg,
+                            border: `1px solid ${surfaceBorder}`,
+                            borderLeft: 'none', borderRight: 'none',
+                            borderRadius: 0,
+                            padding: '6px 0',
+                            width: '36px',
+                            height: '44px',
+                            color: amberInputColor,
+                            textAlign: 'center',
+                            fontSize: '16px',
+                            fontWeight: 700,
+                            fontFamily: 'var(--font-display)',
+                            outline: 'none',
+                            transition: 'all 200ms',
+                          }}
+                        />
+                        <button
+                          type="button"
+                          disabled={val >= phase.max}
+                          onClick={() => onPatternChange?.((prev) => ({ ...prev, [phase.key]: Math.min(phase.max, val + 1) }))}
+                          style={{
+                            width: '28px', height: '44px',
+                            border: `1px solid ${surfaceBorder}`,
+                            borderRadius: '0 6px 6px 0',
+                            background: surfaceBg,
+                            color: val >= phase.max ? stepperDisabledColor : amberInputColor,
+                            cursor: val >= phase.max ? 'not-allowed' : 'pointer',
+                            fontSize: '16px', fontWeight: 700,
+                            opacity: val >= phase.max ? 0.35 : 1,
+                          }}
+                        >+</button>
+                      </div>
+                    </div>
+                  );
+                })}
               </div>
             </div>
 
-            <div style={{ marginTop: '8px', marginBottom: '18px' }}>
-              <div
-                style={{
-                  fontSize: '10px',
-                  letterSpacing: '0.12em',
-                  color: 'rgba(255,255,255,0.4)',
-                  marginBottom: '8px',
-                  fontFamily: 'var(--font-display)',
-                  fontWeight: 600,
-                  textTransform: 'uppercase',
-                  textAlign: 'center',
-                }}
-              >
+            {/* 2F: Pre-delay section divider */}
+            <div style={{
+              height: '1px',
+              background: isLight ? 'rgba(0,0,0,0.08)' : 'rgba(255,255,255,0.08)',
+              margin: '12px 0 16px',
+            }} />
+
+            {/* Pre-Delay — 2G: stepper input */}
+            <div style={{ marginBottom: '18px' }}>
+              <div style={{
+                fontSize: '10px',
+                letterSpacing: '0.12em',
+                color: labelColor,
+                marginBottom: '8px',
+                fontFamily: 'var(--font-display)',
+                fontWeight: 600,
+                textTransform: 'uppercase',
+                textAlign: 'center',
+              }}>
                 Pre-Delay (seconds)
               </div>
               <div className="flex justify-center">
-                <input
-                  type="number"
-                  min="0"
-                  max="20"
-                  value={Number.isFinite(Number(breathPreDelaySec)) ? Number(breathPreDelaySec) : 0}
-                  onChange={(e) => {
-                    const val = Math.max(0, Math.min(20, parseInt(e.target.value, 10) || 0));
-                    onBreathPreDelayChange?.(val);
-                  }}
-                  className="breath-input"
-                  style={{
-                    background: 'rgba(255,255,255,0.03)',
-                    border: '1px solid rgba(255,255,255,0.1)',
-                    borderRadius: '6px',
-                    padding: '6px 0',
-                    width: '70px',
-                    color: 'rgba(212, 175, 55, 0.8)',
-                    textAlign: 'center',
-                    fontSize: '16px',
-                    fontWeight: 700,
-                    fontFamily: 'var(--font-display)',
-                    outline: 'none',
-                  }}
-                />
+                <div className="flex flex-row items-center">
+                  <button
+                    type="button"
+                    disabled={Number(breathPreDelaySec) <= 0}
+                    onClick={() => onBreathPreDelayChange?.(Math.max(0, Number(breathPreDelaySec) - 1))}
+                    style={{
+                      width: '44px', height: '44px',
+                      border: `1px solid ${surfaceBorder}`,
+                      borderRadius: '6px 0 0 6px',
+                      background: surfaceBg,
+                      color: Number(breathPreDelaySec) <= 0 ? stepperDisabledColor : amberInputColor,
+                      cursor: Number(breathPreDelaySec) <= 0 ? 'not-allowed' : 'pointer',
+                      fontSize: '18px', fontWeight: 700,
+                      opacity: Number(breathPreDelaySec) <= 0 ? 0.35 : 1,
+                    }}
+                  >−</button>
+                  <input
+                    type="number"
+                    min="0"
+                    max="20"
+                    value={Number.isFinite(Number(breathPreDelaySec)) ? Number(breathPreDelaySec) : 0}
+                    onChange={(e) => {
+                      onBreathPreDelayChange?.(parseInt(e.target.value, 10) || 0);
+                    }}
+                    onBlur={(e) => {
+                      const val = Math.max(0, Math.min(20, parseInt(e.target.value, 10) || 0));
+                      onBreathPreDelayChange?.(val);
+                    }}
+                    className="breath-input"
+                    style={{
+                      background: surfaceBg,
+                      border: `1px solid ${surfaceBorder}`,
+                      borderLeft: 'none', borderRight: 'none',
+                      borderRadius: 0,
+                      padding: '6px 0',
+                      width: '56px',
+                      height: '44px',
+                      color: amberInputColor,
+                      textAlign: 'center',
+                      fontSize: '16px',
+                      fontWeight: 700,
+                      fontFamily: 'var(--font-display)',
+                      outline: 'none',
+                    }}
+                  />
+                  <button
+                    type="button"
+                    disabled={Number(breathPreDelaySec) >= 20}
+                    onClick={() => onBreathPreDelayChange?.(Math.min(20, Number(breathPreDelaySec) + 1))}
+                    style={{
+                      width: '44px', height: '44px',
+                      border: `1px solid ${surfaceBorder}`,
+                      borderRadius: '0 6px 6px 0',
+                      background: surfaceBg,
+                      color: Number(breathPreDelaySec) >= 20 ? stepperDisabledColor : amberInputColor,
+                      cursor: Number(breathPreDelaySec) >= 20 ? 'not-allowed' : 'pointer',
+                      fontSize: '18px', fontWeight: 700,
+                      opacity: Number(breathPreDelaySec) >= 20 ? 0.35 : 1,
+                    }}
+                  >+</button>
+                </div>
               </div>
             </div>
 
-            {/* Traditional Ratios Panel - shown when traditional method selected */}
+            {/* Traditional Ratios Panel */}
             {breathMethod === 'traditional' && (
               <div style={{ marginBottom: '28px' }}>
                 <TraditionalBreathRatios
@@ -380,7 +483,7 @@ function BreathPracticeCard({
               </div>
             )}
 
-            {/* Benchmark Button - only for expansion method */}
+            {/* Benchmark Button */}
             {breathMethod === 'expansion' && (
               <div className="flex justify-center" style={{ marginBottom: '20px' }}>
                 <button
@@ -394,22 +497,22 @@ function BreathPracticeCard({
                     textTransform: 'uppercase',
                     padding: '8px 16px',
                     borderRadius: '8px',
-                    background: 'rgba(212, 175, 55, 0.06)',
-                    border: '1px solid rgba(212, 175, 55, 0.25)',
-                    color: 'rgba(212, 175, 55, 0.85)',
+                    background: isLight ? 'rgba(140,100,0,0.06)' : 'rgba(212,175,55,0.06)',
+                    border: `1px solid ${isLight ? 'rgba(140,100,0,0.25)' : 'rgba(212,175,55,0.25)'}`,
+                    color: isLight ? 'rgba(100,65,0,0.85)' : 'rgba(212,175,55,0.85)',
                     cursor: 'pointer',
                     transition: 'all 200ms',
-                    boxShadow: '0 0 8px rgba(212, 175, 55, 0.1)'
+                    boxShadow: `0 0 8px ${isLight ? 'rgba(140,100,0,0.08)' : 'rgba(212,175,55,0.1)'}`,
                   }}
                   onMouseEnter={(e) => {
-                    e.currentTarget.style.background = 'rgba(212, 175, 55, 0.15)';
-                    e.currentTarget.style.borderColor = 'rgba(212, 175, 55, 0.5)';
-                    e.currentTarget.style.boxShadow = '0 0 16px rgba(212, 175, 55, 0.2)';
+                    e.currentTarget.style.background = isLight ? 'rgba(140,100,0,0.15)' : 'rgba(212,175,55,0.15)';
+                    e.currentTarget.style.borderColor = isLight ? 'rgba(140,100,0,0.50)' : 'rgba(212,175,55,0.5)';
+                    e.currentTarget.style.boxShadow = `0 0 16px ${isLight ? 'rgba(140,100,0,0.18)' : 'rgba(212,175,55,0.2)'}`;
                   }}
                   onMouseLeave={(e) => {
-                    e.currentTarget.style.background = 'rgba(212, 175, 55, 0.08)';
-                    e.currentTarget.style.borderColor = 'rgba(212, 175, 55, 0.3)';
-                    e.currentTarget.style.boxShadow = '0 0 8px rgba(212, 175, 55, 0.1)';
+                    e.currentTarget.style.background = isLight ? 'rgba(140,100,0,0.06)' : 'rgba(212,175,55,0.08)';
+                    e.currentTarget.style.borderColor = isLight ? 'rgba(140,100,0,0.25)' : 'rgba(212,175,55,0.3)';
+                    e.currentTarget.style.boxShadow = `0 0 8px ${isLight ? 'rgba(140,100,0,0.08)' : 'rgba(212,175,55,0.1)'}`;
                   }}
                 >
                   ✦ Measure Capacity
@@ -481,7 +584,7 @@ function BreathPracticeCard({
                 className="type-caption text-center"
                 style={{
                   marginBottom: '16px',
-                  color: 'rgba(255,255,255,0.6)',
+                  color: lockedColor,
                   letterSpacing: '0.1em',
                   textTransform: 'uppercase',
                 }}
@@ -496,7 +599,7 @@ function BreathPracticeCard({
                 style={{
                   fontSize: '10px',
                   letterSpacing: '0.12em',
-                  color: 'rgba(255,255,255,0.4)',
+                  color: labelColor,
                   marginBottom: '10px',
                   fontFamily: 'var(--font-display)',
                   fontWeight: 600,
@@ -519,9 +622,9 @@ function BreathPracticeCard({
                         minWidth: '88px',
                         padding: '8px 10px',
                         borderRadius: '999px',
-                        border: active ? '1px solid rgba(212, 175, 55, 0.6)' : '1px solid rgba(255, 255, 255, 0.18)',
-                        background: active ? 'rgba(212, 175, 55, 0.15)' : 'rgba(255, 255, 255, 0.03)',
-                        color: active ? 'rgba(212, 175, 55, 0.95)' : 'rgba(255, 255, 255, 0.65)',
+                        border: active ? `1px solid ${amberActiveBorder}` : `1px solid ${inactiveBorder}`,
+                        background: active ? amberActiveBg : inactiveBg,
+                        color: active ? amberActiveColor : inactiveColor,
                         textTransform: 'uppercase',
                         letterSpacing: '0.1em',
                         fontSize: '10px',
@@ -536,11 +639,25 @@ function BreathPracticeCard({
                   );
                 })}
               </div>
+
+              {/* 2F: Guidance heading above stillness prompt */}
+              <div style={{
+                fontSize: '9px',
+                letterSpacing: '0.10em',
+                color: labelColor,
+                textTransform: 'uppercase',
+                fontFamily: 'var(--font-display)',
+                fontWeight: 600,
+                textAlign: 'center',
+                marginTop: '10px',
+                marginBottom: '4px',
+              }}>
+                Guidance
+              </div>
               <div
                 className="type-body text-center"
                 style={{
-                  marginTop: '12px',
-                  color: 'rgba(255,255,255,0.78)',
+                  color: promptColor,
                   fontSize: '13px',
                 }}
               >
@@ -548,10 +665,11 @@ function BreathPracticeCard({
               </div>
             </div>
 
+            {/* Stillness timing — 2G: stepper inputs */}
             <div
               data-tutorial={ANCHORS.FOUNDATIONS_STILLNESS_TIMING}
-              className="flex justify-center gap-6"
-              style={{ marginBottom: '18px' }}
+              className="flex flex-wrap justify-center"
+              style={{ gap: '8px 12px', marginBottom: '18px' }}
             >
               {[
                 { label: 'Focus', key: 'focusSec', value: focusSec, min: 5, max: 300 },
@@ -559,43 +677,79 @@ function BreathPracticeCard({
                 { label: 'Pre-Delay', key: 'preDelaySec', value: stillnessPreDelaySec, min: 0, max: 20 },
               ].map((field) => (
                 <div key={field.key} className="flex flex-col items-center">
-                  <label
-                    style={{
-                      fontSize: '9px',
-                      letterSpacing: '0.12em',
-                      color: 'rgba(255,255,255,0.4)',
-                      marginBottom: '8px',
-                      fontFamily: 'var(--font-display)',
-                      fontWeight: 600,
-                      textTransform: 'uppercase',
-                    }}
-                  >
+                  <label style={{
+                    fontSize: '9px',
+                    letterSpacing: '0.12em',
+                    color: labelColor,
+                    marginBottom: '4px',
+                    fontFamily: 'var(--font-display)',
+                    fontWeight: 600,
+                    textTransform: 'uppercase',
+                  }}>
                     {field.label}
                   </label>
-                  <input
-                    type="number"
-                    min={field.min}
-                    max={field.max}
-                    disabled={isStillnessLocked}
-                    value={field.value}
-                    onChange={(e) => {
-                      const val = Math.max(field.min, Math.min(field.max, parseInt(e.target.value, 10) || 0));
-                      onStillnessConfigChange?.({ [field.key]: val });
-                    }}
-                    style={{
-                      background: 'rgba(255,255,255,0.03)',
-                      border: '1px solid rgba(255,255,255,0.1)',
-                      borderRadius: '6px',
-                      padding: '8px 0',
-                      width: '64px',
-                      color: 'var(--accent-color)',
-                      textAlign: 'center',
-                      fontSize: '18px',
-                      fontWeight: 700,
-                      fontFamily: 'var(--font-display)',
-                      opacity: isStillnessLocked ? 0.6 : 1,
-                    }}
-                  />
+                  <div className="flex flex-row items-center">
+                    <button
+                      type="button"
+                      disabled={isStillnessLocked || field.value <= field.min}
+                      onClick={() => onStillnessConfigChange?.({ [field.key]: Math.max(field.min, field.value - 1) })}
+                      style={{
+                        width: '36px', height: '44px',
+                        border: `1px solid ${surfaceBorder}`,
+                        borderRadius: '6px 0 0 6px',
+                        background: surfaceBg,
+                        color: (isStillnessLocked || field.value <= field.min) ? stepperDisabledColor : 'var(--accent-color)',
+                        cursor: (isStillnessLocked || field.value <= field.min) ? 'not-allowed' : 'pointer',
+                        fontSize: '16px', fontWeight: 700,
+                        opacity: (isStillnessLocked || field.value <= field.min) ? 0.35 : 1,
+                      }}
+                    >−</button>
+                    <input
+                      type="number"
+                      min={field.min}
+                      max={field.max}
+                      disabled={isStillnessLocked}
+                      value={field.value}
+                      onChange={(e) => {
+                        onStillnessConfigChange?.({ [field.key]: parseInt(e.target.value, 10) || field.min });
+                      }}
+                      onBlur={(e) => {
+                        const val = Math.max(field.min, Math.min(field.max, parseInt(e.target.value, 10) || field.min));
+                        onStillnessConfigChange?.({ [field.key]: val });
+                      }}
+                      className="breath-input"
+                      style={{
+                        background: surfaceBg,
+                        border: `1px solid ${surfaceBorder}`,
+                        borderLeft: 'none', borderRight: 'none',
+                        borderRadius: 0,
+                        padding: '8px 0',
+                        width: '48px',
+                        height: '44px',
+                        color: 'var(--accent-color)',
+                        textAlign: 'center',
+                        fontSize: '18px',
+                        fontWeight: 700,
+                        fontFamily: 'var(--font-display)',
+                        opacity: isStillnessLocked ? 0.6 : 1,
+                      }}
+                    />
+                    <button
+                      type="button"
+                      disabled={isStillnessLocked || field.value >= field.max}
+                      onClick={() => onStillnessConfigChange?.({ [field.key]: Math.min(field.max, field.value + 1) })}
+                      style={{
+                        width: '36px', height: '44px',
+                        border: `1px solid ${surfaceBorder}`,
+                        borderRadius: '0 6px 6px 0',
+                        background: surfaceBg,
+                        color: (isStillnessLocked || field.value >= field.max) ? stepperDisabledColor : 'var(--accent-color)',
+                        cursor: (isStillnessLocked || field.value >= field.max) ? 'not-allowed' : 'pointer',
+                        fontSize: '16px', fontWeight: 700,
+                        opacity: (isStillnessLocked || field.value >= field.max) ? 0.35 : 1,
+                      }}
+                    >+</button>
+                  </div>
                 </div>
               ))}
             </div>
@@ -603,68 +757,58 @@ function BreathPracticeCard({
         )}
       </div>
 
-      {/* Collapsible Tempo Sync Section (Breath Practice + Expansion Method Only) */}
+      {/* Collapsible Tempo Sync — 2C: minHeight 44px */}
       {breathSubmode === 'breath' && breathMethod === 'expansion' && !isFocusMode && (
         <div style={{ marginBottom: '20px' }}>
           <button
             onClick={onToggleTempoSync}
             data-tutorial={ANCHORS.FOUNDATIONS_BREATH_TEMPO_TOGGLE}
-          style={{
-            width: '100%',
-            padding: '12px 16px',
-            backgroundColor: showTempoSync ? 'rgba(74, 222, 128, 0.06)' : 'rgba(255, 255, 255, 0.02)',
-            border: '1px solid rgba(74, 222, 128, 0.18)',
-            borderRadius: '10px',
-            color: 'var(--text-secondary)',
-            fontSize: '11px',
-            fontWeight: 700,
-            letterSpacing: '0.08em',
-            cursor: 'pointer',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-            transition: 'all 0.3s ease',
-            fontFamily: 'var(--font-display)',
-            textTransform: 'uppercase',
-          }}
-          onMouseEnter={(e) => {
-            e.currentTarget.style.backgroundColor = 'rgba(74, 222, 128, 0.1)';
-            e.currentTarget.style.borderColor = 'rgba(74, 222, 128, 0.35)';
-          }}
-          onMouseLeave={(e) => {
-            e.currentTarget.style.backgroundColor = showTempoSync ? 'rgba(74, 222, 128, 0.06)' : 'rgba(255, 255, 255, 0.02)';
-            e.currentTarget.style.borderColor = 'rgba(74, 222, 128, 0.18)';
-          }}
-        >
-          <span>Tempo Sync</span>
-          <span style={{ transform: showTempoSync ? 'rotate(180deg)' : 'rotate(0deg)', transition: 'transform 0.3s ease' }}></span>
-        </button>
-        
-        <div
-          style={{
-            marginTop: '8px',
-            display: showTempoSync ? 'block' : 'none',
-          }}
-        >
-          {tempoSyncSlot}
-        </div>
-        
+            style={{
+              width: '100%',
+              padding: '12px 16px',
+              minHeight: '44px',
+              backgroundColor: showTempoSync ? 'rgba(74, 222, 128, 0.06)' : 'rgba(255, 255, 255, 0.02)',
+              border: '1px solid rgba(74, 222, 128, 0.18)',
+              borderRadius: '10px',
+              color: 'var(--text-secondary)',
+              fontSize: '11px',
+              fontWeight: 700,
+              letterSpacing: '0.08em',
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              transition: 'all 0.3s ease',
+              fontFamily: 'var(--font-display)',
+              textTransform: 'uppercase',
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.backgroundColor = 'rgba(74, 222, 128, 0.1)';
+              e.currentTarget.style.borderColor = 'rgba(74, 222, 128, 0.35)';
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.backgroundColor = showTempoSync ? 'rgba(74, 222, 128, 0.06)' : 'rgba(255, 255, 255, 0.02)';
+              e.currentTarget.style.borderColor = 'rgba(74, 222, 128, 0.18)';
+            }}
+          >
+            <span>Tempo Sync</span>
+            <span style={{ transform: showTempoSync ? 'rotate(180deg)' : 'rotate(0deg)', transition: 'transform 0.3s ease' }}></span>
+          </button>
+
+          <div style={{ marginTop: '8px', display: showTempoSync ? 'block' : 'none' }}>
+            {tempoSyncSlot}
+          </div>
+
           <style>{`
             @keyframes slideDown {
-              from {
-                opacity: 0;
-                transform: translateY(-10px);
-              }
-              to {
-                opacity: 1;
-                transform: translateY(0);
-              }
+              from { opacity: 0; transform: translateY(-10px); }
+              to { opacity: 1; transform: translateY(0); }
             }
           `}</style>
         </div>
       )}
 
-      {/* Shared Duration Slider - Hidden for Circuit as it manages its own total duration */}
+      {/* Shared Duration Slider */}
       {supportsDuration && practiceId !== 'circuit' && !(practiceId === 'breath' && isFocusMode) && (
         <div
           style={{ marginBottom: practiceId === 'breath' ? '24px' : '32px' }}
@@ -678,7 +822,7 @@ function BreathPracticeCard({
         </div>
       )}
 
-      {/* Start Button - Sacred Portal with Ember Theme */}
+      {/* Start Button */}
       {!(practiceId === 'ritual') && (
         <div className="flex flex-col items-center" style={{ marginTop: '24px', marginBottom: '14px' }}>
           <button
@@ -706,7 +850,7 @@ function BreathPracticeCard({
               transition: 'all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1)',
               position: 'relative',
             }}
-            onMouseEnter={(e) => { 
+            onMouseEnter={(e) => {
               e.currentTarget.style.transform = 'scale(1.1)';
               e.currentTarget.style.boxShadow = `
                 0 0 100px rgba(var(--accent-r), var(--accent-g), var(--accent-b), 1),
@@ -714,7 +858,7 @@ function BreathPracticeCard({
                 0 12px 30px rgba(var(--accent-r), var(--accent-g), var(--accent-b), 0.75)
               `;
             }}
-            onMouseLeave={(e) => { 
+            onMouseLeave={(e) => {
               e.currentTarget.style.transform = 'scale(1)';
               e.currentTarget.style.boxShadow = `
                 0 0 60px rgba(var(--accent-r), var(--accent-g), var(--accent-b), 0.8),
@@ -723,7 +867,6 @@ function BreathPracticeCard({
               `;
             }}
           >
-            {/* Radial glow backdrop with fiery pulse */}
             <div
               className="portal-glow"
               style={{
@@ -736,7 +879,6 @@ function BreathPracticeCard({
                 animation: 'portal-pulse 3s infinite ease-in-out',
               }}
             />
-            {/* Ripple effect on hover */}
             <div
               className="portal-ripple"
               style={{
@@ -763,6 +905,7 @@ function BreathPracticeCard({
             }
           `}</style>
 
+          {/* Trajectory toggle — 2C: minHeight 44px, 2A: light mode colors */}
           {practiceId === 'breath' && (
             <div className="w-full" style={{ maxWidth: 'var(--ui-rail-max, min(430px, 94vw))', marginTop: '12px' }}>
               <button
@@ -772,12 +915,13 @@ function BreathPracticeCard({
                 className="w-full text-[10px] font-black uppercase tracking-[0.32em] transition-opacity"
                 style={{
                   fontFamily: 'var(--font-display)',
-                  color: 'rgba(253, 251, 245, 0.85)',
+                  color: isLight ? 'rgba(30,20,0,0.80)' : 'rgba(253,251,245,0.85)',
                   opacity: showTrajectory ? 0.95 : 0.7,
-                  padding: '10px 12px',
+                  padding: '12px 12px',
+                  minHeight: '44px',
                   borderRadius: '14px',
-                  border: '1px solid rgba(255,255,255,0.10)',
-                  background: 'rgba(10, 12, 18, 0.35)',
+                  border: `1px solid ${isLight ? 'rgba(0,0,0,0.10)' : 'rgba(255,255,255,0.10)'}`,
+                  background: isLight ? 'rgba(255,255,255,0.50)' : 'rgba(10,12,18,0.35)',
                   backdropFilter: 'blur(18px)',
                   WebkitBackdropFilter: 'blur(18px)',
                 }}

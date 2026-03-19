@@ -160,6 +160,7 @@ function HomeHub({ onSelectSection, activeSection = null, currentStage, previewP
   const [frameRect, setFrameRect] = useState(null);
   const [leftRolled, setLeftRolled] = useState(false);
   const [rightRolled, setRightRolled] = useState(false);
+  const [decayExpanded, setDecayExpanded] = useState(false);
   const hasPersistedCurriculumData = Boolean(
     isCurriculumStateOwnedByCurrentUser
     && (
@@ -452,11 +453,11 @@ function HomeHub({ onSelectSection, activeSection = null, currentStage, previewP
   const sidePanelHandleButtonStyle = {
     alignSelf: 'center',
     width: `clamp(24px, calc(${U} * 1.7), 36px)`,
-    height: '12px',
+    height: '44px',
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
-    padding: 0,
+    padding: '16px 0',
     border: 'none',
     background: 'transparent',
     cursor: 'pointer',
@@ -829,16 +830,10 @@ function HomeHub({ onSelectSection, activeSection = null, currentStage, previewP
                   </div>
                 </div>
 
-                {/* Decay rate — hover for full info */}
+                {/* Decay rate — tap to expand details */}
                 <div
                   className="hub-penalty-label type-label"
-                  title={[
-                    `Decay: −${decayInfo.decayPerMissedDay.toFixed(2)} effective days per missed day`,
-                    `Accumulated loss: ${decayInfo.decayAccumulated} days`,
-                    decayInfo.isRecovering
-                      ? `Recovering: −${decayInfo.recoveryRate}/day (${decayInfo.consecutiveDays} day streak)`
-                      : `Streak ${decayInfo.consecutiveDays}/7 days for recovery bonus`,
-                  ].join('\n')}
+                  onClick={() => setDecayExpanded(v => !v)}
                   style={{
                     textAlign: 'center',
                     fontSize: '9px',
@@ -847,7 +842,7 @@ function HomeHub({ onSelectSection, activeSection = null, currentStage, previewP
                     color: decayInfo.isRecovering
                       ? 'rgba(76,175,80,0.85)'
                       : (isLight ? 'rgba(31, 97, 108, 0.65)' : 'rgba(170, 230, 236, 0.58)'),
-                    cursor: 'default',
+                    cursor: 'pointer',
                     textShadow: sidePanelTextShadow,
                   }}
                 >
@@ -855,6 +850,24 @@ function HomeHub({ onSelectSection, activeSection = null, currentStage, previewP
                     ? `+${decayInfo.recoveryRate}/day recovery`
                     : `−${decayInfo.decayPerMissedDay.toFixed(2)}/miss`}
                 </div>
+
+                {decayExpanded && (
+                  <div style={{
+                    fontSize: '9px',
+                    color: isLight ? 'rgba(31,97,108,0.7)' : 'rgba(170,230,236,0.65)',
+                    lineHeight: 1.45,
+                    textAlign: 'center',
+                    paddingTop: '4px',
+                  }}>
+                    <div>−{decayInfo.decayPerMissedDay.toFixed(2)} per missed day</div>
+                    <div>Accumulated: {decayInfo.decayAccumulated}d</div>
+                    <div>
+                      {decayInfo.isRecovering
+                        ? `Recovering −${decayInfo.recoveryRate}/day · ${decayInfo.consecutiveDays}d streak`
+                        : `${decayInfo.consecutiveDays}/7 days to recovery bonus`}
+                    </div>
+                  </div>
+                )}
 
                 {/* Report button */}
                 <button
@@ -904,7 +917,12 @@ function HomeHub({ onSelectSection, activeSection = null, currentStage, previewP
       <div className="w-full px-4 flex flex-col items-center gap-2 pb-4">
 
         {/* EXPLORE MODES - Navigation Buttons */}
-        {userMode !== 'student' && (
+        <style>{`
+          .im-nav-pill {
+            background-image: ${modeTileBackgroundImage} !important;
+          }
+        `}</style>
+        {userMode !== 'student' ? (
           <div
             className="w-full transition-all duration-700"
             style={{
@@ -913,14 +931,9 @@ function HomeHub({ onSelectSection, activeSection = null, currentStage, previewP
               margin: '0 auto',
             }}
           >
-
-            {/* Horizontal Row - Simple circular buttons - DISTRIBUTES ACROSS RAIL */}
             <div
               className="flex flex-row items-center w-full"
-              style={{
-                justifyContent: 'space-between',
-                gap: '0',
-              }}
+              style={{ justifyContent: 'space-between', gap: '0' }}
             >
               <div className="relative flex flex-col items-center justify-start">
                 <SimpleModeButton
@@ -978,11 +991,39 @@ function HomeHub({ onSelectSection, activeSection = null, currentStage, previewP
                 data-ui-id="homeHub:mode:navigation"
               />
             </div>
-            <style>{`
-              [data-ui-id^="homeHub:mode:"] {
-                background-image: ${modeTileBackgroundImage} !important;
-              }
-            `}</style>
+          </div>
+        ) : (
+          <div
+            className="w-full transition-all duration-700"
+            style={{
+              ...SANCTUARY_RAIL_STYLE,
+              maxWidth: 'var(--ui-rail-max, min(430px, 94vw))',
+              margin: '0 auto',
+            }}
+          >
+            <div
+              className="flex flex-row items-center w-full"
+              style={{ justifyContent: 'center', gap: '48px' }}
+            >
+              <SimpleModeButton
+                title="Practice"
+                onClick={() => handleSelectSection("practice")}
+                disabled={lockToHub}
+                icon="practice"
+                isActive={activeSection === 'practice'}
+                className="im-nav-pill"
+                data-nav-pill-id="home:practice"
+              />
+              <SimpleModeButton
+                title="Navigation"
+                onClick={() => handleSelectSection("navigation")}
+                disabled={lockToHub}
+                icon="navigation"
+                isActive={activeSection === 'navigation'}
+                className="im-nav-pill"
+                data-nav-pill-id="home:navigation"
+              />
+            </div>
           </div>
         )}
 
