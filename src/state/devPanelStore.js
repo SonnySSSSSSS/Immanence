@@ -376,14 +376,6 @@ export function resolveRoleTransform(avatarComposite, stageKey, roleKey) {
     };
   }
 
-  const fromSeedling = getRawRoleTransform(avatarComposite, 'seedling', normalizedRole);
-  if (fromSeedling && typeof fromSeedling === 'object') {
-    return {
-      ...createDefaultLayer(),
-      ...sanitizeRolePatch(normalizedRole, fromSeedling),
-    };
-  }
-
   return createDefaultLayer();
 }
 
@@ -564,20 +556,7 @@ const createDevPanelStoreState = (set, get) => ({
   resetAvatarCompositeStage: (stageKey) =>
     set((state) => {
       const normalizedStageKey = normalizeStageId(stageKey);
-      const avatarComposite = state.avatarComposite || createDefaultAvatarComposite();
-      if (normalizedStageKey === 'seedling') {
-        return setWholeStageTransforms(state, 'seedling', createDefaultStageTransforms());
-      }
-
-      const nextTransformsByStage = { ...avatarComposite.transformsByStage };
-      delete nextTransformsByStage[normalizedStageKey];
-      return {
-        ...state,
-        avatarComposite: {
-          ...avatarComposite,
-          transformsByStage: nextTransformsByStage,
-        },
-      };
+      return setWholeStageTransforms(state, normalizedStageKey, createDefaultStageTransforms());
     }),
 
   copyAvatarCompositeStage: (fromStage, toStage) =>

@@ -158,7 +158,6 @@ export function AvatarComposite({ stage, size }) {
     ? buildAvatarDraftLayers(getAvatarCompositeRoleTransform, normalizedStage)
     : (
       defaultsByStage?.[normalizedStage] ||
-      defaultsByStage?.seedling ||
       DEFAULT_AVATAR_PRESETS[normalizedStage] ||
       DEFAULT_AVATAR_PRESETS.seedling
     );

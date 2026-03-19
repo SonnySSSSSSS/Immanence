@@ -236,7 +236,6 @@ export function DevPanel({
         buildAvatarStageSnapshot(getAvatarCompositeRoleTransform, normalizedAvatarStageKey);
     const currentAvatarDefault =
         defaultsByStage?.[normalizedAvatarStageKey] ||
-        defaultsByStage?.seedling ||
         {};
     const hasUnsavedAvatarDraft = !areAvatarStageSnapshotsEqual(currentAvatarDraft, currentAvatarDefault);
 
@@ -251,9 +250,7 @@ export function DevPanel({
     }, [normalizedAvatarStageKey, replaceAvatarCompositeStageDraft, setStageDefault]);
 
     const handleResetDraftToDefault = useCallback(() => {
-        const stageDefault =
-            defaultsByStage?.[normalizedAvatarStageKey] ||
-            defaultsByStage?.seedling;
+        const stageDefault = defaultsByStage?.[normalizedAvatarStageKey];
         if (!stageDefault) return;
         replaceAvatarCompositeStageDraft(normalizedAvatarStageKey, stageDefault);
         setAvatarDefaultStatus(`Restored Draft from saved Default for ${normalizedAvatarStageKey}.`);
