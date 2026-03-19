@@ -16,7 +16,6 @@ export function PracticeSelector({
         id: id,
         label: p.label,
         rail: getRailColor(id),
-        descriptor: p.descriptor || '',
       };
     });
   }, [PRACTICE_REGISTRY, PRACTICE_IDS]);

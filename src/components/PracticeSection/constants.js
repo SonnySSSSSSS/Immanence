@@ -10,7 +10,6 @@ export const PRACTICE_REGISTRY = {
     icon: "✦",
     supportsDuration: true,
     requiresFullscreen: false,
-    descriptor: 'Breathwork & stillness',
   },
   integration: {
     id: "integration",
@@ -22,7 +21,6 @@ export const PRACTICE_REGISTRY = {
     configComponent: "RitualSelectionDeck",
     requiresFullscreen: false,
     alias: "ritual",
-    descriptor: 'Rituals & ceremonies',
   },
   circuit: {
     id: "circuit",
@@ -33,7 +31,6 @@ export const PRACTICE_REGISTRY = {
     configComponent: "CircuitConfig",
     supportsDuration: true,
     requiresFullscreen: false,
-    descriptor: 'Interval training',
   },
   awareness: {
     id: "awareness",
@@ -43,7 +40,6 @@ export const PRACTICE_REGISTRY = {
     icon: "👁",
     supportsDuration: true,
     requiresFullscreen: false,
-    descriptor: 'Insight & body scan',
     subModes: {
       insight: { id: "cognitive_vipassana", label: "Cognitive", configComponent: "SensoryConfig" },
       bodyscan: { id: "somatic_vipassana", label: "Somatic", configComponent: "BodyScanConfig" },
@@ -59,7 +55,6 @@ export const PRACTICE_REGISTRY = {
     icon: "⌇",
     supportsDuration: true,
     requiresFullscreen: false,
-    descriptor: 'Sound & binaural',
     subModes: {
       aural: { id: "sound", label: "Sound", configComponent: "SoundConfig" },
       cymatics: { id: "cymatics", label: "Cymatics", configComponent: "CymaticsConfig" }
@@ -74,7 +69,6 @@ export const PRACTICE_REGISTRY = {
     icon: "✧",
     supportsDuration: true,
     requiresFullscreen: false,
-    descriptor: 'Visual & photic',
     subModes: {
       visualization: { id: "visualization", label: "Kasina", configComponent: "VisualizationConfig" },
       photic: { id: "photic", label: "Photonic", configComponent: "PhoticControlPanel" }
