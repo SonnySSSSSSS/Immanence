@@ -11,6 +11,8 @@ import { useCurriculumStore } from '../state/curriculumStore';
 import { useNavigationStore } from '../state/navigationStore';
 import { useTutorialStore } from '../state/tutorialStore';
 import { normalizeStageKey } from '../config/avatarStageAssets.js';
+import { AVATAR_COMPOSITE_LAYER_IDS, useDevPanelStore } from '../state/devPanelStore.js';
+import { useAvatarStageDefaultsStore } from '../state/avatarV3Store.js';
 import { CoordinateHelper } from './dev/CoordinateHelper.jsx';
 import { OnboardingContentEditor, TutorialEditor } from './dev/TutorialEditor.jsx';
 import { getQuickDashboardTiles, getCurriculumPracticeBreakdown, getPracticeDetailMetrics } from '../reporting/dashboardProjection.js';
@@ -74,6 +76,36 @@ import { getDevPanelProdGate } from '../lib/devPanelGate.js';
 // Available stages and paths for dropdowns
 const STAGE_OPTIONS = ['Seedling', 'Ember', 'Flame', 'Beacon', 'Stellar'];
 const PATH_OPTIONS = ['Yantra', 'Kaya', 'Chitra', 'Nada'];
+
+function buildAvatarStageSnapshot(getRoleTransform, stageKey) {
+    const snapshot = {};
+    AVATAR_COMPOSITE_LAYER_IDS.forEach((layerId) => {
+        snapshot[layerId] = getRoleTransform(stageKey, layerId);
+    });
+    return snapshot;
+}
+
+function normalizeAvatarStageSnapshot(stageTransforms = {}) {
+    const normalized = {};
+    AVATAR_COMPOSITE_LAYER_IDS.forEach((layerId) => {
+        const source = stageTransforms?.[layerId] || {};
+        normalized[layerId] = {
+            enabled: source.enabled === false ? false : true,
+            opacity: typeof source.opacity === 'number' ? source.opacity : 1,
+            scale: typeof source.scale === 'number' ? source.scale : 1,
+            rotateDeg: typeof source.rotateDeg === 'number' ? source.rotateDeg : 0,
+            x: typeof source.x === 'number' ? source.x : 0,
+            y: typeof source.y === 'number' ? source.y : 0,
+            linkTo: typeof source.linkTo === 'string' ? source.linkTo : null,
+            linkOpacity: source.linkOpacity === true,
+        };
+    });
+    return normalized;
+}
+
+function areAvatarStageSnapshotsEqual(left, right) {
+    return JSON.stringify(normalizeAvatarStageSnapshot(left)) === JSON.stringify(normalizeAvatarStageSnapshot(right));
+}
 // ═══════════════════════════════════════════════════════════════════════════
 // HELPER COMPONENTS (moved outside to avoid hook rendering issues)
 // ═══════════════════════════════════════════════════════════════════════════
@@ -152,6 +184,17 @@ export function DevPanel({
     const setShowCore = setShowCoreProp ?? setShowCoreLocal;
     const avatarAttention = avatarAttentionProp ?? avatarAttentionLocal;
     const setAvatarAttention = setAvatarAttentionProp ?? setAvatarAttentionLocal;
+    const normalizedAvatarStageKey = normalizeStageKey(avatarStage);
+    const avatarCompositeDraftsByStage = useDevPanelStore(s => s.avatarComposite?.transformsByStage);
+    const getAvatarCompositeRoleTransform = useDevPanelStore(s => s.getAvatarCompositeRoleTransform);
+    const setAvatarCompositePreviewDraft = useDevPanelStore(s => s.setAvatarCompositePreviewDraft);
+    const hydrateAvatarCompositeDrafts = useDevPanelStore(s => s.hydrateAvatarCompositeDrafts);
+    const replaceAvatarCompositeStageDraft = useDevPanelStore(s => s.replaceAvatarCompositeStageDraft);
+    const defaultsByStage = useAvatarStageDefaultsStore(s => s.defaultsByStage);
+    const setStageDefault = useAvatarStageDefaultsStore(s => s.setStageDefault);
+    const ensureStageDefault = useAvatarStageDefaultsStore(s => s.ensureStageDefault);
+    const [avatarDefaultStatus, setAvatarDefaultStatus] = useState('');
+    const avatarDraftHydratedRef = useRef(false);
 
     // Sync initial path to parent when DevPanel opens and parent has no path set
     useEffect(() => {
@@ -159,6 +202,62 @@ export function DevPanel({
             setAvatarPathProp(avatarPathLocal);
         }
     }, [isOpen]); // eslint-disable-line react-hooks/exhaustive-deps
+
+    useEffect(() => {
+        ensureStageDefault(normalizedAvatarStageKey);
+    }, [ensureStageDefault, normalizedAvatarStageKey]);
+
+    useEffect(() => {
+        if (!isOpen) {
+            avatarDraftHydratedRef.current = false;
+            setAvatarCompositePreviewDraft(false);
+            return;
+        }
+        setAvatarCompositePreviewDraft(true);
+        if (!avatarDraftHydratedRef.current) {
+            hydrateAvatarCompositeDrafts(defaultsByStage);
+            avatarDraftHydratedRef.current = true;
+        }
+    }, [
+        defaultsByStage,
+        hydrateAvatarCompositeDrafts,
+        isOpen,
+        setAvatarCompositePreviewDraft,
+    ]);
+
+    useEffect(() => {
+        return () => {
+            setAvatarCompositePreviewDraft(false);
+        };
+    }, [setAvatarCompositePreviewDraft]);
+
+    const currentAvatarDraft =
+        avatarCompositeDraftsByStage?.[normalizedAvatarStageKey] ||
+        buildAvatarStageSnapshot(getAvatarCompositeRoleTransform, normalizedAvatarStageKey);
+    const currentAvatarDefault =
+        defaultsByStage?.[normalizedAvatarStageKey] ||
+        defaultsByStage?.seedling ||
+        {};
+    const hasUnsavedAvatarDraft = !areAvatarStageSnapshotsEqual(currentAvatarDraft, currentAvatarDefault);
+
+    const handleSaveStageDefault = useCallback(() => {
+        const draftSnapshot = buildAvatarStageSnapshot(
+            useDevPanelStore.getState().getAvatarCompositeRoleTransform,
+            normalizedAvatarStageKey
+        );
+        setStageDefault(normalizedAvatarStageKey, draftSnapshot);
+        replaceAvatarCompositeStageDraft(normalizedAvatarStageKey, draftSnapshot);
+        setAvatarDefaultStatus(`Saved Default for ${normalizedAvatarStageKey}.`);
+    }, [normalizedAvatarStageKey, replaceAvatarCompositeStageDraft, setStageDefault]);
+
+    const handleResetDraftToDefault = useCallback(() => {
+        const stageDefault =
+            defaultsByStage?.[normalizedAvatarStageKey] ||
+            defaultsByStage?.seedling;
+        if (!stageDefault) return;
+        replaceAvatarCompositeStageDraft(normalizedAvatarStageKey, stageDefault);
+        setAvatarDefaultStatus(`Restored Draft from saved Default for ${normalizedAvatarStageKey}.`);
+    }, [defaultsByStage, normalizedAvatarStageKey, replaceAvatarCompositeStageDraft]);
 
     // Collapsible sections
     const [expandedSections, setExpandedSections] = useState({
@@ -1007,6 +1106,35 @@ export function DevPanel({
                             </div>
                         </div>
                     </Section>
+
+                    <div className="mb-4 rounded-xl border border-white/15 bg-white/5 p-3">
+                        <div className="text-xs font-semibold text-white/85 mb-1">
+                            Avatar Draft to Default
+                        </div>
+                        <div className="text-[11px] text-white/65 mb-2">
+                            Draft edits are temporary until you save them as a stage Default.
+                        </div>
+                        <div className="text-[11px] text-white/75 mb-3">
+                            Stage: <span className="font-semibold text-white/90">{normalizedAvatarStageKey}</span> | Draft status: {hasUnsavedAvatarDraft ? 'Unsaved Draft changes' : 'Draft matches saved Default'}
+                        </div>
+                        <div className="grid grid-cols-2 gap-2 mb-2">
+                            <button
+                                onClick={handleSaveStageDefault}
+                                className="rounded-lg px-3 py-2 text-xs bg-emerald-500/15 border border-emerald-400/35 text-emerald-100 hover:bg-emerald-500/20 transition-all"
+                            >
+                                Save Stage Default
+                            </button>
+                            <button
+                                onClick={handleResetDraftToDefault}
+                                className="rounded-lg px-3 py-2 text-xs bg-white/5 border border-white/15 text-white/75 hover:bg-white/10 transition-all"
+                            >
+                                Restore Draft from Default
+                            </button>
+                        </div>
+                        {!!avatarDefaultStatus && (
+                            <div className="text-[10px] text-white/60">{avatarDefaultStatus}</div>
+                        )}
+                    </div>
 
                     <AvatarCompositeSection
                         expanded={expandedSections.avatarCompositeTuner}

@@ -1,6 +1,151 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
+import { create } from 'zustand';
+import { persist } from 'zustand/middleware';
 import { useProgressStore } from './progressStore.js';
 import { getDateKey, getWeekStart } from '../utils/dateUtils.js';
+import { normalizeStageKey } from '../config/avatarStageAssets.js';
+import { DEFAULT_AVATAR_PRESETS } from '../components/avatarV3/avatarDefaultPresets.js';
+
+export const AVATAR_STAGE_DEFAULTS_PERSIST_KEY = 'immanence-avatar-stage-defaults-v1';
+export const AVATAR_STAGE_DEFAULT_KEYS = ['seedling', 'ember', 'flame', 'beacon', 'stellar'];
+const AVATAR_STAGE_DEFAULT_LAYER_IDS = ['bg', 'stage', 'glass', 'ring'];
+const AVATAR_STAGE_DEFAULT_LAYER = Object.freeze({
+  enabled: true,
+  opacity: 1,
+  scale: 1,
+  rotateDeg: 0,
+  x: 0,
+  y: 0,
+  linkTo: null,
+  linkOpacity: false,
+});
+
+function clampAvatarDefault(value, min, max) {
+  return Math.max(min, Math.min(max, value));
+}
+
+function normalizeAvatarDefaultLayerId(layerId) {
+  if (typeof layerId !== 'string') return null;
+  const normalized = layerId.trim().toLowerCase();
+  return AVATAR_STAGE_DEFAULT_LAYER_IDS.includes(normalized) ? normalized : null;
+}
+
+function sanitizeAvatarDefaultLayerPatch(layerId, patch = {}) {
+  const next = {};
+  if (typeof patch.enabled === 'boolean') next.enabled = patch.enabled;
+  if (typeof patch.opacity === 'number' && Number.isFinite(patch.opacity)) {
+    next.opacity = clampAvatarDefault(patch.opacity, 0, 1);
+  }
+  if (typeof patch.scale === 'number' && Number.isFinite(patch.scale)) {
+    next.scale = clampAvatarDefault(patch.scale, 0.5, 2);
+  }
+  if (typeof patch.rotateDeg === 'number' && Number.isFinite(patch.rotateDeg)) {
+    next.rotateDeg = clampAvatarDefault(patch.rotateDeg, -180, 180);
+  }
+  if (typeof patch.x === 'number' && Number.isFinite(patch.x)) {
+    next.x = clampAvatarDefault(patch.x, -100, 100);
+  }
+  if (typeof patch.y === 'number' && Number.isFinite(patch.y)) {
+    next.y = clampAvatarDefault(patch.y, -100, 100);
+  }
+  if (Object.prototype.hasOwnProperty.call(patch, 'linkTo')) {
+    const normalizedTarget = normalizeAvatarDefaultLayerId(patch.linkTo);
+    next.linkTo = normalizedTarget && normalizedTarget !== layerId ? normalizedTarget : null;
+  }
+  if (typeof patch.linkOpacity === 'boolean') next.linkOpacity = patch.linkOpacity;
+  return next;
+}
+
+function sanitizeAvatarDefaultStageTransforms(stageTransforms = {}) {
+  const source = stageTransforms && typeof stageTransforms === 'object' ? stageTransforms : {};
+  const sanitized = {};
+  AVATAR_STAGE_DEFAULT_LAYER_IDS.forEach((layerId) => {
+    sanitized[layerId] = {
+      ...AVATAR_STAGE_DEFAULT_LAYER,
+      ...sanitizeAvatarDefaultLayerPatch(layerId, source[layerId]),
+    };
+  });
+  return sanitized;
+}
+
+function getBaseAvatarDefaultStageTransforms(stageKey) {
+  const normalizedStage = normalizeStageKey(stageKey);
+  return sanitizeAvatarDefaultStageTransforms(
+    DEFAULT_AVATAR_PRESETS[normalizedStage] || DEFAULT_AVATAR_PRESETS.seedling || {}
+  );
+}
+
+export function sanitizeAvatarStageDefaultsByStage(input = {}) {
+  const source = input && typeof input === 'object' ? input : {};
+  const next = {};
+
+  Object.entries(source).forEach(([rawStageKey, stageTransforms]) => {
+    const stageKey = normalizeStageKey(rawStageKey);
+    next[stageKey] = sanitizeAvatarDefaultStageTransforms(stageTransforms);
+  });
+
+  AVATAR_STAGE_DEFAULT_KEYS.forEach((stageKey) => {
+    if (!next[stageKey]) {
+      next[stageKey] = getBaseAvatarDefaultStageTransforms(stageKey);
+    }
+  });
+
+  return next;
+}
+
+export const useAvatarStageDefaultsStore = create(
+  persist(
+    (set, get) => ({
+      defaultsByStage: sanitizeAvatarStageDefaultsByStage(DEFAULT_AVATAR_PRESETS),
+
+      ensureStageDefault: (stageKey) => {
+        const normalizedStage = normalizeStageKey(stageKey);
+        const state = get();
+        if (state.defaultsByStage?.[normalizedStage]) return;
+
+        set((current) => ({
+          ...current,
+          defaultsByStage: {
+            ...current.defaultsByStage,
+            [normalizedStage]: getBaseAvatarDefaultStageTransforms(normalizedStage),
+          },
+        }));
+      },
+
+      setStageDefault: (stageKey, stageTransforms) =>
+        set((state) => {
+          const normalizedStage = normalizeStageKey(stageKey);
+          return {
+            ...state,
+            defaultsByStage: {
+              ...state.defaultsByStage,
+              [normalizedStage]: sanitizeAvatarDefaultStageTransforms(stageTransforms),
+            },
+          };
+        }),
+
+      replaceAllStageDefaults: (defaultsByStage) =>
+        set((state) => ({
+          ...state,
+          defaultsByStage: sanitizeAvatarStageDefaultsByStage(defaultsByStage),
+        })),
+    }),
+    {
+      name: AVATAR_STAGE_DEFAULTS_PERSIST_KEY,
+      version: 1,
+      partialize: (state) => ({
+        defaultsByStage: sanitizeAvatarStageDefaultsByStage(state.defaultsByStage),
+      }),
+      merge: (persisted, current) => ({
+        ...current,
+        defaultsByStage: sanitizeAvatarStageDefaultsByStage({
+          ...current.defaultsByStage,
+          ...(persisted?.defaultsByStage || {}),
+        }),
+      }),
+    }
+  )
+);
 
 const MODE_WINDOW_DAYS = 42;
 const CADENCE_WINDOW_WEEKS = 26;

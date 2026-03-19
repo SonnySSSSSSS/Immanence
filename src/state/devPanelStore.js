@@ -55,6 +55,7 @@ function createDefaultStageTransforms() {
 function createDefaultAvatarComposite() {
   return {
     enabled: true,
+    previewDraft: false,
     showDebugOverlay: false,
     // AVATAR_DEFAULTS:START
     transformsByStage: {
@@ -351,6 +352,7 @@ export function sanitizeAvatarComposite(input = {}) {
 
   return {
     enabled: typeof source.enabled === 'boolean' ? source.enabled : true,
+    previewDraft: typeof source.previewDraft === 'boolean' ? source.previewDraft : false,
     showDebugOverlay: typeof source.showDebugOverlay === 'boolean' ? source.showDebugOverlay : false,
     transformsByStage: sanitizeTransformsByStage(transformsByStageSource || {}),
   };
@@ -470,26 +472,22 @@ function parseStageTransformsPayload(raw) {
 export function migrateDevPanelState(persistedState, version) {
   if (!persistedState) return persistedState;
 
-  if (version >= 2) {
-    if (!persistedState.avatarComposite) return persistedState;
-    return {
-      ...persistedState,
-      avatarComposite: sanitizeAvatarComposite(persistedState.avatarComposite),
-    };
+  const persistedAvatar = persistedState.avatarComposite || {};
+  const migratedAvatar = {
+    enabled: typeof persistedAvatar.enabled === 'boolean' ? persistedAvatar.enabled : true,
+    previewDraft: typeof persistedAvatar.previewDraft === 'boolean' ? persistedAvatar.previewDraft : false,
+    showDebugOverlay: typeof persistedAvatar.showDebugOverlay === 'boolean' ? persistedAvatar.showDebugOverlay : false,
+  };
+
+  if (version >= 3) {
+    return { ...persistedState, avatarComposite: migratedAvatar };
   }
 
-  const persistedAvatar = persistedState.avatarComposite || {};
-  const migratedAvatar = sanitizeAvatarComposite({
-    enabled: persistedAvatar.enabled,
-    showDebugOverlay: persistedAvatar.showDebugOverlay,
-    transformsByStage: persistedAvatar.transformsByStage,
-    layers: persistedAvatar.layers,
-  });
+  if (version >= 2) {
+    return { ...persistedState, avatarComposite: migratedAvatar };
+  }
 
-  return {
-    ...persistedState,
-    avatarComposite: migratedAvatar,
-  };
+  return { ...persistedState, avatarComposite: migratedAvatar };
 }
 
 const createDevPanelStoreState = (set, get) => ({
@@ -506,6 +504,15 @@ const createDevPanelStoreState = (set, get) => ({
       avatarComposite: {
         ...state.avatarComposite,
         enabled: Boolean(enabled),
+      },
+    })),
+
+  setAvatarCompositePreviewDraft: (previewDraft) =>
+    set((state) => ({
+      ...state,
+      avatarComposite: {
+        ...state.avatarComposite,
+        previewDraft: Boolean(previewDraft),
       },
     })),
 
@@ -532,6 +539,27 @@ const createDevPanelStoreState = (set, get) => ({
 
   setAvatarCompositeRoleTransformLinkOpacity: (stageKey, roleKey, linkOpacity) =>
     set((state) => updateRoleTransform(state, stageKey, roleKey, { linkOpacity: Boolean(linkOpacity) })),
+
+  hydrateAvatarCompositeDrafts: (transformsByStage) =>
+    set((state) => {
+      const nextTransformsByStage = sanitizeTransformsByStage(transformsByStage);
+      return {
+        ...state,
+        avatarComposite: {
+          ...state.avatarComposite,
+          transformsByStage: nextTransformsByStage,
+        },
+      };
+    }),
+
+  replaceAvatarCompositeStageDraft: (stageKey, stageTransforms) =>
+    set((state) => setWholeStageTransforms(state, stageKey, stageTransforms)),
+
+  getAvatarCompositeStageDraft: (stageKey) => {
+    const state = get();
+    const normalizedStageKey = normalizeStageId(stageKey);
+    return createResolvedStageTransforms(state.avatarComposite, normalizedStageKey);
+  },
 
   resetAvatarCompositeStage: (stageKey) =>
     set((state) => {
@@ -670,20 +698,37 @@ const createDevPanelStoreState = (set, get) => ({
 
 const devPanelPersistConfig = {
   name: DEV_PANEL_PERSIST_KEY,
-  version: 2,
+  version: 3,
   migrate: (persistedState, version) => migrateDevPanelState(persistedState, version),
-  // Acceptance check: only avatarComposite is persisted.
+  // Persist only UI toggles; stage draft transforms are intentionally ephemeral.
   partialize: (state) => ({
-    avatarComposite: sanitizeAvatarComposite(state.avatarComposite),
+    avatarComposite: {
+      enabled: Boolean(state.avatarComposite?.enabled),
+      previewDraft: Boolean(state.avatarComposite?.previewDraft),
+      showDebugOverlay: Boolean(state.avatarComposite?.showDebugOverlay),
+    },
   }),
   merge: (persisted, current) => {
-    const migrated = migrateDevPanelState(persisted, 2);
-    const persistedAvatar = migrated?.avatarComposite
-      ? sanitizeAvatarComposite(migrated.avatarComposite)
-      : createDefaultAvatarComposite();
+    const migrated = migrateDevPanelState(persisted, 3);
+    const persistedAvatar = migrated?.avatarComposite || {};
+    const baseAvatar = current?.avatarComposite || createDefaultAvatarComposite();
     return {
       ...current,
-      avatarComposite: persistedAvatar,
+      avatarComposite: {
+        ...baseAvatar,
+        enabled:
+          typeof persistedAvatar.enabled === 'boolean'
+            ? persistedAvatar.enabled
+            : baseAvatar.enabled,
+        previewDraft:
+          typeof persistedAvatar.previewDraft === 'boolean'
+            ? persistedAvatar.previewDraft
+            : baseAvatar.previewDraft,
+        showDebugOverlay:
+          typeof persistedAvatar.showDebugOverlay === 'boolean'
+            ? persistedAvatar.showDebugOverlay
+            : baseAvatar.showDebugOverlay,
+      },
     };
   },
 };
