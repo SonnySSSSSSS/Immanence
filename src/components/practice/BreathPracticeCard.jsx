@@ -209,7 +209,10 @@ function BreathPracticeCard({
                 e.currentTarget.style.borderColor = 'rgba(212, 175, 55, 0.3)';
               }}
             >
-              ▲ Collapse
+              <svg aria-hidden="true" width="10" height="6" viewBox="0 0 10 6" fill="none" style={{ display: 'inline', marginRight: '5px', verticalAlign: 'middle' }}>
+                <path d="M9 5L5 1L1 5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+              </svg>
+              Collapse
             </button>
           </div>
         )}
@@ -633,7 +636,7 @@ function BreathPracticeCard({
             e.currentTarget.style.borderColor = 'rgba(74, 222, 128, 0.18)';
           }}
         >
-          <span>🎵 Tempo Sync</span>
+          <span>Tempo Sync</span>
           <span style={{ transform: showTempoSync ? 'rotate(180deg)' : 'rotate(0deg)', transition: 'transform 0.3s ease' }}></span>
         </button>
         

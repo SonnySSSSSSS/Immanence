@@ -157,12 +157,14 @@ export function CircuitTrainingSelector({
         </div>
 
         {/* Chevron indicator */}
-        <div className="flex-shrink-0 text-white/40 transition-transform duration-200" 
+        <div className="flex-shrink-0 text-white/40 transition-transform duration-200"
           style={{
             transform: open ? 'rotate(180deg)' : 'rotate(0deg)',
           }}
         >
-          ▾
+          <svg aria-hidden="true" width="10" height="6" viewBox="0 0 10 6" fill="none">
+            <path d="M1 1L5 5L9 1" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+          </svg>
         </div>
       </button>
 

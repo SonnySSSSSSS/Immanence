@@ -170,14 +170,6 @@ function HomeHub({ onSelectSection, activeSection = null, currentStage, previewP
       || Object.keys(rawLegCompletions || {}).length > 0
     )
   );
-  const probeLabel = !activeUserId
-    ? 'FRESH_USER'
-    : (userMode === 'explorer'
-      ? 'EXPLORER_STARTUP_REQUIRED'
-      : (showCurriculumOnboarding
-        ? 'STUDENT_ONBOARDING'
-        : (activePath ? 'STUDENT_ACTIVE' : 'STUDENT_SETUP_REQUIRED')));
-
   useEffect(() => {
     setShowCurriculumHubState(false);
     setShowCurriculumOnboarding(false);
@@ -442,7 +434,7 @@ function HomeHub({ onSelectSection, activeSection = null, currentStage, previewP
   };
   const sidePanelMetricSubLabelStyle = {
     color: isLight ? 'rgba(100, 80, 60, 0.4)' : 'rgba(255, 255, 255, 0.30)',
-    fontSize: '7px',
+    fontSize: '9px',
     lineHeight: 1,
     letterSpacing: '0.07em',
     fontWeight: '400',
@@ -498,13 +490,13 @@ function HomeHub({ onSelectSection, activeSection = null, currentStage, previewP
   };
   const sidePanelTileLabelStyle = {
     ...sidePanelMetricLabelStyle,
-    fontSize: '8px',
+    fontSize: '9px',
     lineHeight: 1,
     letterSpacing: '0.06em',
   };
   const sidePanelTileSubLabelStyle = {
     ...sidePanelMetricSubLabelStyle,
-    fontSize: '6px',
+    fontSize: '9px',
     lineHeight: 1,
     letterSpacing: '0.06em',
   };
@@ -578,7 +570,7 @@ function HomeHub({ onSelectSection, activeSection = null, currentStage, previewP
     color: '#fff',
     boxShadow: '0 3px 10px var(--accent-15)',
     width: '100%',
-    fontSize: '6px',
+    fontSize: '9px',
     lineHeight: 1,
     letterSpacing: '0.06em',
     border: 'none',
@@ -782,7 +774,7 @@ function HomeHub({ onSelectSection, activeSection = null, currentStage, previewP
                 {/* Next stage label */}
                 <div className="type-label" style={{
                   ...sidePanelTileLabelStyle,
-                  fontSize: '8px',
+                  fontSize: '9px',
                   whiteSpace: 'nowrap',
                   color: isLight ? 'rgba(31, 97, 108, 0.82)' : 'rgba(170, 230, 236, 0.84)',
                   textShadow: sidePanelTextShadow,
@@ -808,7 +800,7 @@ function HomeHub({ onSelectSection, activeSection = null, currentStage, previewP
                 {/* "days remaining" label */}
                 <div className="type-label" style={{
                   ...sidePanelTileLabelStyle,
-                  fontSize: '8px',
+                  fontSize: '9px',
                   textAlign: 'center',
                   color: isLight ? 'rgba(31, 97, 108, 0.82)' : 'rgba(170, 230, 236, 0.84)',
                   textShadow: sidePanelTextShadow,
@@ -849,7 +841,7 @@ function HomeHub({ onSelectSection, activeSection = null, currentStage, previewP
                   ].join('\n')}
                   style={{
                     textAlign: 'center',
-                    fontSize: '7px',
+                    fontSize: '9px',
                     lineHeight: 1,
                     letterSpacing: '0.06em',
                     color: decayInfo.isRecovering
@@ -999,7 +991,7 @@ function HomeHub({ onSelectSection, activeSection = null, currentStage, previewP
           ...SANCTUARY_RAIL_STYLE,
           borderTop: `1px solid ${isLight ? 'rgba(100, 80, 60, 0.15)' : 'rgba(255, 255, 255, 0.08)'}`,
         }}>
-          {activePath ? (
+          {activePath && (
             <button
               type="button"
               onClick={openStudentActiveActions}
@@ -1012,19 +1004,8 @@ function HomeHub({ onSelectSection, activeSection = null, currentStage, previewP
                 boxShadow: isLight ? '0 8px 18px rgba(80, 60, 35, 0.08)' : '0 10px 24px rgba(0, 0, 0, 0.24)',
               }}
             >
-              {probeLabel}
+              Path Actions
             </button>
-          ) : (
-            <div
-              className="mb-2 inline-flex rounded-full border px-3 py-1 text-[10px] font-black uppercase tracking-[0.18em]"
-              style={{
-                borderColor: isLight ? 'rgba(100, 80, 60, 0.18)' : 'rgba(255,255,255,0.12)',
-                background: isLight ? 'rgba(255,255,255,0.55)' : 'rgba(255,255,255,0.05)',
-                color: isLight ? 'rgba(60,50,35,0.78)' : 'rgba(253,251,245,0.72)',
-              }}
-            >
-              {probeLabel}
-            </div>
           )}
           <div className="w-full">
             <div data-tutorial={ANCHORS.HOME_DAILY_CARD}>
