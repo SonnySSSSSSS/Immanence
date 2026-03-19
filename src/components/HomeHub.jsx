@@ -1007,7 +1007,7 @@ function HomeHub({ onSelectSection, activeSection = null, currentStage, previewP
             >
               <SimpleModeButton
                 title="Practice"
-                onClick={() => handleSelectSection("practice")}
+                onClick={() => handleSelectSection("practice", { forceStudentNavigation: true })}
                 disabled={lockToHub}
                 icon="practice"
                 isActive={activeSection === 'practice'}
@@ -1016,7 +1016,7 @@ function HomeHub({ onSelectSection, activeSection = null, currentStage, previewP
               />
               <SimpleModeButton
                 title="Navigation"
-                onClick={() => handleSelectSection("navigation")}
+                onClick={() => handleSelectSection("navigation", { forceStudentNavigation: true })}
                 disabled={lockToHub}
                 icon="navigation"
                 isActive={activeSection === 'navigation'}

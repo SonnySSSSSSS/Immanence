@@ -467,7 +467,7 @@ function App({ playgroundMode = false, playgroundBottomLayer = true }) {
       return;
     }
     if (section === 'practice') {
-      if (practiceLaunchContext) {
+      if (practiceLaunchContext || forceStudentNavigation) {
         setStudentNavigationOverride(false);
         setActiveSection('practice');
       }
