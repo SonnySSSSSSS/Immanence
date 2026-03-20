@@ -29,13 +29,24 @@ Hero copy:
 - Headline: Build Agency, Not Just Calm
 - Subhead: Train state control through structured spiritual-neurocognitive practice.
 
+Performance reliability framing:
+
+- Do not frame as "getting smarter."
+- Frame as "accessing existing capacity more consistently."
+- Emphasize reduced cognitive noise, reduced drift, and faster return to task.
+
 ## Claims Policy
+
+Evidence status:
+
+- See [EVIDENCE_BASE_SKILL_TRAINING.md](EVIDENCE_BASE_SKILL_TRAINING.md) for current support level and caveats.
 
 ### Allowed claims
 
 - Can improve self-regulation capacity with consistent practice.
 - Can support attention stability and emotional composure.
 - Trains skills associated with reduced reactivity and better response flexibility.
+- Is intended as skill training, not clinical treatment.
 
 ### Restricted claims
 
@@ -43,12 +54,30 @@ Hero copy:
 - Do not claim guaranteed outcomes for all users.
 - Do not claim permanent nervous-system change without direct evidence.
 - Do not present the app as a substitute for licensed care.
+- Do not use "rewires your brain" as product copy.
+- Do not claim app-level equivalence to therapy, medication, sleep, or medical outcomes.
 
 ### Required qualifiers
 
 - Use can, may, associated with, designed to support.
 - Note individual variability and dependence on consistency.
 - Distinguish skill training outcomes from clinical outcomes.
+
+### Practical copy pattern
+
+Use this pattern for external messaging:
+
+1. Mechanism: what is being trained (attention, awareness, regulation)
+2. Practice condition: consistency and dose expectations
+3. Outcome: modest, meaningful skill gains
+4. Boundary: non-clinical, non-guaranteed
+
+## Approved Copy Snippets
+
+- Immanence trains consistency of attention, not intelligence.
+- Practice helps reduce cognitive noise so more of your existing capacity is available when needed.
+- The goal is performance stability under pressure, not a claim of superhuman cognition.
+- Many users may experience fewer focus dropouts and faster recovery after distraction.
 
 ## Evidence Style Guide
 

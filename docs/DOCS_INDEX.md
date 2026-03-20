@@ -17,6 +17,7 @@ Canonical doc map for `immanence-os`, refreshed on 2026-03-09.
 - [PHILOSOPHY.md](PHILOSOPHY.md) - product and design philosophy
 - [STATE_TRAINING_DOCTRINE.md](STATE_TRAINING_DOCTRINE.md) - core framing from reactivity to agency
 - [POSITIONING_AND_CLAIMS_PLAYBOOK.md](POSITIONING_AND_CLAIMS_PLAYBOOK.md) - messaging stack, claims policy, and education roadmap
+- [EVIDENCE_BASE_SKILL_TRAINING.md](EVIDENCE_BASE_SKILL_TRAINING.md) - evidence-backed claim boundaries and caveats
 
 ## Feature And System Docs
 

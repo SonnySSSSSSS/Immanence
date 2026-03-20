@@ -56,6 +56,23 @@ See `SECURITY_AUDIT_SUPABASE_GH_PAGES.md` for the full audit status. Remaining b
 
 **Structured progression.** Stages advance based on sustained consistency, not single-session performance. Identity markers (avatar, rune, stage) reflect long-term commitment.
 
+## Evidence And Claim Boundaries
+
+Immanence is framed as a skill-training system for attention, awareness, and emotional regulation.
+It is not presented as a clinical treatment product.
+
+- Evidence-backed framing and caveats: [docs/EVIDENCE_BASE_SKILL_TRAINING.md](docs/EVIDENCE_BASE_SKILL_TRAINING.md)
+- Messaging and claim rules: [docs/POSITIONING_AND_CLAIMS_PLAYBOOK.md](docs/POSITIONING_AND_CLAIMS_PLAYBOOK.md)
+
+Current evidence supports modest, meaningful improvements for many users with consistent practice.
+Claims are intentionally non-clinical and non-guaranteed.
+
+Immanence frames cognitive impact as performance reliability:
+
+- not a higher intelligence ceiling
+- more consistent access to existing capacity
+- fewer attentional dropouts and better return-to-task behavior under load
+
 ## Dual Mode System
 
 ### Student Mode
@@ -181,6 +198,7 @@ ollama pull gemma3:1b
 - [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) - legacy architecture doc retained for reference
 - [docs/STATE_TRAINING_DOCTRINE.md](docs/STATE_TRAINING_DOCTRINE.md) - core doctrine: from reactivity to deliberate agency
 - [docs/POSITIONING_AND_CLAIMS_PLAYBOOK.md](docs/POSITIONING_AND_CLAIMS_PLAYBOOK.md) - product framing, claims guardrails, and 12-video syllabus
+- [docs/EVIDENCE_BASE_SKILL_TRAINING.md](docs/EVIDENCE_BASE_SKILL_TRAINING.md) - evidence summary and caveats for public-safe claims
 
 ## License
 
