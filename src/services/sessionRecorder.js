@@ -469,12 +469,15 @@ export function recordPracticeSession(payload = {}, options = {}) {
         });
     }
 
+    let recordedSession = null;
     if (persistSession) {
         if (typeof crypto !== 'undefined' && crypto.randomUUID) {
             normalizedSession.id = crypto.randomUUID();
         } else {
             normalizedSession.id = String(Date.now());
         }
+
+        recordedSession = normalizedSession;
 
         if (isDev) {
             devAssertSessionPathContext({
@@ -539,5 +542,5 @@ export function recordPracticeSession(payload = {}, options = {}) {
         logPractice(practiceData);
     }
 
-    return persistSession ? normalizedSession : null;
+    return recordedSession;
 }
