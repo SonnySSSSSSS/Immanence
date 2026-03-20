@@ -1,6 +1,5 @@
 // src/components/WisdomSection.jsx
-import React, { useState, useEffect } from "react";
-import { WisdomSelectionModal } from "./WisdomSelectionModal.jsx";
+import React, { useState, useEffect, useMemo } from "react";
 import { ChapterModal } from "./wisdom/ChapterModal.jsx";
 import { PartAccordion } from "./wisdom/PartAccordion.jsx";
 import { treatiseChapters } from "../data/treatise.generated.js";
@@ -35,7 +34,6 @@ export function WisdomSection() {
   const [modalChapter, setModalChapter] = useState(null);
   const [modalOpen, setModalOpen] = useState(false);
   const [modalTimeBudgetMin, setModalTimeBudgetMin] = useState(null);
-  const [wisdomModalOpen, setWisdomModalOpen] = useState(false);
   const [initialVideoId, setInitialVideoId] = useState(null);
   const [initialVideoBudgetMin, setInitialVideoBudgetMin] = useState(null);
   const { bookmarks, addBookmark, removeBookmark } = useWisdomStore();
@@ -72,6 +70,26 @@ export function WisdomSection() {
       addBookmark({ sectionId: chapterId });
     }
   };
+
+  const bgStarsEmpty = useMemo(() =>
+    Array.from({ length: 30 }, (_, i) => ({
+      w: ((i * 53 + 17) % 15) / 10 + 1,
+      h: ((i * 53 + 17) % 15) / 10 + 1,
+      left: (i * 61 + 7) % 100,
+      top: (i * 43 + 19) % 100,
+      dur: 2 + (i % 30) / 10,
+      delay: (i * 7) % 20 / 10,
+    })),
+  []);
+
+  const bgStarsFilled = useMemo(() =>
+    Array.from({ length: 20 }, (_, i) => ({
+      w: ((i * 37 + 13) % 15) / 10 + 0.5,
+      h: ((i * 37 + 13) % 15) / 10 + 0.5,
+      left: (i * 61 + 7) % 100,
+      top: (i * 43 + 19) % 100,
+    })),
+  []);
 
   const openChapterModal = (chapter, opts = {}) => {
     setModalChapter(chapter);
@@ -242,6 +260,15 @@ export function WisdomSection() {
           />
         </div>
 
+        {!searchQuery && !expandedPart && (
+          <div
+            className="text-center py-3 text-[11px] italic"
+            style={{ color: 'rgba(253,251,245,0.35)', fontFamily: 'var(--font-body)' }}
+          >
+            Begin with Part I — The Call ↓
+          </div>
+        )}
+
         {/* Parts Accordion */}
         <div className="border border-[var(--accent-15)] rounded-2xl">
           {treatiseParts.map((part) => {
@@ -288,18 +315,18 @@ export function WisdomSection() {
         >
           {/* Distant stars background */}
           <div className="absolute inset-0 pointer-events-none">
-            {[...Array(30)].map((_, i) => (
+            {bgStarsEmpty.map((s, i) => (
               <div
                 key={i}
                 className="absolute rounded-full"
                 style={{
-                  width: Math.random() * 2 + 1 + "px",
-                  height: Math.random() * 2 + 1 + "px",
-                  left: Math.random() * 100 + "%",
-                  top: Math.random() * 100 + "%",
+                  width: s.w + "px",
+                  height: s.h + "px",
+                  left: s.left + "%",
+                  top: s.top + "%",
                   background: "rgba(255,255,255,0.3)",
-                  animation: `twinkle ${2 + Math.random() * 3}s ease-in-out infinite`,
-                  animationDelay: Math.random() * 2 + "s",
+                  animation: `twinkle ${s.dur}s ease-in-out infinite`,
+                  animationDelay: s.delay + "s",
                 }}
               />
             ))}
@@ -357,15 +384,15 @@ export function WisdomSection() {
       >
         {/* Distant stars background */}
         <div className="absolute inset-0 pointer-events-none">
-          {[...Array(20)].map((_, i) => (
+          {bgStarsFilled.map((s, i) => (
             <div
               key={i}
               className="absolute rounded-full"
               style={{
-                width: Math.random() * 1.5 + 0.5 + "px",
-                height: Math.random() * 1.5 + 0.5 + "px",
-                left: Math.random() * 100 + "%",
-                top: Math.random() * 100 + "%",
+                width: s.w + "px",
+                height: s.h + "px",
+                left: s.left + "%",
+                top: s.top + "%",
                 background: "rgba(255,255,255,0.2)",
               }}
             />
@@ -541,70 +568,23 @@ export function WisdomSection() {
               borderRadius: "var(--radius-panel)",
             }}
           />
-          {/* Wisdom Selector - Dropdown Style (matching practice menu) */}
-          <div
-            className="mb-6"
-            style={{
-              display: "flex",
-              flexDirection: "column",
-              alignItems: "center",
-              gap: "12px",
-            }}
-          >
-            {/* Text prompt above button */}
-            <div
-              style={{
-                fontFamily: "var(--font-display)",
-                fontSize: "11px",
-                fontWeight: 600,
-                letterSpacing: "var(--tracking-mythic)",
-                color: "rgba(253,251,245,0.5)",
-                textTransform: "uppercase",
-              }}
-            >
-              What do you need?
-            </div>
-            <button
-              onClick={() => setWisdomModalOpen(true)}
-              className="px-6 py-3 rounded-full im-nav-btn"
-              style={{
-                fontFamily: "var(--font-display)",
-                fontSize: "13px",
-                fontWeight: 600,
-                letterSpacing: "var(--tracking-mythic)",
-                color: "var(--accent-color)",
-                display: "flex",
-                alignItems: "center",
-                gap: "12px",
-                background:
-                  "linear-gradient(135deg, rgba(255,255,255,0.08) 0%, transparent 100%)",
-                border: "1px solid var(--accent-30)",
-                boxShadow:
-                  "0 0 25px var(--accent-15), inset 0 0 20px var(--accent-08)",
-                transform: wisdomModalOpen ? "scale(1.06)" : "scale(1)",
-                transition:
-                  "transform 300ms ease-out, background 300ms ease-out, box-shadow 300ms ease-out",
-              }}
-            >
-              <span>
-                {activeTab}
-                {activeTab === "Bookmarks" && bookmarkedIds.length > 0
-                  ? ` (${bookmarkedIds.length})`
-                  : ""}
-              </span>
-              {/* Chevron */}
-              <span
+          <div className="flex gap-2 justify-center flex-wrap mb-6 relative z-10">
+            {TABS.map(tab => (
+              <button
+                key={tab}
+                onClick={() => setActiveTab(tab)}
+                className="px-5 py-2 rounded-full text-[12px] transition-all"
                 style={{
-                  fontSize: "10px",
-                  transform: wisdomModalOpen
-                    ? "rotate(180deg)"
-                    : "rotate(0deg)",
-                  transition: "transform 200ms ease-out",
+                  fontFamily: 'var(--font-display)',
+                  letterSpacing: 'var(--tracking-mythic)',
+                  border: activeTab === tab ? '1px solid var(--accent-40)' : '1px solid transparent',
+                  color: activeTab === tab ? 'var(--accent-color)' : 'rgba(253,251,245,0.45)',
+                  background: activeTab === tab ? 'rgba(255,255,255,0.05)' : 'transparent',
                 }}
               >
-                {"\u25bc"}
-              </span>
-            </button>
+                {tab}{tab === 'Bookmarks' && bookmarkedIds.length > 0 ? ` (${bookmarkedIds.length})` : ''}
+              </button>
+            ))}
           </div>
 
           {/* Content */}
@@ -617,14 +597,6 @@ export function WisdomSection() {
         </div>
       </div>
 
-      {/* Wisdom Selection Modal */}
-      <WisdomSelectionModal
-        isOpen={wisdomModalOpen}
-        onClose={() => setWisdomModalOpen(false)}
-        currentTab={activeTab}
-        onSelectTab={setActiveTab}
-        bookmarksCount={bookmarkedIds.length}
-      />
       {/* PROBE:wisdom-recommendations-removal:END */}
     </>
   );

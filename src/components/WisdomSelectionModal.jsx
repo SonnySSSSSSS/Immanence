@@ -1,5 +1,6 @@
 // src/components/WisdomSelectionModal.jsx
 // Modal for selecting Wisdom section: Treatise, Bookmarks, Videos, Self-Knowledge
+// RETIRED: replaced by inline tab bar in WisdomSection.jsx (Spec 3). Retain for potential mobile-overflow use.
 
 import React, { useEffect } from 'react';
 
