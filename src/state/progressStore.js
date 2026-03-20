@@ -380,8 +380,11 @@ export const useProgressStore = create(
              */
             getStreakInfo: () => {
                 const state = get();
-                const effectiveLastPracticeDate =
-                    state?.streak?.lastPracticeDate || deriveLastPracticeDateFromEvents(state);
+                const derivedLastPracticeDate = deriveLastPracticeDateFromEvents(state);
+                const effectiveLastPracticeDate = [state?.streak?.lastPracticeDate, derivedLastPracticeDate]
+                    .filter(Boolean)
+                    .sort()
+                    .pop() || null;
 
                 if (state.vacation.active) {
                     return {
@@ -393,8 +396,10 @@ export const useProgressStore = create(
                     };
                 }
 
-                const current = deriveCurrentStreak(state);
                 const lastPracticeDate = effectiveLastPracticeDate;
+                const current = lastPracticeDate && (isToday(lastPracticeDate) || isYesterday(lastPracticeDate))
+                    ? countConsecutiveDays(state)
+                    : 0;
 
                 return {
                     current,
