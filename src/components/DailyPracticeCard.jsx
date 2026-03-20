@@ -784,6 +784,13 @@ export function DailyPracticeCard({ onStartPractice, onViewCurriculum, onNavigat
         ? setupArtworkCandidates[setupArtworkAttempt]
         : null;
 
+    // Eagerly preload setup artwork so it's in cache before the setup state renders
+    useEffect(() => {
+        if (!setupArtworkCandidates[0]) return;
+        const img = new Image();
+        img.src = setupArtworkCandidates[0];
+    }, [setupArtworkCandidates]);
+
     const theme = useTheme();
     const primaryHex = theme?.accent?.primary || '#4ade80';
     const sessionRowWallpaperUrl = `${import.meta.env.BASE_URL}off%20day.webp`;
@@ -1313,6 +1320,7 @@ export function DailyPracticeCard({ onStartPractice, onViewCurriculum, onNavigat
                                                 <img
                                                     src={setupArtworkSrc}
                                                     alt="Temple entrance illustration"
+                                                    fetchPriority="high"
                                                     onError={() => {
                                                         setSetupArtworkAttempt(currentAttempt => (
                                                             currentAttempt < setupArtworkCandidates.length

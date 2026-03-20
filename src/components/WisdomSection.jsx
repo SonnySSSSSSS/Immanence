@@ -564,8 +564,8 @@ export function WisdomSection() {
       <div data-tutorial="wisdom-root" className="w-full max-w-5xl mx-auto">
         {/* Tab nav — outside the dark card, on the background */}
         <div
-          className="flex flex-row items-center justify-between w-full mb-4"
-          style={{ gap: '0' }}
+          className="flex flex-row items-center justify-between w-full mb-6"
+          style={{ gap: '0', paddingLeft: '12px', paddingRight: '12px', paddingTop: '8px' }}
         >
           {TABS.map(tab => {
             const displayLabel = tab === 'Bookmarks' && bookmarkedIds.length > 0
