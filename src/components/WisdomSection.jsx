@@ -8,6 +8,7 @@ import { sanitizeText } from "../utils/textUtils.js";
 import { VideoLibrary } from "./VideoLibrary.jsx";
 import { SelfKnowledgeView } from "./wisdom/SelfKnowledgeView.jsx";
 import { WisdomCardHousing } from "./wisdom/WisdomCardHousing.jsx";
+import { GlassIconButton } from "./GlassIconButton.jsx";
 import { useDisplayModeStore } from "../state/displayModeStore.js";
 import { useUiStore } from "../state/uiStore.js";
 import { useWisdomStore } from "../state/wisdomStore.js";
@@ -18,6 +19,20 @@ const TABS = [
   "Videos",
   "Self-Knowledge",
 ];
+
+const TAB_ICONS = {
+  "Treatise": "treatise",
+  "Bookmarks": "bookmarks",
+  "Videos": "videos",
+  "Self-Knowledge": "selfknowledge",
+};
+
+const TAB_LABELS = {
+  "Treatise": "Treatise",
+  "Bookmarks": "Bookmarks",
+  "Videos": "Videos",
+  "Self-Knowledge": "Self",
+};
 
 // â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 // MAIN COMPONENT
@@ -568,36 +583,22 @@ export function WisdomSection() {
               borderRadius: "var(--radius-panel)",
             }}
           />
-          <div className="flex gap-1 justify-center mb-6 relative z-10" style={{ flexWrap: 'nowrap', overflowX: 'auto' }}>
+          <div
+            className="flex flex-row items-center justify-between w-full mb-6 relative z-10"
+            style={{ gap: '0' }}
+          >
             {TABS.map(tab => {
-              const isActive = activeTab === tab;
-              const label = tab === 'Bookmarks' && bookmarkedIds.length > 0 ? `${tab} (${bookmarkedIds.length})` : tab;
+              const displayLabel = tab === 'Bookmarks' && bookmarkedIds.length > 0
+                ? `${TAB_LABELS[tab]} (${bookmarkedIds.length})`
+                : TAB_LABELS[tab];
               return (
-                <button
+                <GlassIconButton
                   key={tab}
+                  label={displayLabel}
+                  iconName={TAB_ICONS[tab]}
                   onClick={() => setActiveTab(tab)}
-                  className="transition-all duration-200"
-                  style={{
-                    fontFamily: 'var(--font-ui)',
-                    fontSize: 'var(--type-label-size)',
-                    textTransform: 'uppercase',
-                    letterSpacing: '0.04em',
-                    whiteSpace: 'nowrap',
-                    flexShrink: 0,
-                    padding: '6px 14px',
-                    borderRadius: '999px',
-                    border: isActive ? '1px solid var(--accent-40)' : '1px solid rgba(255,255,255,0.1)',
-                    color: isActive ? 'var(--accent-color)' : 'rgba(248,247,244,0.45)',
-                    background: isActive
-                      ? 'rgba(255,255,255,0.07)'
-                      : 'rgba(0,0,0,0.22)',
-                    boxShadow: isActive
-                      ? '0 0 12px var(--accent-15), inset 0 1px 2px rgba(255,255,255,0.08)'
-                      : '0 2px 6px rgba(0,0,0,0.3), inset 0 1px 1px rgba(255,255,255,0.04)',
-                  }}
-                >
-                  {label}
-                </button>
+                  selected={activeTab === tab}
+                />
               );
             })}
           </div>

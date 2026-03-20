@@ -206,6 +206,31 @@ export function GlassIconButton({
           <ellipse cx="12" cy="12" rx="10" ry="7" stroke="white" strokeWidth="1" opacity="0.3"/>
         </svg>
       ),
+      treatise: (
+        <svg width="28" height="28" viewBox="0 0 24 24" fill="none">
+          <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" opacity="0.9"/>
+          <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" fill="none" opacity="0.9"/>
+          <path d="M8 7h8M8 11h6" stroke="white" strokeWidth="1.5" strokeLinecap="round" opacity="0.6"/>
+        </svg>
+      ),
+      bookmarks: (
+        <svg width="28" height="28" viewBox="0 0 24 24" fill="none">
+          <path d="M12 2L15.09 8.26L22 9.27L17 14.14L18.18 21.02L12 17.77L5.82 21.02L7 14.14L2 9.27L8.91 8.26L12 2Z" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" opacity="0.9"/>
+        </svg>
+      ),
+      videos: (
+        <svg width="28" height="28" viewBox="0 0 24 24" fill="none">
+          <circle cx="12" cy="12" r="9" stroke="white" strokeWidth="2" opacity="0.9"/>
+          <path d="M10 8.5L16 12L10 15.5V8.5Z" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" fill="none" opacity="0.9"/>
+        </svg>
+      ),
+      selfknowledge: (
+        <svg width="28" height="28" viewBox="0 0 24 24" fill="none">
+          <circle cx="12" cy="8" r="3.5" stroke="white" strokeWidth="2" opacity="0.9"/>
+          <path d="M5 20c0-3.87 3.13-7 7-7s7 3.13 7 7" stroke="white" strokeWidth="2" strokeLinecap="round" opacity="0.9"/>
+          <path d="M17 4.5 Q20 8 17 11.5" stroke="white" strokeWidth="1.5" strokeLinecap="round" opacity="0.5"/>
+        </svg>
+      ),
     };
     return icons[iconName] || icons.cognitive;
   };
