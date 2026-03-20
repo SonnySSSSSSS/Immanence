@@ -72,6 +72,16 @@ If any required item is missing, ambiguous, or conflicting:
 - request a corrected spec
 - do not edit files
 
+#### Spec Auto-Fix (Unambiguous Only)
+
+If a spec's intent is clear and the only issues are minor and unambiguous (formatting, punctuation, obvious typos, or filename-only allowlist entries that map to exactly one repo-relative path), the executing agent may:
+
+- normalize/correct the spec text internally,
+- explicitly list the corrections made (old → new),
+- then implement and verify per the corrected spec.
+
+If any correction is ambiguous (e.g. multiple matching files for a filename-only allowlist entry, unclear constraints, or unclear verification), stop and request clarification; do not implement or commit.
+
 ### Stateful UI Debug Gate
 
 Use this gate when a UI bug depends on derived state, selectors, services, or multi-step logic.
