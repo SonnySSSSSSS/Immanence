@@ -38,7 +38,7 @@ export function useWakeLock(enabled = false) {
 
             // Re-request if the page becomes visible again (e.g. user switched tabs)
             const handleVisibilityChange = () => {
-                if (wakeLockRef.current !== null && document.visibilityState === 'visible') {
+                if (wakeLockRef.current === null && document.visibilityState === 'visible') {
                     requestWakeLock();
                 }
             };

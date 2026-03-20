@@ -27,7 +27,8 @@ export function FeedbackModal({ isOpen, onClose, onSubmit }) {
     };
 
     // Get existing feedback
-    const existing = JSON.parse(localStorage.getItem('immanenceOS.pilotFeedback') || '[]');
+    let existing = [];
+    try { existing = JSON.parse(localStorage.getItem('immanenceOS.pilotFeedback') || '[]'); } catch { existing = []; }
     existing.push(feedback);
     localStorage.setItem('immanenceOS.pilotFeedback', JSON.stringify(existing));
 

@@ -39,6 +39,7 @@ class AudioGuidanceService {
         this.currentAudio = null;
         this.speechSynthesis = window.speechSynthesis;
         this.currentUtterance = null;
+        this.fadeInterval = null;
 
         // Configuration
         this.config = {
@@ -146,11 +147,12 @@ class AudioGuidanceService {
             audio.volume = 0;
             const targetVolume = options.volume || this.config.audio.volume;
             const fadeStep = targetVolume / (this.config.audio.fadeInDuration / 50);
-            const fadeInterval = setInterval(() => {
+            this.fadeInterval = setInterval(() => {
                 if (audio.volume < targetVolume) {
                     audio.volume = Math.min(audio.volume + fadeStep, targetVolume);
                 } else {
-                    clearInterval(fadeInterval);
+                    clearInterval(this.fadeInterval);
+                    this.fadeInterval = null;
                 }
             }, 50);
         }
@@ -167,6 +169,12 @@ class AudioGuidanceService {
      * Stop current audio (speech or pre-recorded)
      */
     stop() {
+        // Clear any active fade interval
+        if (this.fadeInterval) {
+            clearInterval(this.fadeInterval);
+            this.fadeInterval = null;
+        }
+
         // Stop Web Speech API
         if (this.speechSynthesis && this.currentUtterance) {
             this.speechSynthesis.cancel();
