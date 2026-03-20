@@ -167,6 +167,7 @@ export function WisdomSection() {
           <div className="flex items-center gap-2">
             <div className="flex-1 relative">
               <input
+                data-tutorial="wisdom-treatise-search"
                 type="text"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
@@ -262,6 +263,7 @@ export function WisdomSection() {
         {/* Search */}
         <div className="relative">
           <input
+            data-tutorial="wisdom-treatise-search"
             type="text"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
@@ -285,7 +287,7 @@ export function WisdomSection() {
         )}
 
         {/* Parts Accordion */}
-        <div className="border border-[var(--accent-15)] rounded-2xl">
+        <div data-tutorial="wisdom-treatise-parts" className="border border-[var(--accent-15)] rounded-2xl">
           {treatiseParts.map((part) => {
             const chapters = getChaptersForPart(part.id, treatiseChapters);
             return (
@@ -319,15 +321,16 @@ export function WisdomSection() {
     // Empty state: Dark sky awaiting stars
     if (bookmarkedChapters.length === 0) {
       return (
-        <WisdomCardHousing
-          className="min-h-[300px]"
-          cardId="wisdom:bookmarksPanel"
-          contentClassName="relative min-h-[300px] flex flex-col items-center justify-center rounded-2xl overflow-hidden"
-          style={{
-            background:
-              "radial-gradient(ellipse at center, rgba(8,14,24,0.96) 0%, rgba(4,8,15,0.98) 100%)",
-          }}
-        >
+        <div data-tutorial="wisdom-bookmarks-panel" className="w-full">
+          <WisdomCardHousing
+            className="min-h-[300px]"
+            cardId="wisdom:bookmarksPanel"
+            contentClassName="relative min-h-[300px] flex flex-col items-center justify-center rounded-2xl overflow-hidden"
+            style={{
+              background:
+                "radial-gradient(ellipse at center, rgba(8,14,24,0.96) 0%, rgba(4,8,15,0.98) 100%)",
+            }}
+          >
           {/* Distant stars background */}
           <div className="absolute inset-0 pointer-events-none">
             {bgStarsEmpty.map((s, i) => (
@@ -382,21 +385,23 @@ export function WisdomSection() {
               50% { opacity: 0.8; }
             }
           `}</style>
-        </WisdomCardHousing>
+          </WisdomCardHousing>
+        </div>
       );
     }
 
     // Constellation view: Stars with connecting lines
     return (
-      <WisdomCardHousing
-        className="min-h-[350px]"
-        cardId="wisdom:bookmarksPanel"
-        contentClassName="relative min-h-[350px] rounded-2xl p-6 overflow-hidden"
-        style={{
-          background:
-            "radial-gradient(ellipse at center top, rgba(8,14,24,0.96) 0%, rgba(4,8,15,0.99) 100%)",
-        }}
-      >
+      <div data-tutorial="wisdom-bookmarks-panel" className="w-full">
+        <WisdomCardHousing
+          className="min-h-[350px]"
+          cardId="wisdom:bookmarksPanel"
+          contentClassName="relative min-h-[350px] rounded-2xl p-6 overflow-hidden"
+          style={{
+            background:
+              "radial-gradient(ellipse at center top, rgba(8,14,24,0.96) 0%, rgba(4,8,15,0.99) 100%)",
+          }}
+        >
         {/* Distant stars background */}
         <div className="absolute inset-0 pointer-events-none">
           {bgStarsFilled.map((s, i) => (
@@ -501,6 +506,7 @@ export function WisdomSection() {
                     e.stopPropagation();
                     toggleBookmark(ch.id);
                   }}
+                  data-tutorial="wisdom-bookmarks-remove"
                   className="text-sm transition-opacity hover:opacity-70"
                   style={{ color: "rgba(255,200,200,0.8)" }}
                   title="Remove from constellation"
@@ -520,7 +526,8 @@ export function WisdomSection() {
           {bookmarkedChapters.length} star
           {bookmarkedChapters.length !== 1 ? "s" : ""} in your sky
         </div>
-      </WisdomCardHousing>
+        </WisdomCardHousing>
+      </div>
     );
   };
 
@@ -564,6 +571,7 @@ export function WisdomSection() {
       <div data-tutorial="wisdom-root" className="w-full max-w-5xl mx-auto">
         {/* Tab nav — outside the dark card, on the background */}
         <div
+          data-tutorial="wisdom-tab-bar"
           className="flex flex-row items-center justify-between w-full mb-6"
           style={{ gap: '0', paddingLeft: '12px', paddingRight: '12px', paddingTop: '8px' }}
         >

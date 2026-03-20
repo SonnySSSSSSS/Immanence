@@ -234,6 +234,7 @@ export function ChapterModal({
           <div className="flex items-center gap-3">
             <button
               onClick={() => onBookmark(chapter.id)}
+              data-tutorial="wisdom-treatise-bookmark-star"
               className="text-lg transition-all"
               style={{
                 color: isBookmarked

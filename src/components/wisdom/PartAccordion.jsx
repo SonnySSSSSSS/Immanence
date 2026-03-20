@@ -133,6 +133,7 @@ export function PartAccordion({
                       e.stopPropagation();
                       onBookmark(ch.id);
                     }}
+                    data-tutorial="wisdom-treatise-bookmark-star"
                     className="text-sm transition-all flex-shrink-0"
                     style={{
                       color: isBookmarked

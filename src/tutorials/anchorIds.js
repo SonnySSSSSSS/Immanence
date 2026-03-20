@@ -50,6 +50,12 @@ export const ANCHORS = {
   PRACTICE_PHOTIC_INTENSITY: 'photic-intensity',
 
   WISDOM_SECTION_ROOT: 'wisdom-root',
+  WISDOM_TAB_BAR: 'wisdom-tab-bar',
+  WISDOM_TREATISE_SEARCH: 'wisdom-treatise-search',
+  WISDOM_TREATISE_PARTS: 'wisdom-treatise-parts',
+  WISDOM_TREATISE_BOOKMARK_STAR: 'wisdom-treatise-bookmark-star',
+  WISDOM_BOOKMARKS_PANEL: 'wisdom-bookmarks-panel',
+  WISDOM_BOOKMARKS_REMOVE: 'wisdom-bookmarks-remove',
   APPLICATION_SECTION_ROOT: 'application-root',
   NAVIGATION_SECTION_ROOT: 'navigation-root',
   NAVIGATION_PROGRAMS_PANEL: 'navigation-programs-panel',
