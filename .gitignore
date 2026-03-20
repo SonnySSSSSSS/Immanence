@@ -95,3 +95,9 @@ codex_*.txt
 *.dev.log
 dev_probe.log
 dev_tmp.log
+
+# Runtime artifact folders
+logs/
+tmp/
+phase-docs/
+test-results/
