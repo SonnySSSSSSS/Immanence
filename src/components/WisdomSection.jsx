@@ -568,23 +568,38 @@ export function WisdomSection() {
               borderRadius: "var(--radius-panel)",
             }}
           />
-          <div className="flex gap-2 justify-center flex-wrap mb-6 relative z-10">
-            {TABS.map(tab => (
-              <button
-                key={tab}
-                onClick={() => setActiveTab(tab)}
-                className="px-5 py-2 rounded-full text-[12px] transition-all"
-                style={{
-                  fontFamily: 'var(--font-display)',
-                  letterSpacing: 'var(--tracking-mythic)',
-                  border: activeTab === tab ? '1px solid var(--accent-40)' : '1px solid transparent',
-                  color: activeTab === tab ? 'var(--accent-color)' : 'rgba(253,251,245,0.45)',
-                  background: activeTab === tab ? 'rgba(255,255,255,0.05)' : 'transparent',
-                }}
-              >
-                {tab}{tab === 'Bookmarks' && bookmarkedIds.length > 0 ? ` (${bookmarkedIds.length})` : ''}
-              </button>
-            ))}
+          <div className="flex gap-1 justify-center mb-6 relative z-10" style={{ flexWrap: 'nowrap', overflowX: 'auto' }}>
+            {TABS.map(tab => {
+              const isActive = activeTab === tab;
+              const label = tab === 'Bookmarks' && bookmarkedIds.length > 0 ? `${tab} (${bookmarkedIds.length})` : tab;
+              return (
+                <button
+                  key={tab}
+                  onClick={() => setActiveTab(tab)}
+                  className="transition-all duration-200"
+                  style={{
+                    fontFamily: 'var(--font-ui)',
+                    fontSize: 'var(--type-label-size)',
+                    textTransform: 'uppercase',
+                    letterSpacing: '0.04em',
+                    whiteSpace: 'nowrap',
+                    flexShrink: 0,
+                    padding: '6px 14px',
+                    borderRadius: '999px',
+                    border: isActive ? '1px solid var(--accent-40)' : '1px solid rgba(255,255,255,0.1)',
+                    color: isActive ? 'var(--accent-color)' : 'rgba(248,247,244,0.45)',
+                    background: isActive
+                      ? 'rgba(255,255,255,0.07)'
+                      : 'rgba(0,0,0,0.22)',
+                    boxShadow: isActive
+                      ? '0 0 12px var(--accent-15), inset 0 1px 2px rgba(255,255,255,0.08)'
+                      : '0 2px 6px rgba(0,0,0,0.3), inset 0 1px 1px rgba(255,255,255,0.04)',
+                  }}
+                >
+                  {label}
+                </button>
+              );
+            })}
           </div>
 
           {/* Content */}
