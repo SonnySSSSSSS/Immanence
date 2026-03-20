@@ -233,7 +233,7 @@ export const TempoSyncPanel = ({ isPracticing = false, onRunBenchmark }) => {
   // Sync loop state to hook whenever it changes
   useEffect(() => {
     setLoopState(loopA, loopB, isLooping);
-  }, [loopA, loopB, isLooping]);
+  }, [loopA, loopB, isLooping, setLoopState]);
 
   const phaseDuration = getPhaseDuration();
   const confidencePercent = Math.round(confidence * 100);
@@ -349,7 +349,7 @@ export const TempoSyncPanel = ({ isPracticing = false, onRunBenchmark }) => {
         noStableTimerRef.current = null;
       }
     };
-  }, [confidence, isPlaying]);
+  }, [confidence, isPlaying, showNoStable]);
 
   useEffect(() => {
     return () => {

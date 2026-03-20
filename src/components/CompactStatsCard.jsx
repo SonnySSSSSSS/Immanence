@@ -445,7 +445,6 @@ export function CompactStatsCard({ domain = 'wisdom', streakInfo, onOpenArchive,
         return () => window.removeEventListener('keydown', handleKeyDown);
     }, []);
 
-    const sessionsCount = useProgressStore(s => s.sessions.length);
     const getStatsByDomain = useProgressStore(s => s.getStatsByDomain);
     const statsByDomainAll = getStatsByDomain?.({ range: 'ALL' }) || {};
     const practiceTotals = Object.values(statsByDomainAll).reduce(
@@ -512,7 +511,7 @@ export function CompactStatsCard({ domain = 'wisdom', streakInfo, onOpenArchive,
     const currentDomain = domainConfig[domain] || domainConfig.wisdom;
     // Get Timing Offsets for the 5-level chart
     const getWeeklyTimingOffsets = useProgressStore(s => s.getWeeklyTimingOffsets);
-    const weekOffsets = useMemo(() => getWeeklyTimingOffsets(domain), [getWeeklyTimingOffsets, domain, sessionsCount]);
+    const weekOffsets = useMemo(() => getWeeklyTimingOffsets(domain), [getWeeklyTimingOffsets, domain]);
 
     const domainLabels = { wisdom: 'Wisdom', breathwork: 'Breathwork', visualization: 'Visualization' };
 

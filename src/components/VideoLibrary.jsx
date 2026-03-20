@@ -2,7 +2,7 @@
 // FLAME Video Section - Single-focus hearth with horizontal offering bands
 // Selection replaces state, not layout. No modals.
 
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { useVideoStore } from '../state/videoStore.js';
 import { VIDEOS, getEmbedUrl } from '../data/videoData.js';
 import { IdleHearth } from './IdleHearth.jsx';
@@ -22,7 +22,7 @@ function VideoHearth({ video, isPlaying, setIsPlaying, isTransitioning, onClear,
             videoRef.current.currentTime = 0;
             videoRef.current.load();
         }
-    }, [video?.id]);
+    }, [video]);
 
     const videoUrl = video ? getEmbedUrl(video) : null;
 
@@ -426,7 +426,7 @@ export function VideoLibrary({ initialVideoId = null, initialVideoBudgetMin = nu
     const allVideos = VIDEOS; // For now, show all in one band since we only have wisdom category
 
     // The "tending" handler with dissolve transition
-    const tendFire = (video) => {
+    const tendFire = useCallback((video) => {
         // Guard: don't reset if selecting same video
         if (activeVideo?.id === video.id) return;
 
@@ -447,7 +447,7 @@ export function VideoLibrary({ initialVideoId = null, initialVideoBudgetMin = nu
             // Dissolve in
             setIsTransitioning(false);
         }, 300);
-    };
+    }, [activeVideo?.id, initialVideoId, initialVideoBudgetMin]);
 
     // Allow other surfaces (paths/curriculum) to deep-link into a specific video.
     useEffect(() => {
@@ -456,7 +456,7 @@ export function VideoLibrary({ initialVideoId = null, initialVideoBudgetMin = nu
         if (v) {
             queueMicrotask(() => { tendFire(v); });
         }
-    }, [initialVideoId, initialVideoBudgetMin]);
+    }, [initialVideoId, initialVideoBudgetMin, tendFire]);
 
     // Clear video and return to idle embers
     const clearVideo = () => {

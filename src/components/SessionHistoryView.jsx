@@ -29,6 +29,14 @@ import {
     ApplicationDashboardHeader
 } from './tracking/infographics/index.js';
 
+const TAB_TYPE_MAP = {
+    all: ['practice', 'circuit', 'wisdom-reading', 'wisdom-quiz', 'application-log'],
+    practice: ['practice'],
+    circuits: ['circuit'],
+    wisdom: ['wisdom-reading', 'wisdom-quiz'],
+    application: ['application-log']
+};
+
 export function SessionHistoryView({ onClose, initialTab = ARCHIVE_TABS.ALL, initialReportDomain = REPORT_DOMAINS.PRACTICE }) {
     const colorScheme = useDisplayModeStore(s => s.colorScheme);
     const isLight = colorScheme === 'light';
@@ -57,7 +65,6 @@ export function SessionHistoryView({ onClose, initialTab = ARCHIVE_TABS.ALL, ini
     const navigationAssessment = useNavigationStore(s => s.pathAssessment);
     const navigationUnlocked = useNavigationStore(s => s.unlockedSections);
     const navigationFoundation = useNavigationStore(s => s.hasWatchedFoundation);
-    const scheduleAdherenceLog = useNavigationStore(s => s.scheduleAdherenceLog);
     const scheduleSlotsState = useNavigationStore(s => s.scheduleSlots);
     const getScheduleAdherenceSummary = useNavigationStore(s => s.getScheduleAdherenceSummary);
     const getScheduleSlots = useNavigationStore(s => s.getScheduleSlots);
@@ -74,45 +81,45 @@ export function SessionHistoryView({ onClose, initialTab = ARCHIVE_TABS.ALL, ini
     // Memoize the entries to prevent infinite re-renders
     const circuitEntries = useMemo(() => getAllCircuitEntries?.() || [], [getAllCircuitEntries]);
     const allSessions = useMemo(() => getSessions?.() || [], [getSessions]);
-    const allStats = useMemo(() => getAllStats?.() || {}, [getAllStats, allSessions]);
+    const allStats = useMemo(() => getAllStats?.() || {}, [getAllStats]);
     const readingStats = useMemo(() => getReadingStats?.() || ({
         totalSessions: 0,
         totalMinutes: 0,
         sectionsVisited: 0,
         bySection: {},
         lastRead: null
-    }), [getReadingStats, readingSessions]);
+    }), [getReadingStats]);
     const quizStats = useMemo(() => getQuizStats?.() || ({
         totalAttempts: 0,
         passed: 0,
         avgScore: 0,
         passRate: 0
-    }), [getQuizStats, quizAttempts]);
+    }), [getQuizStats]);
     const watchStats = useMemo(() => getWatchStats?.() || ({
         totalWatched: 0,
         completed: 0,
         inProgress: 0
-    }), [getWatchStats, videoById]);
+    }), [getWatchStats]);
     const appStats7 = useMemo(() => getApplicationStats?.(7) || ({
         total: 0,
         byCategory: {},
         respondedDifferently: 0,
         respondedDifferentlyPercent: 0
-    }), [getApplicationStats, applicationLogs]);
+    }), [getApplicationStats]);
     const appStats30 = useMemo(() => getApplicationStats?.(30) || ({
         total: 0,
         byCategory: {},
         respondedDifferently: 0,
         respondedDifferentlyPercent: 0
-    }), [getApplicationStats, applicationLogs]);
+    }), [getApplicationStats]);
     const appStats90 = useMemo(() => getApplicationStats?.(90) || ({
         total: 0,
         byCategory: {},
         respondedDifferently: 0,
         respondedDifferentlyPercent: 0
-    }), [getApplicationStats, applicationLogs]);
-    const patternStats = useMemo(() => getPatternStats?.() || null, [getPatternStats, completedChains]);
-    const trajectory8 = useMemo(() => getTrajectory?.(8) || { weeks: [], trends: {}, insights: {} }, [getTrajectory, allSessions]);
+    }), [getApplicationStats]);
+    const patternStats = useMemo(() => getPatternStats?.() || null, [getPatternStats]);
+    const trajectory8 = useMemo(() => getTrajectory?.(8) || { weeks: [], trends: {}, insights: {} }, [getTrajectory]);
 
     const outsideScheduleSessionIds = (() => {
         if (!navigationActivePath?.startedAt) return new Set();
@@ -248,16 +255,8 @@ export function SessionHistoryView({ onClose, initialTab = ARCHIVE_TABS.ALL, ini
         return entries.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
     }, [allSessions, circuitEntries, readingSessions, quizAttempts, applicationLogs]);
 
-    const tabTypeMap = {
-        all: ['practice', 'circuit', 'wisdom-reading', 'wisdom-quiz', 'application-log'],
-        practice: ['practice'],
-        circuits: ['circuit'],
-        wisdom: ['wisdom-reading', 'wisdom-quiz'],
-        application: ['application-log']
-    };
-
     const filteredEntries = useMemo(() => {
-        const allowedTypes = tabTypeMap[activeTab];
+        const allowedTypes = TAB_TYPE_MAP[activeTab];
         if (activeTab !== 'all' && !allowedTypes) return [];
 
         let entries = combinedEntries;
@@ -372,11 +371,11 @@ export function SessionHistoryView({ onClose, initialTab = ARCHIVE_TABS.ALL, ini
 
     const adherenceSummary7 = useMemo(
         () => getScheduleAdherenceSummary?.(7, navigationActivePath?.activePathId) || null,
-        [getScheduleAdherenceSummary, navigationActivePath, scheduleAdherenceLog]
+        [getScheduleAdherenceSummary, navigationActivePath]
     );
     const adherenceSummary30 = useMemo(
         () => getScheduleAdherenceSummary?.(30, navigationActivePath?.activePathId) || null,
-        [getScheduleAdherenceSummary, navigationActivePath, scheduleAdherenceLog]
+        [getScheduleAdherenceSummary, navigationActivePath]
     );
 
     const tabCounts = {

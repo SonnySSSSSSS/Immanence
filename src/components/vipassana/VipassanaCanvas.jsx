@@ -546,7 +546,7 @@ export function VipassanaCanvas({
                 cancelAnimationFrame(animationFrameRef.current);
             }
         };
-    }, [thoughts, showDebug, fps]);
+    }, [thoughts, showDebug, fps, atmosphericEvent, showStamps, theme?.thoughtElement]);
 
     return (
         <div

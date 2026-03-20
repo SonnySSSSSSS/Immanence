@@ -417,7 +417,7 @@ export function DevPanel({
         } catch (err) {
             console.info('[pick-debug] failed to log', err);
         }
-    }, [pickDebugEnabled, toAncestorDebug, toNodeDebug]);
+    }, [pickDebugEnabled, toAncestorDebug, toNodeDebug, isDevBuild]);
 
     const stopPracticeButtonPickCaptureImmediate = useCallback(() => {
         const handler = practiceButtonPickHandlerRef.current;
@@ -499,7 +499,7 @@ export function DevPanel({
             setPickMode(false);
             un();
         };
-    }, [isOpen, devtoolsEnabled]);
+    }, [canRunDevEffects, isOpen, devtoolsEnabled]);
 
     useEffect(() => {
         if (!canRunDevEffects) return undefined;
@@ -526,13 +526,13 @@ export function DevPanel({
             // ignore
         }
         return undefined;
-    }, [isOpen, devtoolsEnabled, pickDebugEnabled]);
+    }, [canRunDevEffects, isOpen, devtoolsEnabled, pickDebugEnabled]);
 
     useEffect(() => {
         if (!canRunDevEffects) return undefined;
         document.body.classList.toggle('dev-card-id-probe', cardIdProbeEnabled);
         return () => document.body.classList.remove('dev-card-id-probe');
-    }, [isOpen, devtoolsEnabled, cardIdProbeEnabled]);
+    }, [canRunDevEffects, isOpen, devtoolsEnabled, cardIdProbeEnabled]);
 
     useEffect(() => {
         if (!canRunDevEffects) return undefined;
@@ -542,7 +542,7 @@ export function DevPanel({
             if (next?.settings) setNavBtnDraft(next.settings);
         });
         return () => un();
-    }, [isOpen, devtoolsEnabled]);
+    }, [canRunDevEffects, isOpen, devtoolsEnabled]);
 
     useEffect(() => {
         if (!devtoolsEnabled) return undefined;
@@ -625,7 +625,7 @@ export function DevPanel({
             // ignore
         }
         return undefined;
-    }, [isOpen, devtoolsEnabled]);
+    }, [canRunDevEffects, isOpen, devtoolsEnabled]);
 
     useEffect(() => {
         if (!canRunDevEffects) return undefined;
@@ -637,7 +637,7 @@ export function DevPanel({
             // ignore
         }
         return undefined;
-    }, [isOpen, devtoolsEnabled]);
+    }, [canRunDevEffects, isOpen, devtoolsEnabled]);
 
     useEffect(() => {
         if (!canRunDevEffects) return undefined;
@@ -647,7 +647,7 @@ export function DevPanel({
             // ignore
         }
         return undefined;
-    }, [isOpen, devtoolsEnabled, legacyPickersEnabled]);
+    }, [canRunDevEffects, isOpen, devtoolsEnabled, legacyPickersEnabled]);
 
     useEffect(() => {
         if (!canRunDevEffects) return undefined;
@@ -657,7 +657,7 @@ export function DevPanel({
         stopPracticeButtonPickCaptureImmediate();
         queueMicrotask(() => setPracticeButtonPickMode(false));
         return undefined;
-    }, [isOpen, devtoolsEnabled, legacyPickersEnabled, stopPracticeButtonPickCaptureImmediate]);
+    }, [canRunDevEffects, isOpen, devtoolsEnabled, legacyPickersEnabled, stopPracticeButtonPickCaptureImmediate]);
 
     useEffect(() => {
         if (!canRunDevEffects) return undefined;
@@ -666,19 +666,19 @@ export function DevPanel({
             selectedKey: practiceButtonSelectedKey,
         });
         return undefined;
-    }, [isOpen, devtoolsEnabled, practiceButtonApplyToAll, practiceButtonSelectedKey, broadcastPracticeButtonPicker]);
+    }, [canRunDevEffects, isOpen, devtoolsEnabled, practiceButtonApplyToAll, practiceButtonSelectedKey, broadcastPracticeButtonPicker]);
 
     useEffect(() => {
         if (!canRunDevEffects) return undefined;
         broadcastControlsPicker({ selectedId: controlsSelectedId || null });
         return undefined;
-    }, [isOpen, devtoolsEnabled, controlsSelectedId, broadcastControlsPicker]);
+    }, [canRunDevEffects, isOpen, devtoolsEnabled, controlsSelectedId, broadcastControlsPicker]);
 
     useEffect(() => {
         if (!canRunDevEffects) return undefined;
         queueMicrotask(() => setControlsFxDraft(getControlsFxPreset(controlsSelectedId)));
         return undefined;
-    }, [isOpen, devtoolsEnabled, controlsSelectedId]);
+    }, [canRunDevEffects, isOpen, devtoolsEnabled, controlsSelectedId]);
 
     useEffect(() => {
         if (!canRunDevEffects) return undefined;
@@ -731,7 +731,7 @@ export function DevPanel({
                 practiceButtonPickHandlerRef.current = null;
             }
         };
-    }, [isOpen, devtoolsEnabled, practiceButtonPickMode, debugLogPick, logNearestAncestors, stopPracticeButtonPickCaptureImmediate]);
+    }, [canRunDevEffects, isOpen, devtoolsEnabled, practiceButtonPickMode, debugLogPick, logNearestAncestors, stopPracticeButtonPickCaptureImmediate]);
 
     useEffect(() => {
         const removePlatesPickerClass = () => {
@@ -879,7 +879,7 @@ export function DevPanel({
             setPlatesAdvancedOpen(false);
         });
         return undefined;
-    }, [isOpen, devtoolsEnabled, platesSelectedId]);
+    }, [canRunDevEffects, isOpen, devtoolsEnabled, platesSelectedId]);
 
     useEffect(() => {
         if (!isOpen || !devtoolsEnabled || !platesSelectedId) return undefined;
@@ -907,7 +907,7 @@ export function DevPanel({
         if (!canRunDevEffects) return undefined;
         document.body.classList.toggle('dev-ui-target-probe', uiTargetProbeEnabled);
         return () => document.body.classList.remove('dev-ui-target-probe');
-    }, [isOpen, devtoolsEnabled, uiTargetProbeEnabled]);
+    }, [canRunDevEffects, isOpen, devtoolsEnabled, uiTargetProbeEnabled]);
 
     const platesResolved = resolvePlatesFxPreset(platesFxDraft);
     const plateOverrideResetPatch = buildPlateFxOverrideResetPatch();

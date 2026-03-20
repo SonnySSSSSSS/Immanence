@@ -203,7 +203,7 @@ export function IndrasNet({ stage = 'flame', isPracticing = false, isLight = fal
             window.removeEventListener('resize', resize);
             cancelAnimationFrame(animationFrame);
         };
-    }, [stage, isPracticing, isLight, PARTICLE_VERSION]);
+    }, [stage, isPracticing, isLight]);
 
     // Don't render particles during body scan practice
     if (hideParticles) {

@@ -102,7 +102,7 @@ export default function AuthGate({ children, onAuthChange }) {
     setNamePromptValue("");
     setNamePromptErr("");
     setNamePromptOpen(true);
-  }, [session?.user?.id]);
+  }, [session?.user]);
 
   const handleNamePromptNotNow = () => {
     const userId = session?.user?.id ?? null;

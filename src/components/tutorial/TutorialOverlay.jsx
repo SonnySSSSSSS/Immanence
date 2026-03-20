@@ -438,7 +438,7 @@ export function TutorialOverlay() {
   }, [tutorialId, overrideVersion]);
 
   const tutorial = tutorialData.tutorial;
-  const step =
+  const step = useMemo(() =>
     tutorial?.steps?.[stepIndex] ||
     (tutorial
       ? {
@@ -455,7 +455,8 @@ export function TutorialOverlay() {
           onEnter: null,
           onExit: null,
         }
-      : null);
+      : null),
+  [tutorial, stepIndex]);
 
   const teardownDriver = useCallback(() => {
     if (rootRef.current) {

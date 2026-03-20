@@ -1,5 +1,5 @@
 // src/components/SacredTimeSlider.jsx
-import React, { useRef, useState, useEffect } from 'react';
+import React, { useRef, useState, useEffect, useCallback } from 'react';
 
 // Geometric glyph paths (normalized to 100x100 viewbox)
 const GLYPHS = {
@@ -63,7 +63,7 @@ export function SacredTimeSlider({ value, onChange, options }) {
         setTimeout(() => setPulseActive(false), 200);
     };
 
-    const handleInteraction = (clientX) => {
+    const handleInteraction = useCallback((clientX) => {
         if (!trackRef.current) return;
         const rect = trackRef.current.getBoundingClientRect();
         const x = Math.max(0, Math.min(clientX - rect.left, rect.width));
@@ -77,7 +77,7 @@ export function SacredTimeSlider({ value, onChange, options }) {
             triggerPulse();
             onChange(newValue);
         }
-    };
+    }, [options, value, onChange]);
 
     const handleMouseDown = (e) => {
         setIsDragging(true);
@@ -98,7 +98,7 @@ export function SacredTimeSlider({ value, onChange, options }) {
             window.removeEventListener('mousemove', handleMouseMove);
             window.removeEventListener('mouseup', handleMouseUp);
         };
-    }, [isDragging, value, options]);
+    }, [isDragging, handleInteraction]);
 
     return (
         <div

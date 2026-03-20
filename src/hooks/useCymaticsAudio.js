@@ -197,12 +197,13 @@ export function useCymaticsAudio() {
 
     // Cleanup on unmount
     useEffect(() => {
+        const oscMap = oscillatorsRef.current;
         return () => {
             if (driftIntervalRef.current) {
                 clearInterval(driftIntervalRef.current);
             }
 
-            for (const [, nodes] of oscillatorsRef.current.entries()) {
+            for (const [, nodes] of oscMap.entries()) {
                 try {
                     nodes.osc.stop();
                     nodes.osc.disconnect();
@@ -212,7 +213,7 @@ export function useCymaticsAudio() {
                 }
             }
 
-            oscillatorsRef.current.clear();
+            oscMap.clear();
 
             if (audioContextRef.current) {
                 audioContextRef.current.close();

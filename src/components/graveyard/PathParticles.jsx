@@ -1,7 +1,7 @@
 // src/components/PathParticles.jsx
 // Canvas-based particle system - refined FX presets v7
 
-import React, { useRef, useEffect, useCallback } from 'react';
+import React, { useRef, useEffect, useCallback, useMemo } from 'react';
 import { getPathFX, getDefaultFX } from '../data/pathFX.js';
 import { clampPreset, MAX_PARTICLE_COUNT, MAX_TRAIL_LENGTH } from '../data/ringFXPresets.js';
 import { calculateRhythmFrequency, rhythmOscillation } from '../utils/rhythmUtils.js';
@@ -29,12 +29,14 @@ export function PathParticles({
     // Rhythm pulsing support
     const animationTimeRef = useRef(0);
 
-    const rawFx = fxPreset ? clampPreset(fxPreset) : (getPathFX(pathId) || getDefaultFX());
-    const fx = {
-        ...rawFx,
-        particleCount: Math.min(rawFx.particleCount || 12, MAX_PARTICLE_COUNT),
-        trailLength: Math.min(rawFx.trailLength || 0.3, MAX_TRAIL_LENGTH)
-    };
+    const fx = useMemo(() => {
+        const raw = fxPreset ? clampPreset(fxPreset) : (getPathFX(pathId) || getDefaultFX());
+        return {
+            ...raw,
+            particleCount: Math.min(raw.particleCount || 12, MAX_PARTICLE_COUNT),
+            trailLength: Math.min(raw.trailLength || 0.3, MAX_TRAIL_LENGTH)
+        };
+    }, [fxPreset, pathId]);
     const breathParams = fx.breathSync[phase] || fx.breathSync.rest;
 
     useEffect(() => {
@@ -1188,6 +1190,7 @@ export function PathParticles({
         }
 
         return particle;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [fx.motionPattern, fx.particleSize, breathParams, size, phase, ringScale, ringRadiusProp]);
 
     const drawParticle = useCallback((ctx, particle, color) => {
@@ -2150,7 +2153,7 @@ export function PathParticles({
                 cancelAnimationFrame(animationRef.current);
             }
         };
-    }, [pathId, fxPreset, isActive, size, accentColor, fx, initParticles, applyMotion, drawParticle, parseColor, getModifiedColor, intensity]);
+    }, [pathId, fxPreset, isActive, size, accentColor, fx, initParticles, applyMotion, drawParticle, parseColor, getModifiedColor, intensity, ringScale]);
 
     useEffect(() => {
         particlesRef.current = initParticles();

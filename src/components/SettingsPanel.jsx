@@ -19,11 +19,11 @@ export function SettingsPanel({ isOpen, onClose, onSignedOut }) {
     const meta = authUser?.user_metadata || {};
     const rawName = meta?.name ?? meta?.full_name ?? '';
     return typeof rawName === 'string' ? rawName.trim() : '';
-  }, [authUser?.id, authUser?.user_metadata]);
+  }, [authUser?.user_metadata]);
 
   const currentEmail = useMemo(() => {
     return typeof authUser?.email === 'string' ? authUser.email.trim() : '';
-  }, [authUser?.id, authUser?.email]);
+  }, [authUser?.email]);
 
   const [nameDraft, setNameDraft] = useState('');
   const [nameErr, setNameErr] = useState('');
@@ -57,7 +57,7 @@ export function SettingsPanel({ isOpen, onClose, onSignedOut }) {
     setPasswordErr('');
     setPasswordOk('');
     setPasswordSaving(false);
-  }, [authUser?.id, currentDisplayName]);
+  }, [isOpen, authUser?.id, currentDisplayName]);
   // PROBE:SETTINGS_HOOK_ORDER_FIX:END
 
   if (!isOpen) return null;

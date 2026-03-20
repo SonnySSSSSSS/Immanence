@@ -794,7 +794,10 @@ export function DailyPracticeCard({ onStartPractice, onViewCurriculum, onNavigat
     const theme = useTheme();
     const primaryHex = theme?.accent?.primary || '#4ade80';
     const sessionRowWallpaperUrl = `${import.meta.env.BASE_URL}off%20day.webp`;
-    const activeScheduleDays = frozenActiveDays.length > 0 ? frozenActiveDays : [0, 1, 2, 3, 4, 5, 6];
+    const activeScheduleDays = useMemo(
+        () => frozenActiveDays.length > 0 ? frozenActiveDays : [0, 1, 2, 3, 4, 5, 6],
+        [frozenActiveDays]
+    );
     const nextScheduledPracticeDate = useMemo(() => {
         if (!activePathObj || times.length === 0) return null;
 
@@ -1078,7 +1081,6 @@ export function DailyPracticeCard({ onStartPractice, onViewCurriculum, onNavigat
         scheduledWeekIndex,
         activePathObj?.showBreathBenchmark,
         benchmark,
-        onNavigate,
     ]);
 
     useEffect(() => {

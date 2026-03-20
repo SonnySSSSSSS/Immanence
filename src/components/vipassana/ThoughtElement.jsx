@@ -132,6 +132,7 @@ export function ThoughtElement({
 
         animationRef.current = requestAnimationFrame(animate);
         return () => cancelAnimationFrame(animationRef.current);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [id, vx, vy, bobAmplitude, flickerVariance, rotationSpeed, isSticky, fadeModifier]);
 
     // Gesture handlers

@@ -1,6 +1,6 @@
 // src/components/CycleRingControl.jsx
 // Donut chart control for visualization phase timing
-import { useRef, useCallback } from 'react';
+import { useRef, useCallback, useMemo } from 'react';
 
 export function CycleRingControl({
     fadeInDuration,
@@ -15,20 +15,20 @@ export function CycleRingControl({
     size: propSize = 180,
     showLegend = true,
 }) {
-    const PHASES = [
+    const PHASES = useMemo(() => [
         { key: 'fadeIn', label: 'IN', color: 'var(--accent-color)', min: 1, max: 5 },
         { key: 'display', label: 'HOLD', color: isLight ? 'var(--text-primary)' : 'rgba(255,255,255,0.8)', min: 1, max: 30 },
         { key: 'fadeOut', label: 'OUT', color: isLight ? 'var(--accent-60)' : 'var(--accent-60)', min: 1, max: 5 },
         { key: 'void', label: 'VOID', color: isLight ? 'rgba(180,155,110,0.15)' : 'rgba(50,50,50,0.9)', min: 1, max: 30 }
-    ];
+    ], [isLight]);
 
     const svgRef = useRef(null);
-    const values = {
+    const values = useMemo(() => ({
         fadeIn: fadeInDuration,
         display: displayDuration,
         fadeOut: fadeOutDuration,
         void: voidDuration
-    };
+    }), [fadeInDuration, displayDuration, fadeOutDuration, voidDuration]);
 
     const setters = {
         fadeIn: setFadeInDuration,
@@ -74,7 +74,7 @@ export function CycleRingControl({
             startAngle = endAngle;
             return arc;
         });
-    }, [values, total]);
+    }, [values, total, PHASES]);
 
     const arcs = getArcs();
 

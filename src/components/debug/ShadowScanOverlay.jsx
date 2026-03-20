@@ -234,7 +234,7 @@ export function ShadowScanOverlay({ enabled = false }) {
   }, [enabled, locked]);
 
   const chain = active?.chain || [];
-  const candidates = active?.candidates || [];
+  const candidates = useMemo(() => active?.candidates || [], [active?.candidates]);
 
   useEffect(() => {
     if (!enabled) {

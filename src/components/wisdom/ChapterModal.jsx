@@ -76,7 +76,7 @@ export function ChapterModal({
         if (scrollTimeoutRef.current) clearTimeout(scrollTimeoutRef.current);
       };
     }
-  }, [isOpen, chapter]);
+  }, [isOpen, chapter, markSectionCompleted]);
 
   // Reset completion guard when chapter changes
   useEffect(() => { hasMarkedRef.current = false; }, [chapter?.id]);
@@ -102,7 +102,7 @@ export function ChapterModal({
         markSectionCompleted?.(chapter.id, { source: 'read', scrollDepth });
       }
     };
-  }, [isOpen, chapter?.id, recordReadingSession, markSectionCompleted]);
+  }, [isOpen, chapter, recordReadingSession, markSectionCompleted]);
 
   // Mouse movement detection for reading mode
   useEffect(() => {

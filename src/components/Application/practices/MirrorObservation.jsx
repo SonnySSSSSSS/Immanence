@@ -87,7 +87,7 @@ export function MirrorObservation({ onComplete }) {
     }, [activeChain, startNewChain]);
 
     const mirrorData = activeChain?.mirror || {};
-    const context = mirrorData.context || {};
+    const context = useMemo(() => mirrorData.context || {}, [mirrorData.context]);
 
     // Build sentences
     const neutralSentence = useMemo(() =>

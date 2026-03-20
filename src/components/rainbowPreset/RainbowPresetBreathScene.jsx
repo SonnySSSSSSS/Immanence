@@ -22,6 +22,7 @@ export function RainbowPresetBreathSceneContent({ breathDriver = null, quality =
   useEffect(() => {
     smoothCycleProgressRef.current = Math.max(0, Math.min(1, breathDriver?.cycleProgress01 ?? 0))
     lastPhaseRef.current = breathDriver?.phase ?? null
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [breathDriver?.phase])
 
   const rayOut = useCallback(() => hitPrism(false), [])
@@ -32,10 +33,10 @@ export function RainbowPresetBreathSceneContent({ breathDriver = null, quality =
     rainbow.current.material.emissiveIntensity = 20
   }, [])
 
-  const vec = new THREE.Vector3()
+  const vecRef = useRef(new THREE.Vector3())
   const rayMove = useCallback(({ api, position, direction, normal }) => {
     if (!normal) return
-    vec.toArray(api.positions, api.number++ * 3)
+    vecRef.current.toArray(api.positions, api.number++ * 3)
     flare.current.position.set(position.x, position.y, -0.5)
     flare.current.rotation.set(0, 0, -Math.atan2(direction.x, direction.y))
     let angleScreenCenter = Math.atan2(-position.y, -position.x)

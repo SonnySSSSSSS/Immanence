@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import RitualStepDisplay from './RitualStepDisplay';
 import RitualProgress from './RitualProgress';
@@ -49,13 +49,13 @@ const RitualSession = ({ ritual, onComplete, onExit, isLight = false }) => {
 
     // NOTE: width rails are globally enforced; no per-session viewport modes.
 
-    const handleStepComplete = () => {
+    const handleStepComplete = useCallback(() => {
         if (currentStepIndex < totalSteps - 1) {
             setCurrentStepIndex(prev => prev + 1);
         } else {
             setSessionState('completion');
         }
-    };
+    }, [currentStepIndex, totalSteps]);
 
     // Initialize Step
     useEffect(() => {
@@ -65,7 +65,7 @@ const RitualSession = ({ ritual, onComplete, onExit, isLight = false }) => {
                 setIsPaused(false);
             });
         }
-    }, [currentStepIndex, sessionState, ritual]);
+    }, [currentStepIndex, sessionState, ritual, currentStep]);
 
     // Timer Logic
     useEffect(() => {
@@ -99,7 +99,7 @@ const RitualSession = ({ ritual, onComplete, onExit, isLight = false }) => {
         timerRef.current = requestAnimationFrame(tick);
 
         return () => cancelAnimationFrame(timerRef.current);
-    }, [sessionState, isPaused, currentStepIndex]); // Re-bind when step changes to reset logic if needed
+    }, [sessionState, isPaused, currentStepIndex, handleStepComplete]); // Re-bind when step changes to reset logic if needed
 
     // Controls
     const togglePause = () => setIsPaused(prev => !prev);

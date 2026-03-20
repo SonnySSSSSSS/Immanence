@@ -40,13 +40,12 @@ function Sparkline({ data, color }) {
 export function TrajectoryCard({ onTap }) {
     // Get raw sessions data as dependency
     const getTrajectory = useProgressStore(s => s.getTrajectory);
-    const sessionsCount = useProgressStore(s => s.sessions.length);
     const isLight = useDisplayModeStore(s => s.colorScheme === 'light');
 
     // Memoize trajectory computation - only recalculate when sessions/dailyLogs change
     const trajectory = useMemo(() => {
         return getTrajectory(8);
-    }, [getTrajectory, sessionsCount]);
+    }, [getTrajectory]);
 
     // Sparkline data (last 8 weeks)
     const consistencyData = trajectory.weeks.map(w => w.daysActive);

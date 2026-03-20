@@ -29,9 +29,6 @@ export const Reflect = forwardRef(({ children, start: _start = [0, 0, 0], end: _
   const vDir = new THREE.Vector3()
   const vPos = new THREE.Vector3()
 
-  let intersect = null
-  let intersects = []
-
   const api = useMemo(
     () => ({
       number: 0,
@@ -46,8 +43,9 @@ export const Reflect = forwardRef(({ children, start: _start = [0, 0, 0], end: _
         api.end.set(..._end)
       },
       update: () => {
+        let intersect = null
+        let intersects = []
         api.number = 0
-        intersects = []
 
         vStart.copy(api.start)
         vEnd.copy(api.end)
@@ -122,15 +120,16 @@ export const Reflect = forwardRef(({ children, start: _start = [0, 0, 0], end: _
         return Math.max(2, api.number)
       }
     }),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     [bounce, far]
   )
 
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   useLayoutEffect(() => void api.setRay(_start, _end), [..._start, ..._end])
   useImperativeHandle(fRef, () => api, [api])
 
   useLayoutEffect(() => {
     // Collect all objects that fulfill the criteria
-    // eslint-disable-next-line react-hooks/immutability
     api.objects = []
     scene.current.traverse((object) => {
       if (isRayMesh(object)) api.objects.push(object)

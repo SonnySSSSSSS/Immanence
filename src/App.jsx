@@ -541,6 +541,7 @@ function App({ playgroundMode = false, playgroundBottomLayer = true }) {
   // }, [curriculumOnboardingComplete, isCurriculumComplete]);
 
 
+  // v3.27.283 - chore(lint): fix all react-hooks/exhaustive-deps and no-unused-vars warnings across 25 files (65→0)
   // v3.27.282 - fix(practice): add numeric minute labels to duration slider; add dialog role/aria + pre-select + Cancel border to VipassanaVariantSelector
   // v3.27.281 - feat(application): add sigil-slot habit assignment UI and tutorial video modal entry
   // v3.27.280 - feat(application): deterministic 3-stroke sigil decoder with live legend popup and awareness-win wiring

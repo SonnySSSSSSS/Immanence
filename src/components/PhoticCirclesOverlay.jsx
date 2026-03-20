@@ -181,7 +181,7 @@ export function PhoticCirclesOverlay({ isOpen, onClose, autoStart = false }) {
         if (isRunning) {
             startTimeRef.current = performance.now();
         }
-    }, [photic.rateHz, photic.dutyCycle, photic.timingMode, photic.gapMs]);
+    }, [isRunning, photic.rateHz, photic.dutyCycle, photic.timingMode, photic.gapMs]);
 
     // Drag state for adjusting spacing (landscape X axis).
     // In portrait viewports the stage rotates 90deg, so we use Y movement to adjust spacing.
