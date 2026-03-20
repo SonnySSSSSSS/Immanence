@@ -65,6 +65,9 @@ export function PracticeMenuHeader({
               onClick={handleTutorialClick}
               style={{
                 padding: '8px 12px',
+                minHeight: '44px',
+                display: 'inline-flex',
+                alignItems: 'center',
                 borderRadius: '8px',
                 border: '1px solid rgba(255,255,255,0.2)',
                 background: 'rgba(255,255,255,0.05)',
@@ -111,6 +114,7 @@ export function PracticeMenuHeader({
         <div className="practiceMenuHeaderTitleRow">
           <div
             className="practiceMenuHeaderTitle type-h2"
+            title={title}
             style={{
               color: '#F5E6D3',
             }}

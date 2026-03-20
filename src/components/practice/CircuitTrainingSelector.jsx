@@ -11,7 +11,7 @@ const getRailColor = (id) => {
     integration: "rgba(245,158,11,0.95)",
     circuit: "rgba(168,85,247,0.95)",
     awareness: "rgba(56,189,248,0.95)",
-    resonance: "rgba(245,158,11,0.95)",
+    resonance: "rgba(20,210,200,0.95)",
     perception: "rgba(96,165,250,0.95)",
   };
   return colorMap[id] || "rgba(255,255,255,0.5)";
@@ -98,6 +98,7 @@ export function CircuitTrainingSelector({
       <button
         ref={buttonRef}
         type="button"
+        aria-expanded={open}
         onClick={() => setOpen((v) => !v)}
         data-practice-type={practiceTypeForFx}
         data-practice-id={activeId}

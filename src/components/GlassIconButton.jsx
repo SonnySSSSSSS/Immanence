@@ -271,12 +271,12 @@ export function GlassIconButton({
             : (isLight
                 ? `0 6px 18px rgba(100, 80, 60, 0.2), 0 3px 8px rgba(100, 80, 60, 0.15), inset 0 2px 6px rgba(255, 255, 255, 0.9), 0 0 15px ${primaryHex}25`
                 : `0 6px 20px rgba(0, 0, 0, 0.5), 0 3px 10px rgba(0, 0, 0, 0.4), inset 0 1px 2px rgba(255, 255, 255, 0.15), 0 0 20px ${primaryHex}40`),
-          transform: selected ? 'scale(1.05)' : 'scale(1)',
+          transform: selected ? 'scale(1.10)' : 'scale(1)',
           transition: 'all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275)'
         }}
         onMouseEnter={(e) => {
           if (disabled) return;
-          e.currentTarget.style.transform = selected ? 'scale(1.12) translateY(-2px)' : 'scale(1.08) translateY(-2px)';
+          e.currentTarget.style.transform = selected ? 'scale(1.12) translateY(-2px)' : 'scale(1.06) translateY(-2px)';
           e.currentTarget.style.borderColor = isLight ? `${primaryHex}70` : `${primaryHex}80`;
           e.currentTarget.style.boxShadow = isLight
             ? `0 10px 28px rgba(100, 80, 60, 0.3), 0 6px 12px rgba(100, 80, 60, 0.2), 0 0 25px ${primaryHex}40`
@@ -284,7 +284,7 @@ export function GlassIconButton({
         }}
         onMouseLeave={(e) => {
           if (disabled) return;
-          e.currentTarget.style.transform = selected ? 'scale(1.05) translateY(0)' : 'scale(1) translateY(0)';
+          e.currentTarget.style.transform = selected ? 'scale(1.10) translateY(0)' : 'scale(1) translateY(0)';
           e.currentTarget.style.borderColor = isLight ? `${primaryHex}40` : `${primaryHex}50`;
           e.currentTarget.style.boxShadow = selected
             ? (isLight

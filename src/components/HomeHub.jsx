@@ -448,20 +448,8 @@ function HomeHub({ onSelectSection, activeSection = null, currentStage, previewP
     display: 'flex',
     flexDirection: 'column',
     alignItems: 'stretch',
-    gap: `calc(${U} * 0.28)`,
-  };
-  const sidePanelHandleButtonStyle = {
-    alignSelf: 'center',
-    width: `clamp(24px, calc(${U} * 1.7), 36px)`,
-    height: '44px',
-    display: 'flex',
-    alignItems: 'center',
     justifyContent: 'center',
-    padding: '16px 0',
-    border: 'none',
-    background: 'transparent',
-    cursor: 'pointer',
-    flexShrink: 0,
+    gap: `calc(${U} * 0.28)`,
   };
   const sidePanelHandleLineStyle = {
     width: '100%',
@@ -476,6 +464,7 @@ function HomeHub({ onSelectSection, activeSection = null, currentStage, previewP
     display: 'flex',
     flexDirection: 'column',
     alignItems: 'stretch',
+    justifyContent: 'center',
     gap: `calc(${U} * 0.28)`,
     transition: 'max-height 260ms ease, opacity 220ms ease',
   };
@@ -506,7 +495,7 @@ function HomeHub({ onSelectSection, activeSection = null, currentStage, previewP
     display: 'flex',
     flexDirection: 'column',
     alignItems: 'stretch',
-    justifyContent: 'flex-start',
+    justifyContent: 'center',
     gap: `calc(${U} * 0.2)`,
     flexShrink: 0,
   };
@@ -634,11 +623,18 @@ function HomeHub({ onSelectSection, activeSection = null, currentStage, previewP
           {/* LEFT PANEL - Sessions + Active Days */}
           <div
             data-tutorial={ANCHORS.HOME_SESSIONS_PANEL}
+            role="button"
+            tabIndex={0}
+            aria-expanded={!leftRolled}
+            aria-label={leftRolled ? 'Expand practice log panel' : 'Collapse practice log panel'}
+            onClick={() => setLeftRolled((rolled) => !rolled)}
+            onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') setLeftRolled((r) => !r); }}
             style={{
               ...sidePanelFramePrimaryRowStyle,
               height: leftRolled ? PANEL_COLLAPSED_H : PANEL_EXPANDED_H,
               transition: 'height 220ms ease',
               overflow: 'hidden',
+              cursor: 'pointer',
             }}
           >
             <div style={sidePanelHousingOuterStyle} />
@@ -648,16 +644,21 @@ function HomeHub({ onSelectSection, activeSection = null, currentStage, previewP
             <div style={{ ...sidePanelHousingCornerStyle, top: `calc(${U} * 0.3)`, right: `calc(${U} * 0.34)`, borderTopWidth: '1px', borderRightWidth: '1px', borderTopStyle: 'solid', borderRightStyle: 'solid' }} />
             <div style={{ ...sidePanelHousingCornerStyle, bottom: `calc(${U} * 0.38)`, left: `calc(${U} * 0.34)`, borderBottomWidth: '1px', borderLeftWidth: '1px', borderBottomStyle: 'solid', borderLeftStyle: 'solid' }} />
             <div style={{ ...sidePanelHousingCornerStyle, bottom: `calc(${U} * 0.38)`, right: `calc(${U} * 0.34)`, borderBottomWidth: '1px', borderRightWidth: '1px', borderBottomStyle: 'solid', borderRightStyle: 'solid' }} />
-            <div style={{ ...sidePanelTileWrapStyle, position: 'relative', zIndex: 1 }}>
-              <button
-                type="button"
-                aria-expanded={!leftRolled}
-                aria-label={leftRolled ? 'Expand practice log panel' : 'Collapse practice log panel'}
-                onClick={() => setLeftRolled((rolled) => !rolled)}
-                style={sidePanelHandleButtonStyle}
-              >
-                <span aria-hidden="true" style={sidePanelHandleLineStyle} />
-              </button>
+            <div style={{ ...sidePanelTileWrapStyle, position: 'relative', zIndex: 1, height: '100%' }}>
+              {/* Dash indicator — absolutely positioned, no layout impact */}
+              <span
+                aria-hidden="true"
+                style={{
+                  ...sidePanelHandleLineStyle,
+                  position: 'absolute',
+                  top: `calc(${U} * 0.45)`,
+                  left: '50%',
+                  transform: 'translateX(-50%)',
+                  width: `clamp(24px, calc(${U} * 1.7), 36px)`,
+                  pointerEvents: 'none',
+                  zIndex: 2,
+                }}
+              />
               <div
                 style={{
                   ...sidePanelTileContentBaseStyle,
@@ -740,11 +741,18 @@ function HomeHub({ onSelectSection, activeSection = null, currentStage, previewP
           {/* RIGHT PANEL - Completion + On-Time + View Report */}
           <div
             data-tutorial={ANCHORS.HOME_STAGE_PANEL}
+            role="button"
+            tabIndex={0}
+            aria-expanded={!rightRolled}
+            aria-label={rightRolled ? 'Expand rhythm report panel' : 'Collapse rhythm report panel'}
+            onClick={() => setRightRolled((rolled) => !rolled)}
+            onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') setRightRolled((r) => !r); }}
             style={{
               ...sidePanelFramePrimaryRowStyle,
               height: rightRolled ? PANEL_COLLAPSED_H : PANEL_EXPANDED_H,
               transition: 'height 220ms ease',
               overflow: 'hidden',
+              cursor: 'pointer',
             }}
           >
             <div style={sidePanelHousingOuterStyle} />
@@ -754,16 +762,21 @@ function HomeHub({ onSelectSection, activeSection = null, currentStage, previewP
             <div style={{ ...sidePanelHousingCornerStyle, top: `calc(${U} * 0.3)`, right: `calc(${U} * 0.34)`, borderTopWidth: '1px', borderRightWidth: '1px', borderTopStyle: 'solid', borderRightStyle: 'solid' }} />
             <div style={{ ...sidePanelHousingCornerStyle, bottom: `calc(${U} * 0.38)`, left: `calc(${U} * 0.34)`, borderBottomWidth: '1px', borderLeftWidth: '1px', borderBottomStyle: 'solid', borderLeftStyle: 'solid' }} />
             <div style={{ ...sidePanelHousingCornerStyle, bottom: `calc(${U} * 0.38)`, right: `calc(${U} * 0.34)`, borderBottomWidth: '1px', borderRightWidth: '1px', borderBottomStyle: 'solid', borderRightStyle: 'solid' }} />
-            <div style={{ ...sidePanelTileWrapStyle, position: 'relative', zIndex: 1 }}>
-              <button
-                type="button"
-                aria-expanded={!rightRolled}
-                aria-label={rightRolled ? 'Expand rhythm report panel' : 'Collapse rhythm report panel'}
-                onClick={() => setRightRolled((rolled) => !rolled)}
-                style={sidePanelHandleButtonStyle}
-              >
-                <span aria-hidden="true" style={sidePanelHandleLineStyle} />
-              </button>
+            <div style={{ ...sidePanelTileWrapStyle, position: 'relative', zIndex: 1, height: '100%' }}>
+              {/* Dash indicator — absolutely positioned, no layout impact */}
+              <span
+                aria-hidden="true"
+                style={{
+                  ...sidePanelHandleLineStyle,
+                  position: 'absolute',
+                  top: `calc(${U} * 0.45)`,
+                  left: '50%',
+                  transform: 'translateX(-50%)',
+                  width: `clamp(24px, calc(${U} * 1.7), 36px)`,
+                  pointerEvents: 'none',
+                  zIndex: 2,
+                }}
+              />
               <div
                 style={{
                   ...sidePanelTileContentBaseStyle,
