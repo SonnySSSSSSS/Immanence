@@ -126,7 +126,7 @@ export function ApplicationTrackingCard({ onOpenArchive }) {
                                 className="text-[8px] font-black uppercase tracking-[0.1em] opacity-40"
                                 style={{ color: isLight ? 'rgba(60, 45, 35, 0.95)' : 'rgba(253, 251, 245, 0.95)' }}
                             >
-                                Last 7 days: {totalGestures}
+                                Awareness Wins (7d): {totalGestures}
                             </div>
                         </div>
                     </div>

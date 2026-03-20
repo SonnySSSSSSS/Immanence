@@ -5,7 +5,7 @@
 import React from 'react';
 import { useDisplayModeStore } from '../../state/displayModeStore.js';
 
-export function VipassanaVariantSelector({ onSelect, onCancel }) {
+export function VipassanaVariantSelector({ onSelect, onCancel, activeVariant }) {
     const colorScheme = useDisplayModeStore(s => s.colorScheme);
     const isLight = colorScheme === 'light';
 
@@ -28,6 +28,9 @@ export function VipassanaVariantSelector({ onSelect, onCancel }) {
 
     return (
         <div
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="vipassana-variant-title"
             className="fixed inset-0 z-50 flex items-center justify-center p-4"
             style={{
                 background: isLight
@@ -53,6 +56,7 @@ export function VipassanaVariantSelector({ onSelect, onCancel }) {
                 {/* Header */}
                 <div className="text-center mb-5">
                     <h2
+                        id="vipassana-variant-title"
                         className="text-lg font-semibold tracking-wide"
                         style={{
                             color: isLight ? 'rgba(45, 40, 35, 0.95)' : 'rgba(253, 251, 245, 0.95)',
@@ -70,28 +74,36 @@ export function VipassanaVariantSelector({ onSelect, onCancel }) {
 
                 {/* Variant Cards */}
                 <div className="space-y-3 mb-4">
-                    {variants.map((variant) => (
+                    {variants.map((variant) => {
+                        const isCurrentlyActive = activeVariant === variant.id;
+                        return (
                         <button
                             key={variant.id}
                             onClick={() => onSelect(variant.id)}
+                            aria-pressed={isCurrentlyActive}
                             className="w-full text-left rounded-xl p-4 transition-all duration-200 group"
                             style={{
-                                background: isLight
-                                    ? 'rgba(255, 255, 255, 0.6)'
-                                    : 'rgba(255, 255, 255, 0.04)',
-                                border: isLight
-                                    ? '1px solid rgba(175, 139, 44, 0.2)'
-                                    : '1px solid rgba(255, 255, 255, 0.08)',
+                                background: isCurrentlyActive
+                                    ? (isLight ? `${variant.color}18` : `${variant.color}22`)
+                                    : (isLight ? 'rgba(255, 255, 255, 0.6)' : 'rgba(255, 255, 255, 0.04)'),
+                                border: isCurrentlyActive
+                                    ? `1.5px solid ${variant.color}`
+                                    : (isLight ? '1px solid rgba(175, 139, 44, 0.2)' : '1px solid rgba(255, 255, 255, 0.08)'),
+                                boxShadow: isCurrentlyActive ? `0 0 10px ${variant.color}30` : 'none',
                             }}
                             onMouseEnter={(e) => {
-                                e.currentTarget.style.borderColor = variant.color;
-                                e.currentTarget.style.boxShadow = `0 0 12px ${variant.color}40`;
+                                if (!isCurrentlyActive) {
+                                    e.currentTarget.style.borderColor = variant.color;
+                                    e.currentTarget.style.boxShadow = `0 0 12px ${variant.color}40`;
+                                }
                             }}
                             onMouseLeave={(e) => {
-                                e.currentTarget.style.borderColor = isLight
-                                    ? 'rgba(175, 139, 44, 0.2)'
-                                    : 'rgba(255, 255, 255, 0.08)';
-                                e.currentTarget.style.boxShadow = 'none';
+                                if (!isCurrentlyActive) {
+                                    e.currentTarget.style.borderColor = isLight
+                                        ? 'rgba(175, 139, 44, 0.2)'
+                                        : 'rgba(255, 255, 255, 0.08)';
+                                    e.currentTarget.style.boxShadow = 'none';
+                                }
                             }}
                         >
                             <div className="flex items-start gap-3">
@@ -123,7 +135,8 @@ export function VipassanaVariantSelector({ onSelect, onCancel }) {
                                 </span>
                             </div>
                         </button>
-                    ))}
+                        );
+                    })}
                 </div>
 
                 {/* Cancel Button */}
@@ -133,6 +146,9 @@ export function VipassanaVariantSelector({ onSelect, onCancel }) {
                     style={{
                         color: isLight ? 'rgba(90, 77, 60, 0.7)' : 'rgba(253, 251, 245, 0.5)',
                         background: 'transparent',
+                        border: isLight
+                            ? '1px solid rgba(160, 130, 90, 0.3)'
+                            : '1px solid rgba(255, 255, 255, 0.14)',
                     }}
                 >
                     Cancel

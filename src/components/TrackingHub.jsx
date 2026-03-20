@@ -769,7 +769,7 @@ export function TrackingHub({ streakInfo: propStreakInfo }) {
                         className="text-[10px] uppercase font-black tracking-[0.2em]"
                         style={{ color: isLight ? 'rgba(60, 45, 35, 0.85)' : 'rgba(253, 251, 245, 0.85)' }}
                     >
-                        Application Heatmap
+                        Application Awareness Wins
                     </div>
                     <div
                         className="text-xs font-black"
@@ -785,7 +785,7 @@ export function TrackingHub({ streakInfo: propStreakInfo }) {
                             className="text-[8px] uppercase tracking-[0.15em]"
                             style={{ color: isLight ? 'rgba(60, 45, 35, 0.55)' : 'rgba(253, 251, 245, 0.55)' }}
                         >
-                            Last 84 local days · Reacted vs Chose · T_REF={T_REF}
+                            Last 84 local days · Awareness Wins · Reacted vs Chose · T_REF={T_REF}
                         </div>
 
                         <div className="flex items-center gap-2">

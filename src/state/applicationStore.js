@@ -68,6 +68,10 @@ function buildInitialApplicationState() {
         trackerConfig: { items: [] },
         trackerDaily: { byDate: {} },
         intention: null,
+        sigilLegend: {
+            dismissed: false,
+            autoOpenCount: 0,
+        },
     };
 }
 
@@ -188,6 +192,38 @@ export const useApplicationStore = create(
              */
             getAwarenessLogs: () => {
                 return get().awarenessLogs;
+            },
+
+            shouldAutoOpenSigilLegend: () => {
+                const state = get();
+                const dismissed = Boolean(state?.sigilLegend?.dismissed);
+                const autoOpenCount = Number(state?.sigilLegend?.autoOpenCount) || 0;
+                return !dismissed && autoOpenCount < 2;
+            },
+
+            markSigilLegendAutoOpened: () => {
+                set((state) => {
+                    const prev = state?.sigilLegend || { dismissed: false, autoOpenCount: 0 };
+                    const nextCount = Math.min(2, (Number(prev.autoOpenCount) || 0) + 1);
+                    return {
+                        sigilLegend: {
+                            dismissed: Boolean(prev.dismissed),
+                            autoOpenCount: nextCount,
+                        },
+                    };
+                });
+            },
+
+            setSigilLegendDismissed: (dismissed = true) => {
+                set((state) => {
+                    const prev = state?.sigilLegend || { dismissed: false, autoOpenCount: 0 };
+                    return {
+                        sigilLegend: {
+                            dismissed: Boolean(dismissed),
+                            autoOpenCount: Number(prev.autoOpenCount) || 0,
+                        },
+                    };
+                });
             },
 
             // Internal-only bulk setter (tests/backfill/migration tooling).
@@ -382,7 +418,7 @@ export const useApplicationStore = create(
         }),
         {
             name: 'immanenceOS.applicationState',
-            version: 3,
+            version: 4,
             partialize: (state) => ({
                 ownerUserId: normalizeUserId(state.ownerUserId),
                 awarenessLogs: Array.isArray(state.awarenessLogs) ? state.awarenessLogs : [],
@@ -395,6 +431,10 @@ export const useApplicationStore = create(
                         : {},
                 },
                 intention: state.intention ?? null,
+                sigilLegend: {
+                    dismissed: Boolean(state?.sigilLegend?.dismissed),
+                    autoOpenCount: Math.max(0, Math.min(2, Number(state?.sigilLegend?.autoOpenCount) || 0)),
+                },
             }),
             migrate: (persistedState, version) => {
                 const migratedBase = version == null || version < 2
@@ -414,6 +454,10 @@ export const useApplicationStore = create(
                             : {},
                     },
                     intention: next.intention ?? null,
+                    sigilLegend: {
+                        dismissed: Boolean(next?.sigilLegend?.dismissed),
+                        autoOpenCount: Math.max(0, Math.min(2, Number(next?.sigilLegend?.autoOpenCount) || 0)),
+                    },
                 };
             },
             merge: (persistedState, currentState) => ({
@@ -429,6 +473,10 @@ export const useApplicationStore = create(
                     byDate: persistedState?.trackerDaily?.byDate && typeof persistedState.trackerDaily.byDate === 'object'
                         ? persistedState.trackerDaily.byDate
                         : {},
+                },
+                sigilLegend: {
+                    dismissed: Boolean(persistedState?.sigilLegend?.dismissed),
+                    autoOpenCount: Math.max(0, Math.min(2, Number(persistedState?.sigilLegend?.autoOpenCount) || 0)),
                 },
             }),
         }

@@ -182,6 +182,28 @@ export function SacredTimeSlider({ value, onChange, options }) {
                                     }}
                                 />
                             )}
+                            {/* Numeric minute label below each key glyph */}
+                            {isKey && (
+                                <div
+                                    style={{
+                                        position: 'absolute',
+                                        top: '18px',
+                                        fontSize: '9px',
+                                        fontFamily: 'var(--font-display, monospace)',
+                                        letterSpacing: '0.04em',
+                                        color: isSelected
+                                            ? 'rgba(255,255,255,0.9)'
+                                            : isActive
+                                            ? 'rgba(255,255,255,0.55)'
+                                            : 'rgba(255,255,255,0.22)',
+                                        userSelect: 'none',
+                                        pointerEvents: 'none',
+                                        whiteSpace: 'nowrap',
+                                    }}
+                                >
+                                    {opt}
+                                </div>
+                            )}
                         </div>
                     );
                 })}

@@ -541,6 +541,9 @@ function App({ playgroundMode = false, playgroundBottomLayer = true }) {
   // }, [curriculumOnboardingComplete, isCurriculumComplete]);
 
 
+  // v3.27.282 - fix(practice): add numeric minute labels to duration slider; add dialog role/aria + pre-select + Cancel border to VipassanaVariantSelector
+  // v3.27.281 - feat(application): add sigil-slot habit assignment UI and tutorial video modal entry
+  // v3.27.280 - feat(application): deterministic 3-stroke sigil decoder with live legend popup and awareness-win wiring
   // v3.27.279 - chore(sync): classify Supabase sync failures with transport/auth diagnostics
   // v3.27.278 - chore(tutorial): remove temporary unmount probe instrumentation
   // v3.27.277 - fix(tutorial): defer nested root unmount to avoid render-time race warning
