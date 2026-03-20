@@ -579,6 +579,16 @@ export function WisdomSection() {
             const displayLabel = tab === 'Bookmarks' && bookmarkedIds.length > 0
               ? `${TAB_LABELS[tab]} (${bookmarkedIds.length})`
               : TAB_LABELS[tab];
+            const tutorialAnchor =
+              tab === 'Treatise'
+                ? 'wisdom-tab-treatise'
+                : tab === 'Bookmarks'
+                  ? 'wisdom-tab-bookmarks'
+                  : tab === 'Videos'
+                    ? 'wisdom-tab-videos'
+                    : tab === 'Self-Knowledge'
+                      ? 'wisdom-tab-self-knowledge'
+                      : null;
             return (
               <GlassIconButton
                 key={tab}
@@ -586,6 +596,7 @@ export function WisdomSection() {
                 iconName={TAB_ICONS[tab]}
                 onClick={() => setActiveTab(tab)}
                 selected={activeTab === tab}
+                data-tutorial={tutorialAnchor || undefined}
               />
             );
           })}

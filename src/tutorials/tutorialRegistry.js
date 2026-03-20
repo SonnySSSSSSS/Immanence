@@ -25,6 +25,14 @@ function tutorialAnchorTarget(...anchorIds) {
   };
 }
 
+function ensureWisdomTab(anchorId) {
+  if (typeof document === 'undefined') return;
+  const el = document.querySelector(tutorialSelector(anchorId));
+  if (!(el instanceof HTMLElement)) return;
+  if (el.getAttribute('aria-pressed') === 'true') return;
+  el.click();
+}
+
 export const TUTORIALS = {
   'page:home': {
     title: 'Home Hub',
@@ -140,6 +148,7 @@ export const TUTORIALS = {
           ANCHORS.WISDOM_SECTION_ROOT,
         ),
         placement: 'bottom',
+        onEnter: () => ensureWisdomTab(ANCHORS.WISDOM_TAB_TREATISE),
       },
       {
         id: 'wisdom-treatise-parts',
@@ -153,6 +162,7 @@ export const TUTORIALS = {
         ),
         placement: 'top',
         allowInteraction: true,
+        onEnter: () => ensureWisdomTab(ANCHORS.WISDOM_TAB_TREATISE),
       },
       {
         id: 'wisdom-treatise-bookmark-star',
@@ -165,6 +175,7 @@ export const TUTORIALS = {
           ANCHORS.WISDOM_SECTION_ROOT,
         ),
         placement: 'left',
+        onEnter: () => ensureWisdomTab(ANCHORS.WISDOM_TAB_TREATISE),
       },
       {
         id: 'wisdom-bookmarks-panel',
@@ -177,6 +188,7 @@ export const TUTORIALS = {
         ),
         placement: 'top',
         allowInteraction: true,
+        onEnter: () => ensureWisdomTab(ANCHORS.WISDOM_TAB_BOOKMARKS),
       },
       {
         id: 'wisdom-bookmarks-remove',
@@ -190,6 +202,7 @@ export const TUTORIALS = {
         ),
         placement: 'left',
         allowInteraction: true,
+        onEnter: () => ensureWisdomTab(ANCHORS.WISDOM_TAB_BOOKMARKS),
       },
       {
         id: 'wisdom-videos-self',

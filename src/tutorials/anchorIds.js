@@ -51,6 +51,10 @@ export const ANCHORS = {
 
   WISDOM_SECTION_ROOT: 'wisdom-root',
   WISDOM_TAB_BAR: 'wisdom-tab-bar',
+  WISDOM_TAB_TREATISE: 'wisdom-tab-treatise',
+  WISDOM_TAB_BOOKMARKS: 'wisdom-tab-bookmarks',
+  WISDOM_TAB_VIDEOS: 'wisdom-tab-videos',
+  WISDOM_TAB_SELF_KNOWLEDGE: 'wisdom-tab-self-knowledge',
   WISDOM_TREATISE_SEARCH: 'wisdom-treatise-search',
   WISDOM_TREATISE_PARTS: 'wisdom-treatise-parts',
   WISDOM_TREATISE_BOOKMARK_STAR: 'wisdom-treatise-bookmark-star',
