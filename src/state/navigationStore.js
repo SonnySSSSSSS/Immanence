@@ -2,7 +2,7 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import { isDevBuild } from '../dev/runtimeGate.js';
-import { addDaysToDateKey, getDateKey, getLocalDateKey } from '../utils/dateUtils.js';
+import { addDaysToDateKey, getDateKey, getLocalDateKey, parseDateKey } from '../utils/dateUtils.js';
 import { getPathById } from '../data/navigationData.js';
 import { useProgressStore } from './progressStore.js';
 import { generatePathReport, savePathReport } from '../reporting/pathReport.js';
@@ -918,8 +918,8 @@ export const useNavigationStore = create(
                 const startedAtLocalKey = getLocalDateKey(startedAtDate); // YYYY-MM-DD in local timezone
                 const todayKey = getLocalDateKey(); // Today in local timezone
                 
-                const startDay = new Date(startedAtLocalKey);
-                const today = new Date(todayKey);
+                const startDay = parseDateKey(startedAtLocalKey);
+                const today = parseDateKey(todayKey);
                 const daysSinceStart = Math.floor((today - startDay) / (1000 * 60 * 60 * 24));
                 const dayIndex = Math.min(Math.max(daysSinceStart + 1, 0), durationDays);
                 const timePct = Math.round((dayIndex / durationDays) * 100);

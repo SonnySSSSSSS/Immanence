@@ -4,7 +4,7 @@
 
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
-import { getDateKey, getWeekStart, addDaysToDateKey, diffDateKeysInDays } from '../utils/dateUtils.js';
+import { getDateKey, getLocalDateKey, getWeekStart, addDaysToDateKey, diffDateKeysInDays } from '../utils/dateUtils.js';
 import { isDevBuild } from '../dev/runtimeGate.js';
 import { updateAnnualRollups, updateLifetimeMilestones } from '../utils/lifetimeTracking.js';
 
@@ -139,10 +139,18 @@ function deriveLastPracticeDateFromEvents(state) {
 
     const keys = [];
     for (const s of sessions) {
-        if (s?.dateKey) keys.push(s.dateKey);
+        const raw = resolveSessionTimestamp(s);
+        if (!raw) continue;
+        const date = new Date(raw);
+        if (Number.isNaN(date.getTime())) continue;
+        keys.push(getLocalDateKey(date));
     }
     for (const h of honorLogs) {
-        if (h?.dateKey) keys.push(h.dateKey);
+        const raw = h?.date || h?.timestamp || null;
+        if (!raw) continue;
+        const date = new Date(raw);
+        if (Number.isNaN(date.getTime())) continue;
+        keys.push(getLocalDateKey(date));
     }
 
     if (keys.length === 0) return null;
@@ -150,19 +158,19 @@ function deriveLastPracticeDateFromEvents(state) {
     return keys[keys.length - 1] || null;
 }
 
-// Helper: get days between two UTC date keys
+// Helper: get days between two date keys (YYYY-MM-DD)
 function daysBetween(dateKey1, dateKey2) {
     return diffDateKeysInDays(dateKey1, dateKey2);
 }
 
 // Helper: check if date is today
 function isToday(dateKey) {
-    return dateKey === getDateKey();
+    return dateKey === getLocalDateKey();
 }
 
-// Helper: check if date is yesterday (UTC date keys)
+// Helper: check if date is yesterday (local date keys)
 function isYesterday(dateKey) {
-    const todayKey = getDateKey();
+    const todayKey = getLocalDateKey();
     const yesterdayKey = addDaysToDateKey(todayKey, -1);
     return dateKey === yesterdayKey;
 }
@@ -241,6 +249,7 @@ export const useProgressStore = create(
                 const state = get();
                 const targetDate = date ? new Date(date) : new Date();
                 const dateKey = getDateKey(targetDate);
+                const localDateKey = getLocalDateKey(targetDate);
 
                 const newLog = {
                     id: crypto?.randomUUID?.() || String(Date.now()),
@@ -253,7 +262,7 @@ export const useProgressStore = create(
                 };
 
                 // Honor logs also count toward streak
-                const streakUpdate = calculateStreakUpdate(state, dateKey);
+                const streakUpdate = calculateStreakUpdate(state, localDateKey);
 
                 set({
                     honorLogs: [...state.honorLogs, newLog],
@@ -293,7 +302,7 @@ export const useProgressStore = create(
                     // Reset lastPracticeDate to today so streak doesn't immediately decay
                     streak: {
                         ...state.streak,
-                        lastPracticeDate: getDateKey()
+                        lastPracticeDate: getLocalDateKey()
                     }
                 });
             },
@@ -380,11 +389,7 @@ export const useProgressStore = create(
              */
             getStreakInfo: () => {
                 const state = get();
-                const derivedLastPracticeDate = deriveLastPracticeDateFromEvents(state);
-                const effectiveLastPracticeDate = [state?.streak?.lastPracticeDate, derivedLastPracticeDate]
-                    .filter(Boolean)
-                    .sort()
-                    .pop() || null;
+                const effectiveLastPracticeDate = deriveLastPracticeDateFromEvents(state);
 
                 if (state.vacation.active) {
                     return {
@@ -405,7 +410,7 @@ export const useProgressStore = create(
                     current,
                     longest: state.streak.longest,
                     decayWarning: lastPracticeDate && isYesterday(lastPracticeDate),
-                    broken: lastPracticeDate && daysBetween(lastPracticeDate, getDateKey()) >= 2,
+                    broken: lastPracticeDate && daysBetween(lastPracticeDate, getLocalDateKey()) >= 2,
                     onVacation: false
                 };
             },
@@ -1008,11 +1013,11 @@ function calculateStreakUpdate(state, dateKey) {
  */
 function deriveCurrentStreak(state) {
     const lastPracticeDate =
-        state?.streak?.lastPracticeDate || deriveLastPracticeDateFromEvents(state);
+        deriveLastPracticeDateFromEvents(state);
 
     if (!lastPracticeDate) return 0;
 
-    const todayKey = getDateKey();
+    const todayKey = getLocalDateKey();
     const yesterdayKey = addDaysToDateKey(todayKey, -1);
 
     // If practiced today, streak is at least 1
@@ -1036,16 +1041,28 @@ function deriveCurrentStreak(state) {
 function countConsecutiveDays(state) {
     // Get all unique practice dates
     const practiceSessions = getCanonicalSessions(state);
-    const allDates = new Set([
-        ...practiceSessions.map(s => s.dateKey),
-        ...state.honorLogs.map(h => h.dateKey)
-    ]);
+    const honorLogs = Array.isArray(state?.honorLogs) ? state.honorLogs : [];
+    const allDates = new Set();
+    for (const s of practiceSessions) {
+        const raw = resolveSessionTimestamp(s);
+        if (!raw) continue;
+        const date = new Date(raw);
+        if (Number.isNaN(date.getTime())) continue;
+        allDates.add(getLocalDateKey(date));
+    }
+    for (const h of honorLogs) {
+        const raw = h?.date || h?.timestamp || null;
+        if (!raw) continue;
+        const date = new Date(raw);
+        if (Number.isNaN(date.getTime())) continue;
+        allDates.add(getLocalDateKey(date));
+    }
 
     if (allDates.size === 0) return 0;
 
     // Start from today (UTC key) and count backwards using date-key arithmetic
     let count = 0;
-    const todayKey = getDateKey();
+    const todayKey = getLocalDateKey();
     let currentKey = todayKey;
 
     // If practiced today, start counting from today

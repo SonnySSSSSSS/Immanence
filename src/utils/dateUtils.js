@@ -3,6 +3,17 @@ export const getDateKey = (date = new Date()) => {
 };
 
 /**
+ * Parse a local date key (YYYY-MM-DD) into a local Date at midnight.
+ * IMPORTANT: Do not use this for UTC date-key arithmetic; use `parseDateKeyToUtcMs`.
+ */
+export const parseDateKey = (dateKey) => {
+    if (!dateKey || typeof dateKey !== 'string') return null;
+    const [y, m, d] = dateKey.split('-').map(Number);
+    if (!y || !m || !d) return null;
+    return new Date(y, m - 1, d);
+};
+
+/**
  * Parse a UTC date key (YYYY-MM-DD) into a UTC midnight timestamp (ms).
  * This keeps all streak/date-key arithmetic in UTC to avoid local timezone drift.
  */
