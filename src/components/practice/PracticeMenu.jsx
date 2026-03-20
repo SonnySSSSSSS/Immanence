@@ -138,6 +138,7 @@ function PracticeMenu({
       <div className="flex flex-col items-center" style={{ marginTop: '24px', marginBottom: '16px' }}>
         <button
           onClick={onQuickStart}
+          data-tutorial="ritual-quick-start"
           className="group transition-all duration-300 relative overflow-hidden begin-button"
           style={{
             width: '100%',

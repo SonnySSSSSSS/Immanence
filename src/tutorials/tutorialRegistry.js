@@ -630,6 +630,19 @@ export const TUTORIALS = {
         placement: 'bottom',
       },
       {
+        id: 'integration-quick-start',
+        title: 'Quick Start',
+        body: 'If you have a default ritual saved, **Quick Start** continues from your last ritual without re-selecting it.',
+        target: tutorialAnchorTarget(
+          ANCHORS.PRACTICE_RITUAL_QUICK_START,
+          ANCHORS.PRACTICE_RITUAL_STEPS,
+          ANCHORS.PRACTICE_SELECTOR
+        ),
+        placement: 'top',
+        allowInteraction: true,
+        waitFor: 1200,
+      },
+      {
         id: 'integration-steps',
         title: 'Ritual Steps',
         body: 'Choose the invocation or ritual flow you want to run from this deck.',
@@ -985,6 +998,14 @@ export const TUTORIALS = {
         ),
         placement: 'top',
         waitFor: 1200,
+        actions: [
+          {
+            label: 'Binaural advanced',
+            intent: 'openTutorial',
+            tutorialId: 'practice:sound-binaural',
+            variant: 'secondary',
+          },
+        ],
       },
       {
         id: 'sound-isochronic',
@@ -1026,6 +1047,147 @@ export const TUTORIALS = {
         id: 'sound-begin',
         title: 'Begin Practice',
         body: 'Launch the run when you are ready.',
+        target: () =>
+          (typeof document === 'undefined'
+            ? null
+            : document.querySelector('[data-ui-id="practice:cta:begin"]')),
+        placement: 'top',
+      },
+    ],
+  },
+
+  'practice:sound-binaural': {
+    title: 'Binaural Beats (Advanced)',
+    steps: [
+      {
+        id: 'binaural-select',
+        title: 'Select Binaural Beats',
+        body: 'Start by choosing **Binaural Beats** as the sound engine. This tutorial explains the advanced tuning controls inside the binaural panel.',
+        target: tutorialAnchorTarget(
+          ANCHORS.SOUND_TYPE_GRID,
+          ANCHORS.SOUND_BINAURAL_PANEL,
+          ANCHORS.SOUND_ROOT,
+          ANCHORS.PRACTICE_RESONANCE_CONFIG
+        ),
+        placement: 'top',
+        allowInteraction: true,
+        waitFor: 1200,
+      },
+      {
+        id: 'binaural-audio',
+        title: 'Enable Audio / Preview',
+        body: 'Use **Enable Audio** once per session, then **Start** to preview the binaural tones. This is a tuning preview, separate from the main **Begin** button below.',
+        target: tutorialAnchorTarget(
+          ANCHORS.BINAURAL_ENABLE_AUDIO,
+          ANCHORS.BINAURAL_START_STOP,
+          ANCHORS.SOUND_BINAURAL_PANEL,
+          ANCHORS.SOUND_ROOT
+        ),
+        placement: 'top',
+        allowInteraction: true,
+        waitFor: 1200,
+      },
+      {
+        id: 'binaural-advanced-toggle',
+        title: 'Advanced Tuning',
+        body: 'Open **Advanced Tuning** to reveal carrier, beat frequency, texture, and mix controls.',
+        target: tutorialAnchorTarget(
+          ANCHORS.BINAURAL_ADVANCED_TOGGLE,
+          ANCHORS.SOUND_BINAURAL_PANEL,
+          ANCHORS.SOUND_ROOT
+        ),
+        placement: 'top',
+        allowInteraction: true,
+        waitFor: 1200,
+      },
+      {
+        id: 'binaural-master-carrier',
+        title: 'Master Carrier',
+        body: 'The carrier is the base tone (what you literally hear). It changes tone color and comfort. It does not change the beat difference by itself.',
+        target: tutorialAnchorTarget(
+          ANCHORS.BINAURAL_MASTER_CARRIER,
+          ANCHORS.BINAURAL_ADVANCED_TOGGLE,
+          ANCHORS.SOUND_BINAURAL_PANEL
+        ),
+        placement: 'top',
+        waitFor: 1200,
+      },
+      {
+        id: 'binaural-deltaf',
+        title: 'DeltaF (Beat Frequency)',
+        body: 'DeltaF is the perceived difference between the two tones. This is the primary entrainment lever for binaural beats.',
+        target: tutorialAnchorTarget(
+          ANCHORS.BINAURAL_DELTAF,
+          ANCHORS.BINAURAL_MASTER_CARRIER,
+          ANCHORS.SOUND_BINAURAL_PANEL
+        ),
+        placement: 'top',
+        waitFor: 1200,
+      },
+      {
+        id: 'binaural-ratio',
+        title: 'Ratio',
+        body: 'Ratio presets shape how harmonics stack around the carrier and the beat. Use it to change complexity without changing DeltaF directly.',
+        target: tutorialAnchorTarget(
+          ANCHORS.BINAURAL_RATIO,
+          ANCHORS.BINAURAL_DELTAF,
+          ANCHORS.SOUND_BINAURAL_PANEL
+        ),
+        placement: 'top',
+        waitFor: 1200,
+      },
+      {
+        id: 'binaural-spread',
+        title: 'Spread Mode',
+        body: 'Spread chooses the rule for distributing additional voices (Integer vs Phi). This affects shimmer and width.',
+        target: tutorialAnchorTarget(
+          ANCHORS.BINAURAL_SPREAD_MODE,
+          ANCHORS.BINAURAL_RATIO,
+          ANCHORS.SOUND_BINAURAL_PANEL
+        ),
+        placement: 'top',
+        waitFor: 1200,
+      },
+      {
+        id: 'binaural-chaos',
+        title: 'Chaos',
+        body: 'Chaos adds subtle variation. Keep it low if you want precise entrainment; raise it for a more organic texture.',
+        target: tutorialAnchorTarget(
+          ANCHORS.BINAURAL_CHAOS,
+          ANCHORS.BINAURAL_SPREAD_MODE,
+          ANCHORS.SOUND_BINAURAL_PANEL
+        ),
+        placement: 'top',
+        waitFor: 1200,
+      },
+      {
+        id: 'binaural-balance',
+        title: 'Balance Presets',
+        body: 'Balance presets change the harmonic mix. Focused is clean, Immersive is dense, Balanced sits in the middle.',
+        target: tutorialAnchorTarget(
+          ANCHORS.BINAURAL_BALANCE_PRESETS,
+          ANCHORS.SOUND_BINAURAL_PANEL,
+          ANCHORS.SOUND_ROOT
+        ),
+        placement: 'top',
+        waitFor: 1200,
+      },
+      {
+        id: 'binaural-custom',
+        title: 'Custom Voice Gains',
+        body: 'Choose **Custom** to set individual voice gains. This is for fine control when you know what you are listening for.',
+        target: tutorialAnchorTarget(
+          ANCHORS.BINAURAL_CUSTOM_GAINS,
+          ANCHORS.BINAURAL_BALANCE_PRESETS,
+          ANCHORS.SOUND_BINAURAL_PANEL
+        ),
+        placement: 'top',
+        waitFor: 1200,
+      },
+      {
+        id: 'binaural-begin',
+        title: 'Begin Practice',
+        body: 'When tuning is set, use **Begin** to start the actual practice run.',
         target: () =>
           (typeof document === 'undefined'
             ? null
