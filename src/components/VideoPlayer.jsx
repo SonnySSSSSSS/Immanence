@@ -86,9 +86,10 @@ export function VideoPlayer({ video, onComplete, onClose, autoplay = false }) {
     useEffect(() => {
         if (video.provider !== 'youtube') return;
 
-        // Load YouTube IFrame API if not already loaded
-        if (!window.YT) {
+        // Load YouTube IFrame API if not already loaded (guard against re-insertion)
+        if (!window.YT && !document.getElementById('yt-iframe-api')) {
             const tag = document.createElement('script');
+            tag.id = 'yt-iframe-api';
             tag.src = 'https://www.youtube.com/iframe_api';
             const firstScriptTag = document.getElementsByTagName('script')[0];
             firstScriptTag.parentNode.insertBefore(tag, firstScriptTag);
@@ -111,7 +112,12 @@ export function VideoPlayer({ video, onComplete, onClose, autoplay = false }) {
             // Small delay to ensure iframe is mounted
             setTimeout(initPlayer, 100);
         } else {
-            window.onYouTubeIframeAPIReady = initPlayer;
+            // Chain onto existing callback instead of overwriting
+            const prev = window.onYouTubeIframeAPIReady;
+            window.onYouTubeIframeAPIReady = () => {
+                if (prev) prev();
+                initPlayer();
+            };
         }
 
         return () => {
