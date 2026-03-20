@@ -1,5 +1,6 @@
 import React from 'react';
 
+// eslint-disable-next-line react-refresh/only-export-components
 export function getPracticeHousingStyles({ isLight = false, radius = 20, quiet = true } = {}) {
   const radiusPx = typeof radius === 'number' ? `${radius}px` : radius;
   const chamfer = quiet ? '14px' : '18px';

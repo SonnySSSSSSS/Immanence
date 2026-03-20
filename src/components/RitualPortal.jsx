@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useRitualStore } from '../state/ritualStore';
 import { RitualStepContainer } from './ritual/RitualStepContainer';
 import { RitualProgressBar } from './ritual/RitualProgressBar';
@@ -99,8 +99,8 @@ export function RitualPortal({ onComplete, onStop }) {
     const [showGuide, setShowGuide] = useState(true);
     const colorScheme = useDisplayModeStore(s => s.colorScheme);
     const isLight = colorScheme === 'light';
-    // Stable performance.now() anchor for BreathingRing â€” created once on mount.
-    const breathStartTime = useRef(performance.now());
+    // Stable performance.now() anchor for BreathingRing - created once on mount via lazy state.
+    const [breathStartTime] = useState(() => performance.now());
 
     useEffect(() => {
         if (status === 'idle') {
@@ -144,7 +144,7 @@ export function RitualPortal({ onComplete, onStop }) {
                                     exhale: breathPattern.exhale,
                                     holdBottom: breathPattern.hold2
                                 }}
-                                startTime={breathStartTime.current}
+                                startTime={breathStartTime}
                                 onTap={null}
                                 onCycleComplete={null}
                             />

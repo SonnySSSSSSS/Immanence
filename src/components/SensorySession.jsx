@@ -41,8 +41,9 @@ export function SensorySession({
     const [sessionRemainingSec, setSessionRemainingSec] = useState(duration * 60);
     const [completionReason, setCompletionReason] = useState(null);
 
-    // Timer Refs
-    const startTimeRef = useRef(performance.now());
+    // Timer Refs — startTime captured once via useState initializer (avoids impure call during render)
+    const [startTime] = useState(() => performance.now());
+    const startTimeRef = useRef(startTime);
     const onStopCalledRef = useRef(false);
 
     const config = SENSORY_TYPES[sensoryType];
@@ -89,8 +90,10 @@ export function SensorySession({
 
         // Initialize first step duration
         if (stepIndex === 0 && stepRemainingSec === 0) {
-            setStepRemainingSec(stepDurations[0] || 1);
-            setSessionRemainingSec(duration * 60);
+            queueMicrotask(() => {
+                setStepRemainingSec(stepDurations[0] || 1);
+                setSessionRemainingSec(duration * 60);
+            });
         }
 
         // Set up 1-second interval for countdown
@@ -163,12 +166,12 @@ export function SensorySession({
             const prompt = allPrompts[devPromptIndex];
             // Handle both string prompts (emotion) and object prompts (bodyScan, sakshi)
             const promptText = typeof prompt === 'string' ? prompt : prompt.text;
-            setCurrentPrompt(promptText);
+            queueMicrotask(() => setCurrentPrompt(promptText));
         } else if (allPrompts.length > 0 && devPromptIndex >= allPrompts.length) {
             // Index out of bounds after mode change, reset to first prompt
             const prompt = allPrompts[0];
             const promptText = typeof prompt === 'string' ? prompt : prompt.text;
-            setCurrentPrompt(promptText);
+            queueMicrotask(() => setCurrentPrompt(promptText));
         }
     }, [devPromptIndex, sensoryType, allPrompts]);
 
@@ -181,20 +184,22 @@ export function SensorySession({
 
     // Reset when practice/mode/scan changes (including emotion mode changes)
     useEffect(() => {
-        setDevPromptIndex(0);
-        setStepIndex(0);
-        setStepRemainingSec(0);
-        setSessionRemainingSec(duration * 60);
-        setCompletionReason(null);
         onStopCalledRef.current = false;
-        setElapsedSeconds(0);
         startTimeRef.current = performance.now();
+        queueMicrotask(() => {
+            setDevPromptIndex(0);
+            setStepIndex(0);
+            setStepRemainingSec(0);
+            setSessionRemainingSec(duration * 60);
+            setCompletionReason(null);
+            setElapsedSeconds(0);
+        });
     }, [sensoryType, selectedScanId, emotionMode, emotionPromptMode, duration]);
 
     // Sync local scan selection with external scanType changes
     useEffect(() => {
         if (scanType && scanType !== selectedScanId) {
-            setSelectedScanId(scanType);
+            queueMicrotask(() => setSelectedScanId(scanType));
         }
     }, [scanType, selectedScanId]);
 

@@ -10,7 +10,7 @@ export function StageCore({ stage, previousStage, transitionActive }) {
 
   useEffect(() => {
     if (!transitionActive) {
-      setFadeOut(false);
+      queueMicrotask(() => { setFadeOut(false); });
       return;
     }
     const id = requestAnimationFrame(() => setFadeOut(true));

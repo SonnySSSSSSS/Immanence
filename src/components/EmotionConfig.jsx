@@ -6,6 +6,7 @@ import React from 'react';
 import { EMOTION_PRACTICES } from '../data/emotionPractices.js';
 
 // Emotion modes in canonical order
+// eslint-disable-next-line react-refresh/only-export-components
 export const EMOTION_MODES = [
   { id: 'discomfort', label: 'Discomfort' },
   { id: 'fear', label: 'Fear' },
@@ -17,6 +18,7 @@ export const EMOTION_MODES = [
 ];
 
 // Prompt modes
+// eslint-disable-next-line react-refresh/only-export-components
 export const PROMPT_MODES = [
   { id: 'minimal', label: 'Minimal' },
   { id: 'guided', label: 'Guided' },

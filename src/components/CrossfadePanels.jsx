@@ -32,7 +32,7 @@ export function CrossfadePanels({
     useLayoutEffect(() => {
         if (!isSwitch) return;
 
-        setPhase("measuring");
+        queueMicrotask(() => setPhase("measuring"));
 
         // Wait a frame so DOM paints
         requestAnimationFrame(() => {

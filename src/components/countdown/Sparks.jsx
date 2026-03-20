@@ -2,7 +2,7 @@
 // Uses `meshline` package (maintained successor to threejs-meshline).
 // Only deviation: import source + `points` prop instead of deprecated `vertices`.
 import * as THREE from 'three'
-import { useRef, useMemo } from 'react'
+import { useRef, useState } from 'react'
 import { extend, useFrame, useThree } from '@react-three/fiber'
 import { MeshLineGeometry, MeshLineMaterial } from 'meshline'
 
@@ -21,25 +21,25 @@ function Fatline({ curve, width, color, speed }) {
   )
 }
 
+function buildLines(count, colors, radius) {
+  return new Array(count).fill().map((_, index) => {
+    const pos = new THREE.Vector3(Math.sin(0) * radius * r(), Math.cos(0) * radius * r(), 0)
+    const points = new Array(30).fill().map((_, index) => {
+      const angle = (index / 20) * Math.PI * 2
+      return pos.add(new THREE.Vector3(Math.sin(angle) * radius * r(), Math.cos(angle) * radius * r(), 0)).clone()
+    })
+    const curve = new THREE.CatmullRomCurve3(points).getPoints(1000)
+    return {
+      color: colors[parseInt(colors.length * Math.random())],
+      width: Math.max(0.1, (0.2 * index) / 10),
+      speed: Math.max(0.001, 0.004 * Math.random()),
+      curve,
+    }
+  })
+}
+
 export default function Sparks({ mouse, count, colors, radius = 10 }) {
-  const lines = useMemo(
-    () =>
-      new Array(count).fill().map((_, index) => {
-        const pos = new THREE.Vector3(Math.sin(0) * radius * r(), Math.cos(0) * radius * r(), 0)
-        const points = new Array(30).fill().map((_, index) => {
-          const angle = (index / 20) * Math.PI * 2
-          return pos.add(new THREE.Vector3(Math.sin(angle) * radius * r(), Math.cos(angle) * radius * r(), 0)).clone()
-        })
-        const curve = new THREE.CatmullRomCurve3(points).getPoints(1000)
-        return {
-          color: colors[parseInt(colors.length * Math.random())],
-          width: Math.max(0.1, (0.2 * index) / 10),
-          speed: Math.max(0.001, 0.004 * Math.random()),
-          curve,
-        }
-      }),
-    [count]
-  )
+  const [lines] = useState(() => buildLines(count, colors, radius))
 
   const ref = useRef()
   const { size, viewport } = useThree()

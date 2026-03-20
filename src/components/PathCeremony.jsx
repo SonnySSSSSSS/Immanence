@@ -38,7 +38,7 @@ export function PathCeremony({ stage = 'flame' }) {
 
     // Check if share is available
     useEffect(() => {
-        setCanShare(!!navigator.share || !!navigator.clipboard);
+        queueMicrotask(() => { setCanShare(!!navigator.share || !!navigator.clipboard); });
     }, []);
 
     const activeCeremony = devPreviewCeremony || pendingCeremony;
@@ -48,8 +48,10 @@ export function PathCeremony({ stage = 'flame' }) {
     // Show ceremony when pendingCeremony changes
     useEffect(() => {
         if (activeCeremony) {
-            setIsVisible(true);
-            setAnimationPhase('entering');
+            queueMicrotask(() => {
+                setIsVisible(true);
+                setAnimationPhase('entering');
+            });
 
             // Play audio
             if (audioRef.current) {

@@ -64,7 +64,7 @@ import {
 } from '../dev/plateFxPresets.js';
 import Section from './devpanel/ui/Section.jsx';
 import DevButton from './devpanel/ui/DevButton.jsx';
-import { resetLocalData } from './SettingsPanel.jsx';
+import { resetLocalData } from '../lib/resetLocalData.js';
 import DestructiveButton from './devpanel/ui/DestructiveButton.jsx';
 import useDevPanelGate from './devpanel/hooks/useDevPanelGate.js';
 import AvatarCompositeSection from './devpanel/sections/AvatarCompositeSection.jsx';
@@ -145,7 +145,6 @@ export function DevPanel({
     avatarAttention: avatarAttentionProp,
     setAvatarAttention: setAvatarAttentionProp,
 }) {
-    const currentStageKey = (avatarStageProp || 'seedling').toLowerCase();
     // Settings store state
     const showCoordinateHelper = useSettingsStore(s => s.showCoordinateHelper);
     const setCoordinateHelper = useSettingsStore(s => s.setCoordinateHelper);
@@ -618,8 +617,10 @@ export function DevPanel({
             const raw = window.localStorage.getItem(PRACTICE_BUTTON_PICK_STORAGE_KEY);
             if (!raw) return undefined;
             const parsed = JSON.parse(raw);
-            setPracticeButtonApplyToAll(parsed?.applyToAll !== false);
-            setPracticeButtonSelectedKey(typeof parsed?.selectedKey === 'string' ? parsed.selectedKey : null);
+            queueMicrotask(() => {
+                setPracticeButtonApplyToAll(parsed?.applyToAll !== false);
+                setPracticeButtonSelectedKey(typeof parsed?.selectedKey === 'string' ? parsed.selectedKey : null);
+            });
         } catch {
             // ignore
         }
@@ -630,8 +631,8 @@ export function DevPanel({
         if (!canRunDevEffects) return undefined;
         try {
             const raw = window.localStorage.getItem(LEGACY_PICKERS_FLAG_KEY);
-            if (raw === "0") setLegacyPickersEnabled(false);
-            if (raw === "1") setLegacyPickersEnabled(true);
+            if (raw === "0") queueMicrotask(() => setLegacyPickersEnabled(false));
+            if (raw === "1") queueMicrotask(() => setLegacyPickersEnabled(true));
         } catch {
             // ignore
         }
@@ -654,7 +655,7 @@ export function DevPanel({
         // If legacy pickers are hidden, ensure their capture listeners are off.
         setPickMode(false);
         stopPracticeButtonPickCaptureImmediate();
-        setPracticeButtonPickMode(false);
+        queueMicrotask(() => setPracticeButtonPickMode(false));
         return undefined;
     }, [isOpen, devtoolsEnabled, legacyPickersEnabled, stopPracticeButtonPickCaptureImmediate]);
 
@@ -675,7 +676,7 @@ export function DevPanel({
 
     useEffect(() => {
         if (!canRunDevEffects) return undefined;
-        setControlsFxDraft(getControlsFxPreset(controlsSelectedId));
+        queueMicrotask(() => setControlsFxDraft(getControlsFxPreset(controlsSelectedId)));
         return undefined;
     }, [isOpen, devtoolsEnabled, controlsSelectedId]);
 
@@ -684,8 +685,8 @@ export function DevPanel({
         if (!practiceButtonPickMode) return undefined;
 
         // Conflict prevention: never allow two global capture listeners at once.
-        setPickMode(false);
-        setUniversalPickMode(false);
+        queueMicrotask(() => setPickMode(false));
+        queueMicrotask(() => setUniversalPickMode(false));
 
         const normalizePracticeType = (raw) => {
             const t = String(raw || '').trim().toLowerCase();
@@ -759,9 +760,9 @@ export function DevPanel({
         }
 
         // Conflict prevention: never allow two global capture listeners at once.
-        setPickMode(false);
+        queueMicrotask(() => setPickMode(false));
         stopPracticeButtonPickCaptureImmediate();
-        setPracticeButtonPickMode(false);
+        queueMicrotask(() => setPracticeButtonPickMode(false));
 
         if (universalPickerKind === 'controls' || universalPickerKind === 'plates') {
             stopUniversalPickCaptureImmediate();
@@ -873,8 +874,10 @@ export function DevPanel({
 
     useEffect(() => {
         if (!canRunDevEffects) return undefined;
-        setPlatesFxDraft(getPlatesFxPreset(platesSelectedId));
-        setPlatesAdvancedOpen(false);
+        queueMicrotask(() => {
+            setPlatesFxDraft(getPlatesFxPreset(platesSelectedId));
+            setPlatesAdvancedOpen(false);
+        });
         return undefined;
     }, [isOpen, devtoolsEnabled, platesSelectedId]);
 
@@ -1269,27 +1272,25 @@ export function DevPanel({
                         <div className="mb-4 bg-white/5 rounded-lg p-3">
                             <div className="text-xs text-white/80 font-mono mb-2">lifetime scope:</div>
                             {(() => {
-                                try {
-                                    const tiles = getQuickDashboardTiles({ scope: 'lifetime', range: '365d' });
-                                    return (
-                                        <div className="grid grid-cols-2 gap-2 text-[10px] font-mono">
-                                            <div className="bg-white/5 p-1.5 rounded">
-                                                Minutes: <span className="text-emerald-300">{tiles.minutes}</span>
-                                            </div>
-                                            <div className="bg-white/5 p-1.5 rounded">
-                                                Sessions: <span className="text-emerald-300">{tiles.sessionCount}</span>
-                                            </div>
-                                            <div className="bg-white/5 p-1.5 rounded">
-                                                Days: <span className="text-emerald-300">{tiles.activeDays}</span>
-                                            </div>
-                                            <div className="bg-white/5 p-1.5 rounded">
-                                                Complete: <span className="text-emerald-300">{tiles.completionRate}%</span>
-                                            </div>
+                                let tiles = null; let lifetimeErr = null;
+                                try { tiles = getQuickDashboardTiles({ scope: 'lifetime', range: '365d' }); } catch (e) { lifetimeErr = e.message; }
+                                if (lifetimeErr) return <div className="text-red-300 text-[10px]">Error: {lifetimeErr}</div>;
+                                return (
+                                    <div className="grid grid-cols-2 gap-2 text-[10px] font-mono">
+                                        <div className="bg-white/5 p-1.5 rounded">
+                                            Minutes: <span className="text-emerald-300">{tiles.minutes}</span>
                                         </div>
-                                    );
-                                } catch (e) {
-                                    return <div className="text-red-300 text-[10px]">Error: {e.message}</div>;
-                                }
+                                        <div className="bg-white/5 p-1.5 rounded">
+                                            Sessions: <span className="text-emerald-300">{tiles.sessionCount}</span>
+                                        </div>
+                                        <div className="bg-white/5 p-1.5 rounded">
+                                            Days: <span className="text-emerald-300">{tiles.activeDays}</span>
+                                        </div>
+                                        <div className="bg-white/5 p-1.5 rounded">
+                                            Complete: <span className="text-emerald-300">{tiles.completionRate}%</span>
+                                        </div>
+                                    </div>
+                                );
                             })()}
                         </div>
 
@@ -1297,27 +1298,25 @@ export function DevPanel({
                         <div className="mb-4 bg-white/5 rounded-lg p-3">
                             <div className="text-xs text-white/80 font-mono mb-2">runId scope (active path):</div>
                             {(() => {
-                                try {
-                                    const tiles = getQuickDashboardTiles({ scope: 'runId', range: 'all' });
-                                    return (
-                                        <div className="grid grid-cols-2 gap-2 text-[10px] font-mono">
-                                            <div className="bg-white/5 p-1.5 rounded">
-                                                Minutes: <span className="text-sky-300">{tiles.minutes}</span>
-                                            </div>
-                                            <div className="bg-white/5 p-1.5 rounded">
-                                                Sessions: <span className="text-sky-300">{tiles.sessionCount}</span>
-                                            </div>
-                                            <div className="bg-white/5 p-1.5 rounded">
-                                                Days: <span className="text-sky-300">{tiles.activeDays}</span>
-                                            </div>
-                                            <div className="bg-white/5 p-1.5 rounded">
-                                                Complete: <span className="text-sky-300">{tiles.completionRate}%</span>
-                                            </div>
+                                let tilesRun = null; let runIdErr = null;
+                                try { tilesRun = getQuickDashboardTiles({ scope: 'runId', range: 'all' }); } catch (e) { runIdErr = e.message; }
+                                if (runIdErr) return <div className="text-red-300 text-[10px]">Error: {runIdErr}</div>;
+                                return (
+                                    <div className="grid grid-cols-2 gap-2 text-[10px] font-mono">
+                                        <div className="bg-white/5 p-1.5 rounded">
+                                            Minutes: <span className="text-sky-300">{tilesRun.minutes}</span>
                                         </div>
-                                    );
-                                } catch (e) {
-                                    return <div className="text-red-300 text-[10px]">Error: {e.message}</div>;
-                                }
+                                        <div className="bg-white/5 p-1.5 rounded">
+                                            Sessions: <span className="text-sky-300">{tilesRun.sessionCount}</span>
+                                        </div>
+                                        <div className="bg-white/5 p-1.5 rounded">
+                                            Days: <span className="text-sky-300">{tilesRun.activeDays}</span>
+                                        </div>
+                                        <div className="bg-white/5 p-1.5 rounded">
+                                            Complete: <span className="text-sky-300">{tilesRun.completionRate}%</span>
+                                        </div>
+                                    </div>
+                                );
                             })()}
                         </div>
 
@@ -1325,24 +1324,20 @@ export function DevPanel({
                         <div className="bg-white/5 rounded-lg p-3 mb-4">
                             <div className="text-xs text-white/80 font-mono mb-2">Practice breakdown (lifetime):</div>
                             {(() => {
-                                try {
-                                    const breakdown = getCurriculumPracticeBreakdown({ scope: 'lifetime', range: '365d' });
-                                    if (breakdown.length === 0) {
-                                        return <div className="text-white/40 text-[10px]">No sessions recorded</div>;
-                                    }
-                                    return (
-                                        <div className="space-y-1">
-                                            {breakdown.map(item => (
-                                                <div key={item.familyKey} className="flex justify-between text-[10px] text-white/70 font-mono">
-                                                    <span>{item.label}:</span>
-                                                    <span className="text-white/90">{item.minutes}m ({item.count} sessions, {item.percent}%)</span>
-                                                </div>
-                                            ))}
-                                        </div>
-                                    );
-                                } catch (e) {
-                                    return <div className="text-red-300 text-[10px]">Error: {e.message}</div>;
-                                }
+                                let breakdown = null; let breakdownErr = null;
+                                try { breakdown = getCurriculumPracticeBreakdown({ scope: 'lifetime', range: '365d' }); } catch (e) { breakdownErr = e.message; }
+                                if (breakdownErr) return <div className="text-red-300 text-[10px]">Error: {breakdownErr}</div>;
+                                if (breakdown.length === 0) return <div className="text-white/40 text-[10px]">No sessions recorded</div>;
+                                return (
+                                    <div className="space-y-1">
+                                        {breakdown.map(item => (
+                                            <div key={item.familyKey} className="flex justify-between text-[10px] text-white/70 font-mono">
+                                                <span>{item.label}:</span>
+                                                <span className="text-white/90">{item.minutes}m ({item.count} sessions, {item.percent}%)</span>
+                                            </div>
+                                        ))}
+                                    </div>
+                                );
                             })()}
                         </div>
 
@@ -1350,23 +1345,19 @@ export function DevPanel({
                         <div className="bg-white/5 rounded-lg p-3">
                             <div className="text-xs text-white/80 font-mono mb-2">Breathwork detail (lifetime):</div>
                             {(() => {
-                                try {
-                                    const detail = getPracticeDetailMetrics({ scope: 'lifetime', range: '365d', practiceFamily: 'breathwork' });
-                                    if (!detail || detail.sessionCount === 0) {
-                                        return <div className="text-white/40 text-[10px]">No breathwork sessions</div>;
-                                    }
-                                    return (
-                                        <div className="space-y-1 text-[10px] text-white/70 font-mono">
-                                            <div>Minutes: <span className="text-white/90">{detail.totalMinutes}m</span></div>
-                                            <div>Sessions: <span className="text-white/90">{detail.sessionCount}</span></div>
-                                            <div>Avg Duration: <span className="text-white/90">{detail.avgDurationMin}m</span></div>
-                                            <div>Completion: <span className="text-white/90">{detail.completionRate}%</span></div>
-                                            <div>On-time: <span className="text-white/90">{detail.adherencePercent}%</span></div>
-                                        </div>
-                                    );
-                                } catch (e) {
-                                    return <div className="text-red-300 text-[10px]">Error: {e.message}</div>;
-                                }
+                                let detail = null; let detailErr = null;
+                                try { detail = getPracticeDetailMetrics({ scope: 'lifetime', range: '365d', practiceFamily: 'breathwork' }); } catch (e) { detailErr = e.message; }
+                                if (detailErr) return <div className="text-red-300 text-[10px]">Error: {detailErr}</div>;
+                                if (!detail || detail.sessionCount === 0) return <div className="text-white/40 text-[10px]">No breathwork sessions</div>;
+                                return (
+                                    <div className="space-y-1 text-[10px] text-white/70 font-mono">
+                                        <div>Minutes: <span className="text-white/90">{detail.totalMinutes}m</span></div>
+                                        <div>Sessions: <span className="text-white/90">{detail.sessionCount}</span></div>
+                                        <div>Avg Duration: <span className="text-white/90">{detail.avgDurationMin}m</span></div>
+                                        <div>Completion: <span className="text-white/90">{detail.completionRate}%</span></div>
+                                        <div>On-time: <span className="text-white/90">{detail.adherencePercent}%</span></div>
+                                    </div>
+                                );
                             })()}
                         </div>
                     </Section>

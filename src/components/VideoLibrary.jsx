@@ -454,8 +454,7 @@ export function VideoLibrary({ initialVideoId = null, initialVideoBudgetMin = nu
         if (!initialVideoId) return;
         const v = VIDEOS.find(x => x.id === initialVideoId);
         if (v) {
-            setRecommendedBudgetMin(typeof initialVideoBudgetMin === 'number' ? initialVideoBudgetMin : null);
-            tendFire(v);
+            queueMicrotask(() => { tendFire(v); });
         }
     }, [initialVideoId, initialVideoBudgetMin]);
 

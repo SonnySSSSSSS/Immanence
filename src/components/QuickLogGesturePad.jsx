@@ -41,8 +41,9 @@ export function QuickLogGesturePad() {
         // Log it
         logAwareness(categoryId, activePath.pathId);
 
-        // Visual feedback
-        setRipple({ x, y, direction });
+        // Visual feedback — compute pad-relative position here (where ref access is safe)
+        const rect = padRef.current ? padRef.current.getBoundingClientRect() : { left: 0, top: 0 };
+        setRipple({ left: x - rect.left - 40, top: y - rect.top - 40, direction });
         setJustLogged(direction);
 
         // Clear feedback
@@ -191,8 +192,8 @@ export function QuickLogGesturePad() {
                             <div
                                 className="absolute w-20 h-20 rounded-full border-2 border-[var(--accent-color)] pointer-events-none"
                                 style={{
-                                    left: ripple.x - padRef.current.getBoundingClientRect().left - 40,
-                                    top: ripple.y - padRef.current.getBoundingClientRect().top - 40,
+                                    left: ripple.left,
+                                    top: ripple.top,
                                     animation: 'ripple 600ms ease-out forwards'
                                 }}
                             />

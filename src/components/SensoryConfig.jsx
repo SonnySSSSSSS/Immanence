@@ -6,6 +6,7 @@ import { useAwarenessSceneStore } from '../state/awarenessSceneStore.js';
 import { useSessionOverrideStore } from '../state/sessionOverrideStore.js';
 import { preloadAwarenessImages } from '../utils/preloadAwarenessImages.js';
 
+// eslint-disable-next-line react-refresh/only-export-components
 export const SENSORY_TYPES = [
     { id: 'bodyScan', label: 'Body Scan', description: 'Progressive body awareness' },
     { id: 'sakshi', label: 'Sakshi', description: 'Witness consciousness' },
@@ -20,8 +21,7 @@ const AWARENESS_SCENES = [
     { id: 'mountain', label: 'Mountain', imagePath: 'awareness/scenes/mountain.webp' },
 ];
 
-export function SensoryConfig({
-}) {
+export function SensoryConfig() {
     const selectedSceneBase = useAwarenessSceneStore((s) => s.selectedScene);
     const setSelectedSceneBase = useAwarenessSceneStore((s) => s.setSelectedScene);
     const sakshiVersionBase = useAwarenessSceneStore((s) => s.sakshiVersion);

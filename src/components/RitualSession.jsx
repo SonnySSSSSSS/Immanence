@@ -6,6 +6,33 @@ import { Icon } from '../icons/Icon.jsx';
 
 void motion;
 
+// Common wrapper for all ritual surfaces - defined outside component to avoid re-creation during render
+function RitualSurface({ children, isLight }) {
+    return (
+        <div
+            className={`fixed inset-0 z-[200] flex items-center justify-center p-4 pointer-events-none ${isLight ? 'bg-[#FDFBF5]/90 backdrop-blur-md' : 'bg-black/98'}`}
+            style={{ width: 'var(--app-frame-width, 100vw)', margin: '0 auto' }}
+        >
+            <div
+                className={`relative w-full flex flex-col rounded-3xl border overflow-hidden pointer-events-auto shadow-2xl transition-all duration-500 ${isLight ? 'bg-white/95 border-amber-900/10' : 'bg-[#0a0a12]/95 border-white/10'}`}
+                style={{
+                    maxWidth: 'var(--ui-rail-max, min(430px, 94vw))',
+                    maxHeight: 'min(720px, calc(100dvh - 48px))'
+                }}
+            >
+                <div className="flex-1 flex flex-col relative overflow-y-auto no-scrollbar p-5 sm:p-8">
+                    {children}
+                </div>
+            </div>
+            <style>{`
+                .custom-scrollbar::-webkit-scrollbar { width: 4px; }
+                .custom-scrollbar::-webkit-scrollbar-track { background: rgba(0,0,0,0.05); }
+                .custom-scrollbar::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 2px; }
+            `}</style>
+        </div>
+    );
+}
+
 const RitualSession = ({ ritual, onComplete, onExit, isLight = false }) => {
     // State
     const [currentStepIndex, setCurrentStepIndex] = useState(0);
@@ -22,11 +49,21 @@ const RitualSession = ({ ritual, onComplete, onExit, isLight = false }) => {
 
     // NOTE: width rails are globally enforced; no per-session viewport modes.
 
+    const handleStepComplete = () => {
+        if (currentStepIndex < totalSteps - 1) {
+            setCurrentStepIndex(prev => prev + 1);
+        } else {
+            setSessionState('completion');
+        }
+    };
+
     // Initialize Step
     useEffect(() => {
         if (sessionState === 'active' && currentStep) {
-            setStepTimeRemaining(currentStep.duration);
-            setIsPaused(false);
+            queueMicrotask(() => {
+                setStepTimeRemaining(currentStep.duration);
+                setIsPaused(false);
+            });
         }
     }, [currentStepIndex, sessionState, ritual]);
 
@@ -64,14 +101,6 @@ const RitualSession = ({ ritual, onComplete, onExit, isLight = false }) => {
         return () => cancelAnimationFrame(timerRef.current);
     }, [sessionState, isPaused, currentStepIndex]); // Re-bind when step changes to reset logic if needed
 
-    const handleStepComplete = () => {
-        if (currentStepIndex < totalSteps - 1) {
-            setCurrentStepIndex(prev => prev + 1);
-        } else {
-            setSessionState('completion');
-        }
-    };
-
     // Controls
     const togglePause = () => setIsPaused(prev => !prev);
 
@@ -89,36 +118,10 @@ const RitualSession = ({ ritual, onComplete, onExit, isLight = false }) => {
         }
     };
 
-    // Common wrapper for all ritual surfaces - respects Hearth mode constraints
-    const RitualSurface = ({ children }) => (
-        <div
-            className={`fixed inset-0 z-[200] flex items-center justify-center p-4 pointer-events-none ${isLight ? 'bg-[#FDFBF5]/90 backdrop-blur-md' : 'bg-black/98'}`}
-            style={{ width: 'var(--app-frame-width, 100vw)', margin: '0 auto' }}
-        >
-            <div 
-                className={`relative w-full flex flex-col rounded-3xl border overflow-hidden pointer-events-auto shadow-2xl transition-all duration-500 ${isLight ? 'bg-white/95 border-amber-900/10' : 'bg-[#0a0a12]/95 border-white/10'}`}
-                style={{ 
-                    maxWidth: 'var(--ui-rail-max, min(430px, 94vw))',
-                    maxHeight: 'min(720px, calc(100dvh - 48px))'
-                }}
-            >
-                <div className="flex-1 flex flex-col relative overflow-y-auto no-scrollbar p-5 sm:p-8">
-                    {children}
-                </div>
-            </div>
-            
-            <style>{`
-                .custom-scrollbar::-webkit-scrollbar { width: 4px; }
-                .custom-scrollbar::-webkit-scrollbar-track { background: rgba(0,0,0,0.05); }
-                .custom-scrollbar::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 2px; }
-            `}</style>
-        </div>
-    );
-
     // Render Completion
     if (sessionState === 'completion') {
         return (
-            <RitualSurface>
+            <RitualSurface isLight={isLight}>
                 <div className="w-full flex flex-col items-center justify-center text-center py-4 sm:py-6">
                     <div className="w-full max-w-lg flex flex-col gap-5 animate-in fade-in duration-700 items-center">
                         <div className="flex items-center justify-center text-4xl sm:text-5xl" style={{ color: 'var(--accent-color)' }}>

@@ -166,6 +166,7 @@ export function SelectedPlateOverlay() {
     el.style.setProperty("--plate-c3", triplet.c3);
   }, [stageBaseColor]);
 
+  // eslint-disable-next-line react-hooks/preserve-manual-memoization
   const applyAll = useCallback(() => {
     const allPresets = getAllPlatesFxPresets();
     const activeIds = new Set([

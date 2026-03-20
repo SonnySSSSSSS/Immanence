@@ -41,7 +41,7 @@ function SingleSessionJournalForm({ sessionId, onComplete }) {
         cancelMicroNote
     } = useJournalStore();
 
-    const [placeholderIndex] = useState(Math.floor(Math.random() * TECH_NOTE_PLACEHOLDERS.length));
+    const [placeholderIndex] = useState(() => Math.floor(Math.random() * TECH_NOTE_PLACEHOLDERS.length));
 
     // Auto-advance after attention selection
     const handleAttentionSelect = (quality) => {

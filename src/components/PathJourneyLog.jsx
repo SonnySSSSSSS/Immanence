@@ -120,7 +120,6 @@ export function PathJourneyLog() {
                                 letterSpacing: 'var(--tracking-mythic)',
                                 fontSize: '1.125rem',
                                 color: 'var(--accent-color, #fcd34d)',
-                                fontWeight: 600,
                             }}
                         >
                             {PATH_NAMES[currentPath]} Path
@@ -149,7 +148,6 @@ export function PathJourneyLog() {
                         style={{
                             fontFamily: 'var(--font-display)',
                             fontWeight: 600,
-                            letterSpacing: 'var(--tracking-mythic)',
                             fontSize: '0.75rem',
                             color: 'rgba(255, 255, 255, 0.5)',
                             textTransform: 'uppercase',
@@ -219,7 +217,6 @@ export function PathJourneyLog() {
                         style={{
                             fontFamily: 'var(--font-display)',
                             fontWeight: 600,
-                            letterSpacing: 'var(--tracking-mythic)',
                             fontSize: '0.75rem',
                             color: 'rgba(255, 255, 255, 0.5)',
                             textTransform: 'uppercase',

@@ -35,10 +35,6 @@ function isRingFrameActive(practiceActive = true) {
   return practiceActive;
 }
 
-function getHybridOverlayZoom(size) {
-  return Math.max(1, Math.min(size?.width || 0, size?.height || 0) / 2);
-}
-
 const scheduleBreathingRingUpdate = (callback) => {
   if (typeof queueMicrotask === 'function') {
     queueMicrotask(callback);

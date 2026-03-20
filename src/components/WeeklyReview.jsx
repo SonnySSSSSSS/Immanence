@@ -1,6 +1,16 @@
 // src/components/WeeklyReview.jsx
-import React from 'react';
+import React, { useState } from 'react';
 import { useApplicationStore } from '../state/applicationStore.js';
+
+function generateTrend(current, trendWeeks, variance = 0.3) {
+    const trend = [];
+    for (let i = 0; i < trendWeeks; i++) {
+        const progress = i / (trendWeeks - 1);
+        const value = Math.max(0, current * (0.3 + progress * 0.7) + (Math.random() - 0.5) * variance * current);
+        trend.push(Math.round(value));
+    }
+    return trend;
+}
 
 export function WeeklyReview() {
     const { getStats } = useApplicationStore();
@@ -11,20 +21,13 @@ export function WeeklyReview() {
     const practiceDays = 5; // TODO: Get from practice store
     const totalDays = 7;
 
-    // Generate 8-week trend data (mock for now)
+    // Generate 8-week trend data (mock for now) - computed once via lazy state to avoid impure render calls
     const trendWeeks = 8;
-    const generateTrend = (current, variance = 0.3) => {
-        const trend = [];
-        for (let i = 0; i < trendWeeks; i++) {
-            const progress = i / (trendWeeks - 1);
-            const value = Math.max(0, current * (0.3 + progress * 0.7) + (Math.random() - 0.5) * variance * current);
-            trend.push(Math.round(value));
-        }
-        return trend;
-    };
-
-    const awarenessTrend = generateTrend(weekStats.total);
-    const agencyTrend = generateTrend(weekStats.respondedDifferently);
+    const [trendData] = useState(() => ({
+        awarenessTrend: generateTrend(weekStats.total, trendWeeks),
+        agencyTrend: generateTrend(weekStats.respondedDifferently, trendWeeks),
+    }));
+    const { awarenessTrend, agencyTrend } = trendData;
     const practiceTrend = [3, 5, 4, 6, 7, 6, 7, 7]; // Mock
 
     const renderTrendBar = (value, maxValue, index) => {

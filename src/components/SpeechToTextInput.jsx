@@ -37,8 +37,10 @@ export function SpeechToTextInput({ value, onChange, placeholder = 'Enter a thou
         setIsListening(false);
       };
 
-      setRecognition(recognitionInstance);
-      setIsSupported(true);
+      queueMicrotask(() => {
+        setRecognition(recognitionInstance);
+        setIsSupported(true);
+      });
     }
   }, [onChange]);
 

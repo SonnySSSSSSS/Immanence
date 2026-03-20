@@ -7,30 +7,6 @@ import { useDisplayModeStore } from '../state/displayModeStore.js';
 import { useTheme } from '../context/ThemeContext.jsx';
 import { isUiPickingActive } from '../dev/uiControlsCaptureManager.js';
 
-// Icon name mapping for subModes
-export const SUB_MODE_ICON_MAP = {
-  // Awareness subModes
-  insight: 'cognitive',
-  cognitive_vipassana: 'cognitive',
-  bodyscan: 'somatic',
-  somatic_vipassana: 'somatic',
-  feeling: 'emotion',
-
-  // Resonance subModes
-  aural: 'sound',
-  sound: 'sound',
-  cymatics: 'cymatics',
-
-  // Perception subModes
-  visualization: 'kasina',
-  kasina: 'kasina',
-  photic: 'photonic',
-
-  // Foundation subModes (for future use)
-  breath: 'breath',
-  stillness: 'stillness'
-};
-
 export function GlassIconButton({
   label,
   iconName,

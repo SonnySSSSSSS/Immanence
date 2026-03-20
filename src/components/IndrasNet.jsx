@@ -1,9 +1,9 @@
 // src/components/IndrasNet.jsx
 // INDRA'S NET - Stage-aware cosmic particles at bottom
 //
-// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+//                                                                                                                                                                                                                                  
 // CRITICAL PATTERN: Layout Width Particle Rendering
-// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+//                                                                                                                                                                                                                                  
 //
 // PROBLEM: When switching between layout widths (e.g., 430px and 820px),
 // canvas-rendered particles would stretch or shrink because the canvas element
@@ -26,7 +26,7 @@
 //    - Particles only created once per canvas mount
 //    - Resize handler only reinitializes on significant width changes (>50px)
 //
-// âš ï¸ DO NOT REMOVE OR MODIFY THIS PATTERN WITHOUT TESTING:
+//        DO NOT REMOVE OR MODIFY THIS PATTERN WITHOUT TESTING:
 //    - Toggle between different layout widths multiple times
 //    - Verify particles maintain consistent size across transitions
 //    - Check that no stretching, squashing, or duplication occurs
@@ -37,7 +37,7 @@
 // [ ] Confirm smooth fade transition (no flicker or jump)
 // [ ] Check particle count remains consistent (no duplication)
 // [ ] Test with different stages (seedling, ember, flame, beacon, stellar)
-// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+//                                                                                                                                                                                                                                  
 
 import React, { useEffect, useRef, useState } from "react";
 
@@ -64,10 +64,10 @@ export function IndrasNet({ stage = 'flame', isPracticing = false, isLight = fal
     const hideParticles = isPracticing;
     const initializedRef = useRef(false);
 
-    // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+    //                                                                                                                                                                                                                                  
     // LAYER 1: KEY-BASED REMOUNTING
-    // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
-    // âš ï¸ CRITICAL: This key forces React to unmount/remount the canvas element
+    //                                                                                                                                                                                                                                  
+    //        CRITICAL: This key forces React to unmount/remount the canvas element
     // when the layout key changes, ensuring particles are never stretched
     const [canvasKey, setCanvasKey] = useState(`canvas-${layoutKey}-0`);
     const [opacity, setOpacity] = useState(1);
@@ -77,11 +77,11 @@ export function IndrasNet({ stage = 'flame', isPracticing = false, isLight = fal
     useEffect(() => {
         if (prevLayoutRef.current !== layoutKey) {
             // LAYER 2: FADE TRANSITION - Smooth visual experience
-            setOpacity(0);
+            queueMicrotask(() => { setOpacity(0); });
 
             // After fade completes, remount canvas with new key
             const timer = setTimeout(() => {
-                // Update key â†’ React unmounts old canvas, mounts new one
+                // Update key     React unmounts old canvas, mounts new one
                 setCanvasKey(`canvas-${layoutKey}-${Date.now()}`);
                 prevLayoutRef.current = layoutKey;
 
@@ -93,7 +93,7 @@ export function IndrasNet({ stage = 'flame', isPracticing = false, isLight = fal
                 requestAnimationFrame(() => {
                     setOpacity(1);
                 });
-            }, 300); // âš ï¸ Must match CSS transition duration
+            }, 300); //        Must match CSS transition duration
 
             return () => clearTimeout(timer);
         }
@@ -115,10 +115,10 @@ export function IndrasNet({ stage = 'flame', isPracticing = false, isLight = fal
         const stageLower = (stage || 'flame').toLowerCase();
         const colors = STAGE_PARTICLE_COLORS[stageLower] || STAGE_PARTICLE_COLORS.flame;
 
-        // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+        //                                                                                                                                                                                                                                  
         // LAYER 3: PROTECTED INITIALIZATION
-        // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
-        // âš ï¸ CRITICAL: Prevents duplicate particle creation during canvas lifetime
+        //                                                                                                                                                                                                                                  
+        //        CRITICAL: Prevents duplicate particle creation during canvas lifetime
         function initParticles() {
             if (initializedRef.current) return; // Already initialized for this mount
             initializedRef.current = true;

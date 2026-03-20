@@ -26,6 +26,9 @@ export function PhoticPreview() {
     const isActiveRef = useRef(true);
     const isIntersectingRef = useRef(true);
 
+    // Ref to hold the latest loop callback to avoid self-referencing during declaration
+    const pulseLoopRef = useRef(null);
+
     // Pulse loop - identical logic to PhoticCirclesOverlay
     const pulseLoop = useCallback(() => {
         // Fallback for missing startTime
@@ -80,9 +83,13 @@ export function PhoticPreview() {
 
         // Request next frame only if active
         if (isActiveRef.current && isIntersectingRef.current) {
-            rafRef.current = requestAnimationFrame(pulseLoop);
+            rafRef.current = requestAnimationFrame(pulseLoopRef.current);
         }
     }, [photic.rateHz, photic.dutyCycle, photic.brightness, photic.timingMode, photic.gapMs]);
+
+    useEffect(() => {
+        pulseLoopRef.current = pulseLoop;
+    }, [pulseLoop]);
 
     // Start RAF loop on mount, cleanup on unmount
     useEffect(() => {

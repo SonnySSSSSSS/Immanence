@@ -39,13 +39,13 @@ export function RitualSelectionDeck({ onSelectRitual, selectedRitualId }) {
 
     useEffect(() => {
         if (selectedRitualId) {
-            setLocalSelectedId(selectedRitualId);
+            queueMicrotask(() => { setLocalSelectedId(selectedRitualId); });
         }
     }, [selectedRitualId]);
 
     useEffect(() => {
         if (!selectedRitualId && rituals.length > 0 && !localSelectedId) {
-            setLocalSelectedId(rituals[0].id);
+            queueMicrotask(() => { setLocalSelectedId(rituals[0].id); });
         }
     }, [selectedRitualId, rituals, localSelectedId]);
 

@@ -64,6 +64,7 @@ function JeweledBraceletScene({ accentColor, breathDriver }) {
     metalness:         0.15,
     toneMapped:        false,
   }), []);
+  const nodeMatRef = useRef(nodeMat);
 
   // Node positions: evenly distributed on main ring circumference
   const nodeAngles = useMemo(() =>
@@ -115,8 +116,8 @@ function JeweledBraceletScene({ accentColor, breathDriver }) {
       nodeEmissive = 0.55; // holdBottom: base level
     }
 
-    nodeMat.emissive.set(accentColor || '#22d3ee');
-    nodeMat.emissiveIntensity = nodeEmissive;
+    nodeMatRef.current.emissive.set(accentColor || '#22d3ee');
+    nodeMatRef.current.emissiveIntensity = nodeEmissive;
 
     // ── Glow shell opacity ──────────────────────────────────────────────────
     if (glowMatRef.current) {

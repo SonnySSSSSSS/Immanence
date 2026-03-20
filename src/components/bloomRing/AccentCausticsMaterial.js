@@ -115,6 +115,7 @@ export default function AccentCausticsMaterial({
     React.createElement('torusGeometry', {
       args: [radius, tube * 1.04, radialSegments, tubularSegments],
     }),
+    // eslint-disable-next-line react-hooks/refs
     React.createElement('shaderMaterial', {
       ref: matRef,
       uniforms,

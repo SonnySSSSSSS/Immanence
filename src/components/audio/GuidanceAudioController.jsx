@@ -15,6 +15,7 @@
 import { useEffect, useRef } from "react";
 import { useTempoAudioStore } from "../../state/tempoAudioStore.js";
 
+// eslint-disable-next-line react-refresh/only-export-components
 export function isGuidanceAudioPlaybackActive({ source, status }) {
   return Boolean(source) && status === "playing";
 }

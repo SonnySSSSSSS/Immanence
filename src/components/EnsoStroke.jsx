@@ -115,7 +115,7 @@ export function EnsoStroke({ centerX = 200, centerY = 200, radius = 140, accurac
     // Animate drawing from 0 to 1
     useEffect(() => {
         if (!isActive) {
-            setDrawProgress(0);
+            queueMicrotask(() => { setDrawProgress(0); });
             return;
         }
 

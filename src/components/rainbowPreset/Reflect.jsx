@@ -130,6 +130,7 @@ export const Reflect = forwardRef(({ children, start: _start = [0, 0, 0], end: _
 
   useLayoutEffect(() => {
     // Collect all objects that fulfill the criteria
+    // eslint-disable-next-line react-hooks/immutability
     api.objects = []
     scene.current.traverse((object) => {
       if (isRayMesh(object)) api.objects.push(object)

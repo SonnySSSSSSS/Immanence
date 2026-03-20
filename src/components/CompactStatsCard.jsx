@@ -515,7 +515,6 @@ export function CompactStatsCard({ domain = 'wisdom', streakInfo, onOpenArchive,
     const weekOffsets = useMemo(() => getWeeklyTimingOffsets(domain), [getWeeklyTimingOffsets, domain, sessionsCount]);
 
     const domainLabels = { wisdom: 'Wisdom', breathwork: 'Breathwork', visualization: 'Visualization' };
-    void getAvatarCenter;
 
     return (
         <>

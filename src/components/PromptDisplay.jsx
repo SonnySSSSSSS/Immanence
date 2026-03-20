@@ -11,7 +11,7 @@ export function PromptDisplay({ text, onAudioPlay, fadeMs = 500 }) {
     useEffect(() => {
         if (text !== prevTextRef.current) {
             // Fade out
-            setOpacity(0);
+            queueMicrotask(() => { setOpacity(0); });
 
             const fadeTimer = setTimeout(() => {
                 setDisplayedText(text);

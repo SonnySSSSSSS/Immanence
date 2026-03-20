@@ -54,7 +54,8 @@ import { SessionControls } from "./practice/SessionControls.jsx";
 import { StillnessRingSession } from "./practice/StillnessRingSession.jsx";
 import { PracticeOptionsCard } from "./practice/PracticeOptionsCard.jsx";
 import { InstructionVideoPanel } from "./InstructionVideoPanel.jsx";
-import { GlassIconButton, SUB_MODE_ICON_MAP } from "./GlassIconButton.jsx";
+import { GlassIconButton } from "./GlassIconButton.jsx";
+import { SUB_MODE_ICON_MAP } from "./subModeIconMap.js";
 import ParallaxForest from "./ParallaxForest.jsx";
 import { SakshiVisual } from "./SakshiVisual.jsx";
 import { useAwarenessSceneStore } from "../state/awarenessSceneStore.js";
@@ -942,7 +943,7 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
       pathGuidanceStartedRef.current = false;
       pathGuidanceWasPausedRef.current = false;
       pathGuidanceRanRef.current = false;
-      resetGuidanceCompletionState();
+      queueMicrotask(() => resetGuidanceCompletionState());
       activePathContextRef.current = null;
       activePathLaunchGuidanceRef.current = undefined;
       activePathInstructionVideoRef.current = undefined;
@@ -975,7 +976,7 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
     pathGuidanceStartedRef.current = false;
     pathGuidanceWasPausedRef.current = false;
     pathGuidanceRanRef.current = false;
-    resetGuidanceCompletionState();
+    queueMicrotask(() => resetGuidanceCompletionState());
     const benchmarkCtx = resolveInitiationV2BenchmarkContext(ctx);
     queueMicrotask(() => setInitiationBenchmarkContext(benchmarkCtx));
     suppressPrefSaveRef.current = ctx.persistPreferences === false;
@@ -1166,7 +1167,7 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
       pathGuidanceRanRef.current = false;
       pathGuidanceStartedRef.current = false;
       pathGuidanceWasPausedRef.current = false;
-      resetGuidanceCompletionState();
+      queueMicrotask(() => resetGuidanceCompletionState());
       activePathContextRef.current = null;
       activePathLaunchGuidanceRef.current = undefined;
       queueMicrotask(() => setPathLaunchGuidance(undefined));
@@ -1175,7 +1176,7 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
 
   useEffect(() => {
     if (isRunning) return;
-    clearGuidanceFallbackCue();
+    queueMicrotask(() => clearGuidanceFallbackCue());
     audioGuidance.stop();
   }, [isRunning, clearGuidanceFallbackCue]);
 
@@ -1533,7 +1534,7 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
       }
       pathGuidanceStartedRef.current = false;
       pathGuidanceWasPausedRef.current = false;
-      resetGuidanceCompletionState();
+      queueMicrotask(() => resetGuidanceCompletionState());
       return;
     }
 
@@ -1553,7 +1554,7 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
       audioStore.setSource(audioFile);
       pathGuidanceStartedRef.current = false;
       pathGuidanceWasPausedRef.current = false;
-      resetGuidanceCompletionState();
+      queueMicrotask(() => resetGuidanceCompletionState());
     }
 
     if (isSessionPaused) {
@@ -1627,7 +1628,7 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
       guidanceCurrentTimeSec: currentTimeSec,
     });
 
-    setGuidanceFallbackSubtitle(GUIDANCE_FALLBACK_LINE);
+    queueMicrotask(() => setGuidanceFallbackSubtitle(GUIDANCE_FALLBACK_LINE));
     guidanceFallbackSubtitleTimerRef.current = window.setTimeout(() => {
       guidanceFallbackSubtitleTimerRef.current = null;
       setGuidanceFallbackSubtitle(null);
@@ -2272,6 +2273,15 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
     timeLeft,
   ]);
 
+  const previousTimeLeftRef = useRef(timeLeft);
+  const pendingCycleFinishRef = useRef(false);
+  const pendingNaturalFinishModeRef = useRef(null);
+  const completionDispatchedRef = useRef(false);
+  const completionProbeMetaRef = useRef(null);
+  const lastCycleBoundaryAtRef = useRef(null);
+  const [pendingCycleFinish, setPendingCycleFinish] = useState(false);
+  const [pendingNaturalFinishMode, setPendingNaturalFinishMode] = useState(null);
+
   const queueNaturalSessionCompletion = useCallback((meta) => {
     if (completionDispatchedRef.current) return;
     const pendingFinishWasArmed = pendingCycleFinishRef.current;
@@ -2280,12 +2290,15 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
     pendingNaturalFinishModeRef.current = null;
     setPendingCycleFinish(false);
     setPendingNaturalFinishMode(null);
-    completionProbeMetaRef.current = {
+    const probeMeta = {
       ...meta,
       pendingFinish: pendingFinishWasArmed,
       completedAtMs: performance.now(),
     };
-    queueMicrotask(() => handleStop({ completed: true }));
+    queueMicrotask(() => {
+      completionProbeMetaRef.current = probeMeta;
+      handleStop({ completed: true });
+    });
   }, [handleStop]);
 
   const armPendingNaturalFinish = useCallback((mode) => {
@@ -2748,15 +2761,6 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
     });
   };
 
-  const previousTimeLeftRef = useRef(timeLeft);
-  const pendingCycleFinishRef = useRef(false);
-  const pendingNaturalFinishModeRef = useRef(null);
-  const completionDispatchedRef = useRef(false);
-  const completionProbeMetaRef = useRef(null);
-  const lastCycleBoundaryAtRef = useRef(null);
-  const [pendingCycleFinish, setPendingCycleFinish] = useState(false);
-  const [pendingNaturalFinishMode, setPendingNaturalFinishMode] = useState(null);
-
   // Update tempo sync session elapsed time (calculates segment transitions)
   useEffect(() => {
     if (!tempoSessionActive || !isRunning || !songDurationSec) return;
@@ -2917,12 +2921,12 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
             });
           } else {
             pendingCycleFinishRef.current = true;
-            setPendingCycleFinish(true);
+            queueMicrotask(() => setPendingCycleFinish(true));
           }
         } else if (isStillnessBoundaryCompletionSession) {
-          armPendingNaturalFinish('stillness');
+          queueMicrotask(() => armPendingNaturalFinish('stillness'));
         } else if (isStepBoundaryCompletionSession) {
-          armPendingNaturalFinish('step');
+          queueMicrotask(() => armPendingNaturalFinish('step'));
         } else {
           queueNaturalSessionCompletionRef.current?.({
             trigger: 'raw-expiry-non-breath',
@@ -2972,10 +2976,10 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
     pendingCycleFinishRef.current = false;
     pendingNaturalFinishModeRef.current = null;
     completionDispatchedRef.current = false;
-    completionProbeMetaRef.current = null;
     lastCycleBoundaryAtRef.current = null;
-    setPendingCycleFinish(false);
-    setPendingNaturalFinishMode(null);
+    queueMicrotask(() => { completionProbeMetaRef.current = null; });
+    queueMicrotask(() => setPendingCycleFinish(false));
+    queueMicrotask(() => setPendingNaturalFinishMode(null));
   }, [isRunning]);
 
   useEffect(() => {

@@ -6,6 +6,37 @@ import { useProgressStore } from '../state/progressStore';
 import { useDisplayModeStore } from '../state/displayModeStore';
 import { REPORT_DOMAINS } from './tracking/archiveLinkConstants.js';
 
+// Sparkline mini-chart component - defined outside TrajectoryCard to avoid re-creation during render
+function normalizeData(data) {
+    const max = Math.max(...data, 1);
+    return data.map(v => v / max);
+}
+
+function Sparkline({ data, color }) {
+    const normalized = normalizeData(data);
+    const width = 78; // Increased from 60 (30% larger)
+    const height = 26; // Increased from 20 (30% larger)
+    const points = normalized.map((v, i) => {
+        const x = (i / (normalized.length - 1)) * width;
+        const y = height - (v * height);
+        return `${x},${y}`;
+    }).join(' ');
+
+    return (
+        <svg width={width} height={height} className="opacity-60">
+            <polyline
+                points={points}
+                fill="none"
+                stroke={color}
+                strokeWidth="2" // Increased from 1.5
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                style={{ opacity: 0.8 }}
+            />
+        </svg>
+    );
+}
+
 export function TrajectoryCard({ onTap }) {
     // Get raw sessions data as dependency
     const getTrajectory = useProgressStore(s => s.getTrajectory);
@@ -21,12 +52,6 @@ export function TrajectoryCard({ onTap }) {
     const consistencyData = trajectory.weeks.map(w => w.daysActive);
     const precisionData = trajectory.weeks.map(w => w.avgPrecision.breath || 0);
     const volumeData = trajectory.weeks.map(w => w.totalMinutes);
-
-    // Normalize to 0-1 for sparkline
-    const normalize = (data) => {
-        const max = Math.max(...data, 1);
-        return data.map(v => v / max);
-    };
 
     // Trend arrow
     const { direction, directionLabel } = trajectory.trends;
@@ -53,32 +78,6 @@ export function TrajectoryCard({ onTap }) {
 
         const totalMinutes = trajectory.weeks.reduce((sum, w) => sum + w.totalMinutes, 0);
         return `${totalMinutes} minutes across 8 weeks`;
-    };
-
-    // Sparkline mini-chart component
-    const Sparkline = ({ data, color }) => {
-        const normalized = normalize(data);
-        const width = 78; // Increased from 60 (30% larger)
-        const height = 26; // Increased from 20 (30% larger)
-        const points = normalized.map((v, i) => {
-            const x = (i / (normalized.length - 1)) * width;
-            const y = height - (v * height);
-            return `${x},${y}`;
-        }).join(' ');
-
-        return (
-            <svg width={width} height={height} className="opacity-60">
-                <polyline
-                    points={points}
-                    fill="none"
-                    stroke={color}
-                    strokeWidth="2" // Increased from 1.5
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    style={{ opacity: 0.8 }}
-                />
-            </svg>
-        );
     };
 
     return (

@@ -12,8 +12,6 @@ export function useStillnessIntervalSessionState({
   isPaused,
   sessionStartTime,
   totalDurationSec,
-  focusSec,
-  restSec,
   postDelaySec = 0,
   pendingFinish = false,
   tickMs = 200,

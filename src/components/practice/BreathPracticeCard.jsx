@@ -9,82 +9,13 @@ import { STILLNESS_INTENSITY_META } from "../../data/stillnessIntensityMeta.js";
 import { ANCHORS } from "../../tutorials/anchorIds.js";
 import { BeginPracticeButton } from "./BeginPracticeButton.jsx";
 
-function BreathPracticeCard({
-  practiceId,
-  label,
-  breathSubmode,
-  onBreathSubmodeChange,
-  pattern,
-  onPatternChange,
-  onRunBenchmark,
-  stillnessConfig,
-  onStillnessConfigChange,
-  isStillnessLocked,
-  breathPreDelaySec,
-  onBreathPreDelayChange,
-  duration,
-  onDurationChange,
-  durationOptions,
-  supportsDuration,
-  showTempoSync,
-  onToggleTempoSync,
-  tempoSyncSlot,
-  onStart,
-  showTrajectory,
-  onToggleTrajectory,
-  onOpenTrajectory,
+function CollapsedSummaryCard({
+  surfaceBg, surfaceBorder, labelColor, valueColor, breathSubmode, breathMethod,
+  focusSec, restSec, pattern, duration, stillnessIntensityLabel, stillnessPreDelaySec,
+  isLight, editButtonRef, handleEditClick, isStillnessLocked,
+  amberBg, amberBgHover, amberBorder, amberBorderHover, amberColor,
 }) {
-  const [breathMethod, setBreathMethod] = useState("expansion");
-  const [mode, setMode] = useState("focus");
-  const isFocusMode = mode === "focus";
-  const editButtonRef = useRef(null);
-  const focusSec = Number(stillnessConfig?.focusSec) || 45;
-  const restSec = Number(stillnessConfig?.restSec) || 15;
-  const stillnessPreDelaySec = Number(stillnessConfig?.preDelaySec) || 0;
-  const stillnessIntensity = String(stillnessConfig?.focusIntensity || "medium").toLowerCase();
-  const stillnessIntensityMeta = STILLNESS_INTENSITY_META[stillnessIntensity] || STILLNESS_INTENSITY_META.medium;
-  const stillnessIntensityLabel = stillnessIntensityMeta.label;
-  const stillnessPrompt = stillnessIntensityMeta.prompt;
-
-  // Light/dark mode awareness (2A)
-  const colorScheme = useDisplayModeStore(s => s.colorScheme);
-  const isLight = colorScheme === 'light';
-
-  // Derived color tokens (2A)
-  const surfaceBg = isLight ? 'rgba(0,0,0,0.04)' : 'rgba(255,255,255,0.03)';
-  const surfaceBorder = isLight ? 'rgba(0,0,0,0.10)' : 'rgba(255,255,255,0.1)';
-  const labelColor = isLight ? 'rgba(60,40,0,0.50)' : 'rgba(255,255,255,0.4)';
-  const valueColor = isLight ? 'rgba(30,20,0,0.85)' : 'rgba(255,255,255,0.9)';
-  const amberBg = isLight ? 'rgba(140,100,0,0.12)' : 'rgba(212,175,55,0.12)';
-  const amberBgHover = isLight ? 'rgba(140,100,0,0.20)' : 'rgba(212,175,55,0.20)';
-  const amberBorder = isLight ? 'rgba(140,100,0,0.30)' : 'rgba(212,175,55,0.3)';
-  const amberBorderHover = isLight ? 'rgba(140,100,0,0.50)' : 'rgba(212,175,55,0.5)';
-  const amberColor = isLight ? 'rgba(100,65,0,0.90)' : 'rgba(212,175,55,0.9)';
-  const amberInputColor = isLight ? 'rgba(100,65,0,0.85)' : 'rgba(212,175,55,0.8)';
-  const amberActiveBg = isLight ? 'rgba(140,100,0,0.18)' : 'rgba(212,175,55,0.18)';
-  const amberActiveBorder = isLight ? 'rgba(140,100,0,0.50)' : 'rgba(212,175,55,0.5)';
-  const amberActiveColor = isLight ? 'rgba(100,65,0,0.95)' : 'rgba(212,175,55,0.95)';
-  const inactiveBorder = isLight ? 'rgba(0,0,0,0.15)' : 'rgba(255,255,255,0.18)';
-  const inactiveColor = isLight ? 'rgba(60,40,0,0.70)' : 'rgba(255,255,255,0.65)';
-  const inactiveBg = isLight ? 'rgba(0,0,0,0.02)' : 'rgba(255,255,255,0.03)';
-  const promptColor = isLight ? 'rgba(30,20,0,0.75)' : 'rgba(255,255,255,0.78)';
-  const lockedColor = isLight ? 'rgba(60,40,0,0.60)' : 'rgba(255,255,255,0.6)';
-  const stepperDisabledColor = isLight ? 'rgba(0,0,0,0.15)' : 'rgba(255,255,255,0.2)';
-
-  const tutorialId = breathSubmode === 'stillness' ? 'practice:stillness' : 'practice:breath';
-
-  const handleStart = () => {
-    setMode("focus");
-    onStart?.();
-  };
-
-  // 2B: onClick instead of onMouseDown, with pointer stop propagation
-  const handleEditClick = useCallback(() => {
-    setMode("explore");
-  }, []);
-
-  // Collapsed summary (focus mode)
-  const CollapsedSummary = () => (
+  return (
     <div style={{
       background: surfaceBg,
       border: `1px solid ${surfaceBorder}`,
@@ -166,6 +97,80 @@ function BreathPracticeCard({
       </button>
     </div>
   );
+}
+
+function BreathPracticeCard({
+  practiceId,
+  label,
+  breathSubmode,
+  pattern,
+  onPatternChange,
+  onRunBenchmark,
+  stillnessConfig,
+  onStillnessConfigChange,
+  isStillnessLocked,
+  breathPreDelaySec,
+  onBreathPreDelayChange,
+  duration,
+  onDurationChange,
+  durationOptions,
+  supportsDuration,
+  showTempoSync,
+  onToggleTempoSync,
+  tempoSyncSlot,
+  onStart,
+  showTrajectory,
+  onToggleTrajectory,
+  onOpenTrajectory,
+}) {
+  const [breathMethod, setBreathMethod] = useState("expansion");
+  const [mode, setMode] = useState("focus");
+  const isFocusMode = mode === "focus";
+  const editButtonRef = useRef(null);
+  const focusSec = Number(stillnessConfig?.focusSec) || 45;
+  const restSec = Number(stillnessConfig?.restSec) || 15;
+  const stillnessPreDelaySec = Number(stillnessConfig?.preDelaySec) || 0;
+  const stillnessIntensity = String(stillnessConfig?.focusIntensity || "medium").toLowerCase();
+  const stillnessIntensityMeta = STILLNESS_INTENSITY_META[stillnessIntensity] || STILLNESS_INTENSITY_META.medium;
+  const stillnessIntensityLabel = stillnessIntensityMeta.label;
+  const stillnessPrompt = stillnessIntensityMeta.prompt;
+
+  // Light/dark mode awareness (2A)
+  const colorScheme = useDisplayModeStore(s => s.colorScheme);
+  const isLight = colorScheme === 'light';
+
+  // Derived color tokens (2A)
+  const surfaceBg = isLight ? 'rgba(0,0,0,0.04)' : 'rgba(255,255,255,0.03)';
+  const surfaceBorder = isLight ? 'rgba(0,0,0,0.10)' : 'rgba(255,255,255,0.1)';
+  const labelColor = isLight ? 'rgba(60,40,0,0.50)' : 'rgba(255,255,255,0.4)';
+  const valueColor = isLight ? 'rgba(30,20,0,0.85)' : 'rgba(255,255,255,0.9)';
+  const amberBg = isLight ? 'rgba(140,100,0,0.12)' : 'rgba(212,175,55,0.12)';
+  const amberBgHover = isLight ? 'rgba(140,100,0,0.20)' : 'rgba(212,175,55,0.20)';
+  const amberBorder = isLight ? 'rgba(140,100,0,0.30)' : 'rgba(212,175,55,0.3)';
+  const amberBorderHover = isLight ? 'rgba(140,100,0,0.50)' : 'rgba(212,175,55,0.5)';
+  const amberColor = isLight ? 'rgba(100,65,0,0.90)' : 'rgba(212,175,55,0.9)';
+  const amberInputColor = isLight ? 'rgba(100,65,0,0.85)' : 'rgba(212,175,55,0.8)';
+  const amberActiveBg = isLight ? 'rgba(140,100,0,0.18)' : 'rgba(212,175,55,0.18)';
+  const amberActiveBorder = isLight ? 'rgba(140,100,0,0.50)' : 'rgba(212,175,55,0.5)';
+  const amberActiveColor = isLight ? 'rgba(100,65,0,0.95)' : 'rgba(212,175,55,0.95)';
+  const inactiveBorder = isLight ? 'rgba(0,0,0,0.15)' : 'rgba(255,255,255,0.18)';
+  const inactiveColor = isLight ? 'rgba(60,40,0,0.70)' : 'rgba(255,255,255,0.65)';
+  const inactiveBg = isLight ? 'rgba(0,0,0,0.02)' : 'rgba(255,255,255,0.03)';
+  const promptColor = isLight ? 'rgba(30,20,0,0.75)' : 'rgba(255,255,255,0.78)';
+  const lockedColor = isLight ? 'rgba(60,40,0,0.60)' : 'rgba(255,255,255,0.6)';
+  const stepperDisabledColor = isLight ? 'rgba(0,0,0,0.15)' : 'rgba(255,255,255,0.2)';
+
+  const tutorialId = breathSubmode === 'stillness' ? 'practice:stillness' : 'practice:breath';
+
+  const handleStart = () => {
+    setMode("focus");
+    onStart?.();
+  };
+
+  // 2B: onClick instead of onMouseDown, with pointer stop propagation
+  const handleEditClick = useCallback(() => {
+    setMode("explore");
+  }, []);
 
   return (
     <div className="relative px-4 sm:px-8 animate-in fade-in duration-300" data-tutorial={ANCHORS.FOUNDATIONS_ROOT}>
@@ -181,7 +186,15 @@ function BreathPracticeCard({
         {/* Focus Mode: Collapsed Summary */}
         {isFocusMode && practiceId === 'breath' && (
           <div className="relative z-20" style={{ marginBottom: '20px', pointerEvents: "auto" }}>
-            <CollapsedSummary />
+            <CollapsedSummaryCard
+              surfaceBg={surfaceBg} surfaceBorder={surfaceBorder} labelColor={labelColor} valueColor={valueColor}
+              breathSubmode={breathSubmode} breathMethod={breathMethod} focusSec={focusSec} restSec={restSec}
+              pattern={pattern} duration={duration} stillnessIntensityLabel={stillnessIntensityLabel}
+              stillnessPreDelaySec={stillnessPreDelaySec} isLight={isLight} editButtonRef={editButtonRef}
+              handleEditClick={handleEditClick} isStillnessLocked={isStillnessLocked}
+              amberBg={amberBg} amberBgHover={amberBgHover} amberBorder={amberBorder}
+              amberBorderHover={amberBorderHover} amberColor={amberColor}
+            />
           </div>
         )}
 

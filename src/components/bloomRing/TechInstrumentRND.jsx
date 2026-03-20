@@ -792,6 +792,7 @@ export function TechInstrumentSceneContent({ accentColor, breathDriver }) {
     && !composerSuppressed
     && composerContextHealthy;
 
+  // eslint-disable-next-line react-hooks/refs
   if (BLOOM_ENABLED && !composerEnabled && !composerWarnedRef.current) {
     composerWarnedRef.current = true;
     console.warn(`[TechInstrumentRND] composer disabled preset=${PRESET_NAME} usableContext=${composerContextHealthy} suppressed=${composerSuppressed}`);

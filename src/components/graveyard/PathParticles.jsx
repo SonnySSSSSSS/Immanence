@@ -28,7 +28,6 @@ export function PathParticles({
     
     // Rhythm pulsing support
     const animationTimeRef = useRef(0);
-    const rhythmFreqRef = useRef(0.5);
 
     const rawFx = fxPreset ? clampPreset(fxPreset) : (getPathFX(pathId) || getDefaultFX());
     const fx = {
@@ -802,7 +801,7 @@ export function PathParticles({
                         particle.y += Math.cos(particle.phase * 1.5 + Date.now() * 0.0015) * 3 * dt;
                         break;
 
-                    case 'rain':
+                    case 'rain': {
                         const baseAngle = direction > 0 ? Math.PI * 0.35 : Math.PI * 0.65;
                         const streakAngle = baseAngle + particle.driftAngle;
                         const streakSpeed = baseSpeed * 200 * (0.8 + particle.streakMult * 0.2);
@@ -825,6 +824,7 @@ export function PathParticles({
                             particle.isDissolving = false;
                         }
                         break;
+                    }
 
                     case 'fade':
                     default:

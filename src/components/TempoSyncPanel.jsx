@@ -95,7 +95,7 @@ export const TempoSyncPanel = ({ isPracticing = false, onRunBenchmark }) => {
     if (enabled && !isInitialized) {
       initializeAudioContext();
       startDetection();
-      setIsInitialized(true);
+      queueMicrotask(() => { setIsInitialized(true); });
     }
   }, [enabled, isInitialized, initializeAudioContext, startDetection]);
 
@@ -117,10 +117,9 @@ export const TempoSyncPanel = ({ isPracticing = false, onRunBenchmark }) => {
     if (songDurationSec !== prevSongDurationRef.current) {
       prevSongDurationRef.current = songDurationSec;
       if (Number.isFinite(songDurationSec)) {
-        setDuration(songDurationSec);
+        queueMicrotask(() => { setDuration(songDurationSec); });
       } else if (!hasSong) {
-        setDuration(0);
-        setCurrentTime(0);
+        queueMicrotask(() => { setDuration(0); setCurrentTime(0); });
       }
     }
   }, [songDurationSec, hasSong]);
@@ -329,7 +328,7 @@ export const TempoSyncPanel = ({ isPracticing = false, onRunBenchmark }) => {
 
     if (!isPlaying || confidence >= threshold) {
       if (showNoStable && (confChanged || playChanged)) {
-        setShowNoStable(false);
+        queueMicrotask(() => { setShowNoStable(false); });
       }
       if (noStableTimerRef.current) {
         clearTimeout(noStableTimerRef.current);

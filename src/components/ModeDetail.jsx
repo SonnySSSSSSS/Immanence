@@ -121,7 +121,7 @@ export function ModeDetail({ modeId, onBack, autoStartTraining = false }) {
     // Handle auto-start from chain transitions
     useEffect(() => {
         if (autoStartTraining) {
-            setTrainingOpen(true);
+            queueMicrotask(() => { setTrainingOpen(true); });
         }
     }, [autoStartTraining, modeId]);
 

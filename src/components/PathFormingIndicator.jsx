@@ -57,7 +57,6 @@ export function PathFormingIndicator({ compact = false }) {
                 style={{
                     fontFamily: 'var(--font-display)',
                     fontWeight: 700,
-                    letterSpacing: 'var(--tracking-mythic)',
                     fontSize: compact ? '0.75rem' : '0.875rem',
                     color: 'rgba(255, 255, 255, 0.6)',
                     letterSpacing: '0.1em',
