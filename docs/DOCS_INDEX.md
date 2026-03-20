@@ -15,6 +15,8 @@ Canonical doc map for `immanence-os`, refreshed on 2026-03-09.
 - [WORKFLOW.md](WORKFLOW.md) - workflow guidance and handoff habits
 - [LLM_INTEGRATION.md](LLM_INTEGRATION.md) - local Ollama integration and setup
 - [PHILOSOPHY.md](PHILOSOPHY.md) - product and design philosophy
+- [STATE_TRAINING_DOCTRINE.md](STATE_TRAINING_DOCTRINE.md) - core framing from reactivity to agency
+- [POSITIONING_AND_CLAIMS_PLAYBOOK.md](POSITIONING_AND_CLAIMS_PLAYBOOK.md) - messaging stack, claims policy, and education roadmap
 
 ## Feature And System Docs
 

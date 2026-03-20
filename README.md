@@ -179,6 +179,8 @@ ollama pull gemma3:1b
 - [ARCHITECTURE.md](ARCHITECTURE.md) - current top-level technical map
 - [docs/DOC_GAPS.md](docs/DOC_GAPS.md) - short gap map for missing or stale docs
 - [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) - legacy architecture doc retained for reference
+- [docs/STATE_TRAINING_DOCTRINE.md](docs/STATE_TRAINING_DOCTRINE.md) - core doctrine: from reactivity to deliberate agency
+- [docs/POSITIONING_AND_CLAIMS_PLAYBOOK.md](docs/POSITIONING_AND_CLAIMS_PLAYBOOK.md) - product framing, claims guardrails, and 12-video syllabus
 
 ## License
 
