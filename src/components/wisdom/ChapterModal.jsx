@@ -22,6 +22,7 @@ export function ChapterModal({
   const mouseTimeoutRef = useRef(null);
   const readStartRef = useRef(null);
   const scrollProgressRef = useRef(0);
+  const hasMarkedRef = useRef(false);
   const { recordReadingSession, markSectionCompleted } = useWisdomStore();
 
   const currentIndex = allChapters.findIndex((ch) => ch.id === chapter?.id);
@@ -42,7 +43,8 @@ export function ChapterModal({
       setScrollProgress(clamped);
 
       // Mark chapter as completed when user reaches the bottom zone.
-      if (chapter && clamped >= 85) {
+      if (chapter && clamped >= 85 && !hasMarkedRef.current) {
+        hasMarkedRef.current = true;
         markSectionCompleted?.(chapter.id, { source: 'scroll', scrollDepth: clamped / 100 });
       }
 
@@ -52,10 +54,10 @@ export function ChapterModal({
       // Clear existing timeout
       if (scrollTimeoutRef.current) clearTimeout(scrollTimeoutRef.current);
 
-      // Exit reading mode after 2s of no scroll
+      // Exit reading mode after 4s of no scroll
       scrollTimeoutRef.current = setTimeout(() => {
         setIsReadingMode(false);
-      }, 2000);
+      }, 4000);
 
       // Save scroll position to localStorage
       if (chapter) {
@@ -75,6 +77,9 @@ export function ChapterModal({
       };
     }
   }, [isOpen, chapter]);
+
+  // Reset completion guard when chapter changes
+  useEffect(() => { hasMarkedRef.current = false; }, [chapter?.id]);
 
   // Reading session lifecycle: record time spent and last scroll depth on close/unmount.
   useEffect(() => {
@@ -110,7 +115,7 @@ export function ChapterModal({
 
       mouseTimeoutRef.current = setTimeout(() => {
         setIsReadingMode(true);
-      }, 3000);
+      }, 4000);
     };
 
     document.addEventListener("mousemove", handleMouseMove);

@@ -6,6 +6,7 @@ import { useState } from 'react';
 import { BigFiveAssessment } from './BigFiveAssessment.jsx';
 import { PersonalityWave } from './PersonalityWave.jsx';
 import { WisdomCardHousing } from './WisdomCardHousing.jsx';
+import { useWisdomStore } from '../../state/wisdomStore.js';
 
 function getDefaultProfile() {
     return {
@@ -18,16 +19,26 @@ function getTraitSummary(scores) {
     if (!scores) return [];
 
     const traits = [];
+
     if (scores.openness > 0.6) traits.push('open to experience');
-    if (scores.openness < 0.4) traits.push('practical, conventional');
+    else if (scores.openness < 0.4) traits.push('practical, conventional');
+    else traits.push('balanced curiosity');
+
     if (scores.conscientiousness > 0.6) traits.push('organized, disciplined');
-    if (scores.conscientiousness < 0.4) traits.push('flexible, spontaneous');
+    else if (scores.conscientiousness < 0.4) traits.push('flexible, spontaneous');
+    else traits.push('adaptably structured');
+
     if (scores.extraversion > 0.6) traits.push('socially energized');
-    if (scores.extraversion < 0.4) traits.push('reserved, reflective');
+    else if (scores.extraversion < 0.4) traits.push('reserved, reflective');
+    else traits.push('selectively social');
+
     if (scores.agreeableness > 0.6) traits.push('cooperative, trusting');
-    if (scores.agreeableness < 0.4) traits.push('skeptical, direct');
+    else if (scores.agreeableness < 0.4) traits.push('skeptical, direct');
+    else traits.push('discerningly kind');
+
     if (scores.neuroticism > 0.6) traits.push('emotionally sensitive');
-    if (scores.neuroticism < 0.4) traits.push('emotionally stable');
+    else if (scores.neuroticism < 0.4) traits.push('emotionally stable');
+    else traits.push('emotionally responsive');
 
     return traits;
 }
@@ -36,7 +47,9 @@ export function SelfKnowledgeView() {
     const [showAssessment, setShowAssessment] = useState(false);
     const [assessmentType, setAssessmentType] = useState(null);
     const [draftScores, setDraftScores] = useState(null);
-    const [profile, setProfile] = useState(getDefaultProfile);
+    const storedProfile = useWisdomStore(s => s.selfKnowledgeProfile);
+    const setSelfKnowledgeProfile = useWisdomStore(s => s.setSelfKnowledgeProfile);
+    const profile = storedProfile ?? getDefaultProfile();
 
     const [newTag, setNewTag] = useState('');
 
@@ -63,7 +76,7 @@ export function SelfKnowledgeView() {
                 <BigFiveAssessment
                     onUpdate={(scores) => setDraftScores(scores)}
                     onSave={(nextBigFive) => {
-                        setProfile((current) => ({ ...current, bigFive: nextBigFive }));
+                        setSelfKnowledgeProfile({ ...profile, bigFive: nextBigFive });
                     }}
                     onComplete={() => {
                         setShowAssessment(false);
@@ -90,7 +103,7 @@ export function SelfKnowledgeView() {
             ...profile,
             selfDescribedTags: [...selfDescribedTags, normalized],
         };
-        setProfile(nextProfile);
+        setSelfKnowledgeProfile(nextProfile);
         setNewTag('');
     };
 
@@ -99,7 +112,7 @@ export function SelfKnowledgeView() {
             ...profile,
             selfDescribedTags: selfDescribedTags.filter((existingTag) => existingTag !== tag),
         };
-        setProfile(nextProfile);
+        setSelfKnowledgeProfile(nextProfile);
     };
 
     const traits = getTraitSummary(bigFive?.scores);

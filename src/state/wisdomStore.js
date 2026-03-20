@@ -22,6 +22,7 @@ function buildInitialWisdomState() {
         quizUnlocks: {},
         flashcardState: {},
         dueCardsCache: [],
+        selfKnowledgeProfile: null,
     };
 }
 
@@ -373,11 +374,16 @@ export const useWisdomStore = create(
              */
             getBookmarks: () => {
                 return get().bookmarks;
-            }
+            },
+
+            /**
+             * Set the self-knowledge profile (persisted)
+             */
+            setSelfKnowledgeProfile: (profile) => set({ selfKnowledgeProfile: profile }),
         }),
         {
             name: 'immanenceOS.wisdom',
-            version: 2,
+            version: 3,
             partialize: (state) => ({
                 ownerUserId: normalizeUserId(state.ownerUserId),
                 readingSessions: Array.isArray(state.readingSessions) ? state.readingSessions : [],
@@ -389,6 +395,7 @@ export const useWisdomStore = create(
                 quizUnlocks: state.quizUnlocks || {},
                 flashcardState: state.flashcardState || {},
                 dueCardsCache: Array.isArray(state.dueCardsCache) ? state.dueCardsCache : [],
+                selfKnowledgeProfile: state.selfKnowledgeProfile ?? null,
             }),
             migrate: (persistedState) => {
                 const next = persistedState || {};
@@ -404,6 +411,7 @@ export const useWisdomStore = create(
                     quizUnlocks: next.quizUnlocks || {},
                     flashcardState: next.flashcardState || {},
                     dueCardsCache: Array.isArray(next.dueCardsCache) ? next.dueCardsCache : [],
+                    selfKnowledgeProfile: next.selfKnowledgeProfile ?? null,
                 };
             },
             merge: (persistedState, currentState) => ({
@@ -420,6 +428,7 @@ export const useWisdomStore = create(
                 quizUnlocks: persistedState?.quizUnlocks || {},
                 flashcardState: persistedState?.flashcardState || {},
                 dueCardsCache: Array.isArray(persistedState?.dueCardsCache) ? persistedState.dueCardsCache : [],
+                selfKnowledgeProfile: persistedState?.selfKnowledgeProfile ?? null,
             }),
         }
     )
