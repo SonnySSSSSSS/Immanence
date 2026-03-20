@@ -118,11 +118,12 @@ export function SelfKnowledgeView() {
     const traits = getTraitSummary(bigFive?.scores);
 
     return (
-        <WisdomCardHousing
-            className="space-y-6"
-            cardId="wisdom:selfKnowledgePanel"
-            contentClassName="space-y-6 px-5 py-5 sm:px-6 sm:py-6"
-        >
+        <div data-tutorial="wisdom-self-root">
+            <WisdomCardHousing
+                className="space-y-6"
+                cardId="wisdom:selfKnowledgePanel"
+                contentClassName="space-y-6 px-5 py-5 sm:px-6 sm:py-6"
+            >
             {/* Header / Wave Visualization */}
             <div className="relative pt-2 pb-6">
                 <div className="text-center mb-6">
@@ -190,6 +191,7 @@ export function SelfKnowledgeView() {
 
             {/* Big Five Card */}
             <div
+                data-tutorial="wisdom-self-bigfive-card"
                 className="p-5 rounded-2xl"
                 style={{
                     background: 'rgba(0,0,0,0.25)',
@@ -278,6 +280,7 @@ export function SelfKnowledgeView() {
                                 setAssessmentType('bigFive');
                                 setShowAssessment(true);
                             }}
+                            data-tutorial="wisdom-self-bigfive-action"
                             className="mt-3 text-[11px] uppercase tracking-wider"
                             style={{ color: 'var(--accent-60)' }}
                         >
@@ -290,6 +293,7 @@ export function SelfKnowledgeView() {
                             setAssessmentType('bigFive');
                             setShowAssessment(true);
                         }}
+                        data-tutorial="wisdom-self-bigfive-action"
                         className="w-full py-3 rounded-xl text-[12px] uppercase tracking-wider transition-all"
                         style={{
                             background: 'linear-gradient(135deg, rgba(251, 191, 36, 0.2) 0%, rgba(251, 191, 36, 0.1) 100%)',
@@ -354,6 +358,7 @@ export function SelfKnowledgeView() {
 
             {/* Self-described tags */}
             <div
+                data-tutorial="wisdom-self-tags"
                 className="p-4 rounded-xl"
                 style={{
                     background: 'rgba(0,0,0,0.2)',
@@ -441,6 +446,7 @@ export function SelfKnowledgeView() {
                     {selfDescribedTags.length}/10 tags
                 </div>
             </div>
-        </WisdomCardHousing>
+            </WisdomCardHousing>
+        </div>
     );
 }

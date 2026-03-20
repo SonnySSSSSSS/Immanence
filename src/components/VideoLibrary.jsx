@@ -28,6 +28,7 @@ function VideoHearth({ video, isPlaying, setIsPlaying, isTransitioning, onClear,
 
     return (
         <section
+            data-tutorial="wisdom-videos-hearth"
             className="w-full flex flex-col items-center justify-center px-4 pt-4 pb-8 relative z-10"
             style={{
                 background: isLight
@@ -271,7 +272,10 @@ function OfferingBand({ label, videos, activeVideoId, onSelect, isLight }) {
     if (!videos || videos.length === 0) return null;
 
     return (
-        <div className="mb-7">
+        <div
+            data-tutorial={label === 'Featured' ? 'wisdom-videos-featured-band' : (label === 'Library' ? 'wisdom-videos-library-band' : undefined)}
+            className="mb-7"
+        >
             {/* Label with scroll arrows */}
             <div className="flex items-center justify-between mb-4 px-4">
                 <div>
@@ -473,6 +477,7 @@ export function VideoLibrary({ initialVideoId = null, initialVideoBudgetMin = nu
 
     return (
         <div
+            data-tutorial="wisdom-videos-root"
             className="w-full min-h-[70vh] flex flex-col relative"
             style={{
                 background: isLight
