@@ -562,8 +562,29 @@ export function WisdomSection() {
       />
 
       <div data-tutorial="wisdom-root" className="w-full max-w-5xl mx-auto">
+        {/* Tab nav — outside the dark card, on the background */}
         <div
-          className="border border-[var(--accent-15)] backdrop-blur-xl px-7 pt-8 pb-9 space-y-5 relative"
+          className="flex flex-row items-center justify-between w-full mb-4"
+          style={{ gap: '0' }}
+        >
+          {TABS.map(tab => {
+            const displayLabel = tab === 'Bookmarks' && bookmarkedIds.length > 0
+              ? `${TAB_LABELS[tab]} (${bookmarkedIds.length})`
+              : TAB_LABELS[tab];
+            return (
+              <GlassIconButton
+                key={tab}
+                label={displayLabel}
+                iconName={TAB_ICONS[tab]}
+                onClick={() => setActiveTab(tab)}
+                selected={activeTab === tab}
+              />
+            );
+          })}
+        </div>
+
+        <div
+          className="border border-[var(--accent-15)] backdrop-blur-xl px-7 pt-5 pb-9 space-y-5 relative"
           style={{
             background: "rgba(20, 10, 15, 0.78)",
             borderRadius: "var(--radius-panel)",
@@ -583,25 +604,6 @@ export function WisdomSection() {
               borderRadius: "var(--radius-panel)",
             }}
           />
-          <div
-            className="flex flex-row items-center justify-between w-full mb-6 relative z-10"
-            style={{ gap: '0' }}
-          >
-            {TABS.map(tab => {
-              const displayLabel = tab === 'Bookmarks' && bookmarkedIds.length > 0
-                ? `${TAB_LABELS[tab]} (${bookmarkedIds.length})`
-                : TAB_LABELS[tab];
-              return (
-                <GlassIconButton
-                  key={tab}
-                  label={displayLabel}
-                  iconName={TAB_ICONS[tab]}
-                  onClick={() => setActiveTab(tab)}
-                  selected={activeTab === tab}
-                />
-              );
-            })}
-          </div>
 
           {/* Content */}
           <section className="min-h-[400px] relative z-10">
