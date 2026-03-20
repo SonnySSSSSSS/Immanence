@@ -234,7 +234,7 @@ export const TUTORIALS = {
       {
         id: 'wisdom-videos-featured-band',
         title: 'Featured Offerings',
-        body: 'Featured is a short curated list. If no Featured band is present, all videos live in the Library band.',
+        body: 'Featured is a short curriculum-priority list: the videos you most want watched for the current arc. If no Featured band is present, everything is in Library.',
         target: tutorialAnchorTarget(
           ANCHORS.WISDOM_VIDEOS_FEATURED_BAND,
           ANCHORS.WISDOM_VIDEOS_LIBRARY_BAND,
@@ -249,7 +249,7 @@ export const TUTORIALS = {
       {
         id: 'wisdom-videos-library-band',
         title: 'Library',
-        body: 'Library is the full catalog. Scroll horizontally and select a token to load it into the hearth.',
+        body: 'Library is the full catalog. Scroll horizontally and select any token to load it into the hearth.',
         target: tutorialAnchorTarget(
           ANCHORS.WISDOM_VIDEOS_LIBRARY_BAND,
           ANCHORS.WISDOM_VIDEOS_ROOT,
