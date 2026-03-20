@@ -132,7 +132,7 @@ export function BinauralTrainerPanel({ isLight = false }) {
     });
 
     return (
-        <div className="w-full">
+        <div className="w-full" data-tutorial="binaural-root">
             <div className="flex min-h-0 flex-col gap-4">
                 {/* Primary Controls - Always Visible */}
                 <div className="flex flex-wrap gap-2">
@@ -140,6 +140,7 @@ export function BinauralTrainerPanel({ isLight = false }) {
                         <button
                             type="button"
                             onClick={ensureReady}
+                            data-tutorial="binaural-enable-audio"
                             style={buttonStyle(false)}
                         >
                             Enable Audio
@@ -148,6 +149,7 @@ export function BinauralTrainerPanel({ isLight = false }) {
                     <button
                         type="button"
                         onClick={isRunning ? stop : start}
+                        data-tutorial="binaural-start-stop"
                         style={buttonStyle(isRunning)}
                     >
                         {isRunning ? 'Stop' : 'Start'}
@@ -159,6 +161,7 @@ export function BinauralTrainerPanel({ isLight = false }) {
                     type="button"
                     onClick={() => setShowAdvanced(!showAdvanced)}
                     className="flex items-center gap-2 w-full py-2 transition-colors"
+                    data-tutorial="binaural-advanced-toggle"
                     style={{
                         fontFamily: 'var(--font-display)',
                         fontSize: '11px',
@@ -198,7 +201,7 @@ export function BinauralTrainerPanel({ isLight = false }) {
                             <div style={sectionLabelStyle}>Core Tone</div>
                             <div className="flex flex-col gap-3">
                                 {/* Master Carrier */}
-                                <label className="flex flex-col gap-1">
+                                <label className="flex flex-col gap-1" data-tutorial="binaural-master-carrier">
                                     <div className="flex justify-between items-center">
                                         <span style={sliderLabelStyle}>Master Carrier</span>
                                         <span style={{ ...sliderLabelStyle, color: 'var(--accent-color)' }}>
@@ -217,7 +220,7 @@ export function BinauralTrainerPanel({ isLight = false }) {
                                 </label>
 
                                 {/* DeltaF */}
-                                <label className="flex flex-col gap-1">
+                                <label className="flex flex-col gap-1" data-tutorial="binaural-deltaf">
                                     <div className="flex justify-between items-center">
                                         <span style={sliderLabelStyle}>DeltaF</span>
                                         <span style={{ ...sliderLabelStyle, color: 'var(--accent-color)' }}>
@@ -236,7 +239,7 @@ export function BinauralTrainerPanel({ isLight = false }) {
                                 </label>
 
                                 {/* Ratio */}
-                                <label className="flex flex-col gap-1">
+                                <label className="flex flex-col gap-1" data-tutorial="binaural-ratio">
                                     <span style={sliderLabelStyle}>Ratio</span>
                                     <select
                                         value={ratio}
@@ -269,7 +272,7 @@ export function BinauralTrainerPanel({ isLight = false }) {
                             <div style={sectionLabelStyle}>Texture</div>
                             <div className="flex flex-col gap-3">
                                 {/* Spread Mode */}
-                                <div className="flex flex-wrap gap-2">
+                                <div className="flex flex-wrap gap-2" data-tutorial="binaural-spread-mode">
                                     <button
                                         type="button"
                                         onClick={() => setSpread('integer', 1)}
@@ -287,7 +290,7 @@ export function BinauralTrainerPanel({ isLight = false }) {
                                 </div>
 
                                 {/* Chaos */}
-                                <label className="flex flex-col gap-1">
+                                <label className="flex flex-col gap-1" data-tutorial="binaural-chaos">
                                     <div className="flex justify-between items-center">
                                         <span style={sliderLabelStyle}>Chaos</span>
                                         <span style={{ ...sliderLabelStyle, color: 'var(--accent-color)' }}>
@@ -314,7 +317,7 @@ export function BinauralTrainerPanel({ isLight = false }) {
                             <div style={sectionLabelStyle}>Mix</div>
                             <div className="flex flex-col gap-3">
                                 {/* Voice Gain Presets */}
-                                <div>
+                                <div data-tutorial="binaural-balance-presets">
                                     <div style={{ ...sliderLabelStyle, marginBottom: '8px' }}>Balance</div>
                                     <div className="flex flex-wrap gap-2">
                                         {Object.entries(VOICE_PRESETS).map(([key, preset]) => (
@@ -341,6 +344,7 @@ export function BinauralTrainerPanel({ isLight = false }) {
                                 {voicePreset === 'custom' && (
                                     <div
                                         className="flex flex-col gap-2 pt-2"
+                                        data-tutorial="binaural-custom-gains"
                                         style={{
                                             animation: 'fadeIn 0.2s ease-out',
                                         }}
