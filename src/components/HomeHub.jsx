@@ -87,8 +87,8 @@ function HomeHub({ onSelectSection, activeSection = null, currentStage, previewP
   const avatarPath = previewPath ?? storedPath;
 
   const { isOpen: isTutorialOpen, tutorialId, stepIndex } = useTutorialStore();
-  const activeTutorialTarget = tutorialId ? TUTORIALS[tutorialId]?.steps?.[stepIndex]?.target : null;
-  const isDailyCardTutorialTarget = isTutorialOpen && activeTutorialTarget?.includes('home-daily-card');
+  const activeTutorialStep = tutorialId ? TUTORIALS[tutorialId]?.steps?.[stepIndex] : null;
+  const isDailyCardTutorialTarget = isTutorialOpen && activeTutorialStep?.id === 'home-daily-card';
   const handleSelectSection = React.useCallback((section, options = undefined) => {
     if (lockToHub) return;
     onSelectSection(section, options);

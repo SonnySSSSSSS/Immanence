@@ -602,10 +602,16 @@ export function TutorialOverlay() {
       const targetElement = await waitForTutorialTarget(step);
       if (cancelled) return;
 
+      const fallbackElement =
+        !targetElement && step?.waitFor?.fallbackToCenter !== false
+          ? (document.querySelector('[data-app-frame]') || document.body)
+          : null;
+      const resolvedElement = targetElement || fallbackElement;
+
       const driverInstance = createDriverInstance(step, { onClose: closeTutorial });
       driverRef.current = driverInstance;
 
-      const driverStep = createDriverStep(step, targetElement, {
+      const driverStep = createDriverStep(step, resolvedElement, {
         onClose: closeTutorial,
         onPopoverRender: (popover) => {
           if (cancelled) return;
@@ -660,7 +666,12 @@ export function TutorialOverlay() {
         },
       });
 
-      driverInstance.highlight(driverStep);
+      try {
+        driverInstance.highlight(driverStep);
+      } catch (e) {
+        console.warn('[TutorialOverlay] Driver highlight failed; closing tutorial to prevent crash.', e);
+        closeTutorial();
+      }
     };
 
     render();

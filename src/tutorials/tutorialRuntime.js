@@ -92,9 +92,52 @@ export function resolveTutorialDefinition(tutorialId) {
 
 function resolveElementFromTarget(target) {
   if (!target) return null;
-  if (typeof target === 'function') return target() || null;
-  if (typeof target === 'string') return document.querySelector(target);
-  return null;
+
+  const MAX_DEPTH = 6;
+  const resolve = (value, depth) => {
+    if (!value) return null;
+    if (depth > MAX_DEPTH) return null;
+
+    if (typeof HTMLElement !== 'undefined' && value instanceof HTMLElement) return value;
+
+    if (typeof value === 'string') {
+      try {
+        return document.querySelector(value);
+      } catch {
+        return null;
+      }
+    }
+
+    if (typeof value === 'function') {
+      try {
+        return resolve(value(), depth + 1);
+      } catch {
+        return null;
+      }
+    }
+
+    if (Array.isArray(value)) {
+      for (const candidate of value) {
+        const resolved = resolve(candidate, depth + 1);
+        if (resolved) return resolved;
+      }
+      return null;
+    }
+
+    if (value && typeof value === 'object') {
+      // Legacy/override-friendly shapes (all optional): { element }, { selector }, { target }
+      if (typeof HTMLElement !== 'undefined' && value.element instanceof HTMLElement) return value.element;
+      if (value.selector && typeof value.selector === 'string') {
+        return resolve(value.selector, depth + 1);
+      }
+      if (value.target) return resolve(value.target, depth + 1);
+      return null;
+    }
+
+    return null;
+  };
+
+  return resolve(target, 0);
 }
 
 export function resolveTutorialTarget(step) {
