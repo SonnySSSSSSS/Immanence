@@ -503,7 +503,7 @@ function ScrollingWheel({ value, onChange, options, colorScheme = 'dark' }) {
   );
 }
 
-export function PracticeSection({ onPracticingChange, onBreathStateChange, avatarPath, onNavigate, onOpenPhotic, isActiveBreathSession = false }) {
+export function PracticeSection({ onPracticingChange, onBreathStateChange, onNavigate, onOpenPhotic, isActiveBreathSession = false }) {
   const {
     startSession,
     endSession,
@@ -3360,7 +3360,6 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
                     startTime={sessionStartTime}
                     practiceActive={isRunning}
                     onUnmount={handleBreathingRingUnmount}
-                    pathId={avatarPath}
                     ringMode={currentRingPreset.id}
                     totalSessionDurationSec={duration}
                     guidanceAudioActive={isGuidanceAudioActive}

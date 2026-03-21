@@ -75,7 +75,6 @@ import { getDevPanelProdGate } from '../lib/devPanelGate.js';
 
 // Available stages and paths for dropdowns
 const STAGE_OPTIONS = ['Seedling', 'Ember', 'Flame', 'Beacon', 'Stellar'];
-const PATH_OPTIONS = ['Yantra', 'Kaya', 'Chitra', 'Nada'];
 
 function buildAvatarStageSnapshot(getRoleTransform, stageKey) {
     const snapshot = {};
@@ -138,12 +137,6 @@ export function DevPanel({
     onClose,
     avatarStage: avatarStageProp,
     setAvatarStage: setAvatarStageProp,
-    avatarPath: avatarPathProp,
-    setAvatarPath: setAvatarPathProp,
-    showCore: showCoreProp,
-    setShowCore: setShowCoreProp,
-    avatarAttention: avatarAttentionProp,
-    setAvatarAttention: setAvatarAttentionProp,
 }) {
     // Settings store state
     const showCoordinateHelper = useSettingsStore(s => s.showCoordinateHelper);
@@ -157,8 +150,6 @@ export function DevPanel({
 
     // Color scheme detection
     const colorScheme = useDisplayModeStore(s => s.colorScheme);
-    const stageAssetStyle = useDisplayModeStore(s => s.stageAssetStyle);
-    const setStageAssetStyle = useDisplayModeStore(s => s.setStageAssetStyle);
     const isLight = colorScheme === 'light';
     const isDevBuild = import.meta.env.DEV;
     const isProdBuild = !isDevBuild;
@@ -169,20 +160,11 @@ export function DevPanel({
     // DevPanel should be fully functional in dev builds; do not require extra devtools unlock gates.
     const devtoolsEnabled = Boolean(isDevBuild || devPanelGateEnabled);
     const canRunDevEffects = useDevPanelGate(isOpen, devtoolsEnabled);
-    // Avatar preview controls (fallback to local state if no props supplied)
+    // Avatar stage control (fallback to local state if no props supplied)
     const [avatarStageLocal, setAvatarStageLocal] = useState('Flame');
-    const [avatarPathLocal, setAvatarPathLocal] = useState(PATH_OPTIONS[0] || 'Yantra');
-    const [showCoreLocal, setShowCoreLocal] = useState(true);
-    const [avatarAttentionLocal, setAvatarAttentionLocal] = useState('none');
 
     const avatarStage = avatarStageProp ?? avatarStageLocal;
     const setAvatarStage = setAvatarStageProp ?? setAvatarStageLocal;
-    const avatarPath = avatarPathProp ?? avatarPathLocal;
-    const setAvatarPath = setAvatarPathProp ?? setAvatarPathLocal;
-    const showCore = showCoreProp ?? showCoreLocal;
-    const setShowCore = setShowCoreProp ?? setShowCoreLocal;
-    const avatarAttention = avatarAttentionProp ?? avatarAttentionLocal;
-    const setAvatarAttention = setAvatarAttentionProp ?? setAvatarAttentionLocal;
     const normalizedAvatarStageKey = normalizeStageKey(avatarStage);
     const avatarCompositeDraftsByStage = useDevPanelStore(s => s.avatarComposite?.transformsByStage);
     const getAvatarCompositeRoleTransform = useDevPanelStore(s => s.getAvatarCompositeRoleTransform);
@@ -192,13 +174,6 @@ export function DevPanel({
     const [avatarDefaultStatus, setAvatarDefaultStatus] = useState('');
     const [avatarPromoteAck, setAvatarPromoteAck] = useState('');
     const avatarDraftHydratedRef = useRef(false);
-
-    // Sync initial path to parent when DevPanel opens and parent has no path set
-    useEffect(() => {
-        if (isOpen && avatarPathProp === null && setAvatarPathProp) {
-            setAvatarPathProp(avatarPathLocal);
-        }
-    }, [isOpen]); // eslint-disable-line react-hooks/exhaustive-deps
 
     useEffect(() => {
         if (!isOpen) {
@@ -1019,7 +994,7 @@ export function DevPanel({
                         isLight={isLight}
                     >
                         <div className="devpanel-helper-text text-xs text-white/50 mb-3">
-                            Stage sets the wallpaper color. Path sets sigil geometry, breath pattern, and bloom intensity.
+                            Stage sets the wallpaper color.
                         </div>
 
                         {/* Stage selector */}
@@ -1046,79 +1021,6 @@ export function DevPanel({
                                     <option key={s} value={s}>{s}</option>
                                 ))}
                             </select>
-                        </div>
-
-                        {/* Path selector */}
-                        <div className="flex items-center gap-3 mb-4">
-                            <label className="devpanel-field-label text-sm font-medium w-16" style={{ color: isLight ? 'rgba(60, 50, 40, 0.9)' : 'white' }}>Path</label>
-                            <select
-                                value={avatarPath || ''}
-                                onChange={(e) => setAvatarPath(e.target.value || null)}
-                                className="devpanel-light-select flex-1 rounded-lg px-3 py-2.5 text-base font-medium"
-                                style={{
-                                    background: isLight ? 'rgba(255, 255, 255, 0.9)' : '#0a0a12',
-                                    border: isLight ? '1px solid rgba(180, 155, 110, 0.3)' : '1px solid rgba(255, 255, 255, 0.3)',
-                                    color: isLight ? 'rgba(60, 50, 40, 0.95)' : 'white',
-                                    colorScheme: isLight ? 'light' : 'dark'
-                                }}
-                            >
-                                <option value="">None (default)</option>
-                                {PATH_OPTIONS.map(p => (
-                                    <option key={p} value={p}>{p}</option>
-                                ))}
-                            </select>
-                        </div>
-
-                        {/* Core + Attention preview toggles */}
-                        <div className="flex items-center gap-3 mb-4">
-                            <label className="devpanel-field-label devpanel-field-label--muted text-xs w-16" style={{ color: isLight ? 'rgba(140, 100, 60, 0.9)' : '#fb923c' }}>Preview</label>
-                            <button
-                                onClick={() => setShowCore(!showCore)}
-                                className="devpanel-light-toggle px-3 py-1.5 rounded-lg text-xs font-semibold"
-                                style={{
-                                    background: showCore ? 'rgba(212, 168, 74, 0.2)' : 'rgba(255, 255, 255, 0.06)',
-                                    color: isLight ? 'rgba(60, 50, 40, 0.9)' : 'white',
-                                    border: isLight ? '1px solid rgba(180, 155, 110, 0.35)' : '1px solid rgba(255, 255, 255, 0.2)'
-                                }}
-                            >
-                                {showCore ? 'Core On' : 'Core Off'}
-                            </button>
-                            <select
-                                value={avatarAttention}
-                                onChange={(e) => setAvatarAttention(e.target.value)}
-                                className="devpanel-light-select flex-1 rounded-lg px-3 py-1.5 text-xs font-medium"
-                                style={{
-                                    background: isLight ? 'rgba(255, 255, 255, 0.9)' : '#0a0a12',
-                                    border: isLight ? '1px solid rgba(180, 155, 110, 0.3)' : '1px solid rgba(255, 255, 255, 0.3)',
-                                    color: isLight ? 'rgba(60, 50, 40, 0.95)' : 'white',
-                                    colorScheme: isLight ? 'light' : 'dark'
-                                }}
-                            >
-                                {['none', 'ekagrata', 'sahaja', 'vigilance'].map((opt) => (
-                                    <option key={opt} value={opt}>{opt}</option>
-                                ))}
-                            </select>
-                        </div>
-
-                        {/* Stage Asset Style Toggle */}
-                        <div className="flex items-center gap-3 mb-4">
-                            <label className="devpanel-field-label devpanel-field-label--muted text-xs w-16" style={{ color: isLight ? 'rgba(140, 100, 60, 0.9)' : '#fb923c' }}>Asset Style</label>
-                            <div className="devpanel-style-chip-group flex bg-white/5 rounded-lg p-1 gap-1">
-                                {[1, 2, 3, 4, 5].map(styleSet => (
-                                    <button
-                                        key={styleSet}
-                                        onClick={() => setStageAssetStyle(styleSet)}
-                                        data-active={stageAssetStyle === styleSet ? 'true' : 'false'}
-                                        className={`devpanel-style-chip w-7 h-7 flex items-center justify-center rounded text-[10px] font-bold transition-all ${
-                                            stageAssetStyle === styleSet
-                                                ? 'bg-amber-500/20 text-amber-300 border border-amber-500/30'
-                                                : 'text-white/40 hover:text-white/60 hover:bg-white/5'
-                                        }`}
-                                    >
-                                        {styleSet}
-                                    </button>
-                                ))}
-                            </div>
                         </div>
                     </Section>
 

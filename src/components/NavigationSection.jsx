@@ -15,7 +15,7 @@ import { CurriculumOnboarding } from './CurriculumOnboarding.jsx';
 
 const normalizeInitiationPathIdentity = (pathId) => (pathId === 'initiation-2' ? 'initiation' : pathId);
 
-export function NavigationSection({ currentStage, previewPath, onNavigate, isPracticing = false }) {
+export function NavigationSection({ currentStage, onNavigate, isPracticing = false }) {
   const { activePath, beginPath } = useNavigationStore();
   const colorScheme = useDisplayModeStore(s => s.colorScheme);
   const isLight = colorScheme === 'light';
@@ -25,7 +25,6 @@ export function NavigationSection({ currentStage, previewPath, onNavigate, isPra
   const normalizedStage = String(effectiveStage || 'seedling').toLowerCase();
   const getDisplayPath = usePathStore(s => s.getDisplayPath);
   const storedPath = getDisplayPath ? getDisplayPath(effectiveStage) : null;
-  const avatarPath = previewPath ?? storedPath;
   const pathGridRef = useRef(null);
 
   // Local state for path overlay - only opens via explicit user click, never from persisted state
@@ -72,7 +71,7 @@ export function NavigationSection({ currentStage, previewPath, onNavigate, isPra
           lastStageChange={lastStageChange}
           lastModeChange={lastModeChange}
           lastSessionComplete={lastSessionComplete}
-          path={avatarPath}
+          path={storedPath}
         />
       </div>
 

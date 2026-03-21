@@ -56,7 +56,7 @@ import AuthGate from "./components/auth/AuthGate";
 const DISABLE_SELECTION = false;
 const USER_STATE_SYNC_DEBUG = false;
 
-function SectionView({ section, isPracticing, onPracticingChange, onBreathStateChange, onStageChange, currentStage, previewPath, previewShowCore, previewAttention, showFxGallery, onNavigate, onOpenHardwareGuide, onOpenPhotic, hideCards, isActiveBreathSession = false, isBreathLayoutLocked = false }) {
+function SectionView({ section, isPracticing, onPracticingChange, onBreathStateChange, onStageChange, currentStage, showFxGallery, onNavigate, onOpenHardwareGuide, onOpenPhotic, hideCards, isActiveBreathSession = false, isBreathLayoutLocked = false }) {
   // NOTE: Previously had a special vipassana branch that rendered PracticeSection without wrapper divs.
   // This caused unmount/remount when transitioning to vipassana practices because the tree structure changed.
   // REMOVED: The vipassana InsightMeditationPortal uses createPortal to render to document.body,
@@ -73,8 +73,6 @@ function SectionView({ section, isPracticing, onPracticingChange, onBreathStateC
           <PracticeSection 
             onPracticingChange={onPracticingChange} 
             onBreathStateChange={onBreathStateChange}
-            avatarPath={previewPath} 
-            showCore={previewShowCore}
             showFxGallery={showFxGallery} 
             isActiveBreathSession={isActiveBreathSession}
             onNavigate={onNavigate} 
@@ -98,11 +96,11 @@ function SectionView({ section, isPracticing, onPracticingChange, onBreathStateC
               <div className="type-label normal-case text-white/50">Loading Application...</div>
             </div>
           }>
-            <ApplicationSection onStageChange={onStageChange} currentStage={currentStage} previewPath={previewPath} previewShowCore={previewShowCore} previewAttention={previewAttention} onNavigate={onNavigate} />
+            <ApplicationSection onNavigate={onNavigate} />
           </Suspense>
         )}
 
-        {section === "navigation" && !hideCards && <NavigationSection onStageChange={onStageChange} currentStage={currentStage} previewPath={previewPath} previewShowCore={previewShowCore} previewAttention={previewAttention} onNavigate={onNavigate} onOpenHardwareGuide={onOpenHardwareGuide} isPracticing={isPracticing} />}
+        {section === "navigation" && !hideCards && <NavigationSection onStageChange={onStageChange} currentStage={currentStage} onNavigate={onNavigate} onOpenHardwareGuide={onOpenHardwareGuide} isPracticing={isPracticing} />}
       </div>
     </div>
   );
@@ -113,9 +111,7 @@ function App({ playgroundMode = false, playgroundBottomLayer = true }) {
   // Color scheme (dark/light)
   const colorScheme = useDisplayModeStore((s) => s.colorScheme);
   const overrideStage = useDevOverrideStore((s) => s.stage);
-  const overridePath = useDevOverrideStore((s) => s.avatarPath);
   const setOverrideStage = useDevOverrideStore((s) => s.setStage);
-  const setOverridePath = useDevOverrideStore((s) => s.setAvatarPath);
   const userMode = useUserModeStore((s) => s.userMode);
   const hasChosenUserMode = useUserModeStore((s) => s.hasChosenUserMode);
   const modeByUserId = useUserModeStore((s) => s.modeByUserId);
@@ -409,12 +405,8 @@ function App({ playgroundMode = false, playgroundBottomLayer = true }) {
 
   // Preview state (lifted from AvatarPreview to persist and apply to all avatars)
   const [previewStage, setPreviewStage] = useState('Seedling');
-  const [previewPath, setPreviewPath] = useState(null);
-  const [previewShowCore, setPreviewShowCore] = useState(true);
-  const [previewAttention, setPreviewAttention] = useState('none');
 
   const effectivePreviewStage = playgroundMode ? overrideStage : previewStage;
-  const effectivePreviewPath = playgroundMode ? overridePath : previewPath;
   const effectiveAvatarStage = playgroundMode ? overrideStage : avatarStage;
 
   const handlePreviewStageChange = useCallback((nextStage) => {
@@ -424,14 +416,6 @@ function App({ playgroundMode = false, playgroundBottomLayer = true }) {
     }
     setPreviewStage(nextStage);
   }, [playgroundMode, setOverrideStage]);
-
-  const handlePreviewPathChange = useCallback((nextPath) => {
-    if (playgroundMode) {
-      setOverridePath(nextPath);
-      return;
-    }
-    setPreviewPath(nextPath);
-  }, [playgroundMode, setOverridePath]);
 
   const handleAvatarStageSelection = useCallback((stageName) => {
     if (playgroundMode) {
@@ -886,12 +870,6 @@ function App({ playgroundMode = false, playgroundBottomLayer = true }) {
             onClose={() => setShowDevPanel(false)}
             avatarStage={effectivePreviewStage}
             setAvatarStage={handlePreviewStageChange}
-            avatarPath={effectivePreviewPath}
-            setAvatarPath={handlePreviewPathChange}
-            showCore={previewShowCore}
-            setShowCore={setPreviewShowCore}
-            avatarAttention={previewAttention}
-            setAvatarAttention={setPreviewAttention}
           />
         </Suspense>
       )}
@@ -1807,9 +1785,6 @@ function App({ playgroundMode = false, playgroundBottomLayer = true }) {
                       onStageChange={(hsl, stageName) => handleAvatarStageSelection(stageName)}
                       isPracticing={isPracticing}
                       currentStage={effectivePreviewStage}
-                      previewPath={effectivePreviewPath}
-                      previewShowCore={previewShowCore}
-                      previewAttention={previewAttention}
                       onOpenHardwareGuide={() => setIsHardwareGuideOpen(true)}
                       lockToHub={playgroundMode}
                       debugDisableDailyCard={debugDisableDailyCard}
@@ -1835,9 +1810,6 @@ function App({ playgroundMode = false, playgroundBottomLayer = true }) {
                   onBreathStateChange={setBreathState}
                   onStageChange={(hsl, stageName) => handleAvatarStageSelection(stageName)}
                   currentStage={effectivePreviewStage}
-                  previewPath={effectivePreviewPath}
-                  previewShowCore={previewShowCore}
-                  previewAttention={previewAttention}
                   showFxGallery={showFxGallery}
                   onNavigate={handleSectionSelect}
                   onOpenHardwareGuide={() => setIsHardwareGuideOpen(true)}
