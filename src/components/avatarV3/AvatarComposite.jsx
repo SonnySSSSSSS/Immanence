@@ -1,7 +1,8 @@
 import React from 'react';
 import './AvatarComposite.css';
 import { useDevPanelStore } from '../../state/devPanelStore.js';
-import { DEFAULT_AVATAR_PRESETS } from './avatarDefaultPresets.js';
+import { useDisplayModeStore } from '../../state/displayModeStore.js';
+import { DEFAULT_AVATAR_PRESETS, DEFAULT_AVATAR_PRESETS_LIGHT } from './avatarDefaultPresets.js';
 import { getDevPanelProdGate } from '../../lib/devPanelGate.js';
 import { getStageAssets, normalizeStageKey } from '../../config/avatarStageAssets.js';
 
@@ -89,8 +90,6 @@ function getDevStyleForLayer(layerId, layer) {
   return {
     opacity,
     transform: `translate(${x}px, ${y}px) rotate(${rotateDeg}deg) scale(${scale})`,
-    transformOrigin: 'center center',
-    transformBox: 'border-box',
   };
 }
 
@@ -121,20 +120,22 @@ function getLastPathSegment(publicPath) {
   return index === -1 ? normalized : normalized.slice(index + 1);
 }
 
-function buildAvatarDraftLayers(getRoleTransform, stageKey) {
+function buildAvatarDraftLayers(getRoleTransform, stageKey, colorScheme) {
   const stageLayers = {};
   LAYER_IDS.forEach((layerId) => {
-    stageLayers[layerId] = getRoleTransform(stageKey, layerId);
+    stageLayers[layerId] = getRoleTransform(stageKey, layerId, colorScheme);
   });
   return stageLayers;
 }
 
 export function AvatarComposite({ stage, size }) {
   const normalizedStage = normalizeStageKey(stage);
+  const colorScheme = useDisplayModeStore((s) => s.colorScheme);
   const devPanelGateEnabled = getDevPanelProdGate();
   const avatarCompositeDevState = useDevPanelStore((s) => s.avatarComposite);
   const getAvatarCompositeRoleTransform = useDevPanelStore((s) => s.getAvatarCompositeRoleTransform);
-  const stageAssets = getStageAssets(normalizedStage);
+  const stageAssets = getStageAssets(normalizedStage, colorScheme);
+  const activePresets = colorScheme === 'light' ? DEFAULT_AVATAR_PRESETS_LIGHT : DEFAULT_AVATAR_PRESETS;
 
   const backgroundSrc = resolvePublicAssetUrl(stageAssets.background);
   const stageSrc = resolvePublicAssetUrl(stageAssets.plantForeground);
@@ -149,8 +150,8 @@ export function AvatarComposite({ stage, size }) {
   );
 
   const baseLayers = useDraftTransforms
-    ? buildAvatarDraftLayers(getAvatarCompositeRoleTransform, normalizedStage)
-    : (DEFAULT_AVATAR_PRESETS[normalizedStage] || DEFAULT_AVATAR_PRESETS.seedling);
+    ? buildAvatarDraftLayers(getAvatarCompositeRoleTransform, normalizedStage, colorScheme)
+    : (activePresets[normalizedStage] || activePresets.seedling);
 
   const mergedLayers = mergeLayers(baseLayers);
   const effectiveLayers = {};
@@ -220,7 +221,7 @@ export function AvatarComposite({ stage, size }) {
             ring o:{effectiveLayers.ring.opacity.toFixed(2)} s:{effectiveLayers.ring.scale.toFixed(2)} r:{effectiveLayers.ring.rotateDeg.toFixed(0)} x:{effectiveLayers.ring.x.toFixed(0)} y:{effectiveLayers.ring.y.toFixed(0)}
           </div>
           <div className="avatar-composite__debug-line">
-            stage key:{normalizedStage}
+            stage key:{normalizedStage} scheme:{colorScheme}
           </div>
           <div className="avatar-composite__debug-line">
             wallpaper:{getLastPathSegment(stageAssets.wallpaper)}

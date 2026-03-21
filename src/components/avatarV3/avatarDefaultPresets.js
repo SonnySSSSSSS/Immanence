@@ -31,15 +31,54 @@ const STAGE_PRESETS = {
   },
 };
 
-export const DEFAULT_AVATAR_PRESETS = Object.freeze(
-  Object.fromEntries(
-    Object.entries(STAGE_PRESETS).map(([stageKey, stageLayers]) => [
-      stageKey,
-      Object.freeze(
-        Object.fromEntries(
-          Object.entries(stageLayers).map(([layerKey, layer]) => [layerKey, Object.freeze({ ...layer })])
-        )
-      ),
-    ])
-  )
-);
+// Light-mode presets — neutral baseline, tune via DevPanel in light mode.
+const LIGHT_STAGE_PRESETS = {
+  seedling: {
+    bg: { enabled: true, opacity: 1, scale: 1, rotateDeg: 0, x: 0, y: 0, linkTo: null, linkOpacity: false },
+    stage: { enabled: true, opacity: 1, scale: 1, rotateDeg: 0, x: 0, y: 0, linkTo: null, linkOpacity: false },
+    glass: { enabled: true, opacity: 0.25, scale: 1, rotateDeg: 0, x: 0, y: 0, linkTo: null, linkOpacity: false },
+    ring: { enabled: true, opacity: 1, scale: 1, rotateDeg: 0, x: 0, y: 0, linkTo: null, linkOpacity: false },
+  },
+  ember: {
+    bg: { enabled: true, opacity: 1, scale: 1, rotateDeg: 0, x: 0, y: 0, linkTo: null, linkOpacity: false },
+    stage: { enabled: true, opacity: 1, scale: 1, rotateDeg: 0, x: 0, y: 0, linkTo: null, linkOpacity: false },
+    glass: { enabled: true, opacity: 0.23, scale: 1, rotateDeg: 0, x: 0, y: 0, linkTo: null, linkOpacity: false },
+    ring: { enabled: true, opacity: 1, scale: 1, rotateDeg: 0, x: 0, y: 0, linkTo: null, linkOpacity: false },
+  },
+  flame: {
+    bg: { enabled: true, opacity: 1, scale: 1, rotateDeg: 0, x: 0, y: 0, linkTo: null, linkOpacity: false },
+    stage: { enabled: true, opacity: 1, scale: 1, rotateDeg: 0, x: 0, y: 0, linkTo: null, linkOpacity: false },
+    glass: { enabled: true, opacity: 0.24, scale: 1, rotateDeg: 0, x: 0, y: 0, linkTo: null, linkOpacity: false },
+    ring: { enabled: true, opacity: 1, scale: 1, rotateDeg: 0, x: 0, y: 0, linkTo: null, linkOpacity: false },
+  },
+  beacon: {
+    bg: { enabled: true, opacity: 1, scale: 1, rotateDeg: 0, x: 0, y: 0, linkTo: null, linkOpacity: false },
+    stage: { enabled: true, opacity: 1, scale: 1, rotateDeg: 0, x: 0, y: 0, linkTo: null, linkOpacity: false },
+    glass: { enabled: true, opacity: 0.23, scale: 1, rotateDeg: 0, x: 0, y: 0, linkTo: null, linkOpacity: false },
+    ring: { enabled: true, opacity: 1, scale: 1, rotateDeg: 0, x: 0, y: 0, linkTo: null, linkOpacity: false },
+  },
+  stellar: {
+    bg: { enabled: true, opacity: 1, scale: 1, rotateDeg: 0, x: 0, y: 0, linkTo: null, linkOpacity: false },
+    stage: { enabled: true, opacity: 1, scale: 1, rotateDeg: 0, x: 0, y: 0, linkTo: null, linkOpacity: false },
+    glass: { enabled: true, opacity: 0.13, scale: 1, rotateDeg: 0, x: 0, y: 0, linkTo: null, linkOpacity: false },
+    ring: { enabled: true, opacity: 1, scale: 1, rotateDeg: 0, x: 0, y: 0, linkTo: null, linkOpacity: false },
+  },
+};
+
+function freezePresets(presets) {
+  return Object.freeze(
+    Object.fromEntries(
+      Object.entries(presets).map(([stageKey, stageLayers]) => [
+        stageKey,
+        Object.freeze(
+          Object.fromEntries(
+            Object.entries(stageLayers).map(([layerKey, layer]) => [layerKey, Object.freeze({ ...layer })])
+          )
+        ),
+      ])
+    )
+  );
+}
+
+export const DEFAULT_AVATAR_PRESETS = freezePresets(STAGE_PRESETS);
+export const DEFAULT_AVATAR_PRESETS_LIGHT = freezePresets(LIGHT_STAGE_PRESETS);

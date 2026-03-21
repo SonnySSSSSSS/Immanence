@@ -1,7 +1,7 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import { normalizeStageKey } from '../config/avatarStageAssets.js';
-import { DEFAULT_AVATAR_PRESETS } from '../components/avatarV3/avatarDefaultPresets.js';
+import { DEFAULT_AVATAR_PRESETS, DEFAULT_AVATAR_PRESETS_LIGHT } from '../components/avatarV3/avatarDefaultPresets.js';
 
 export const DEV_PANEL_PERSIST_KEY = 'immanence-dev-panel';
 export const AVATAR_COMPOSITE_LAYER_IDS = ['bg', 'stage', 'glass', 'ring'];
@@ -45,10 +45,11 @@ function createDefaultLayer() {
   return { ...DEFAULT_LAYER };
 }
 
-function createDefaultStageTransforms(stageKey = 'seedling') {
+function createDefaultStageTransforms(stageKey = 'seedling', colorScheme = 'dark') {
   const normalizedStageKey = normalizeStageId(stageKey);
+  const presets = colorScheme === 'light' ? DEFAULT_AVATAR_PRESETS_LIGHT : DEFAULT_AVATAR_PRESETS;
   return sanitizeStageTransforms(
-    DEFAULT_AVATAR_PRESETS[normalizedStageKey] || DEFAULT_AVATAR_PRESETS.seedling
+    presets[normalizedStageKey] || presets.seedling
   );
 }
 
@@ -58,6 +59,7 @@ function createDefaultAvatarComposite() {
     previewDraft: false,
     showDebugOverlay: false,
     transformsByStage: sanitizeTransformsByStage(DEFAULT_AVATAR_PRESETS),
+    transformsByStageLight: sanitizeTransformsByStage(DEFAULT_AVATAR_PRESETS_LIGHT),
   };
 }
 
@@ -132,6 +134,10 @@ export function sanitizeAvatarComposite(input = {}) {
     source.transformsByStage && typeof source.transformsByStage === 'object'
       ? source.transformsByStage
       : null;
+  let transformsByStageLightSource =
+    source.transformsByStageLight && typeof source.transformsByStageLight === 'object'
+      ? source.transformsByStageLight
+      : null;
 
   if (!transformsByStageSource && source.layers && typeof source.layers === 'object') {
     transformsByStageSource = { seedling: source.layers };
@@ -142,20 +148,39 @@ export function sanitizeAvatarComposite(input = {}) {
     previewDraft: typeof source.previewDraft === 'boolean' ? source.previewDraft : false,
     showDebugOverlay: typeof source.showDebugOverlay === 'boolean' ? source.showDebugOverlay : false,
     transformsByStage: sanitizeTransformsByStage(transformsByStageSource || {}),
+    transformsByStageLight: sanitizeTransformsByStage(transformsByStageLightSource || {}),
   };
 }
 
-function getRawRoleTransform(avatarComposite, stageKey, roleKey) {
-  return avatarComposite?.transformsByStage?.[stageKey]?.[roleKey];
+// --- Scheme helpers ---
+
+function resolveScheme(colorScheme) {
+  return colorScheme === 'light' ? 'light' : 'dark';
 }
 
-export function resolveRoleTransform(avatarComposite, stageKey, roleKey) {
+function getTransformsByScheme(avatarComposite, colorScheme) {
+  return resolveScheme(colorScheme) === 'light'
+    ? avatarComposite?.transformsByStageLight
+    : avatarComposite?.transformsByStage;
+}
+
+function setTransformsByScheme(avatarComposite, colorScheme, nextTransformsByStage) {
+  return resolveScheme(colorScheme) === 'light'
+    ? { ...avatarComposite, transformsByStageLight: nextTransformsByStage }
+    : { ...avatarComposite, transformsByStage: nextTransformsByStage };
+}
+
+function getRawRoleTransform(avatarComposite, stageKey, roleKey, colorScheme = 'dark') {
+  return getTransformsByScheme(avatarComposite, colorScheme)?.[stageKey]?.[roleKey];
+}
+
+export function resolveRoleTransform(avatarComposite, stageKey, roleKey, colorScheme = 'dark') {
   const normalizedRole = normalizeLayerId(roleKey);
   if (!normalizedRole) return createDefaultLayer();
 
   const normalizedStage = normalizeStageId(stageKey);
 
-  const fromStage = getRawRoleTransform(avatarComposite, normalizedStage, normalizedRole);
+  const fromStage = getRawRoleTransform(avatarComposite, normalizedStage, normalizedRole, colorScheme);
   if (fromStage && typeof fromStage === 'object') {
     return {
       ...createDefaultLayer(),
@@ -166,56 +191,55 @@ export function resolveRoleTransform(avatarComposite, stageKey, roleKey) {
   return createDefaultLayer();
 }
 
-function createResolvedStageTransforms(avatarComposite, stageKey) {
+function createResolvedStageTransforms(avatarComposite, stageKey, colorScheme = 'dark') {
   const normalizedStage = normalizeStageId(stageKey);
   const next = {};
   AVATAR_COMPOSITE_LAYER_IDS.forEach((layerId) => {
-    next[layerId] = resolveRoleTransform(avatarComposite, normalizedStage, layerId);
+    next[layerId] = resolveRoleTransform(avatarComposite, normalizedStage, layerId, colorScheme);
   });
   return next;
 }
 
-function updateRoleTransform(state, stageKey, layerId, patch) {
+function updateRoleTransform(state, stageKey, layerId, patch, colorScheme = 'dark') {
   const normalizedLayerId = normalizeLayerId(layerId);
   if (!normalizedLayerId) return state;
   const normalizedStageKey = normalizeStageId(stageKey);
   const sanitizedPatch = sanitizeRolePatch(normalizedLayerId, patch);
   const avatarComposite = state.avatarComposite || createDefaultAvatarComposite();
-  const existingStage = avatarComposite.transformsByStage?.[normalizedStageKey];
+  const existingByScheme = getTransformsByScheme(avatarComposite, colorScheme);
+  const existingStage = existingByScheme?.[normalizedStageKey];
   const baseStage = existingStage
     ? sanitizeStageTransforms(existingStage)
-    : createResolvedStageTransforms(avatarComposite, normalizedStageKey);
+    : createResolvedStageTransforms(avatarComposite, normalizedStageKey, colorScheme);
 
-  return {
-    ...state,
-    avatarComposite: {
-      ...avatarComposite,
-      transformsByStage: {
-        ...avatarComposite.transformsByStage,
-        [normalizedStageKey]: {
-          ...baseStage,
-          [normalizedLayerId]: {
-            ...baseStage[normalizedLayerId],
-            ...sanitizedPatch,
-          },
-        },
+  const nextTransformsByStage = {
+    ...existingByScheme,
+    [normalizedStageKey]: {
+      ...baseStage,
+      [normalizedLayerId]: {
+        ...baseStage[normalizedLayerId],
+        ...sanitizedPatch,
       },
     },
   };
-}
 
-function setWholeStageTransforms(state, stageKey, stageTransforms) {
-  const normalizedStageKey = normalizeStageId(stageKey);
-  const avatarComposite = state.avatarComposite || createDefaultAvatarComposite();
   return {
     ...state,
-    avatarComposite: {
-      ...avatarComposite,
-      transformsByStage: {
-        ...avatarComposite.transformsByStage,
-        [normalizedStageKey]: sanitizeStageTransforms(stageTransforms),
-      },
-    },
+    avatarComposite: setTransformsByScheme(avatarComposite, colorScheme, nextTransformsByStage),
+  };
+}
+
+function setWholeStageTransforms(state, stageKey, stageTransforms, colorScheme = 'dark') {
+  const normalizedStageKey = normalizeStageId(stageKey);
+  const avatarComposite = state.avatarComposite || createDefaultAvatarComposite();
+  const existingByScheme = getTransformsByScheme(avatarComposite, colorScheme);
+  const nextTransformsByStage = {
+    ...existingByScheme,
+    [normalizedStageKey]: sanitizeStageTransforms(stageTransforms),
+  };
+  return {
+    ...state,
+    avatarComposite: setTransformsByScheme(avatarComposite, colorScheme, nextTransformsByStage),
   };
 }
 
@@ -243,9 +267,9 @@ export function migrateDevPanelState(persistedState, version) {
 const createDevPanelStoreState = (set, get) => ({
   avatarComposite: createDefaultAvatarComposite(),
 
-  getAvatarCompositeRoleTransform: (stageKey, roleKey) => {
+  getAvatarCompositeRoleTransform: (stageKey, roleKey, colorScheme = 'dark') => {
     const state = get();
-    return resolveRoleTransform(state.avatarComposite, stageKey, roleKey);
+    return resolveRoleTransform(state.avatarComposite, stageKey, roleKey, colorScheme);
   },
 
   setAvatarCompositeEnabled: (enabled) =>
@@ -275,49 +299,52 @@ const createDevPanelStoreState = (set, get) => ({
       },
     })),
 
-  setAvatarCompositeRoleTransform: (stageKey, roleKey, partialPatch) =>
-    set((state) => updateRoleTransform(state, stageKey, roleKey, partialPatch)),
+  setAvatarCompositeRoleTransform: (stageKey, roleKey, partialPatch, colorScheme = 'dark') =>
+    set((state) => updateRoleTransform(state, stageKey, roleKey, partialPatch, colorScheme)),
 
-  setAvatarCompositeRoleTransformValue: (stageKey, roleKey, key, value) =>
-    set((state) => updateRoleTransform(state, stageKey, roleKey, { [key]: value })),
+  setAvatarCompositeRoleTransformValue: (stageKey, roleKey, key, value, colorScheme = 'dark') =>
+    set((state) => updateRoleTransform(state, stageKey, roleKey, { [key]: value }, colorScheme)),
 
-  setAvatarCompositeRoleTransformEnabled: (stageKey, roleKey, enabled) =>
-    set((state) => updateRoleTransform(state, stageKey, roleKey, { enabled: Boolean(enabled) })),
+  setAvatarCompositeRoleTransformEnabled: (stageKey, roleKey, enabled, colorScheme = 'dark') =>
+    set((state) => updateRoleTransform(state, stageKey, roleKey, { enabled: Boolean(enabled) }, colorScheme)),
 
-  setAvatarCompositeRoleTransformLink: (stageKey, roleKey, linkTo) =>
-    set((state) => updateRoleTransform(state, stageKey, roleKey, { linkTo })),
+  setAvatarCompositeRoleTransformLink: (stageKey, roleKey, linkTo, colorScheme = 'dark') =>
+    set((state) => updateRoleTransform(state, stageKey, roleKey, { linkTo }, colorScheme)),
 
-  setAvatarCompositeRoleTransformLinkOpacity: (stageKey, roleKey, linkOpacity) =>
-    set((state) => updateRoleTransform(state, stageKey, roleKey, { linkOpacity: Boolean(linkOpacity) })),
+  setAvatarCompositeRoleTransformLinkOpacity: (stageKey, roleKey, linkOpacity, colorScheme = 'dark') =>
+    set((state) => updateRoleTransform(state, stageKey, roleKey, { linkOpacity: Boolean(linkOpacity) }, colorScheme)),
 
-  hydrateAvatarCompositeDrafts: (transformsByStage) =>
+  hydrateAvatarCompositeDrafts: (transformsByStage, colorScheme = 'dark') =>
     set((state) => {
       const nextTransformsByStage = sanitizeTransformsByStage(transformsByStage);
+      const avatarComposite = state.avatarComposite || createDefaultAvatarComposite();
       return {
         ...state,
-        avatarComposite: {
-          ...state.avatarComposite,
-          transformsByStage: nextTransformsByStage,
-        },
+        avatarComposite: setTransformsByScheme(avatarComposite, colorScheme, nextTransformsByStage),
       };
     }),
 
-  replaceAvatarCompositeStageDraft: (stageKey, stageTransforms) =>
-    set((state) => setWholeStageTransforms(state, stageKey, stageTransforms)),
+  replaceAvatarCompositeStageDraft: (stageKey, stageTransforms, colorScheme = 'dark') =>
+    set((state) => setWholeStageTransforms(state, stageKey, stageTransforms, colorScheme)),
 
-  getAvatarCompositeStageDraft: (stageKey) => {
+  getAvatarCompositeStageDraft: (stageKey, colorScheme = 'dark') => {
     const state = get();
     const normalizedStageKey = normalizeStageId(stageKey);
-    return createResolvedStageTransforms(state.avatarComposite, normalizedStageKey);
+    return createResolvedStageTransforms(state.avatarComposite, normalizedStageKey, colorScheme);
   },
 
-  resetAvatarCompositeStage: (stageKey) =>
+  resetAvatarCompositeStage: (stageKey, colorScheme = 'dark') =>
     set((state) => {
       const normalizedStageKey = normalizeStageId(stageKey);
-      return setWholeStageTransforms(state, normalizedStageKey, createDefaultStageTransforms(normalizedStageKey));
+      return setWholeStageTransforms(
+        state,
+        normalizedStageKey,
+        createDefaultStageTransforms(normalizedStageKey, colorScheme),
+        colorScheme
+      );
     }),
 
-  // Compatibility wrappers (legacy callers -> seedling)
+  // Compatibility wrappers (legacy callers -> seedling, dark)
   setAvatarCompositeLayerEnabled: (layerId, enabled) =>
     set((state) => updateRoleTransform(state, 'seedling', layerId, { enabled: Boolean(enabled) })),
 
@@ -350,11 +377,11 @@ const createDevPanelStoreState = (set, get) => ({
       return nextState;
     }),
 
-  getAvatarCompositeAllStagesJSON: () => {
+  getAvatarCompositeAllStagesJSON: (colorScheme = 'dark') => {
     const state = get();
     const transformsByStage = {};
     AVATAR_COMPOSITE_STAGE_KEYS.forEach((stageKey) => {
-      transformsByStage[stageKey] = createResolvedStageTransforms(state.avatarComposite, stageKey);
+      transformsByStage[stageKey] = createResolvedStageTransforms(state.avatarComposite, stageKey, colorScheme);
     });
     return JSON.stringify(
       {
@@ -365,11 +392,11 @@ const createDevPanelStoreState = (set, get) => ({
     );
   },
 
-  getAvatarCompositeDefaultsSnippet: () => {
+  getAvatarCompositeDefaultsSnippet: (colorScheme = 'dark') => {
     const state = get();
     const transformsByStage = {};
     AVATAR_COMPOSITE_STAGE_KEYS.forEach((stageKey) => {
-      transformsByStage[stageKey] = createResolvedStageTransforms(state.avatarComposite, stageKey);
+      transformsByStage[stageKey] = createResolvedStageTransforms(state.avatarComposite, stageKey, colorScheme);
     });
     return `transformsByStage: ${JSON.stringify(transformsByStage, null, 2)},`;
   },

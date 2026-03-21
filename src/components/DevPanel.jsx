@@ -11,7 +11,7 @@ import { useCurriculumStore } from '../state/curriculumStore';
 import { useNavigationStore } from '../state/navigationStore';
 import { useTutorialStore } from '../state/tutorialStore';
 import { normalizeStageKey } from '../config/avatarStageAssets.js';
-import { DEFAULT_AVATAR_PRESETS } from './avatarV3/avatarDefaultPresets.js';
+import { DEFAULT_AVATAR_PRESETS, DEFAULT_AVATAR_PRESETS_LIGHT } from './avatarV3/avatarDefaultPresets.js';
 import { AVATAR_COMPOSITE_LAYER_IDS, useDevPanelStore } from '../state/devPanelStore.js';
 import { CoordinateHelper } from './dev/CoordinateHelper.jsx';
 import { OnboardingContentEditor, TutorialEditor } from './dev/TutorialEditor.jsx';
@@ -76,10 +76,10 @@ import { getDevPanelProdGate } from '../lib/devPanelGate.js';
 // Available stages and paths for dropdowns
 const STAGE_OPTIONS = ['Seedling', 'Ember', 'Flame', 'Beacon', 'Stellar'];
 
-function buildAvatarStageSnapshot(getRoleTransform, stageKey) {
+function buildAvatarStageSnapshot(getRoleTransform, stageKey, colorScheme = 'dark') {
     const snapshot = {};
     AVATAR_COMPOSITE_LAYER_IDS.forEach((layerId) => {
-        snapshot[layerId] = getRoleTransform(stageKey, layerId);
+        snapshot[layerId] = getRoleTransform(stageKey, layerId, colorScheme);
     });
     return snapshot;
 }
@@ -166,7 +166,9 @@ export function DevPanel({
     const avatarStage = avatarStageProp ?? avatarStageLocal;
     const setAvatarStage = setAvatarStageProp ?? setAvatarStageLocal;
     const normalizedAvatarStageKey = normalizeStageKey(avatarStage);
-    const avatarCompositeDraftsByStage = useDevPanelStore(s => s.avatarComposite?.transformsByStage);
+    const avatarCompositeDraftsByStage = useDevPanelStore(s =>
+        isLight ? s.avatarComposite?.transformsByStageLight : s.avatarComposite?.transformsByStage
+    );
     const getAvatarCompositeRoleTransform = useDevPanelStore(s => s.getAvatarCompositeRoleTransform);
     const setAvatarCompositePreviewDraft = useDevPanelStore(s => s.setAvatarCompositePreviewDraft);
     const hydrateAvatarCompositeDrafts = useDevPanelStore(s => s.hydrateAvatarCompositeDrafts);
@@ -183,7 +185,8 @@ export function DevPanel({
         }
         setAvatarCompositePreviewDraft(true);
         if (!avatarDraftHydratedRef.current) {
-            hydrateAvatarCompositeDrafts(DEFAULT_AVATAR_PRESETS);
+            hydrateAvatarCompositeDrafts(DEFAULT_AVATAR_PRESETS, 'dark');
+            hydrateAvatarCompositeDrafts(DEFAULT_AVATAR_PRESETS_LIGHT, 'light');
             avatarDraftHydratedRef.current = true;
         }
     }, [
@@ -198,12 +201,13 @@ export function DevPanel({
         };
     }, [setAvatarCompositePreviewDraft]);
 
+    const activeAvatarPresets = isLight ? DEFAULT_AVATAR_PRESETS_LIGHT : DEFAULT_AVATAR_PRESETS;
     const currentAvatarDraft =
         avatarCompositeDraftsByStage?.[normalizedAvatarStageKey] ||
-        buildAvatarStageSnapshot(getAvatarCompositeRoleTransform, normalizedAvatarStageKey);
+        buildAvatarStageSnapshot(getAvatarCompositeRoleTransform, normalizedAvatarStageKey, colorScheme);
     const currentAvatarDefault =
-        DEFAULT_AVATAR_PRESETS[normalizedAvatarStageKey] ||
-        DEFAULT_AVATAR_PRESETS.seedling;
+        activeAvatarPresets[normalizedAvatarStageKey] ||
+        activeAvatarPresets.seedling;
     const hasUnsavedAvatarDraft = !areAvatarStageSnapshotsEqual(currentAvatarDraft, currentAvatarDefault);
     const avatarDraftStatusLabel = hasUnsavedAvatarDraft
         ? 'Unsaved Draft changes'
@@ -215,7 +219,7 @@ export function DevPanel({
 
     const handleSaveStageDefault = useCallback(async () => {
         const nowLabel = new Date().toLocaleTimeString();
-        const draftSnippet = `${normalizedAvatarStageKey}: ${JSON.stringify(currentAvatarDraft, null, 2)},`;
+        const draftSnippet = `// ${colorScheme} scheme\n${normalizedAvatarStageKey}: ${JSON.stringify(currentAvatarDraft, null, 2)},`;
         const canUseClipboard = typeof navigator !== 'undefined' && navigator.clipboard?.writeText;
 
         if (canUseClipboard) {
@@ -230,19 +234,19 @@ export function DevPanel({
         }
 
         setAvatarDefaultStatus(
-            `Preview-only draft. Promote by updating src/components/avatarV3/avatarDefaultPresets.js for ${normalizedAvatarStageKey}.`
+            `Preview-only draft. Promote by updating src/components/avatarV3/avatarDefaultPresets.js for ${normalizedAvatarStageKey} (${colorScheme} scheme).`
         );
-    }, [currentAvatarDraft, normalizedAvatarStageKey]);
+    }, [colorScheme, currentAvatarDraft, normalizedAvatarStageKey]);
 
     const handleResetDraftToDefault = useCallback(() => {
         const stageDefault =
-            DEFAULT_AVATAR_PRESETS[normalizedAvatarStageKey] ||
-            DEFAULT_AVATAR_PRESETS.seedling;
+            activeAvatarPresets[normalizedAvatarStageKey] ||
+            activeAvatarPresets.seedling;
         if (!stageDefault) return;
-        replaceAvatarCompositeStageDraft(normalizedAvatarStageKey, stageDefault);
+        replaceAvatarCompositeStageDraft(normalizedAvatarStageKey, stageDefault, colorScheme);
         setAvatarPromoteAck('');
-        setAvatarDefaultStatus(`Restored Draft from canonical code Default for ${normalizedAvatarStageKey}.`);
-    }, [normalizedAvatarStageKey, replaceAvatarCompositeStageDraft]);
+        setAvatarDefaultStatus(`Restored Draft from canonical code Default for ${normalizedAvatarStageKey} (${colorScheme} scheme).`);
+    }, [activeAvatarPresets, colorScheme, normalizedAvatarStageKey, replaceAvatarCompositeStageDraft]);
 
     // Collapsible sections
     const [expandedSections, setExpandedSections] = useState({
