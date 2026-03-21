@@ -90,6 +90,7 @@ function getDevStyleForLayer(layerId, layer) {
     opacity,
     transform: `translate(${x}px, ${y}px) rotate(${rotateDeg}deg) scale(${scale})`,
     transformOrigin: 'center center',
+    transformBox: 'border-box',
   };
 }
 
