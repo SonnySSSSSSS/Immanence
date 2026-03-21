@@ -190,6 +190,7 @@ export function DevPanel({
     const hydrateAvatarCompositeDrafts = useDevPanelStore(s => s.hydrateAvatarCompositeDrafts);
     const replaceAvatarCompositeStageDraft = useDevPanelStore(s => s.replaceAvatarCompositeStageDraft);
     const [avatarDefaultStatus, setAvatarDefaultStatus] = useState('');
+    const [avatarPromoteAck, setAvatarPromoteAck] = useState('');
     const avatarDraftHydratedRef = useRef(false);
 
     // Sync initial path to parent when DevPanel opens and parent has no path set
@@ -229,12 +230,34 @@ export function DevPanel({
         DEFAULT_AVATAR_PRESETS[normalizedAvatarStageKey] ||
         DEFAULT_AVATAR_PRESETS.seedling;
     const hasUnsavedAvatarDraft = !areAvatarStageSnapshotsEqual(currentAvatarDraft, currentAvatarDefault);
+    const avatarDraftStatusLabel = hasUnsavedAvatarDraft
+        ? 'Unsaved Draft changes'
+        : 'Draft matches canonical code Default';
 
-    const handleSaveStageDefault = useCallback(() => {
+    useEffect(() => {
+        setAvatarPromoteAck('');
+    }, [normalizedAvatarStageKey]);
+
+    const handleSaveStageDefault = useCallback(async () => {
+        const nowLabel = new Date().toLocaleTimeString();
+        const draftSnippet = `${normalizedAvatarStageKey}: ${JSON.stringify(currentAvatarDraft, null, 2)},`;
+        const canUseClipboard = typeof navigator !== 'undefined' && navigator.clipboard?.writeText;
+
+        if (canUseClipboard) {
+            try {
+                await navigator.clipboard.writeText(draftSnippet);
+                setAvatarPromoteAck(`Promote acknowledged at ${nowLabel}; stage snippet copied.`);
+            } catch {
+                setAvatarPromoteAck(`Promote acknowledged at ${nowLabel}; copy snippet manually.`);
+            }
+        } else {
+            setAvatarPromoteAck(`Promote acknowledged at ${nowLabel}; copy snippet manually.`);
+        }
+
         setAvatarDefaultStatus(
             `Preview-only draft. Promote by updating src/components/avatarV3/avatarDefaultPresets.js for ${normalizedAvatarStageKey}.`
         );
-    }, [normalizedAvatarStageKey]);
+    }, [currentAvatarDraft, normalizedAvatarStageKey]);
 
     const handleResetDraftToDefault = useCallback(() => {
         const stageDefault =
@@ -242,6 +265,7 @@ export function DevPanel({
             DEFAULT_AVATAR_PRESETS.seedling;
         if (!stageDefault) return;
         replaceAvatarCompositeStageDraft(normalizedAvatarStageKey, stageDefault);
+        setAvatarPromoteAck('');
         setAvatarDefaultStatus(`Restored Draft from canonical code Default for ${normalizedAvatarStageKey}.`);
     }, [normalizedAvatarStageKey, replaceAvatarCompositeStageDraft]);
 
@@ -1106,7 +1130,8 @@ export function DevPanel({
                             Draft edits are preview-only. Canonical defaults are code-defined in avatarDefaultPresets.js.
                         </div>
                         <div className="devpanel-avatar-draft-status text-[11px] text-white/75 mb-3">
-                            Stage: <span className="devpanel-avatar-draft-stage font-semibold text-white/90">{normalizedAvatarStageKey}</span> | Draft status: {hasUnsavedAvatarDraft ? 'Unsaved Draft changes' : 'Draft matches canonical code Default'}
+                            Stage: <span className="devpanel-avatar-draft-stage font-semibold text-white/90">{normalizedAvatarStageKey}</span> | Draft status: {avatarDraftStatusLabel}
+                            {avatarPromoteAck ? ` | ${avatarPromoteAck}` : ''}
                         </div>
                         <div className="grid grid-cols-2 gap-2 mb-2">
                             <button
