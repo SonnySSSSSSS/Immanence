@@ -63,7 +63,7 @@ function AvatarCompositeSection({
             nextLayers[layerId] = getAvatarCompositeRoleTransform(normalizedEditingStageKey, layerId);
         });
         return nextLayers;
-    }, [getAvatarCompositeRoleTransform, normalizedEditingStageKey]);
+    }, [avatarComposite, getAvatarCompositeRoleTransform, normalizedEditingStageKey]);
     const tunerEnabled = avatarComposite?.enabled !== false;
     const showDebugOverlay = Boolean(avatarComposite?.showDebugOverlay);
 
