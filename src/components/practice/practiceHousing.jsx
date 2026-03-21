@@ -15,7 +15,7 @@ export function getPracticeHousingStyles({ isLight = false, radius = 20, quiet =
       overflow: 'visible',
       boxShadow: isLight
         ? '0 14px 28px rgba(18, 40, 52, 0.10)'
-        : '0 18px 34px rgba(0, 0, 0, 0.30), 0 0 12px rgba(78, 214, 226, 0.10)',
+        : '0 2px 4px rgba(0, 0, 0, 0.4), 0 8px 20px rgba(0, 0, 0, 0.35), 0 24px 48px rgba(0, 0, 0, 0.3), 0 0 16px rgba(78, 214, 226, 0.08)',
     },
     panel: {
       borderRadius: radiusPx,
@@ -57,10 +57,10 @@ export function PracticeHousingChrome({ isLight = false, quiet = true, radius = 
           background: isLight
             ? 'linear-gradient(180deg, rgba(228, 244, 248, 0.82) 0%, rgba(206, 232, 238, 0.56) 100%)'
             : 'linear-gradient(180deg, rgba(7, 16, 24, 0.94) 0%, rgba(4, 10, 18, 0.90) 100%)',
-          border: `1px solid ${isLight ? 'rgba(97, 177, 190, 0.26)' : 'rgba(112, 233, 242, 0.18)'}`,
+          border: `1px solid ${isLight ? 'rgba(97, 177, 190, 0.26)' : 'rgba(112, 233, 242, 0.22)'}`,
           boxShadow: isLight
             ? 'inset 0 1px 0 rgba(255,255,255,0.58), inset 0 -8px 20px rgba(18,40,52,0.06)'
-            : 'inset 0 1px 0 rgba(168, 241, 248, 0.06), inset 0 -10px 18px rgba(0,0,0,0.34)',
+            : 'inset 0 1px 0 rgba(168, 241, 248, 0.08), inset 0 -10px 18px rgba(0,0,0,0.34), 0 0 16px rgba(78, 214, 226, 0.08)',
           pointerEvents: 'none',
           zIndex: 0,
         }}

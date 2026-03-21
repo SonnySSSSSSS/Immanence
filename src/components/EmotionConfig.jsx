@@ -59,7 +59,7 @@ export function EmotionConfig({
               <button
                 key={emotionMode.id}
                 onClick={() => setMode?.(emotionMode.id)}
-                className="rounded-lg px-3 py-3 transition-all duration-200 text-center"
+                className="rounded-lg px-3 py-3 transition-all duration-300 text-center group hover:scale-105 active:scale-95"
                 style={{
                   fontFamily: 'var(--font-display)',
                   fontSize: '10px',
@@ -68,20 +68,23 @@ export function EmotionConfig({
                   background: isActive
                     ? isLight
                       ? 'rgba(212, 175, 55, 0.15)'
-                      : 'rgba(212, 175, 55, 0.2)'
+                      : 'linear-gradient(135deg, rgba(212, 175, 55, 0.45) 0%, rgba(212, 175, 55, 0.2) 100%)'
                     : isLight
-                      ? 'rgba(60,50,35,0.05)'
-                      : 'rgba(0,0,0,0.2)',
+                      ? 'rgba(0,0,0,0.2)'
+                      : 'linear-gradient(135deg, rgba(40, 50, 60, 0.4) 0%, rgba(10, 15, 25, 0.6) 100%)',
                   border: isActive
-                    ? `1px solid ${isLight ? 'rgba(212, 175, 55, 0.4)' : 'rgba(212, 175, 55, 0.6)'}`
-                    : `1px solid ${isLight ? 'rgba(60,50,35,0.1)' : 'rgba(255,255,255,0.1)'}`,
+                    ? `1px solid ${isLight ? 'rgba(212, 175, 55, 0.4)' : 'rgba(212, 175, 55, 0.8)'}`
+                    : `1px solid ${isLight ? 'rgba(255,255,255,0.1)' : 'rgba(100, 120, 140, 0.25)'}`,
                   color: isActive ? 'rgba(212, 175, 55, 1)' : textColors.secondary,
                   cursor: 'pointer',
-                  boxShadow: isActive
-                    ? isLight
-                      ? 'inset 0 0 12px rgba(212, 175, 55, 0.1)'
-                      : '0 0 20px rgba(212, 175, 55, 0.15)'
-                    : 'none',
+                  boxShadow: (isActive
+                    ? (isLight
+                      ? 'inset 0 0 12px rgba(212, 175, 55, 0.1), 0 0 20px rgba(212, 175, 55, 0.15)'
+                      : 'inset 0 2px 6px rgba(255,255,255,0.15), inset 0 -6px 16px rgba(0,0,0,0.5), 0 0 40px rgba(212, 175, 55, 0.35), 0 10px 30px rgba(0,0,0,0.6), 0 -4px 12px rgba(212, 175, 55, 0.25), 0 2px 4px rgba(0,0,0,0.4)')
+                    : (isLight
+                      ? 'none'
+                      : 'inset 0 1px 2px rgba(100, 150, 160, 0.1), 0 6px 18px rgba(0,0,0,0.35), 0 -2px 6px rgba(0,0,0,0.2)')),
+                  transformOrigin: 'center',
                 }}
               >
                 {emotionMode.label}
@@ -97,14 +100,15 @@ export function EmotionConfig({
           className="rounded-lg p-3"
           data-tutorial="awareness-emotion-frame"
           style={{
-            background: isLight ? 'rgba(60,50,35,0.05)' : 'rgba(0,0,0,0.2)',
-            border: isLight ? '1px solid rgba(60,50,35,0.1)' : '1px solid rgba(255,255,255,0.1)',
+            background: isLight ? 'rgba(0,0,0,0.2)' : 'linear-gradient(180deg, rgba(20, 35, 45, 0.4) 0%, rgba(8, 15, 22, 0.5) 100%)',
+            border: isLight ? '1px solid rgba(255,255,255,0.1)' : '1px solid rgba(78, 214, 226, 0.12)',
             fontFamily: 'var(--font-body)',
             fontSize: '12px',
             fontStyle: 'italic',
             color: textColors.description,
             textAlign: 'center',
             lineHeight: '1.6',
+            boxShadow: isLight ? 'none' : 'inset 0 1px 0 rgba(168, 241, 248, 0.04), 0 4px 12px rgba(0,0,0,0.2)',
           }}
         >
           "{frameText}"
@@ -120,7 +124,7 @@ export function EmotionConfig({
               <button
                 key={pMode.id}
                 onClick={() => setPromptMode?.(pMode.id)}
-                className="rounded-lg px-4 py-2 transition-all duration-200"
+                className="rounded-lg px-4 py-2 transition-all duration-300 hover:scale-105 active:scale-95"
                 style={{
                   fontFamily: 'var(--font-display)',
                   fontSize: '10px',
@@ -129,20 +133,23 @@ export function EmotionConfig({
                   background: isActive
                     ? isLight
                       ? 'rgba(212, 175, 55, 0.15)'
-                      : 'rgba(212, 175, 55, 0.2)'
+                      : 'linear-gradient(135deg, rgba(212, 175, 55, 0.45) 0%, rgba(212, 175, 55, 0.2) 100%)'
                     : isLight
-                      ? 'rgba(60,50,35,0.05)'
-                      : 'rgba(0,0,0,0.2)',
+                      ? 'rgba(0,0,0,0.2)'
+                      : 'linear-gradient(135deg, rgba(40, 50, 60, 0.4) 0%, rgba(10, 15, 25, 0.6) 100%)',
                   border: isActive
-                    ? `1px solid ${isLight ? 'rgba(212, 175, 55, 0.4)' : 'rgba(212, 175, 55, 0.6)'}`
-                    : `1px solid ${isLight ? 'rgba(60,50,35,0.1)' : 'rgba(255,255,255,0.1)'}`,
+                    ? `1px solid ${isLight ? 'rgba(212, 175, 55, 0.4)' : 'rgba(212, 175, 55, 0.8)'}`
+                    : `1px solid ${isLight ? 'rgba(255,255,255,0.1)' : 'rgba(100, 120, 140, 0.25)'}`,
                   color: isActive ? 'rgba(212, 175, 55, 1)' : textColors.secondary,
                   cursor: 'pointer',
-                  boxShadow: isActive
-                    ? isLight
-                      ? 'inset 0 0 12px rgba(212, 175, 55, 0.1)'
-                      : '0 0 20px rgba(212, 175, 55, 0.15)'
-                    : 'none',
+                  boxShadow: (isActive
+                    ? (isLight
+                      ? 'inset 0 0 12px rgba(212, 175, 55, 0.1), 0 0 20px rgba(212, 175, 55, 0.15)'
+                      : 'inset 0 2px 6px rgba(255,255,255,0.15), inset 0 -6px 16px rgba(0,0,0,0.5), 0 0 40px rgba(212, 175, 55, 0.35), 0 10px 30px rgba(0,0,0,0.6), 0 -4px 12px rgba(212, 175, 55, 0.25), 0 2px 4px rgba(0,0,0,0.4)')
+                    : (isLight
+                      ? 'none'
+                      : 'inset 0 1px 2px rgba(100, 150, 160, 0.1), 0 6px 18px rgba(0,0,0,0.35), 0 -2px 6px rgba(0,0,0,0.2)')),
+                  transformOrigin: 'center',
                 }}
               >
                 {pMode.label}

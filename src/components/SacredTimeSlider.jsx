@@ -124,14 +124,15 @@ export function SacredTimeSlider({ value, onChange, options }) {
                     height: '30px'
                 }}
             >
-                {/* Track background line */}
+                {/* Track background line with depth */}
                 <div
                     className="absolute left-0 right-0 h-1 rounded-full"
                     style={{
                         top: '50%',
                         transform: 'translateY(-50%)',
-                        background: 'rgba(255,255,255,0.1)',
-                        border: '1px solid rgba(255,255,255,0.05)'
+                        background: 'linear-gradient(180deg, rgba(255,255,255,0.15) 0%, rgba(255,255,255,0.05) 100%)',
+                        border: '1px solid rgba(255,255,255,0.1)',
+                        boxShadow: 'inset 0 1px 0 rgba(168, 241, 248, 0.06), 0 2px 8px rgba(0,0,0,0.3)'
                     }}
                 />
 
@@ -221,14 +222,24 @@ export function SacredTimeSlider({ value, onChange, options }) {
                         transition: 'left 80ms ease-out',
                     }}
                 >
+                    {/* Shadow depth layer */}
+                    <div
+                        className="absolute inset-0 rounded-full transition-all duration-100"
+                        style={{
+                            background: 'transparent',
+                            boxShadow: pulseActive
+                                ? `0 8px 20px rgba(0, 0, 0, 0.5), 0 -2px 8px rgba(212, 175, 55, 0.2)`
+                                : `0 6px 16px rgba(0, 0, 0, 0.4), 0 -1px 4px rgba(212, 175, 55, 0.1)`,
+                        }}
+                    />
                     {/* Inner neon core */}
                     <div
                         className="absolute inset-0 rounded-full transition-all duration-100"
                         style={{
                             background: `radial-gradient(circle, var(--accent-color) 40%, transparent 70%)`,
                             boxShadow: pulseActive
-                                ? `0 0 30px var(--accent-glow)`
-                                : `0 0 20px var(--accent-40)`,
+                                ? `0 0 30px var(--accent-glow), inset 0 1px 0 rgba(255, 255, 255, 0.2)`
+                                : `0 0 20px var(--accent-40), inset 0 1px 0 rgba(255, 255, 255, 0.15)`,
                             transform: 'scale(1)'
                         }}
                     />
@@ -238,8 +249,8 @@ export function SacredTimeSlider({ value, onChange, options }) {
                         style={{
                             border: `2px solid var(--accent-color)`,
                             boxShadow: pulseActive
-                                ? `0 0 40px var(--accent-color), 0 0 60px var(--accent-50)`
-                                : `0 0 30px var(--accent-80)`,
+                                ? `0 0 40px var(--accent-color), 0 0 60px var(--accent-50), inset 0 1px 2px rgba(255, 255, 255, 0.3)`
+                                : `0 0 30px var(--accent-80), inset 0 1px 2px rgba(255, 255, 255, 0.2)`,
                             background: 'transparent'
                         }}
                     />
