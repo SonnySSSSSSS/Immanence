@@ -23,11 +23,11 @@ export function BeginPracticeButton({ label, onStart, ...rest }) {
           borderRadius: '60px',
           background: 'var(--ui-button-gradient, linear-gradient(135deg, var(--accent-primary), var(--accent-secondary)))',
           color: '#0a0a0a',
-          textShadow: '0 0 10px var(--accent-color)',
+          textShadow: '0 0 5px var(--accent-color)',
           boxShadow: `
-            0 0 60px rgba(var(--accent-r), var(--accent-g), var(--accent-b), 0.8),
-            inset 0 0 30px rgba(255, 255, 255, 0.25),
-            0 8px 20px rgba(var(--accent-r), var(--accent-g), var(--accent-b), 0.55)
+            0 0 30px rgba(var(--accent-r), var(--accent-g), var(--accent-b), 0.4),
+            inset 0 0 15px rgba(255, 255, 255, 0.12),
+            0 4px 10px rgba(var(--accent-r), var(--accent-g), var(--accent-b), 0.28)
           `,
           transition: 'all 0.25s ease-out',
           position: 'relative',
@@ -35,17 +35,17 @@ export function BeginPracticeButton({ label, onStart, ...rest }) {
         onMouseEnter={(e) => {
           e.currentTarget.style.transform = 'scale(1.03)';
           e.currentTarget.style.boxShadow = `
-            0 0 100px rgba(var(--accent-r), var(--accent-g), var(--accent-b), 1),
-            inset 0 0 35px rgba(255, 255, 255, 0.35),
-            0 12px 30px rgba(var(--accent-r), var(--accent-g), var(--accent-b), 0.75)
+            0 0 50px rgba(var(--accent-r), var(--accent-g), var(--accent-b), 0.5),
+            inset 0 0 18px rgba(255, 255, 255, 0.18),
+            0 6px 15px rgba(var(--accent-r), var(--accent-g), var(--accent-b), 0.38)
           `;
         }}
         onMouseLeave={(e) => {
           e.currentTarget.style.transform = 'scale(1)';
           e.currentTarget.style.boxShadow = `
-            0 0 60px rgba(var(--accent-r), var(--accent-g), var(--accent-b), 0.8),
-            inset 0 0 30px rgba(255, 255, 255, 0.25),
-            0 8px 20px rgba(var(--accent-r), var(--accent-g), var(--accent-b), 0.55)
+            0 0 30px rgba(var(--accent-r), var(--accent-g), var(--accent-b), 0.4),
+            inset 0 0 15px rgba(255, 255, 255, 0.12),
+            0 4px 10px rgba(var(--accent-r), var(--accent-g), var(--accent-b), 0.28)
           `;
         }}
         {...rest}
@@ -55,9 +55,9 @@ export function BeginPracticeButton({ label, onStart, ...rest }) {
           style={{
             position: 'absolute',
             inset: '-4px',
-            background: 'radial-gradient(circle at center, rgba(var(--accent-r), var(--accent-g), var(--accent-b), 0.6) 0%, transparent 70%)',
-            opacity: 0.7,
-            filter: 'blur(15px)',
+            background: 'radial-gradient(circle at center, rgba(var(--accent-r), var(--accent-g), var(--accent-b), 0.3) 0%, transparent 70%)',
+            opacity: 0.35,
+            filter: 'blur(8px)',
             zIndex: -1,
             animation: 'portal-pulse 3s infinite ease-in-out',
           }}
@@ -79,8 +79,8 @@ export function BeginPracticeButton({ label, onStart, ...rest }) {
       </button>
       <style>{`
         @keyframes portal-pulse {
-          0%, 100% { opacity: 0.7; transform: scale(1); }
-          50% { opacity: 1; transform: scale(1.05); }
+          0%, 100% { opacity: 0.35; transform: scale(1); }
+          50% { opacity: 0.5; transform: scale(1.05); }
         }
         .begin-button:hover .portal-ripple {
           opacity: 1 !important;
