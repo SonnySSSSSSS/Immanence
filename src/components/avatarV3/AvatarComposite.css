@@ -21,6 +21,7 @@
   object-fit: contain;
   object-position: center;
   pointer-events: none;
+  -webkit-user-select: none;
   user-select: none;
   backface-visibility: hidden;
   transform-box: fill-box;
@@ -36,6 +37,7 @@
   object-fit: contain;
   object-position: center;
   pointer-events: none;
+  -webkit-user-select: none;
   user-select: none;
   backface-visibility: hidden;
   transform-box: fill-box;
@@ -101,6 +103,7 @@
   border-radius: 4px;
   background: rgba(0, 0, 0, 0.7);
   pointer-events: none;
+  -webkit-user-select: none;
   user-select: none;
 }
 
