@@ -1,7 +1,6 @@
-import React, { useEffect } from 'react';
+import React from 'react';
 import './AvatarComposite.css';
 import { useDevPanelStore } from '../../state/devPanelStore.js';
-import { useAvatarStageDefaultsStore } from '../../state/avatarV3Store.js';
 import { DEFAULT_AVATAR_PRESETS } from './avatarDefaultPresets.js';
 import { getDevPanelProdGate } from '../../lib/devPanelGate.js';
 import { getStageAssets, normalizeStageKey } from '../../config/avatarStageAssets.js';
@@ -134,8 +133,6 @@ export function AvatarComposite({ stage, size }) {
   const devPanelGateEnabled = getDevPanelProdGate();
   const avatarCompositeDevState = useDevPanelStore((s) => s.avatarComposite);
   const getAvatarCompositeRoleTransform = useDevPanelStore((s) => s.getAvatarCompositeRoleTransform);
-  const defaultsByStage = useAvatarStageDefaultsStore((s) => s.defaultsByStage);
-  const ensureStageDefault = useAvatarStageDefaultsStore((s) => s.ensureStageDefault);
   const stageAssets = getStageAssets(normalizedStage);
 
   const backgroundSrc = resolvePublicAssetUrl(stageAssets.background);
@@ -150,17 +147,9 @@ export function AvatarComposite({ stage, size }) {
     devPanelGateEnabled && avatarCompositeDevState?.showDebugOverlay
   );
 
-  useEffect(() => {
-    ensureStageDefault(normalizedStage);
-  }, [ensureStageDefault, normalizedStage]);
-
   const baseLayers = useDraftTransforms
     ? buildAvatarDraftLayers(getAvatarCompositeRoleTransform, normalizedStage)
-    : (
-      defaultsByStage?.[normalizedStage] ||
-      DEFAULT_AVATAR_PRESETS[normalizedStage] ||
-      DEFAULT_AVATAR_PRESETS.seedling
-    );
+    : (DEFAULT_AVATAR_PRESETS[normalizedStage] || DEFAULT_AVATAR_PRESETS.seedling);
 
   const mergedLayers = mergeLayers(baseLayers);
   const effectiveLayers = {};

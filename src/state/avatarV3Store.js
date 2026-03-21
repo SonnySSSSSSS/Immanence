@@ -1,6 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { create } from 'zustand';
-import { persist } from 'zustand/middleware';
 import { useProgressStore } from './progressStore.js';
 import { getDateKey, getWeekStart } from '../utils/dateUtils.js';
 import { normalizeStageKey } from '../config/avatarStageAssets.js';
@@ -93,58 +92,50 @@ export function sanitizeAvatarStageDefaultsByStage(input = {}) {
   return next;
 }
 
+if (typeof window !== 'undefined') {
+  try {
+    window.localStorage?.removeItem?.(AVATAR_STAGE_DEFAULTS_PERSIST_KEY);
+  } catch {
+    // Ignore storage failures (privacy mode, denied access, etc.)
+  }
+}
+
 export const useAvatarStageDefaultsStore = create(
-  persist(
-    (set, get) => ({
-      defaultsByStage: sanitizeAvatarStageDefaultsByStage(DEFAULT_AVATAR_PRESETS),
+  (set, get) => ({
+    defaultsByStage: sanitizeAvatarStageDefaultsByStage(DEFAULT_AVATAR_PRESETS),
 
-      ensureStageDefault: (stageKey) => {
-        const normalizedStage = normalizeStageKey(stageKey);
-        const state = get();
-        if (state.defaultsByStage?.[normalizedStage]) return;
+    ensureStageDefault: (stageKey) => {
+      const normalizedStage = normalizeStageKey(stageKey);
+      const state = get();
+      if (state.defaultsByStage?.[normalizedStage]) return;
 
-        set((current) => ({
-          ...current,
-          defaultsByStage: {
-            ...current.defaultsByStage,
-            [normalizedStage]: getBaseAvatarDefaultStageTransforms(normalizedStage),
-          },
-        }));
-      },
-
-      setStageDefault: (stageKey, stageTransforms) =>
-        set((state) => {
-          const normalizedStage = normalizeStageKey(stageKey);
-          return {
-            ...state,
-            defaultsByStage: {
-              ...state.defaultsByStage,
-              [normalizedStage]: sanitizeAvatarDefaultStageTransforms(stageTransforms),
-            },
-          };
-        }),
-
-      replaceAllStageDefaults: (defaultsByStage) =>
-        set((state) => ({
-          ...state,
-          defaultsByStage: sanitizeAvatarStageDefaultsByStage(defaultsByStage),
-        })),
-    }),
-    {
-      name: AVATAR_STAGE_DEFAULTS_PERSIST_KEY,
-      version: 1,
-      partialize: (state) => ({
-        defaultsByStage: sanitizeAvatarStageDefaultsByStage(state.defaultsByStage),
-      }),
-      merge: (persisted, current) => ({
+      set((current) => ({
         ...current,
-        defaultsByStage: sanitizeAvatarStageDefaultsByStage({
+        defaultsByStage: {
           ...current.defaultsByStage,
-          ...(persisted?.defaultsByStage || {}),
-        }),
+          [normalizedStage]: getBaseAvatarDefaultStageTransforms(normalizedStage),
+        },
+      }));
+    },
+
+    setStageDefault: (stageKey, stageTransforms) =>
+      set((state) => {
+        const normalizedStage = normalizeStageKey(stageKey);
+        return {
+          ...state,
+          defaultsByStage: {
+            ...state.defaultsByStage,
+            [normalizedStage]: sanitizeAvatarDefaultStageTransforms(stageTransforms),
+          },
+        };
       }),
-    }
-  )
+
+    replaceAllStageDefaults: (defaultsByStage) =>
+      set((state) => ({
+        ...state,
+        defaultsByStage: sanitizeAvatarStageDefaultsByStage(defaultsByStage),
+      })),
+  })
 );
 
 const MODE_WINDOW_DAYS = 42;

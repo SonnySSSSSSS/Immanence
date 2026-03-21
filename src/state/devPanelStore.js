@@ -1,6 +1,7 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import { normalizeStageKey } from '../config/avatarStageAssets.js';
+import { DEFAULT_AVATAR_PRESETS } from '../components/avatarV3/avatarDefaultPresets.js';
 
 export const DEV_PANEL_PERSIST_KEY = 'immanence-dev-panel';
 export const AVATAR_COMPOSITE_LAYER_IDS = ['bg', 'stage', 'glass', 'ring'];
@@ -44,12 +45,11 @@ function createDefaultLayer() {
   return { ...DEFAULT_LAYER };
 }
 
-function createDefaultStageTransforms() {
-  const transforms = {};
-  AVATAR_COMPOSITE_LAYER_IDS.forEach((layerId) => {
-    transforms[layerId] = createDefaultLayer();
-  });
-  return transforms;
+function createDefaultStageTransforms(stageKey = 'seedling') {
+  const normalizedStageKey = normalizeStageId(stageKey);
+  return sanitizeStageTransforms(
+    DEFAULT_AVATAR_PRESETS[normalizedStageKey] || DEFAULT_AVATAR_PRESETS.seedling
+  );
 }
 
 function createDefaultAvatarComposite() {
@@ -57,220 +57,7 @@ function createDefaultAvatarComposite() {
     enabled: true,
     previewDraft: false,
     showDebugOverlay: false,
-    // AVATAR_DEFAULTS:START
-    transformsByStage: {
-      "seedling": {
-        "bg": {
-          "enabled": true,
-          "opacity": 1,
-          "scale": 1.86,
-          "rotateDeg": 0,
-          "x": 0,
-          "y": 0,
-          "linkTo": null,
-          "linkOpacity": false
-        },
-        "stage": {
-          "enabled": true,
-          "opacity": 1,
-          "scale": 1.49,
-          "rotateDeg": 0,
-          "x": 0,
-          "y": 9,
-          "linkTo": null,
-          "linkOpacity": false
-        },
-        "glass": {
-          "enabled": true,
-          "opacity": 0.25,
-          "scale": 1.6,
-          "rotateDeg": 0,
-          "x": 0,
-          "y": 6,
-          "linkTo": null,
-          "linkOpacity": false
-        },
-        "ring": {
-          "enabled": true,
-          "opacity": 1,
-          "scale": 1.72,
-          "rotateDeg": 0,
-          "x": 0,
-          "y": 8,
-          "linkTo": null,
-          "linkOpacity": false
-        }
-      },
-      "ember": {
-        "bg": {
-          "enabled": true,
-          "opacity": 1,
-          "scale": 1.53,
-          "rotateDeg": 0,
-          "x": 0,
-          "y": 8,
-          "linkTo": null,
-          "linkOpacity": false
-        },
-        "stage": {
-          "enabled": true,
-          "opacity": 1,
-          "scale": 1,
-          "rotateDeg": 0,
-          "x": 0,
-          "y": 9,
-          "linkTo": null,
-          "linkOpacity": false
-        },
-        "glass": {
-          "enabled": true,
-          "opacity": 0.23,
-          "scale": 1.6,
-          "rotateDeg": 0,
-          "x": -4,
-          "y": 11,
-          "linkTo": null,
-          "linkOpacity": false
-        },
-        "ring": {
-          "enabled": true,
-          "opacity": 1,
-          "scale": 1.58,
-          "rotateDeg": 0,
-          "x": 0,
-          "y": 0,
-          "linkTo": null,
-          "linkOpacity": false
-        }
-      },
-      "flame": {
-        "bg": {
-          "enabled": true,
-          "opacity": 1,
-          "scale": 1.74,
-          "rotateDeg": 0,
-          "x": 0,
-          "y": 0,
-          "linkTo": null,
-          "linkOpacity": false
-        },
-        "stage": {
-          "enabled": true,
-          "opacity": 1,
-          "scale": 1,
-          "rotateDeg": 0,
-          "x": 2,
-          "y": 17,
-          "linkTo": null,
-          "linkOpacity": false
-        },
-        "glass": {
-          "enabled": true,
-          "opacity": 0.24,
-          "scale": 1.73,
-          "rotateDeg": 0,
-          "x": 3,
-          "y": 9,
-          "linkTo": null,
-          "linkOpacity": false
-        },
-        "ring": {
-          "enabled": true,
-          "opacity": 1,
-          "scale": 1.46,
-          "rotateDeg": 0,
-          "x": 0,
-          "y": 10,
-          "linkTo": null,
-          "linkOpacity": false
-        }
-      },
-      "beacon": {
-        "bg": {
-          "enabled": true,
-          "opacity": 1,
-          "scale": 1.66,
-          "rotateDeg": 0,
-          "x": 0,
-          "y": 8,
-          "linkTo": null,
-          "linkOpacity": false
-        },
-        "stage": {
-          "enabled": true,
-          "opacity": 1,
-          "scale": 1.3,
-          "rotateDeg": 0,
-          "x": 0,
-          "y": 0,
-          "linkTo": null,
-          "linkOpacity": false
-        },
-        "glass": {
-          "enabled": true,
-          "opacity": 0.23,
-          "scale": 1.53,
-          "rotateDeg": 0,
-          "x": 0,
-          "y": 7,
-          "linkTo": null,
-          "linkOpacity": false
-        },
-        "ring": {
-          "enabled": true,
-          "opacity": 1,
-          "scale": 1.54,
-          "rotateDeg": 0,
-          "x": 0,
-          "y": 7,
-          "linkTo": null,
-          "linkOpacity": false
-        }
-      },
-      "stellar": {
-        "bg": {
-          "enabled": true,
-          "opacity": 1,
-          "scale": 1.57,
-          "rotateDeg": 0,
-          "x": 0,
-          "y": 13,
-          "linkTo": null,
-          "linkOpacity": false
-        },
-        "stage": {
-          "enabled": true,
-          "opacity": 1,
-          "scale": 1.15,
-          "rotateDeg": 0,
-          "x": 3,
-          "y": 10,
-          "linkTo": null,
-          "linkOpacity": false
-        },
-        "glass": {
-          "enabled": true,
-          "opacity": 0.13,
-          "scale": 1.5,
-          "rotateDeg": 0,
-          "x": 0,
-          "y": 7,
-          "linkTo": null,
-          "linkOpacity": false
-        },
-        "ring": {
-          "enabled": true,
-          "opacity": 1,
-          "scale": 1.6,
-          "rotateDeg": 0,
-          "x": 0,
-          "y": 4,
-          "linkTo": null,
-          "linkOpacity": false
-        }
-      }
-    },
-    // AVATAR_DEFAULTS:END
+    transformsByStage: sanitizeTransformsByStage(DEFAULT_AVATAR_PRESETS),
   };
 }
 
@@ -333,7 +120,7 @@ function sanitizeTransformsByStage(input = {}) {
   });
 
   if (!next.seedling) {
-    next.seedling = sanitizeStageTransforms();
+    next.seedling = createDefaultStageTransforms('seedling');
   }
 
   return next;
@@ -467,7 +254,7 @@ export function migrateDevPanelState(persistedState, version) {
   const persistedAvatar = persistedState.avatarComposite || {};
   const migratedAvatar = {
     enabled: typeof persistedAvatar.enabled === 'boolean' ? persistedAvatar.enabled : true,
-    previewDraft: typeof persistedAvatar.previewDraft === 'boolean' ? persistedAvatar.previewDraft : false,
+    previewDraft: false,
     showDebugOverlay: typeof persistedAvatar.showDebugOverlay === 'boolean' ? persistedAvatar.showDebugOverlay : false,
   };
 
@@ -556,7 +343,7 @@ const createDevPanelStoreState = (set, get) => ({
   resetAvatarCompositeStage: (stageKey) =>
     set((state) => {
       const normalizedStageKey = normalizeStageId(stageKey);
-      return setWholeStageTransforms(state, normalizedStageKey, createDefaultStageTransforms());
+      return setWholeStageTransforms(state, normalizedStageKey, createDefaultStageTransforms(normalizedStageKey));
     }),
 
   copyAvatarCompositeStage: (fromStage, toStage) =>
@@ -679,11 +466,10 @@ const devPanelPersistConfig = {
   name: DEV_PANEL_PERSIST_KEY,
   version: 3,
   migrate: (persistedState, version) => migrateDevPanelState(persistedState, version),
-  // Persist only UI toggles; stage draft transforms are intentionally ephemeral.
+  // Persist only persistent UI toggles; stage draft transforms and preview mode are ephemeral.
   partialize: (state) => ({
     avatarComposite: {
       enabled: Boolean(state.avatarComposite?.enabled),
-      previewDraft: Boolean(state.avatarComposite?.previewDraft),
       showDebugOverlay: Boolean(state.avatarComposite?.showDebugOverlay),
     },
   }),
@@ -699,10 +485,7 @@ const devPanelPersistConfig = {
           typeof persistedAvatar.enabled === 'boolean'
             ? persistedAvatar.enabled
             : baseAvatar.enabled,
-        previewDraft:
-          typeof persistedAvatar.previewDraft === 'boolean'
-            ? persistedAvatar.previewDraft
-            : baseAvatar.previewDraft,
+        previewDraft: false,
         showDebugOverlay:
           typeof persistedAvatar.showDebugOverlay === 'boolean'
             ? persistedAvatar.showDebugOverlay
