@@ -219,35 +219,6 @@ function setWholeStageTransforms(state, stageKey, stageTransforms) {
   };
 }
 
-function parseStageTransformsPayload(raw) {
-  if (typeof raw !== 'string') return { ok: false, error: 'Invalid input type' };
-  try {
-    const parsed = JSON.parse(raw);
-    if (!parsed || typeof parsed !== 'object') {
-      return { ok: false, error: 'Invalid JSON shape' };
-    }
-
-    const hasRoleKeys = AVATAR_COMPOSITE_LAYER_IDS.some((layerId) =>
-      Object.prototype.hasOwnProperty.call(parsed, layerId)
-    );
-    if (hasRoleKeys) {
-      return { ok: true, transforms: parsed };
-    }
-
-    if (parsed.transforms && typeof parsed.transforms === 'object') {
-      return { ok: true, transforms: parsed.transforms };
-    }
-
-    if (parsed.layers && typeof parsed.layers === 'object') {
-      return { ok: true, transforms: parsed.layers };
-    }
-
-    return { ok: false, error: 'No avatar composite transform payload found' };
-  } catch {
-    return { ok: false, error: 'Invalid JSON' };
-  }
-}
-
 export function migrateDevPanelState(persistedState, version) {
   if (!persistedState) return persistedState;
 
@@ -346,32 +317,6 @@ const createDevPanelStoreState = (set, get) => ({
       return setWholeStageTransforms(state, normalizedStageKey, createDefaultStageTransforms(normalizedStageKey));
     }),
 
-  copyAvatarCompositeStage: (fromStage, toStage) =>
-    set((state) => {
-      const fromStageKey = normalizeStageId(fromStage);
-      const toStageKey = normalizeStageId(toStage);
-      const sourceTransforms = createResolvedStageTransforms(state.avatarComposite, fromStageKey);
-      return setWholeStageTransforms(state, toStageKey, sourceTransforms);
-    }),
-
-  copyAvatarCompositeStageToAll: (fromStage) =>
-    set((state) => {
-      const fromStageKey = normalizeStageId(fromStage);
-      const sourceTransforms = createResolvedStageTransforms(state.avatarComposite, fromStageKey);
-      const avatarComposite = state.avatarComposite || createDefaultAvatarComposite();
-      const nextTransformsByStage = { ...avatarComposite.transformsByStage };
-      AVATAR_COMPOSITE_STAGE_KEYS.forEach((stageKey) => {
-        nextTransformsByStage[stageKey] = sanitizeStageTransforms(sourceTransforms);
-      });
-      return {
-        ...state,
-        avatarComposite: {
-          ...avatarComposite,
-          transformsByStage: nextTransformsByStage,
-        },
-      };
-    }),
-
   // Compatibility wrappers (legacy callers -> seedling)
   setAvatarCompositeLayerEnabled: (layerId, enabled) =>
     set((state) => updateRoleTransform(state, 'seedling', layerId, { enabled: Boolean(enabled) })),
@@ -404,36 +349,6 @@ const createDevPanelStoreState = (set, get) => ({
       });
       return nextState;
     }),
-
-  getAvatarCompositeSettingsJSON: (stageKey = 'seedling') => {
-    const state = get();
-    const normalizedStageKey = normalizeStageId(stageKey);
-    const stageTransforms = createResolvedStageTransforms(state.avatarComposite, normalizedStageKey);
-    return JSON.stringify(
-      {
-        stage: normalizedStageKey,
-        transforms: stageTransforms,
-      },
-      null,
-      2
-    );
-  },
-
-  setAvatarCompositeSettingsJSON: (stageKeyOrRaw, maybeRaw) => {
-    let stageKey = 'seedling';
-    let raw = stageKeyOrRaw;
-
-    if (typeof maybeRaw === 'string') {
-      stageKey = normalizeStageId(stageKeyOrRaw);
-      raw = maybeRaw;
-    }
-
-    const parsed = parseStageTransformsPayload(raw);
-    if (!parsed.ok) return { ok: false, error: parsed.error };
-
-    set((state) => setWholeStageTransforms(state, stageKey, parsed.transforms));
-    return { ok: true };
-  },
 
   getAvatarCompositeAllStagesJSON: () => {
     const state = get();

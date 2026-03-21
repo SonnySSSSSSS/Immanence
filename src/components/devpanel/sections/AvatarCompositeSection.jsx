@@ -39,10 +39,6 @@ function AvatarCompositeSection({
     const setAvatarCompositeRoleTransformLink = useDevPanelStore(s => s.setAvatarCompositeRoleTransformLink);
     const setAvatarCompositeRoleTransformLinkOpacity = useDevPanelStore(s => s.setAvatarCompositeRoleTransformLinkOpacity);
     const resetAvatarCompositeStage = useDevPanelStore(s => s.resetAvatarCompositeStage);
-    const copyAvatarCompositeStage = useDevPanelStore(s => s.copyAvatarCompositeStage);
-    const copyAvatarCompositeStageToAll = useDevPanelStore(s => s.copyAvatarCompositeStageToAll);
-    const getAvatarCompositeSettingsJSON = useDevPanelStore(s => s.getAvatarCompositeSettingsJSON);
-    const setAvatarCompositeSettingsJSON = useDevPanelStore(s => s.setAvatarCompositeSettingsJSON);
     const getAvatarCompositeAllStagesJSON = useDevPanelStore(s => s.getAvatarCompositeAllStagesJSON);
 
     const [layerExpanded, setLayerExpanded] = useState({
@@ -51,8 +47,6 @@ function AvatarCompositeSection({
         glass: false,
         ring: false,
     });
-    const [linkAllTarget, setLinkAllTarget] = useState('none');
-    const [jsonDraft, setJsonDraft] = useState('');
     const [jsonStatus, setJsonStatus] = useState('');
 
     const normalizedEditingStageKey = normalizeStageKey(editingStageKey);
@@ -85,24 +79,8 @@ function AvatarCompositeSection({
         setAvatarCompositeRoleTransformValue(normalizedEditingStageKey, layerId, 'y', 0);
     };
 
-    const copySettings = async () => {
-        const json = getAvatarCompositeSettingsJSON(normalizedEditingStageKey);
-        setJsonDraft(json);
-        if (typeof navigator !== 'undefined' && navigator.clipboard?.writeText) {
-            try {
-                await navigator.clipboard.writeText(json);
-                setJsonStatus('Copied to clipboard.');
-                return;
-            } catch {
-                // Fallback handled below.
-            }
-        }
-        setJsonStatus('Copied to editor field.');
-    };
-
     const copyAllStagesJson = async () => {
         const json = getAvatarCompositeAllStagesJSON();
-        setJsonDraft(json);
         if (typeof navigator !== 'undefined' && navigator.clipboard?.writeText) {
             try {
                 await navigator.clipboard.writeText(json);
@@ -112,32 +90,7 @@ function AvatarCompositeSection({
                 // Fallback handled below.
             }
         }
-        setJsonStatus('Copied all stages JSON to editor field.');
-    };
-
-    const applySettings = () => {
-        const result = setAvatarCompositeSettingsJSON(normalizedEditingStageKey, jsonDraft);
-        setJsonStatus(result?.ok ? 'Settings applied.' : `Paste failed: ${result?.error || 'Unknown error'}`);
-    };
-
-    const applyLinkAllForCurrentStage = () => {
-        if (destructiveLocked) return;
-        const master = linkAllTarget === 'none' ? null : linkAllTarget;
-        AVATAR_COMPOSITE_LAYER_IDS.forEach((layerId) => {
-            const linkTo = master && layerId !== master ? master : null;
-            setAvatarCompositeRoleTransformLink(normalizedEditingStageKey, layerId, linkTo);
-        });
-    };
-
-    const handleCopyCurrentStageToAll = () => {
-        if (destructiveLocked) return;
-        if (prodGuarded && prodArmed && !import.meta.env.DEV) {
-            const confirmed = window.confirm(
-                'Copy current stage tuning to ALL stages? This will overwrite existing presets for ember, flame, beacon, and stellar.'
-            );
-            if (!confirmed) return;
-        }
-        copyAvatarCompositeStageToAll(normalizedEditingStageKey);
+        setJsonStatus('Clipboard unavailable; unable to copy.');
     };
 
     return (
@@ -172,53 +125,6 @@ function AvatarCompositeSection({
                 </button>
             </div>
 
-            <div className="grid grid-cols-[1fr_auto] gap-2 mb-3 items-center">
-                <select
-                    value={linkAllTarget}
-                    onChange={(e) => setLinkAllTarget(e.target.value)}
-                    className="w-full rounded-lg px-3 py-2 text-xs"
-                    style={{
-                        background: isLight ? 'rgba(255, 255, 255, 0.9)' : '#0a0a12',
-                        border: isLight ? '1px solid rgba(180, 155, 110, 0.3)' : '1px solid rgba(255, 255, 255, 0.25)',
-                        color: isLight ? 'rgba(60, 50, 40, 0.95)' : 'white',
-                        colorScheme: isLight ? 'light' : 'dark'
-                    }}
-                >
-                    {AVATAR_COMPOSITE_LINK_OPTIONS.map((option) => (
-                        <option key={option} value={option}>
-                            {option === 'none' ? 'None' : `Link all to ${option}`}
-                        </option>
-                    ))}
-                </select>
-                <button
-                    onClick={applyLinkAllForCurrentStage}
-                    disabled={destructiveLocked}
-                    className="rounded-lg px-3 py-2 text-xs bg-white/5 border border-white/15 text-white/70 hover:bg-white/10 transition-all disabled:opacity-40 disabled:cursor-not-allowed"
-                >
-                    Apply
-                </button>
-            </div>
-
-            <div className="grid grid-cols-2 gap-2 mb-4">
-                <button
-                    onClick={() => {
-                        if (destructiveLocked) return;
-                        copyAvatarCompositeStage('seedling', normalizedEditingStageKey);
-                    }}
-                    disabled={destructiveLocked}
-                    className="rounded-lg px-3 py-2 text-xs bg-white/5 border border-white/15 text-white/70 hover:bg-white/10 transition-all disabled:opacity-40 disabled:cursor-not-allowed"
-                >
-                    Copy Seedling -&gt; Current Stage
-                </button>
-                <button
-                    onClick={handleCopyCurrentStageToAll}
-                    disabled={destructiveLocked}
-                    className="rounded-lg px-3 py-2 text-xs bg-white/5 border border-white/15 text-white/70 hover:bg-white/10 transition-all disabled:opacity-40 disabled:cursor-not-allowed"
-                >
-                    Copy Current Stage -&gt; All Stages
-                </button>
-            </div>
-
             <div className="grid grid-cols-2 gap-2 mb-4">
                 <button
                     onClick={() => {
@@ -231,18 +137,13 @@ function AvatarCompositeSection({
                     Reset Current Stage
                 </button>
                 <button
-                    onClick={copySettings}
-                    className="rounded-lg px-3 py-2 text-xs bg-white/5 border border-white/15 text-white/70 hover:bg-white/10 transition-all"
-                >
-                    Copy Current Stage JSON
-                </button>
-                <button
                     onClick={copyAllStagesJson}
                     className="rounded-lg px-3 py-2 text-xs bg-white/5 border border-white/15 text-white/70 hover:bg-white/10 transition-all"
                 >
                     Copy All Stages JSON
                 </button>
             </div>
+            {!!jsonStatus && <div className="text-[10px] text-white/55 mb-4">{jsonStatus}</div>}
             {destructiveLocked && (
                 <div className="text-[10px] text-white/55 mb-4">
                     Arm to enable destructive actions (prod only).
@@ -411,40 +312,6 @@ function AvatarCompositeSection({
                         </div>
                     );
                 })}
-            </div>
-
-            <div className="space-y-2">
-                <textarea
-                    value={jsonDraft}
-                    onChange={(e) => setJsonDraft(e.target.value)}
-                    placeholder="Paste Avatar Composite settings JSON here"
-                    rows={5}
-                    className="w-full rounded-lg px-3 py-2 text-[11px] font-mono"
-                    style={{
-                        background: isLight ? 'rgba(255, 255, 255, 0.9)' : '#0a0a12',
-                        border: isLight ? '1px solid rgba(180, 155, 110, 0.3)' : '1px solid rgba(255, 255, 255, 0.25)',
-                        color: isLight ? 'rgba(60, 50, 40, 0.95)' : 'white',
-                        colorScheme: isLight ? 'light' : 'dark'
-                    }}
-                />
-                <div className="grid grid-cols-2 gap-2">
-                    <button
-                        onClick={applySettings}
-                        className="rounded-lg px-3 py-2 text-xs bg-white/5 border border-white/15 text-white/70 hover:bg-white/10 transition-all"
-                    >
-                        Paste Settings JSON
-                    </button>
-                    <button
-                        onClick={() => {
-                            setJsonDraft('');
-                            setJsonStatus('');
-                        }}
-                        className="rounded-lg px-3 py-2 text-xs bg-white/5 border border-white/15 text-white/60 hover:bg-white/10 transition-all"
-                    >
-                        Clear JSON
-                    </button>
-                </div>
-                {!!jsonStatus && <div className="text-[10px] text-white/55">{jsonStatus}</div>}
             </div>
         </Section>
     );
