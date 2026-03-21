@@ -11,8 +11,8 @@ import { useCurriculumStore } from '../state/curriculumStore';
 import { useNavigationStore } from '../state/navigationStore';
 import { useTutorialStore } from '../state/tutorialStore';
 import { normalizeStageKey } from '../config/avatarStageAssets.js';
+import { DEFAULT_AVATAR_PRESETS } from './avatarV3/avatarDefaultPresets.js';
 import { AVATAR_COMPOSITE_LAYER_IDS, useDevPanelStore } from '../state/devPanelStore.js';
-import { useAvatarStageDefaultsStore } from '../state/avatarV3Store.js';
 import { CoordinateHelper } from './dev/CoordinateHelper.jsx';
 import { OnboardingContentEditor, TutorialEditor } from './dev/TutorialEditor.jsx';
 import { getQuickDashboardTiles, getCurriculumPracticeBreakdown, getPracticeDetailMetrics } from '../reporting/dashboardProjection.js';
@@ -189,9 +189,6 @@ export function DevPanel({
     const setAvatarCompositePreviewDraft = useDevPanelStore(s => s.setAvatarCompositePreviewDraft);
     const hydrateAvatarCompositeDrafts = useDevPanelStore(s => s.hydrateAvatarCompositeDrafts);
     const replaceAvatarCompositeStageDraft = useDevPanelStore(s => s.replaceAvatarCompositeStageDraft);
-    const defaultsByStage = useAvatarStageDefaultsStore(s => s.defaultsByStage);
-    const setStageDefault = useAvatarStageDefaultsStore(s => s.setStageDefault);
-    const ensureStageDefault = useAvatarStageDefaultsStore(s => s.ensureStageDefault);
     const [avatarDefaultStatus, setAvatarDefaultStatus] = useState('');
     const avatarDraftHydratedRef = useRef(false);
 
@@ -203,10 +200,6 @@ export function DevPanel({
     }, [isOpen]); // eslint-disable-line react-hooks/exhaustive-deps
 
     useEffect(() => {
-        ensureStageDefault(normalizedAvatarStageKey);
-    }, [ensureStageDefault, normalizedAvatarStageKey]);
-
-    useEffect(() => {
         if (!isOpen) {
             avatarDraftHydratedRef.current = false;
             setAvatarCompositePreviewDraft(false);
@@ -214,11 +207,10 @@ export function DevPanel({
         }
         setAvatarCompositePreviewDraft(true);
         if (!avatarDraftHydratedRef.current) {
-            hydrateAvatarCompositeDrafts(defaultsByStage);
+            hydrateAvatarCompositeDrafts(DEFAULT_AVATAR_PRESETS);
             avatarDraftHydratedRef.current = true;
         }
     }, [
-        defaultsByStage,
         hydrateAvatarCompositeDrafts,
         isOpen,
         setAvatarCompositePreviewDraft,
@@ -234,26 +226,24 @@ export function DevPanel({
         avatarCompositeDraftsByStage?.[normalizedAvatarStageKey] ||
         buildAvatarStageSnapshot(getAvatarCompositeRoleTransform, normalizedAvatarStageKey);
     const currentAvatarDefault =
-        defaultsByStage?.[normalizedAvatarStageKey] ||
-        {};
+        DEFAULT_AVATAR_PRESETS[normalizedAvatarStageKey] ||
+        DEFAULT_AVATAR_PRESETS.seedling;
     const hasUnsavedAvatarDraft = !areAvatarStageSnapshotsEqual(currentAvatarDraft, currentAvatarDefault);
 
     const handleSaveStageDefault = useCallback(() => {
-        const draftSnapshot = buildAvatarStageSnapshot(
-            useDevPanelStore.getState().getAvatarCompositeRoleTransform,
-            normalizedAvatarStageKey
+        setAvatarDefaultStatus(
+            `Preview-only draft. Promote by updating src/components/avatarV3/avatarDefaultPresets.js for ${normalizedAvatarStageKey}.`
         );
-        setStageDefault(normalizedAvatarStageKey, draftSnapshot);
-        replaceAvatarCompositeStageDraft(normalizedAvatarStageKey, draftSnapshot);
-        setAvatarDefaultStatus(`Saved Default for ${normalizedAvatarStageKey}.`);
-    }, [normalizedAvatarStageKey, replaceAvatarCompositeStageDraft, setStageDefault]);
+    }, [normalizedAvatarStageKey]);
 
     const handleResetDraftToDefault = useCallback(() => {
-        const stageDefault = defaultsByStage?.[normalizedAvatarStageKey];
+        const stageDefault =
+            DEFAULT_AVATAR_PRESETS[normalizedAvatarStageKey] ||
+            DEFAULT_AVATAR_PRESETS.seedling;
         if (!stageDefault) return;
         replaceAvatarCompositeStageDraft(normalizedAvatarStageKey, stageDefault);
-        setAvatarDefaultStatus(`Restored Draft from saved Default for ${normalizedAvatarStageKey}.`);
-    }, [defaultsByStage, normalizedAvatarStageKey, replaceAvatarCompositeStageDraft]);
+        setAvatarDefaultStatus(`Restored Draft from canonical code Default for ${normalizedAvatarStageKey}.`);
+    }, [normalizedAvatarStageKey, replaceAvatarCompositeStageDraft]);
 
     // Collapsible sections
     const [expandedSections, setExpandedSections] = useState({
@@ -933,12 +923,12 @@ export function DevPanel({
             )}
 
             {/* Panel */}
-            <div className="relative pointer-events-auto ml-auto w-[400px] h-full border-l overflow-y-auto no-scrollbar" style={{
+            <div className="devpanel-shell relative pointer-events-auto ml-auto w-[400px] h-full border-l overflow-y-auto no-scrollbar" style={{
                 background: isLight ? '#F5F0E6' : '#0a0a12',
                 borderColor: isLight ? 'rgba(180, 155, 110, 0.25)' : 'rgba(255, 255, 255, 0.1)'
             }}>
                 {/* Header */}
-                <div className="sticky top-0 z-10 border-b px-4 py-3 flex items-center justify-between" style={{
+                <div className="devpanel-header sticky top-0 z-10 border-b px-4 py-3 flex items-center justify-between" style={{
                     background: isLight ? '#F5F0E6' : '#0a0a12',
                     borderColor: isLight ? 'rgba(180, 155, 110, 0.25)' : 'rgba(255, 255, 255, 0.1)'
                 }}>
@@ -993,7 +983,7 @@ export function DevPanel({
                 </div>
 
                 {/* Content */}
-                <div className="p-4 space-y-4">
+                <div className="devpanel-content p-4 space-y-4">
 
                     {/* ═══════════════════════════════════════════════════════════════ */}
                     {/* AVATAR STAGE */}
@@ -1004,13 +994,13 @@ export function DevPanel({
                         onToggle={() => toggleSection('avatar')}
                         isLight={isLight}
                     >
-                        <div className="text-xs text-white/50 mb-3">
+                        <div className="devpanel-helper-text text-xs text-white/50 mb-3">
                             Stage sets the wallpaper color. Path sets sigil geometry, breath pattern, and bloom intensity.
                         </div>
 
                         {/* Stage selector */}
                         <div className="flex items-center gap-3 mb-4">
-                            <label className="text-sm font-medium w-16" style={{ color: isLight ? 'rgba(60, 50, 40, 0.9)' : 'white' }}>Stage</label>
+                            <label className="devpanel-field-label text-sm font-medium w-16" style={{ color: isLight ? 'rgba(60, 50, 40, 0.9)' : 'white' }}>Stage</label>
                             <select
                                 value={avatarStage}
                                 onChange={(e) => {
@@ -1020,7 +1010,7 @@ export function DevPanel({
                                         detail: { stage: e.target.value } 
                                     }));
                                 }}
-                                className="flex-1 rounded-lg px-3 py-2.5 text-base font-medium"
+                                className="devpanel-light-select flex-1 rounded-lg px-3 py-2.5 text-base font-medium"
                                 style={{
                                     background: isLight ? 'rgba(255, 255, 255, 0.9)' : '#0a0a12',
                                     border: isLight ? '1px solid rgba(180, 155, 110, 0.3)' : '1px solid rgba(255, 255, 255, 0.3)',
@@ -1036,11 +1026,11 @@ export function DevPanel({
 
                         {/* Path selector */}
                         <div className="flex items-center gap-3 mb-4">
-                            <label className="text-sm font-medium w-16" style={{ color: isLight ? 'rgba(60, 50, 40, 0.9)' : 'white' }}>Path</label>
+                            <label className="devpanel-field-label text-sm font-medium w-16" style={{ color: isLight ? 'rgba(60, 50, 40, 0.9)' : 'white' }}>Path</label>
                             <select
                                 value={avatarPath || ''}
                                 onChange={(e) => setAvatarPath(e.target.value || null)}
-                                className="flex-1 rounded-lg px-3 py-2.5 text-base font-medium"
+                                className="devpanel-light-select flex-1 rounded-lg px-3 py-2.5 text-base font-medium"
                                 style={{
                                     background: isLight ? 'rgba(255, 255, 255, 0.9)' : '#0a0a12',
                                     border: isLight ? '1px solid rgba(180, 155, 110, 0.3)' : '1px solid rgba(255, 255, 255, 0.3)',
@@ -1057,10 +1047,10 @@ export function DevPanel({
 
                         {/* Core + Attention preview toggles */}
                         <div className="flex items-center gap-3 mb-4">
-                            <label className="text-xs w-16" style={{ color: isLight ? 'rgba(140, 100, 60, 0.9)' : '#fb923c' }}>Preview</label>
+                            <label className="devpanel-field-label devpanel-field-label--muted text-xs w-16" style={{ color: isLight ? 'rgba(140, 100, 60, 0.9)' : '#fb923c' }}>Preview</label>
                             <button
                                 onClick={() => setShowCore(!showCore)}
-                                className="px-3 py-1.5 rounded-lg text-xs font-semibold"
+                                className="devpanel-light-toggle px-3 py-1.5 rounded-lg text-xs font-semibold"
                                 style={{
                                     background: showCore ? 'rgba(212, 168, 74, 0.2)' : 'rgba(255, 255, 255, 0.06)',
                                     color: isLight ? 'rgba(60, 50, 40, 0.9)' : 'white',
@@ -1072,7 +1062,7 @@ export function DevPanel({
                             <select
                                 value={avatarAttention}
                                 onChange={(e) => setAvatarAttention(e.target.value)}
-                                className="flex-1 rounded-lg px-3 py-1.5 text-xs font-medium"
+                                className="devpanel-light-select flex-1 rounded-lg px-3 py-1.5 text-xs font-medium"
                                 style={{
                                     background: isLight ? 'rgba(255, 255, 255, 0.9)' : '#0a0a12',
                                     border: isLight ? '1px solid rgba(180, 155, 110, 0.3)' : '1px solid rgba(255, 255, 255, 0.3)',
@@ -1088,13 +1078,14 @@ export function DevPanel({
 
                         {/* Stage Asset Style Toggle */}
                         <div className="flex items-center gap-3 mb-4">
-                            <label className="text-xs w-16" style={{ color: isLight ? 'rgba(140, 100, 60, 0.9)' : '#fb923c' }}>Asset Style</label>
-                            <div className="flex bg-white/5 rounded-lg p-1 gap-1">
+                            <label className="devpanel-field-label devpanel-field-label--muted text-xs w-16" style={{ color: isLight ? 'rgba(140, 100, 60, 0.9)' : '#fb923c' }}>Asset Style</label>
+                            <div className="devpanel-style-chip-group flex bg-white/5 rounded-lg p-1 gap-1">
                                 {[1, 2, 3, 4, 5].map(styleSet => (
                                     <button
                                         key={styleSet}
                                         onClick={() => setStageAssetStyle(styleSet)}
-                                        className={`w-7 h-7 flex items-center justify-center rounded text-[10px] font-bold transition-all ${
+                                        data-active={stageAssetStyle === styleSet ? 'true' : 'false'}
+                                        className={`devpanel-style-chip w-7 h-7 flex items-center justify-center rounded text-[10px] font-bold transition-all ${
                                             stageAssetStyle === styleSet
                                                 ? 'bg-amber-500/20 text-amber-300 border border-amber-500/30'
                                                 : 'text-white/40 hover:text-white/60 hover:bg-white/5'
@@ -1107,32 +1098,32 @@ export function DevPanel({
                         </div>
                     </Section>
 
-                    <div className="mb-4 rounded-xl border border-white/15 bg-white/5 p-3">
-                        <div className="text-xs font-semibold text-white/85 mb-1">
-                            Avatar Draft to Default
+                    <div className="devpanel-avatar-draft-card mb-4 rounded-xl border border-white/15 bg-white/5 p-3">
+                        <div className="devpanel-avatar-draft-title text-xs font-semibold text-white/85 mb-1">
+                            Avatar Draft Preview
                         </div>
-                        <div className="text-[11px] text-white/65 mb-2">
-                            Draft edits are temporary until you save them as a stage Default.
+                        <div className="devpanel-helper-text text-[11px] text-white/65 mb-2">
+                            Draft edits are preview-only. Canonical defaults are code-defined in avatarDefaultPresets.js.
                         </div>
-                        <div className="text-[11px] text-white/75 mb-3">
-                            Stage: <span className="font-semibold text-white/90">{normalizedAvatarStageKey}</span> | Draft status: {hasUnsavedAvatarDraft ? 'Unsaved Draft changes' : 'Draft matches saved Default'}
+                        <div className="devpanel-avatar-draft-status text-[11px] text-white/75 mb-3">
+                            Stage: <span className="devpanel-avatar-draft-stage font-semibold text-white/90">{normalizedAvatarStageKey}</span> | Draft status: {hasUnsavedAvatarDraft ? 'Unsaved Draft changes' : 'Draft matches canonical code Default'}
                         </div>
                         <div className="grid grid-cols-2 gap-2 mb-2">
                             <button
                                 onClick={handleSaveStageDefault}
-                                className="rounded-lg px-3 py-2 text-xs bg-emerald-500/15 border border-emerald-400/35 text-emerald-100 hover:bg-emerald-500/20 transition-all"
+                                className="devpanel-light-primary-action rounded-lg px-3 py-2 text-xs bg-emerald-500/15 border border-emerald-400/35 text-emerald-100 hover:bg-emerald-500/20 transition-all"
                             >
-                                Save Stage Default
+                                Promote in Code
                             </button>
                             <button
                                 onClick={handleResetDraftToDefault}
-                                className="rounded-lg px-3 py-2 text-xs bg-white/5 border border-white/15 text-white/75 hover:bg-white/10 transition-all"
+                                className="devpanel-light-secondary-action rounded-lg px-3 py-2 text-xs bg-white/5 border border-white/15 text-white/75 hover:bg-white/10 transition-all"
                             >
-                                Restore Draft from Default
+                                Restore from Code Default
                             </button>
                         </div>
                         {!!avatarDefaultStatus && (
-                            <div className="text-[10px] text-white/60">{avatarDefaultStatus}</div>
+                            <div className="devpanel-helper-text text-[10px] text-white/60">{avatarDefaultStatus}</div>
                         )}
                     </div>
 
