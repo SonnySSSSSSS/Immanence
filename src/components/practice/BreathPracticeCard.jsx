@@ -13,7 +13,7 @@ function CollapsedSummaryCard({
   surfaceBg, surfaceBorder, labelColor, valueColor, breathSubmode, breathMethod,
   focusSec, restSec, pattern, duration, stillnessIntensityLabel, stillnessPreDelaySec,
   isLight, editButtonRef, handleEditClick, isStillnessLocked,
-  amberBg, amberBgHover, amberBorder, amberBorderHover, amberColor,
+  amberBg, amberBgHover, amberBorder, amberBorderHover, amberColor, surfaceShadow,
 }) {
   return (
     <div style={{
@@ -22,6 +22,7 @@ function CollapsedSummaryCard({
       borderRadius: '12px',
       padding: '12px',
       marginBottom: '12px',
+      boxShadow: surfaceShadow,
     }}>
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '10px', marginBottom: '10px' }}>
         <div>
@@ -140,8 +141,10 @@ function BreathPracticeCard({
   const isLight = colorScheme === 'light';
 
   // Derived color tokens (2A)
-  const surfaceBg = isLight ? 'rgba(0,0,0,0.04)' : 'rgba(255,255,255,0.03)';
-  const surfaceBorder = isLight ? 'rgba(0,0,0,0.10)' : 'rgba(255,255,255,0.1)';
+  // Light mode: warm pale vellum neutral (#F3EFE6) across all stages; stage identity in trim/accent only
+  const surfaceBg = isLight ? 'rgba(243, 239, 230, 1)' : 'rgba(255,255,255,0.03)';
+  const surfaceBorder = isLight ? 'rgba(120, 102, 78, 0.16)' : 'rgba(255,255,255,0.1)';
+  const surfaceShadow = isLight ? '0 2px 4px rgba(0,0,0,0.06)' : 'none';
   const labelColor = isLight ? 'rgba(60,40,0,0.50)' : 'rgba(255,255,255,0.4)';
   const valueColor = isLight ? 'rgba(30,20,0,0.85)' : 'rgba(255,255,255,0.9)';
   const amberBg = isLight ? 'rgba(140,100,0,0.12)' : 'rgba(212,175,55,0.12)';
@@ -193,7 +196,7 @@ function BreathPracticeCard({
               stillnessPreDelaySec={stillnessPreDelaySec} isLight={isLight} editButtonRef={editButtonRef}
               handleEditClick={handleEditClick} isStillnessLocked={isStillnessLocked}
               amberBg={amberBg} amberBgHover={amberBgHover} amberBorder={amberBorder}
-              amberBorderHover={amberBorderHover} amberColor={amberColor}
+              amberBorderHover={amberBorderHover} amberColor={amberColor} surfaceShadow={surfaceShadow}
             />
           </div>
         )}
