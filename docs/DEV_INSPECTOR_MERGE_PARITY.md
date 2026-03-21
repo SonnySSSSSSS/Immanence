@@ -24,6 +24,7 @@ Use this checklist to confirm parity before deleting legacy section code.
 - Verify the same card still reflects saved styling.
 
 Pass criteria:
+
 - Styling values persist after reload.
 - No console/runtime errors related to card tuner persistence.
 
@@ -34,6 +35,7 @@ Pass criteria:
 - Verify selected-card overrides remain cleared while global behavior remains intact.
 
 Pass criteria:
+
 - Per-card override stays cleared after reload.
 - Global settings are not unintentionally wiped.
 
@@ -45,6 +47,7 @@ Pass criteria:
 - Verify nav button FX settings persist.
 
 Pass criteria:
+
 - Nav button FX values persist after reload.
 - Controls still target `.im-nav-btn` styling tokens.
 
@@ -55,6 +58,7 @@ Pass criteria:
 - Verify `Debug resolved:` updates with current mode/id.
 
 Pass criteria:
+
 - Readout updates live with current pick.
 - No stale readout after mode switches.
 
@@ -66,6 +70,7 @@ Pass criteria:
 - For Practice Button FX, verify `Apply to all` + selected key behavior still works.
 
 Pass criteria:
+
 - Global and selected behavior remain distinct and functional.
 - Practice button key-scoped behavior still responds correctly.
 
@@ -76,6 +81,7 @@ Pass criteria:
 - Watch UI for doubled updates (duplicate overlays, repeated toggles, duplicate readout changes).
 
 Pass criteria:
+
 - Single action produces single logical update.
 - No evidence of duplicate listeners or stacked capture handlers.
 

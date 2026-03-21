@@ -88,10 +88,13 @@ All claims include evidence with path, line range, and minimal excerpt.
   Evidence: `src/components/DevPanel.jsx:785-785` - plates payload `{ selectedId: resolvedId }`.
   Evidence: `src/dev/pickerChannel.js:1-2` - payload is serialized as JSON exactly as emitted.
   Example payload (`controls`):
+
   ```json
   { "selectedId": "homeHub:mode:navigation" }
   ```
+
   Example payload (`plates`):
+
   ```json
   { "selectedId": "homeHub:plate:mode:practice" }
   ```
@@ -166,6 +169,7 @@ All claims include evidence with path, line range, and minimal excerpt.
   Evidence: `src/dev/cardTuner.js:12-19` - defaults include `cardTintH`, `cardTintS`, `cardTintL`, `cardAlpha`, `cardBorderAlpha`, `cardBlur`.
   Evidence: `src/dev/cardTuner.js:43-51` - `normalize(...)` clamps each field.
   Example payload (`global` or one card preset):
+
   ```json
   {
     "cardTintH": 220,
@@ -193,6 +197,7 @@ All claims include evidence with path, line range, and minimal excerpt.
   Evidence: `src/components/DevPanel.jsx:596-600` - reads persisted payload.
   Evidence: `src/components/dev/PracticeButtonElectricBorderOverlay.jsx:10-11` - same key/event consumed by overlay.
   Example payload:
+
   ```json
   { "applyToAll": false, "selectedKey": "visual:practice-options" }
   ```
@@ -260,6 +265,7 @@ All claims include evidence with path, line range, and minimal excerpt.
   Evidence: `src/state/navButtonTuner.js:5-16` - defaults define `enabled` + 10 `navBtn*` properties.
   Evidence: `src/state/navButtonTuner.js:43-56` - `normalize(...)` for all persisted fields.
   Example payload:
+
   ```json
   {
     "enabled": true,

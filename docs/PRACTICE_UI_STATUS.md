@@ -187,4 +187,3 @@ If any adjustments are needed to the completed phases, let me know before I proc
 ---
 
 **Ready to proceed with remaining phases when you give the go-ahead.**
-

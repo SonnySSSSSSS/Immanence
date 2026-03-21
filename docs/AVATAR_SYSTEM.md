@@ -3,6 +3,7 @@
 ## Overview
 
 The avatar system in Immanence OS has two independent dimensions:
+
 1. **STAGES** — The vertical axis representing duration and consistency of participation
 2. **PATHS** — The horizontal axis representing the behavioral shape of participation
 
@@ -13,8 +14,10 @@ Both dimensions are behavior-based. Both are honest. Neither makes claims about 
 ## Philosophical Foundation
 
 ### The Five-Layer Stack
+
 The Avatar is constructed as a temporal composite of five distinct visual layers, ordered by depth (back to front):
 0. **Luminous Field** (`AvatarLuminousCanvas.jsx`): Sacred geometry, particles, and atmospheric nebula.
+
 1. **Breathing Aura**: Dynamic glow syncing with practice breath patterns.
 2. **Rune Ring**: Rotating outer glyph circle (Clockwise, 62.4s period).
 3. **Inner Sigil Core**: The central stage/path-aware PNG (Counter-clockwise, 249.6s period - 25% speed).
@@ -45,6 +48,7 @@ This is the key philosophical reframe that makes the system honest:
 ### What Stages Represent
 
 Stages represent **time + consistency of participation**:
+
 - Seedling → Ember = you're building consistency
 - Ember → Flame = your pattern is stabilizing
 - Flame → Beacon = you've sustained participation for months
@@ -75,6 +79,7 @@ avgAccuracy = lifetime average accuracy (0..1)
 ### Visual Design Philosophy
 
 Each stage is not about "more rings" — it's about **transformation of existing structure**:
+
 - SEEDLING: 6-7 rings, simple, soft
 - EMBER: 5-6 rings, warming
 - FLAME: 4-5 rings, sharpening
@@ -120,12 +125,15 @@ STELLAR: {
 ### Stage Transition Animation
 
 When crossing a stage threshold:
+
 1. Pulse outward from center (bright, brief)
 2. Rotation surge (rings spin faster momentarily)
 3. Both happen together over ~1.5 seconds
 
 ### Harmonic Rotation
+
 The avatar uses **counter-rotation** to create visual depth and a "locked center" effect:
+
 - **Outer Rune Ring**: 62.4s clockwise.
 - **Inner Sigil Core**: 249.6s counter-clockwise.
 - The 1:4 ratio (25%) ensures the core remains anchored even while in motion.
@@ -133,6 +141,7 @@ The avatar uses **counter-rotation** to create visual depth and a "locked center
 ### Hint/Morph System
 
 At 85%+ progress within a stage, the avatar begins to hint at the next stage:
+
 - Color starts shifting toward next stage palette
 - Morphs up to 15% toward next stage characteristics
 - Creates a sense of approaching transformation
@@ -182,12 +191,14 @@ Events → Weekly Features → Probabilistic Inference → Hysteresis Commit
 ```
 
 **Atomic Events:**
+
 - Session start/end
 - Completion vs. abandonment
 - Interruption patterns
 - Practice switching
 
 **Weekly Aggregated Features:**
+
 - Duration patterns
 - Completion rate
 - Switch rate between practices
@@ -196,11 +207,13 @@ Events → Weekly Features → Probabilistic Inference → Hysteresis Commit
 - Alive rate (active engagement vs. passive timer-running)
 
 **Sliding Windows:**
+
 - 2 weeks (short-term noise filter)
 - 6 weeks (mid-term pattern)
 - 12 weeks (long-term commitment)
 
 **Commitment Logic:**
+
 - 3 months minimum before committing to a path
 - Similar duration required to switch paths
 - "Weather" (temporary variations) don't trigger changes
@@ -331,6 +344,7 @@ function calculateStageInfo(sessions, accuracy) {
 ### Validation Tests
 
 When user data exists:
+
 - Cluster actual feature vectors (not predefined centroids)
 - See if 3 clusters emerge naturally or if you get 2, 4, or a continuum
 - Ask users: "Does this path label resonate with how your attention feels in practice?"
@@ -377,6 +391,7 @@ This table governs the entire exploration. **If a generated asset violates this 
 ### Locked Axis Definitions
 
 #### STAGE (Vertical Axis)
+
 **What it is:** Scalar function of time × consistency.
 **Visual Controls:** Ring count, color palette, material refinement.
 **Answers only:** *"How much capacity has been built over time?"*
@@ -384,6 +399,7 @@ This table governs the entire exploration. **If a generated asset violates this 
 ---
 
 #### PATH (Horizontal Axis)
+
 **What it is:** Behavioral participation modes (Dhyana, Prana, Drishti, Jnana, Soma, Samyoga).
 **Visual Controls:** One of 3 Geometry Families (Precision, Flowing, Faceted) + Path-specific expression.
 **Answers only:** *"What is the mode of participation?"*
@@ -391,6 +407,7 @@ This table governs the entire exploration. **If a generated asset violates this 
 ---
 
 #### ATTENTION VECTOR (Internal Axis)
+
 **What it is:** Attentional orientation (Ekagrata, Sahaja, Vigilance).
 **Visual Controls:** Internal light behavior only.
 **Answers only:** *"What is the flavor of attention within the path?"*
@@ -410,6 +427,7 @@ Instead, explore in **orthogonal passes**, each answering a specific validation 
 **Goal:** Verify that **Stages alone** communicate increasing duration/consistency without implying superiority or enlightenment.
 
 **Method:**
+
 - Fix Path = neutral (perfect symmetry, no deformation)
 - Fix Vector = neutral (steady glow, no jitter)
 - Generate: 5 Stages × multiple seeds
@@ -418,6 +436,7 @@ Instead, explore in **orthogonal passes**, each answering a specific validation 
 > "If I showed only these five avatars, would a user intuitively read 'time + consistency'?"
 
 **Pass Criteria:**
+
 - Stellar must feel *refined*, not merely flashy
 - Progression must read as capacity-building, not aesthetic escalation
 - No stage should implicitly suggest moral or spiritual superiority
@@ -429,6 +448,7 @@ Instead, explore in **orthogonal passes**, each answering a specific validation 
 **Goal:** Verify that **Paths are legible as behavioral shapes**, independent of progress.
 
 **Method:**
+
 - Fix Stage = FLAME (middle, most readable)
 - Fix Vector = neutral
 - Vary Path: Ekagrata / Sahaja / Vigilance
@@ -438,6 +458,7 @@ Instead, explore in **orthogonal passes**, each answering a specific validation 
 > "Do these feel like different *ways of showing up*, not different levels?"
 
 **Pass Criteria:**
+
 - If Ekagrata looks "better" than Vigilance, the system is lying
 - Paths must be distinguishable by geometry/symmetry alone
 - Color palette must remain identical across all paths
@@ -449,6 +470,7 @@ Instead, explore in **orthogonal passes**, each answering a specific validation 
 **Goal:** Ensure vectors read as *energy behavior*, not personality or virtue.
 
 **Method:**
+
 - Fix Stage = FLAME
 - Fix Path = Ekagrata (most structurally stable)
 - Vary Attention Vector (e.g., stable / jittered / diffused)
@@ -457,6 +479,7 @@ Instead, explore in **orthogonal passes**, each answering a specific validation 
 > "Does the structure remain identical while the *energy* changes?"
 
 **Pass Criteria:**
+
 - If geometry shifts, the vector is leaking into Path
 - Only light dynamics, pulse, and glow should vary
 - No structural deformation allowed
@@ -468,6 +491,7 @@ Instead, explore in **orthogonal passes**, each answering a specific validation 
 **Goal:** Test whether vectors *modulate* paths without redefining them.
 
 **Method:**
+
 - Fix Stage = FLAME
 - Cross all combinations:
   - Ekagrata × {stable, jittered, diffused}
@@ -478,6 +502,7 @@ Instead, explore in **orthogonal passes**, each answering a specific validation 
 > "Can I still identify the Path even when the energy texture changes?"
 
 **Pass Criteria:**
+
 - Path identity must remain legible across all vectors
 - If not, vectors are overpowering shape
 
@@ -488,6 +513,7 @@ Instead, explore in **orthogonal passes**, each answering a specific validation 
 **Goal:** Ensure Stage progression remains legible *across all Paths*.
 
 **Method:**
+
 - Pick one Path (e.g., Sahaja)
 - Pick one Vector (neutral)
 - Generate all 5 Stages
@@ -496,6 +522,7 @@ Instead, explore in **orthogonal passes**, each answering a specific validation 
 > "Does vertical progression read as capacity-building, not aesthetic escalation?"
 
 **Pass Criteria:**
+
 - Stage identity must be preserved across paths
 - If Sahaja + Stellar feels fundamentally different from Ekagrata + Stellar, the stage axis is compromised
 
@@ -532,6 +559,7 @@ This is not verbosity — **it's guardrails**.
 ### Batching Strategy (5070 Ti / Z-Turbo)
 
 Use the GPU for **breadth, not polish**:
+
 - Low steps (6–10)
 - CFG conservative (1.0–1.5)
 - Many seeds (10+ per combination)
@@ -561,6 +589,7 @@ Use the GPU for **breadth, not polish**:
 ### Metadata Tags (Minimum Required)
 
 For each generated asset:
+
 - `stage` (SEEDLING | EMBER | FLAME | BEACON | STELLAR)
 - `path` (Ekagrata | Sahaja | Vigilance | Neutral)
 - `attentionVector` (Stable | Jittered | Diffused | Neutral)
@@ -698,6 +727,7 @@ Once neutral is established, we can define deviations for each path.
 ### Ekagrata (Structured Commitment)
 
 **Geometry Signature:**
+
 - **Symmetry:** High (6-fold or 8-fold)
 - **Deformation:** Minimal. Rings may thicken/thin but remain circular.
 - **Mass Distribution:** Concentrated toward center or outer edge (structured focus)
@@ -706,6 +736,7 @@ Once neutral is established, we can define deviations for each path.
 - **Flow Direction:** Inward or outward radial flow
 
 **Prompt Fragment:**
+
 ```
 PATH: Ekagrata (Structured Commitment)
 Geometry: High symmetry (6–8 fold), minimal deformation.
@@ -719,6 +750,7 @@ Slight front-tilt. No fragmentation. Inward radial flow.
 ### Sahaja (Steady Rhythmic Participation)
 
 **Geometry Signature:**
+
 - **Symmetry:** Medium (4-fold or organic wave patterns)
 - **Deformation:** Gentle undulation, flowing curves
 - **Mass Distribution:** Evenly distributed with gentle wave modulation
@@ -727,6 +759,7 @@ Slight front-tilt. No fragmentation. Inward radial flow.
 - **Flow Direction:** Circular, tangential (suggests orbit, not thrust)
 
 **Prompt Fragment:**
+
 ```
 PATH: Sahaja (Steady Rhythmic Participation)
 Geometry: Medium symmetry (4-fold or organic wave).
@@ -740,6 +773,7 @@ Level pose, no tilt. Circular/tangential flow.
 ### Vigilance (Exploratory Varied Participation)
 
 **Geometry Signature:**
+
 - **Symmetry:** Low or asymmetric (2-fold or scattered)
 - **Deformation:** Irregular, varied thickness and gaps
 - **Mass Distribution:** Scattered, clustered in multiple regions
@@ -748,6 +782,7 @@ Level pose, no tilt. Circular/tangential flow.
 - **Flow Direction:** Multi-directional, scanning pattern
 
 **Prompt Fragment:**
+
 ```
 PATH: Vigilance (Exploratory Varied Participation)
 Geometry: Low symmetry (2-fold or asymmetric).
@@ -769,6 +804,7 @@ Variable tilt/angle. Multi-directional flow, scanning pattern.
 ### Jittered (High Temporal Variance)
 
 **Energy Signature:**
+
 - **Pulse Rate:** Irregular, 0.5–2 Hz with randomness
 - **Pulse Amplitude:** 20–40% opacity variation (random peaks)
 - **Jitter:** Visible positional/rotational jitter (±2–5 degrees)
@@ -777,6 +813,7 @@ Variable tilt/angle. Multi-directional flow, scanning pattern.
 - **Temporal Noise:** High. Unpredictable timing.
 
 **Prompt Fragment:**
+
 ```
 ATTENTION VECTOR: Jittered (High Temporal Variance)
 Light Behavior: Irregular pulse 0.5–2 Hz, 20–40% opacity variation.
@@ -790,6 +827,7 @@ High temporal noise, unpredictable timing.
 ### Diffused (Interruption/Fragmentation)
 
 **Energy Signature:**
+
 - **Pulse Rate:** Slow, 0.3–0.5 Hz
 - **Pulse Amplitude:** 30–50% opacity variation (deep fades)
 - **Jitter:** None. Smooth but diffused.
@@ -798,6 +836,7 @@ High temporal noise, unpredictable timing.
 - **Temporal Noise:** Low frequency, gentle drift
 
 **Prompt Fragment:**
+
 ```
 ATTENTION VECTOR: Diffused (Interruption/Fragmentation)
 Light Behavior: Slow pulse 0.3–0.5 Hz, 30–50% opacity variation.

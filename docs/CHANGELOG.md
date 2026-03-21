@@ -8,6 +8,7 @@
 ## PHASE 1: FOUNDATION (2024)
 
 ### Avatar System âœ…
+
 - 5-stage progression: Seedling â†’ Ember â†’ Flame â†’ Beacon â†’ Stellar
 - 6 path variants per stage (12 total avatars)
 - Dynamic accent colors based on stage/path
@@ -15,6 +16,7 @@
 - Weekly streak badges and stage transitions
 
 ### Practice System âœ…
+
 - **Breathing Practices:**
   - Box breathing (4-4-4-4)
   - 4-7-8 breathing
@@ -28,6 +30,7 @@
   - Somatic awareness
 
 ### State Management Foundation âœ…
+
 - Zustand for all state (localStorage persistence)
 - Progress store (sessions, streaks, benchmarks)
 - Settings store (display mode, preferences)
@@ -38,6 +41,7 @@
 ## PHASE 2: MEDITATION & AWARENESS (Late 2024)
 
 ### Four Modes System âœ…
+
 - **Mirror:** Observation without judgment
   - Actor, action, recipient capture
   - Neutral sentence generation
@@ -61,12 +65,14 @@
   - Time-bound commitments
 
 ### Advanced Practices âœ…
+
 - **Vipassana Meditation** (Cognitive & Somatic variants)
 - **Cymatics Visualization** - Frequency/geometry meditation
 - **Sound Bath** - Audio-based practice
 - **Circuit Training** - Multi-exercise sequences
 
 ### Application Section âœ…
+
 - Awareness tracking (intention + observations)
 - Weekly log aggregation
 - Pattern recognition interface
@@ -77,6 +83,7 @@
 ## PHASE 3: CONSISTENCY & TRACKING (December 2024 - January 2025)
 
 ### Cycle System âœ…
+
 - 21-day Foundation mode (strict consecutive)
 - 42-day Advanced mode (consecutive or flexible)
 - Consistency rate calculations
@@ -86,6 +93,7 @@
 - Duration consistency tracking
 
 ### Practice Journal System âœ…
+
 - **Post-Session Journal:**
   - Attention quality (1-5 scale)
   - Challenge categorization (physical, attention, emotional, consistency, technique)
@@ -99,6 +107,7 @@
   - Session archiving
 
 ### Data Visualization âœ…
+
 - **CircuitInsightsView:**
   - Attention quality trend lines (Recharts)
   - Challenge frequency bar charts
@@ -107,6 +116,7 @@
   - JSON/CSV export functionality
 
 ### Hub Stats Integration âœ…
+
 - Daily streak display
 - Days completed counter
 - Next practice countdown
@@ -118,6 +128,7 @@
 ## PHASE 4: WISDOM & CONTENT (January 2025)
 
 ### Wisdom Section âœ…
+
 - **Treatise Integration:**
   - Full 103-chapter text
   - Parts 1-7 organization
@@ -139,6 +150,7 @@
   - Procedural SVG icons for categories
 
 ### Self-Knowledge âœ…
+
 - Big Five personality assessment framework
 - Wave store for trait tracking (openness, conscientiousness, extraversion, agreeableness, neuroticism)
 - Assessment history
@@ -149,6 +161,7 @@
 ## PHASE 5: VISUAL POLISH & INTEGRATION (January 2026)
 
 ### Avatar System Refinement âœ…
+
 - Luminous avatar visualization
 - Rune ring animations
 - Particle system enhancements
@@ -156,6 +169,7 @@
 - Stage-specific visual signatures
 
 ### UI/UX Improvements âœ…
+
 - Glass capsule containers (thin white strokes, backdrop blur)
 - Serif typography (Cinzel, Playfair Display)
 - Gold hairline rules and accents
@@ -163,6 +177,7 @@
 - Meditative interface philosophy
 
 ### Navigation & Structure âœ…
+
 - Home Hub (dashboard with stats)
 - Practice Section (mode selection & execution)
 - Four Modes Section (awareness training)
@@ -172,6 +187,7 @@
 - Dev Panel (Ctrl+Shift+D for debugging)
 
 ### Accessibility âœ…
+
 - ARIA roles and labels
 - Keyboard navigation support
 - Focus state management
@@ -183,6 +199,7 @@
 ## PHASE 6: RITUAL CURRICULUM (January 2026 - In Progress)
 
 ### Ritual Curriculum System ðŸ”¨
+
 - 14-day structured ritual onboarding
 - First-time onboarding flow (~10 min)
 - Daily practice scheduling (2 time slots)
@@ -191,6 +208,7 @@
 - 2-week completion reporting
 
 **Components in Development:**
+
 - CurriculumOnboarding - Step-by-step introduction
 - CurriculumHub - 14-day schedule display
 - DailyPracticeCard - Today's practice quick access
@@ -199,6 +217,7 @@
 - CurriculumCompletionReport - 2-week summary & insights
 
 **State Management:**
+
 - useCurriculumStore - Zustand store for curriculum tracking
 - Curriculum data structure (14-day paths with themes)
 - Integration with existing practice system
@@ -208,24 +227,28 @@
 ## TECHNICAL ARCHITECTURE MILESTONES
 
 ### State Management Evolution
+
 - âœ… Single stores â†’ Multiple specialized stores
 - âœ… Manual persistence â†’ Zustand middleware
 - âœ… Session-based â†’ Cycle-aware tracking
 - âœ… Simple metrics â†’ Compound consistency calculations
 
 ### Component Architecture
+
 - âœ… Monolithic components â†’ Modular practice types
 - âœ… Inline styles â†’ Tailwind theming
 - âœ… Static layouts â†’ Responsive CSS Grid/Flex
 - âœ… Basic forms â†’ Complex multi-step journeys
 
 ### Data Flow
+
 - âœ… Prop drilling â†’ Context/Store access
 - âœ… Callback hell â†’ Zustand action chaining
 - âœ… In-memory â†’ LocalStorage persistence
 - âœ… Manual exports â†’ JSON/CSV automation
 
 ### Visual Design
+
 - âœ… Generic UI â†’ Spiritually-grounded aesthetic
 - âœ… Default colors â†’ Dynamic stage-aware theming
 - âœ… Static animations â†’ Meditative motion design
@@ -236,6 +259,7 @@
 ## TECHNOLOGY STACK
 
 ### Frontend
+
 - **React 18** - Component framework
 - **Vite** - Build tool
 - **Tailwind CSS** - Styling
@@ -246,6 +270,7 @@
 - **React Router** - Navigation
 
 ### Development Tools
+
 - **Node.js** - Runtime
 - **npm** - Package management
 - **Git** - Version control
@@ -254,6 +279,7 @@
 - **Claude.ai** - AI-assisted development
 
 ### Data & Integration
+
 - **localStorage** - Local data persistence
 - **Anthropic Claude API** - LLM validation & analysis
 - **JSON/CSV export** - Data portability
@@ -293,12 +319,14 @@
 ## KNOWN TECHNICAL DEBT & IMPROVEMENTS
 
 ### Completed Refactors
+
 - âœ… SessionHistoryView moved to React Portal (fixed z-index issues)
 - âœ… Color synchronization across stores (stage colors propagate everywhere)
 - âœ… Circuit mode integration with journal system
 - âœ… Breakpoint handling for mobile/tablet/desktop
 
 ### Outstanding Items
+
 - [ ] Spell-check & typo fixes in wisdom content
 - [ ] Performance optimization for large datasets
 - [ ] Sound cues for meditation guidance
@@ -311,18 +339,21 @@
 ## FUTURE ROADMAP
 
 ### Q1 2026
+
 - âœ… Ritual curriculum completion & testing
 - [ ] Additional curriculum paths (yoga, energy work, etc.)
 - [ ] Enhanced video integration (self-recorded practices)
 - [ ] Sound design & audio cues
 
 ### Q2 2026
+
 - [ ] Mobile app prototype (React Native)
 - [ ] Server infrastructure & cloud sync
 - [ ] Advanced analytics dashboard
 - [ ] Community features (optional)
 
 ### Q3+ 2026
+
 - [ ] Transmedia expansion (video essays, workshops)
 - [ ] Consulting services integration
 - [ ] Advanced curriculum paths
@@ -341,6 +372,7 @@
 ## PHILOSOPHY & INTENT
 
 Immanence OS is not a wellness app. It's a consciousness development platform grounded in:
+
 - Rigorous philosophical frameworks
 - Contemplative traditions (Vedanta, Buddhism, Christianity, Taoism)
 - Modern technology & measurement
@@ -350,5 +382,3 @@ Immanence OS is not a wellness app. It's a consciousness development platform gr
 Target: **Wanderers, Misfits, Beautiful Fuck-Ups** seeking authentic spiritual work.
 
 Core thesis: **Existence as participation.** Not transcendence seeking, but honest engagement with life as the practice itself.
-
-

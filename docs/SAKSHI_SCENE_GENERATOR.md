@@ -18,6 +18,7 @@ Generate parallax scene layers for Sakshi scenes using ComfyUI.
 **See [ComfyUI CLI Guide](COMFYUI_CLI.md)** for comprehensive documentation.
 
 Quick examples:
+
 ```bash
 # Generate a single layer
 node tools/comfy-cli forest midground
@@ -46,6 +47,7 @@ cd ../..
 ```
 
 Then run:
+
 ```bash
 node tools/comfy-cli --all
 ```

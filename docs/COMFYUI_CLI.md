@@ -9,6 +9,7 @@ Generate Sakshi parallax scene layers and other assets **without writing scripts
 ## Prerequisites
 
 ### ComfyUI Setup
+
 - ComfyUI running at `http://127.0.0.1:8188`
 - Models installed:
   - **Checkpoint**: `z_image_bf16.safetensors` or `z_image_turbo_bf16.safetensors`
@@ -16,9 +17,11 @@ Generate Sakshi parallax scene layers and other assets **without writing scripts
   - **VAE**: `ae.safetensors` (Flux VAE, goes in `models/vae/`)
 
 ### Node.js
+
 - Node.js 18+
 
 ### Installation
+
 ```bash
 cd tools/comfy-cli
 npm install
@@ -30,17 +33,20 @@ cd ../..
 ## Quick Start
 
 ### Generate a Single Layer
+
 ```bash
 node tools/comfy-cli forest midground
 ```
 
 ### Generate All Layers of a Scene
+
 ```bash
 node tools/comfy-cli forest
 node tools/comfy-cli city --model base
 ```
 
 ### Generate All Scenes and Layers
+
 ```bash
 node tools/comfy-cli --all
 node tools/comfy-cli --all --model turbo
@@ -53,11 +59,13 @@ node tools/comfy-cli --all --model turbo
 ### 1. **Command Line** (Manual Generation)
 
 Basic syntax:
+
 ```bash
 node tools/comfy-cli <scene> [layer] [--model base|turbo]
 ```
 
 Examples:
+
 ```bash
 # Single layer
 node tools/comfy-cli forest background
@@ -76,6 +84,7 @@ node tools/comfy-cli --all --model base
 ### 2. **npm Scripts** (Automated)
 
 Add to `package.json`:
+
 ```json
 {
   "scripts": {
@@ -89,6 +98,7 @@ Add to `package.json`:
 ```
 
 Then run:
+
 ```bash
 npm run gen:forest
 npm run gen:all
@@ -98,11 +108,13 @@ npm run gen:base
 ### 3. **MCP Server** (Claude Code Integration)
 
 Start the MCP server:
+
 ```bash
 node tools/comfy-cli/mcp-server.js
 ```
 
 Claude Code can then invoke:
+
 - **`generate-scene`** — Generate specific scene/layer
 - **`list-scenes`** — Show available scenes and layers
 
@@ -136,26 +148,31 @@ await generateAsset('forest', 'midground', 'turbo');
 ## Available Scenes and Layers
 
 ### Forest
+
 - `background` — Distant canopy, misty depth
 - `midground` — Forest path with trees
 - `foreground` — Earth path with leaves
 
 ### City
+
 - `background` — Urban skyline, buildings
 - `midground` — Quiet street
 - `foreground` — Pavement and curb
 
 ### Office
+
 - `background` — Interior wall with window
 - `midground` — Home office room
 - `foreground` — Floor and furniture edge
 
 ### Beach
+
 - `background` — Sky and horizon
 - `midground` — Shoreline with waves
 - `foreground` — Sand near feet
 
 ### Mountain
+
 - `background` — Distant silhouettes
 - `midground` — Mountain trail
 - `foreground` — Rocky path
@@ -165,6 +182,7 @@ await generateAsset('forest', 'midground', 'turbo');
 ## Model Presets
 
 ### Turbo (Fast, Good Quality)
+
 ```
 Steps: 9
 CFG: 1.0
@@ -175,6 +193,7 @@ Best for: Iteration, testing
 ```
 
 ### Base (Slow, Better Quality)
+
 ```
 Steps: 25
 CFG: 7.0
@@ -189,11 +208,13 @@ Best for: Final assets
 ## Output Format
 
 Assets are saved as WEBP (quality=90):
+
 ```
 public/scenes/sakshi/{scene}/{layer}.webp
 ```
 
 Example:
+
 - `public/scenes/sakshi/forest/background.webp`
 - `public/scenes/sakshi/city/midground.webp`
 - `public/scenes/sakshi/mountain/foreground.webp`
@@ -203,11 +224,13 @@ Example:
 ## Troubleshooting
 
 ### ComfyUI Not Accessible
+
 ```
 ❌ ComfyUI not accessible at http://127.0.0.1:8188
 ```
 
 **Fix**: Ensure ComfyUI is running:
+
 ```bash
 # Start ComfyUI in another terminal
 cd /path/to/ComfyUI
@@ -215,43 +238,51 @@ cd /path/to/ComfyUI
 ```
 
 ### Checkpoint Not Found
+
 ```
 ❌ Error: Model checkpoint z_image_turbo_bf16.safetensors not found
 ```
 
 **Fix**: Verify checkpoint exists in ComfyUI:
+
 ```
 ComfyUI/models/diffusion_models/z_image_turbo_bf16.safetensors
 ```
 
 ### CLIP Model Not Found
+
 ```
 ❌ Error: CLIP model qwen_3_4b.safetensors not found
 ```
 
 **Fix**: Download to ComfyUI text_encoders folder:
+
 ```
 ComfyUI/models/text_encoders/qwen_3_4b.safetensors
 ```
 
-Get it from: https://huggingface.co/Comfy-Org/z_image_turbo/tree/main/split_files/text_encoders
+Get it from: <https://huggingface.co/Comfy-Org/z_image_turbo/tree/main/split_files/text_encoders>
 
 ### Job Timeout
+
 ```
 ❌ Error: Job ... timed out
 ```
 
 **Fix**:
+
 - Use `--model turbo` (faster)
 - Ensure ComfyUI isn't processing other jobs
 - Check ComfyUI system resources
 
 ### Out of Memory
+
 ```
 CUDA Out of Memory
 ```
 
 **Fix**: Use turbo model or reduce resolution (edit script):
+
 ```javascript
 // In tools/comfy-cli/index.js, change:
 width: 1024,  // reduce to 512
@@ -274,26 +305,31 @@ height: 1024, // reduce to 512
 ## Best Practices
 
 1. **Test first**: Generate a single layer before batch operations
+
    ```bash
    node tools/comfy-cli forest midground
    ```
 
 2. **Use turbo for iteration**: Save time testing prompts
+
    ```bash
    node tools/comfy-cli forest --model turbo
    ```
 
 3. **Use base for final assets**: Better quality for production
+
    ```bash
    node tools/comfy-cli forest --model base
    ```
 
 4. **Batch generation**: Use npm scripts or `--all` for multiple assets
+
    ```bash
    npm run gen:all
    ```
 
 5. **Monitor first run**: Watch the output to confirm everything works
+
    ```bash
    node tools/comfy-cli city background
    # Look for: "✅ {scene}/background/{layer}.webp"
@@ -315,6 +351,7 @@ const SCENES = {
 ```
 
 Then regenerate:
+
 ```bash
 node tools/comfy-cli forest background
 ```
@@ -326,11 +363,13 @@ node tools/comfy-cli forest background
 If you have old Python scripts (`generate_sakshi_scene_assets.py`, etc.):
 
 **Old:**
+
 ```bash
 python tools/comfy/generate_sakshi_scene_assets.py --scene forest --layer midground
 ```
 
 **New:**
+
 ```bash
 node tools/comfy-cli forest midground
 ```

@@ -12,6 +12,7 @@ Add this inside `<head>` before any CSS:
 ```
 
 **Fonts included:**
+
 - **Cinzel** — Ancient/classical display font for headings, labels, buttons
 - **Crimson Pro** — Elegant serif for body text, descriptions
 - **JetBrains Mono** — Technical font for stats, numbers
@@ -29,6 +30,7 @@ import './App.css'; // Keep existing if needed
 ```
 
 The CSS establishes:
+
 - Custom properties (colors, shadows, spacing)
 - Component classes (panel-ornate, btn-glow, pill-group, etc.)
 - Typography system
@@ -41,6 +43,7 @@ The CSS establishes:
 Swap your existing `/src/components/PracticeSection.jsx` with the new one.
 
 **Key changes:**
+
 - Uses new CSS classes instead of Tailwind-only styling
 - Same logic, completely new visual treatment
 - Ornate panel with corner decorations
@@ -98,6 +101,7 @@ The current Background.jsx is fine, but consider updating vignette color to matc
 ## Visual System Summary
 
 ### Color Palette
+
 - **Gold bright:** `#fcd34d` — Primary accent, active states
 - **Gold mid:** `#f59e0b` — Secondary accent, glows
 - **Gold deep:** `#b45309` — Shadows, depth
@@ -105,11 +109,13 @@ The current Background.jsx is fine, but consider updating vignette color to matc
 - **Background surface:** `#0f0f1a` — Panel backgrounds
 
 ### Typography Scale
+
 - **Display (Cinzel):** Labels, buttons, headings — ALL CAPS, wide tracking
 - **Body (Crimson Pro):** Descriptions, paragraphs — Elegant, readable
 - **Mono (JetBrains):** Stats, numbers, technical data
 
 ### Component Classes
+
 - `.panel-ornate` — Main container with glow and texture
 - `.corner-ornament` — Adds decorative corner marks
 - `.btn-glow` — Primary action button (gold gradient)
@@ -128,6 +134,7 @@ The current Background.jsx is fine, but consider updating vignette color to matc
 ## Next Steps
 
 Once integrated, apply the same visual vocabulary to:
+
 1. **WisdomSection** — Same panel style, ornate tabs
 2. **NavigationSection** — Goal chips as preset-chips
 3. **ApplicationSection** — Gesture tracker with ornate styling

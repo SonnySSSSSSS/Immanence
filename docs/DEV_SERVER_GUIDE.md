@@ -11,7 +11,8 @@ Why: Claude worktrees are temporary, isolated branches used for AI sessions and 
 
 ## Problem: Multiple Servers, Version Mismatches, Port Conflicts
 
-### Common Issues:
+### Common Issues
+
 - Dev server running on multiple ports (5173, 5174, etc.)
 - Browser showing old version even after code changes
 - "Port in use" errors - server starts on 5174 instead of 5173
@@ -31,16 +32,19 @@ When Vite tries to start on port 5173 and finds it taken, it automatically moves
 ## Quick Fix (Recommended Workflow)
 
 ### 1. Check What's Running
+
 ```powershell
 Get-Process | Where-Object {$_.ProcessName -like "*node*"}
 ```
 
 ### 2. Reset Everything
+
 ```powershell
 .\dev-reset.ps1
 ```
 
 This script will:
+
 - Find and show all Node processes (with PIDs and ports)
 - Try to kill them
 - Clear Vite cache (`node_modules/.vite`)
@@ -50,16 +54,19 @@ This script will:
 ### 3. If Processes Won't Die (Need Admin Rights)
 
 **Right-click PowerShell → Run as Administrator**, then:
+
 ```powershell
 .\dev-kill-admin.ps1
 ```
 
 OR manually:
+
 ```powershell
 taskkill /F /IM node.exe
 ```
 
 ### 4. Start Fresh
+
 ```powershell
 npm run dev
 ```
@@ -67,6 +74,7 @@ npm run dev
 Verify it says: `http://localhost:5173/` (NOT 5174!)
 
 ### 5. Force Browser Refresh
+
 - **Hard refresh**: `Ctrl + Shift + R` or `Ctrl + F5`
 - **Clear cache**: Open DevTools → Application → Clear site data
 
@@ -85,26 +93,32 @@ Verify it says: `http://localhost:5173/` (NOT 5174!)
 
 ## Prevention Best Practices
 
-### Before Starting Work:
+### Before Starting Work
+
 1. Check for running servers:
+
    ```powershell
    Get-Process | Where-Object {$_.ProcessName -like "*node*"}
    ```
 
 2. If any exist, stop them:
+
    ```powershell
    Stop-Process -Name node -Force
    ```
 
-### During Development:
+### During Development
+
 - **Use only ONE dev server** at a time
 - If port changes (5173 → 5174), stop and restart
 - Clear Vite cache when seeing stale code:
+
   ```powershell
   Remove-Item -Recurse -Force node_modules/.vite
   ```
 
-### After Editing:
+### After Editing
+
 - Watch the terminal for HMR updates (should say "hmr update")
 - If no HMR, do a hard refresh in browser
 - If still stale, run `dev-reset.ps1`
@@ -112,6 +126,7 @@ Verify it says: `http://localhost:5173/` (NOT 5174!)
 ## Version Check
 
 Always verify version in the UI matches your code:
+
 - Look at bottom of sidebar: `v3.X.X`
 - Should match version in `src/App.jsx`
 

@@ -26,4 +26,3 @@ On Windows, `npm ci` / `npm install` can fail with `EPERM: operation not permitt
 3. If `EPERM` persists:
    - rerun from an elevated terminal (Run as Administrator), or
    - reboot, then run `npm ci` again.
-

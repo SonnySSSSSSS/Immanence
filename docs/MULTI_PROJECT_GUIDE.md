@@ -285,6 +285,7 @@ Before proposing NEW [Component/Module/Service]:
 3. Only propose NEW if reuse would cause more complexity
 
 ---
+
 ```
 
 ---
@@ -339,6 +340,7 @@ npm run test         # Run tests
 [Steps from code → production]
 
 ---
+
 ```
 
 ---
@@ -348,6 +350,7 @@ npm run test         # Run tests
 ### Document Hierarchy (Across Projects)
 
 ```
+
 ORGANIZATION_DOCS/
 ├── README.md                    [Company overview]
 ├── STANDARDS/
@@ -366,6 +369,7 @@ ORGANIZATION_DOCS/
     ├── backend-service/
     ├── cli-tool/
     └── ... (other projects)
+
 ```
 
 ### Cross-Project Links
@@ -435,6 +439,7 @@ git commit -m "setup: initialize documentation structure per DOC_ORGANIZATION_ST
 ### Issue: "Too many docs, agents are confused"
 
 **Solution**:
+
 - Consolidate Tier 3 feature docs (merge related files)
 - Archive Tier 4 old task logs (move to `docs/archive/`)
 - Delete Tier 5 transient docs (prune monthly)
@@ -442,6 +447,7 @@ git commit -m "setup: initialize documentation structure per DOC_ORGANIZATION_ST
 ### Issue: "Docs are out of sync with code"
 
 **Solution**:
+
 - Add code review rule: "If code changes, docs must be updated"
 - Link each doc to the files it documents (e.g., "See: `src/services/llmService.js`")
 - Use issue labels: "docs-needed" for code changes without doc updates
@@ -449,6 +455,7 @@ git commit -m "setup: initialize documentation structure per DOC_ORGANIZATION_ST
 ### Issue: "Agents keep creating their own docs"
 
 **Solution**:
+
 - Enforce TASK template (docs/AGENTS.md) for all work
 - Link all work to existing docs (no orphan docs)
 - Review doc naming during code review
@@ -465,4 +472,3 @@ This standard is designed to be **flexible** and **scalable**:
 - **Iterate** based on agent feedback and team needs
 
 The goal is: **Agents productive in 15 minutes, project leads clear on status in 30 seconds.**
-

@@ -1,4 +1,5 @@
 # CANONICAL BASELINE JEWEL SELECTION
+
 ## Phase 0 — Jewel Lock Establishment
 
 **Date**: 2025-12-28  
@@ -11,6 +12,7 @@
 ### Existing "Core" Assets
 
 Found in `dist/avatars/`:
+
 - `seedling-core.png` (1.19 MB)
 - `ember-core.png` (1.44 MB)
 - `flame-core.png` (1.41 MB)
@@ -22,6 +24,7 @@ Found in `dist/avatars/`:
 ### Alternative Candidates
 
 The directory also contains:
+
 - **Stage-Mode combinations** (e.g., `Flame-Dhyana.png`, `Beacon-Soma.png`)
 - **Stage-Mode-Path combinations** (e.g., `avatar-flame-dhyana-ekagrata_00001_.png`)
 
@@ -32,6 +35,7 @@ The directory also contains:
 ## Selection Criteria (from AVATAR_JEWEL_SPEC.md)
 
 Each baseline must:
+
 - ✅ Feel manufactured, not illustrated
 - ✅ Imply cutting, polishing, refinement
 - ✅ Reward long looking
@@ -48,9 +52,11 @@ Each baseline must:
 ## SELECTED BASELINES
 
 ### Seedling_Base
+
 **File**: `dist/avatars/seedling-core.png`  
 **Stage Spec**: 6-7 internal rings, Indigo (#818cf8, #6366f1)  
 **Validation**:
+
 - [ ] Jewel authority confirmed
 - [ ] Ring count matches spec
 - [ ] Color palette matches stage
@@ -61,9 +67,11 @@ Each baseline must:
 ---
 
 ### Ember_Base
+
 **File**: `dist/avatars/ember-core.png`  
 **Stage Spec**: 5-6 internal rings, Orange (#fb923c, #f97316)  
 **Validation**:
+
 - [ ] Jewel authority confirmed
 - [ ] Ring count matches spec
 - [ ] Color palette matches stage
@@ -74,9 +82,11 @@ Each baseline must:
 ---
 
 ### Flame_Base
+
 **File**: `dist/avatars/flame-core.png`  
 **Stage Spec**: 4-5 internal rings, Gold (#fcd34d, #f59e0b)  
 **Validation**:
+
 - [ ] Jewel authority confirmed
 - [ ] Ring count matches spec
 - [ ] Color palette matches stage
@@ -87,9 +97,11 @@ Each baseline must:
 ---
 
 ### Beacon_Base
+
 **File**: `dist/avatars/beacon-core.png`  
 **Stage Spec**: 3-4 internal rings, Cyan (#22d3ee, #06b6d4)  
 **Validation**:
+
 - [ ] Jewel authority confirmed
 - [ ] Ring count matches spec
 - [ ] Color palette matches stage
@@ -100,9 +112,11 @@ Each baseline must:
 ---
 
 ### Stellar_Base
+
 **File**: `dist/avatars/stellar-core.png`  
 **Stage Spec**: 2-3 internal rings, Violet (#a78bfa, #8b5cf6)  
 **Validation**:
+
 - [ ] Jewel authority confirmed
 - [ ] Ring count matches spec
 - [ ] Color palette matches stage
@@ -124,6 +138,7 @@ Each baseline must:
 ## Rejection Criteria
 
 If any baseline fails validation:
+
 - **Fallback Option 1**: Select from existing Stage-Mode combinations (e.g., `Flame-Dhyana.png`)
 - **Fallback Option 2**: Generate new baseline using strict Jewel Lock prompt
 - **Fallback Option 3**: Use user-provided reference image

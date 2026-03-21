@@ -11,6 +11,7 @@
 ### 1. Enhanced `.github/copilot-instructions.md`
 
 **Changes**:
+
 - ✅ Added complete **Component Hierarchy** (ASCII diagram)
 - ✅ Added **Zustand Store Lifecycle** example with persist middleware
 - ✅ Added **Four Modes Validation Chain** with LLM prompt templates
@@ -18,6 +19,7 @@
 - ✅ Organized all content into standard structure
 
 **Result**: Agents can now:
+
 - Understand full component tree in seconds
 - Copy/paste working Zustand store template
 - See exact Four Modes validation signatures
@@ -28,6 +30,7 @@
 ### 2. New `docs/DOC_ORGANIZATION_STANDARD.md`
 
 **Covers**:
+
 - ✅ 5-tier documentation hierarchy (Entry Points → Scratch)
 - ✅ Purpose and audience for each tier
 - ✅ Document structure template (reusable for all docs)
@@ -38,6 +41,7 @@
 - ✅ Quick start for new projects
 
 **Use this for**:
+
 - Onboarding new agents: "Here's how docs are organized"
 - Creating new docs: Use the template
 - Organizing multi-project docs: Copy this standard
@@ -48,6 +52,7 @@
 ### 3. New `docs/DOC_INVENTORY.md`
 
 **Contains**:
+
 - ✅ Status of all current docs (✅ Ready, 🟡 Unclear, 🔴 Cleanup)
 - ✅ Consolidation opportunities (e.g., Avatar subsystem has 7 files)
 - ✅ Archive recommendations (PHASE_2_*.md, old TASK_*.md)
@@ -56,6 +61,7 @@
 - ✅ Document ownership map
 
 **Use this for**:
+
 - Quick lookup: "Which doc covers X?"
 - Planning cleanup: Clear action items
 - Understanding current state: "What's ready? What needs work?"
@@ -148,6 +154,7 @@ Tier 5: Scratch / Experimental (Transient)
    - Delete redundant files
 
 2. **Set up archive folders**
+
    ```bash
    mkdir -p docs/archive/TASKS
    mkdir -p docs/archive/PHASES
@@ -188,6 +195,7 @@ The `.github/copilot-instructions.md` now includes:
 > **Entry point**: "Photic" button in `PracticeSection` practice type switcher opens `PhoticCirclesOverlay` (full-viewport overlay, z-index 1000).
 >
 > **Configuration** (persisted in `settingsStore.photic`):
+>
 > - Rate: 0.1–20 Hz (frequency of pulse)
 > - Brightness: 0–1.0 (circle opacity)
 > - Spacing: 40–320px (distance between circles)
@@ -230,4 +238,3 @@ The documentation system is now yours to customize:
 4. **Add project-specific rules**: Insert a "Project-Specific Conventions" section in Tier 1
 
 All materials are designed to be **reusable** and **customizable** for your unique needs.
-

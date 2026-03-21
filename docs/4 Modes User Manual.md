@@ -31,10 +31,10 @@ How to Use:
         Recipient: Who or what received the action?
     The Neutral Sentence: The system will ask you to synthesize these into a single factual statement.
 
-Subjective (Rejected) 	Neutral (Accepted)
-"John ignored me purposefully." 	"John walked past my desk without speaking."
-"I failed completely." 	"I did not meet the deadline stated in the contract."
-"They were aggressive." 	"They raised their voice volume above conversation level."
+Subjective (Rejected)  Neutral (Accepted)
+"John ignored me purposefully."  "John walked past my desk without speaking."
+"I failed completely."  "I did not meet the deadline stated in the contract."
+"They were aggressive."  "They raised their voice volume above conversation level."
 
 Troubleshooting & Constraint Resolution
 
@@ -84,7 +84,7 @@ Problem: "I have too many interpretations to list." Logic: The system does not r
 
 Resolution: Log the three loudest or most persistent thoughts. Group similar thoughts under one category (e.g., group "I'm stupid" and "I always mess up" under Narrative about Self).
 
-3. Wave Mode (Emotional Capacity)
+1. Wave Mode (Emotional Capacity)
 
 Problem: "The intensity is too high to complete the timer." System Feedback: Session Aborted.
 
@@ -163,11 +163,11 @@ This document illustrates a single valid entry chain within the Immanence Engine
 Context: Workplace / Digital
 
 Input Status: LOCKED
-Field 	User Input
-Actor 	Manager D.
-Action 	Sent email
-Object 	Subject: "Urgent"
-Timestamp 	09:15 AM
+Field  User Input
+Actor  Manager D.
+Action  Sent email
+Object  Subject: "Urgent"
+Timestamp  09:15 AM
 
 The Neutral Sentence (Final Locked Fact):
 
@@ -175,16 +175,16 @@ The Neutral Sentence (Final Locked Fact):
 
 System Note: Previous attempts using words like 'demanding,' 'cryptic,' and 'scary' were rejected by the constraint filter.
 
-2. Prism Mode (Interpretation)
+1. Prism Mode (Interpretation)
 
 Function: Assumption Testing
 
 Anchor: The Locked Mirror Sentence above.
-Interpretation (User Thought) 	Category 	Evidence Check 	Status
-"I am going to be fired." 	Future Prediction 	Does the text say "fired"? No. 	Unsupported
-"They found the error in the Q3 report." 	Causality 	Does the text mention Q3? No. 	Unsupported
-"D. is angry with me." 	Narrative (Other) 	Does the text describe emotion? No. 	Unsupported
-"A meeting is requested for 2pm." 	Future Prediction 	Does the text say "2pm"? Yes. 	Supported
+Interpretation (User Thought)  Category  Evidence Check  Status
+"I am going to be fired."  Future Prediction  Does the text say "fired"? No.  Unsupported
+"They found the error in the Q3 report."  Causality  Does the text mention Q3? No.  Unsupported
+"D. is angry with me."  Narrative (Other)  Does the text describe emotion? No.  Unsupported
+"A meeting is requested for 2pm."  Future Prediction  Does the text say "2pm"? Yes.  Supported
 
 Prism Summary:
 
@@ -213,7 +213,7 @@ Wave Ride Log:
 
 System Note: Capacity Verified. User successfully observed sensation without acting on the impulse to reply immediately.
 
-4. Sword Mode (Committed Action)
+1. Sword Mode (Committed Action)
 
 Function: Values-Aligned Execution
 

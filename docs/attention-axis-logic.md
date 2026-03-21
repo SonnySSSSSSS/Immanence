@@ -124,7 +124,7 @@ Early drafts attempted to use:
 
 All were rejected.
 
-### Reason:
+### Reason
 
 Any single metric smuggles metaphysics.
 
@@ -337,7 +337,6 @@ This document exists so that:
 
 If a future change contradicts these principles,
 **it must justify itself against this document.**
-
 
 Appendix A — Practice Families: Rationale and Mapping Logic
 A.1 Why Practice Families Exist

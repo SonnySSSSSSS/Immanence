@@ -9,6 +9,7 @@ The Cycle & Consistency System is a structured progression framework that replac
 > "The practice IS the path. Showing up consistently changes you regardless of what your 'attention quality' is on any given day."
 
 The system measures **participation**, not internal states. It recognizes that:
+
 - Sustained practice creates transformation
 - Consistency matters more than intensity
 - Different people have different capacity for structure
@@ -42,6 +43,7 @@ Two modes reflecting different approaches to consistency:
 ### 3. Checkpoint System
 
 Every **14 days**, the system:
+
 - Reviews progress metrics
 - Allows mode switching (if desired)
 - Recalibrates timeline using smoothing formula
@@ -64,6 +66,7 @@ curriculumStore.js     → Circuits, path curricula (stub)
 ### Key Data Structures
 
 **Current Cycle:**
+
 ```javascript
 {
   type: 'foundation' | 'transformation' | 'integration',
@@ -80,6 +83,7 @@ curriculumStore.js     → Circuits, path curricula (stub)
 ```
 
 **Benchmarks:**
+
 ```javascript
 benchmarks: {
   breath: {
@@ -93,6 +97,7 @@ benchmarks: {
 ```
 
 **Practice History:**
+
 ```javascript
 practiceHistory: [{
   date: timestamp,
@@ -111,12 +116,14 @@ practiceHistory: [{
 ### cycleManager.js
 
 **Responsibilities:**
+
 - Log practice sessions (10+ min triggers cycle day)
 - Calculate effective progress (mode-weighted)
 - Handle mode switches with recalibration
 - Calculate consistency metrics (time-of-day, duration, frequency)
 
 **Key Formula: Effective Progress**
+
 ```javascript
 effectiveDays = practiceDays.length * (actualRate / modeBaseline)
 
@@ -127,6 +134,7 @@ effectiveDays = practiceDays.length * (actualRate / modeBaseline)
 ```
 
 **Mode Switch Recalibration:**
+
 ```javascript
 // When switching from Flexible → Consecutive:
 // Same 30 practice days, but higher bar (1.0 instead of 0.67)
@@ -139,12 +147,14 @@ This ensures **fairness**: your practice days don't disappear, but the effective
 ### benchmarkManager.js
 
 **Responsibilities:**
+
 - Log self-reported metrics (breath hold, focus duration, etc.)
 - Track trends (improving/stable/declining)
 - Check stage advancement requirements
 - Detect capacity regression (20%+ drop)
 
 **Stage Requirements:**
+
 ```javascript
 Seedling → Ember:   1 cycle, 75% consistency, any path progress
 Ember → Flame:      3 cycles, 80% consistency, 2 paths
@@ -153,6 +163,7 @@ Beacon → Stellar:   10 cycles, 90% consistency, mastery in all paths
 ```
 
 **Regression Detection:**
+
 - Compares recent 5 data points to historical best
 - If recent average < 80% of best → regression detected
 - Recommendation: stage demotion or refocus on that path
@@ -160,11 +171,13 @@ Beacon → Stellar:   10 cycles, 90% consistency, mastery in all paths
 ### circuitManager.js
 
 **Responsibilities:**
+
 - Manage multi-path training sessions
 - Calculate exercise transitions
 - Split contributions across paths
 
 **Example: Foundation Circuit**
+
 ```javascript
 {
   exercises: [
@@ -244,18 +257,21 @@ Offer next cycle type (foundation → transformation → integration)
 ### Existing Practice Components
 
 **BreathingPractice.jsx, FlamePractice.jsx, BodyScanPractice.jsx:**
+
 - After session completes → call `cycleManager.logPractice()`
 - Trigger benchmark input at checkpoints
 
 ### Navigation Component
 
 **Add:**
+
 - `ConsistencyFoundation.jsx` as first item (always visible)
 - `CircuitTrainer.jsx` as new section
 
 ### Avatar Progression
 
 **Modified logic:**
+
 - Stage advancement now requires:
   - Cycle completion count (from `cycleStore.totalCyclesCompleted`)
   - Benchmark metrics (from `benchmarkManager.metricsCheckForStage()`)
@@ -270,6 +286,7 @@ Offer next cycle type (foundation → transformation → integration)
 ### Why 10+ Minutes?
 
 Practice sessions under 10 minutes don't count toward cycle days. Rationale:
+
 - Prevents gaming the system with 1-minute "check-ins"
 - Ensures meaningful engagement
 - Aligns with minimum effective practice duration
@@ -277,6 +294,7 @@ Practice sessions under 10 minutes don't count toward cycle days. Rationale:
 ### Why 67% for Flexible Mode?
 
 14 of 21 days = 67%. This allows:
+
 - 1 day off per week (7 days)
 - Life happens (illness, travel, emergencies)
 - Still requires discipline (not "whenever you feel like it")
@@ -290,6 +308,7 @@ Practice sessions under 10 minutes don't count toward cycle days. Rationale:
 ### Why Lock Mode for 2 Weeks?
 
 Prevents oscillation. Without locking:
+
 - User switches to Consecutive on good week
 - Switches back to Flexible when it gets hard
 - System becomes meaningless
@@ -297,6 +316,7 @@ Prevents oscillation. Without locking:
 ### Why Smoothing Formula?
 
 When switching modes, we don't want to:
+
 - **Punish** users who switch to harder mode (lose all progress)
 - **Reward** users who switch to easier mode (instant completion)
 
@@ -305,11 +325,13 @@ The formula preserves practice days but recalculates effective progress based on
 ### Why Self-Reported Benchmarks?
 
 The phone cannot measure:
+
 - Breath hold duration (requires user honesty)
 - Subjective awareness quality
 - Somatic resolution
 
 Self-reporting is honest about limitations. We trust users to report accurately because:
+
 - No external rewards (no leaderboards, no social sharing)
 - Only consequence is avatar stage (which is personal)
 - Lying to yourself defeats the purpose
@@ -352,7 +374,8 @@ Self-reporting is honest about limitations. We trust users to report accurately 
 
 **Problem**: User fails a cycle (stops practicing). What happens on restart?
 
-**Solution**: 
+**Solution**:
+
 - Failed cycle archived with `failed: true`
 - User can start new cycle immediately
 - Failed cycles don't count toward `totalCyclesCompleted`

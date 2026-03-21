@@ -3,6 +3,7 @@
 ## Scope
 
 Applies to **ALL ComfyUI runs** using turbo / lightning / distilled checkpoints:
+
 - UI cards, rails, body scan assets
 - Icons, panels, backgrounds
 - Any ComfyUI generation targeting these models
@@ -23,6 +24,7 @@ Default: 8
 **🚫 NEVER:** `steps > 8`
 
 **Why:** Turbo models are designed for low-step synthesis. Beyond 8 steps, the iterative refinement destabilizes the model's learned distribution, causing:
+
 - Baked / melted gradients
 - Loss of form coherence
 - "Overcooked" appearance
@@ -38,6 +40,7 @@ Hard cap: 1.5
 **🚫 NEVER:** `CFG ≥ 1.6`
 
 **Why:** Turbo models are trained with low guidance. High CFG:
+
 - Amplifies noise artifacts
 - Creates mushy, oversaturated output
 - Ruins precision in architectural / symmetrical subjects
@@ -53,10 +56,12 @@ Range: 0.3–0.5 (img2img)
 ### Sampler
 
 **Recommended:**
+
 - `DPM++ 2M Karras`
 - `Euler (simple)`
 
 **Avoid:**
+
 - `DPM++ SDE Karras` (can overshoot with turbo)
 - `Ancestral samplers` (Euler a, DPM++ a)
 
@@ -74,6 +79,7 @@ Alternative: normal
 ### Rule 1: Describe the THING, not the render
 
 **❌ WRONG:**
+
 ```
 "beautiful luminous glowing meditation figure with ethereal energy,
  cinematic bokeh, volumetric god rays, mystical aura, dreamy soft focus"
@@ -82,6 +88,7 @@ Alternative: normal
 This asks the model to *render dream-like effects*, which turbo models struggle with.
 
 **✅ RIGHT:**
+
 ```
 "seated meditation figure, clear silhouette,
  soft glow at head, dark background, calm"
@@ -94,6 +101,7 @@ This describes the subject and lets the model handle synthesis naturally.
 ### Rule 2: Negative prompt is NOT optional
 
 Turbo models are prone to:
+
 - Glowing blobs instead of form
 - Text artifacts
 - Overly dramatic lighting
@@ -114,12 +122,14 @@ psychedelic, neon, oversaturated
 ### Rule 3: Be minimal and literal
 
 **❌ WRONG (too poetic):**
+
 ```
 "the sacred geometry of breath flowing through the chakra centers,
  a luminous mandala of consciousness ascending toward transcendence"
 ```
 
 **✅ RIGHT (literal, achievable):**
+
 ```
 "human silhouette in meditation, head to pelvis,
  vertical energy line from crown to root,
@@ -158,6 +168,7 @@ Before hitting **Queue Prompt**, verify:
 **Cause:** Steps too high (> 8) OR CFG too high (≥ 1.6)
 
 **Fix:**
+
 1. Drop steps to **6**
 2. Drop CFG to **1.0**
 3. Regenerate
@@ -168,6 +179,7 @@ Before hitting **Queue Prompt**, verify:
 **Cause:** Prompt too vague / illustrative ("ethereal", "mystical", "dreamy")
 
 **Fix:**
+
 1. Rewrite prompt to be literal and anatomical
 2. Add to negative: `"blurry, soft focus, mushy"`
 3. Regenerate
@@ -177,6 +189,7 @@ Before hitting **Queue Prompt**, verify:
 **Cause:** CFG too high (≥ 1.5) or prompt includes "vibrant", "psychedelic"
 
 **Fix:**
+
 1. Drop CFG to **1.0**
 2. Remove color adjectives; replace with material names (e.g., "gold" → "warm amber")
 3. Regenerate
@@ -186,6 +199,7 @@ Before hitting **Queue Prompt**, verify:
 **Cause:** Model is hallucinating UI elements or letters
 
 **Fix:**
+
 1. Ensure negative includes: `"text, letters, symbols, UI, borders"`
 2. Remove prompt terms like "mandala", "chakra symbols", "sacred geometry"
 3. Use **literal + minimal** prompts
@@ -196,6 +210,7 @@ Before hitting **Queue Prompt**, verify:
 **Cause:** Seed conflict, or model did not load correctly
 
 **Fix:**
+
 1. Verify checkpoint is loaded (check ComfyUI terminal for errors)
 2. Change seed
 3. Regenerate
@@ -213,21 +228,21 @@ sampler: DPM++ 2M Karras
 scheduler: karras
 ```
 
-### If output is too smooth/soft (lacking detail):
+### If output is too smooth/soft (lacking detail)
 
 ```
 steps: 8 (no change)
 CFG: 1.5 (increase only to this)
 ```
 
-### If output is too sharp/noisy:
+### If output is too sharp/noisy
 
 ```
 steps: 6 (decrease only)
 CFG: 1.0 (decrease only)
 ```
 
-### If output is too stylized (illustration-like):
+### If output is too stylized (illustration-like)
 
 ```
 steps: 6 (decrease)
@@ -242,6 +257,7 @@ Negative: add "illustration, digital art, painting style"
 ### Asset: Body Scan – Upper (head glow)
 
 **ComfyUI Settings:**
+
 - Checkpoint: `z-image-turbo-fp8-aio.safetensors`
 - Sampler: `DPM++ 2M Karras`
 - Steps: 8
@@ -250,6 +266,7 @@ Negative: add "illustration, digital art, painting style"
 - Denoise: 1.0
 
 **Positive Prompt:**
+
 ```
 seated meditation figure, clear silhouette,
 energy concentrated at head and crown,
@@ -260,6 +277,7 @@ calm, restrained, precise
 ```
 
 **Negative Prompt:**
+
 ```
 text, symbols, mandalas, UI, borders,
 abstract gradient backgrounds,
@@ -271,6 +289,7 @@ psychedelic colors
 ```
 
 **Expected Result:**
+
 - Clear seated figure
 - Violet glow at head only
 - Dark background
@@ -288,6 +307,7 @@ python tools/comfy/generate_awareness_silhouette_assets.py
 ```
 
 **Built-in guards:**
+
 - Steps clamped to **max 8**
 - CFG clamped to **max 1.5**
 - No ControlNet / LoRA / upscaler
@@ -295,6 +315,7 @@ python tools/comfy/generate_awareness_silhouette_assets.py
 - Region-specific prompts (locked)
 
 Modify only:
+
 - `CHECKPOINT` (if using different turbo model)
 - `SEED_BASE` (if you want different variants)
 

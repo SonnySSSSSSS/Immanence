@@ -6,7 +6,7 @@
 
 ## Where to Start
 
-### 🤖 If you're an AI agent:
+### 🤖 If you're an AI agent
 
 ```
 START HERE: .github/copilot-instructions.md
@@ -17,7 +17,7 @@ START HERE: .github/copilot-instructions.md
     (Reference ARCHITECTURE.md as needed)
 ```
 
-### 👤 If you're a project lead:
+### 👤 If you're a project lead
 
 ```
 START HERE: docs/DOC_INVENTORY.md
@@ -31,7 +31,7 @@ START HERE: docs/DOC_INVENTORY.md
     Update Deprecated / Historical + CHANGELOG.md
 ```
 
-### 🏢 If you're an organization:
+### 🏢 If you're an organization
 
 ```
 START HERE: docs/DOC_ORGANIZATION_STANDARD.md
@@ -183,11 +183,13 @@ Agent starts here:
 ## Quick Commands (Copy/Paste)
 
 ### Setup archive folders
+
 ```bash
 mkdir -p docs/archive/{TASKS,PHASES,SPECS}
 ```
 
 ### Archive old task logs (when done)
+
 ```bash
 mv docs/TASK-*.md docs/archive/TASKS/ 2>/dev/null || true
 git add docs/archive/
@@ -195,6 +197,7 @@ git commit -m "chore: archive old task logs per DOC_ORGANIZATION_STANDARD"
 ```
 
 ### Verify documentation structure
+
 ```bash
 ls -la .github/copilot-instructions.md
 ls -la docs/{AGENTS,ARCHITECTURE,DEVELOPMENT,DOC_ORGANIZATION_STANDARD,DOC_INVENTORY}.md
@@ -218,21 +221,27 @@ ls -la docs/{AGENTS,ARCHITECTURE,DEVELOPMENT,DOC_ORGANIZATION_STANDARD,DOC_INVEN
 ## Common Questions
 
 ### Q: "Where do I start if I'm new?"
+
 A: Read `.github/copilot-instructions.md` (5 min) → you're productive
 
 ### Q: "How do I understand the full architecture?"
+
 A: Read `docs/ARCHITECTURE.md` (15 min) for complete wiring
 
 ### Q: "What needs to be cleaned up?"
+
 A: Check `docs/DOC_INVENTORY.md` for "Consolidation Opportunities" section
 
 ### Q: "How do I create new docs?"
+
 A: Use template in `docs/DOC_ORGANIZATION_STANDARD.md`
 
 ### Q: "How do I scale this to multiple projects?"
+
 A: Follow `docs/MULTI_PROJECT_GUIDE.md` for setup instructions
 
 ### Q: "Can I customize this system?"
+
 A: Yes! Edit Tier 1 docs with project-specific rules, modify the standard as needed
 
 ---
@@ -266,7 +275,8 @@ This documentation system was designed with **you** in mind:
 
 ## Need Help?
 
-### For questions about:
+### For questions about
+
 - **This system**: See `docs/DOC_ORGANIZATION_STANDARD.md`
 - **Your project**: See `.github/copilot-instructions.md` + `docs/ARCHITECTURE.md`
 - **Implementation**: See `docs/IMPLEMENTATION_SUMMARY.md`

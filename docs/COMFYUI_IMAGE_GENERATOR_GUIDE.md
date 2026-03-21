@@ -11,6 +11,7 @@
 The following describes a future-proof system (kept for reference, but not currently implemented):
 
 ## Prerequisites
+
 - ComfyUI running locally at `http://127.0.0.1:8188`
 - MCP proxy running on `http://localhost:5050` (see [src/tools/runComfyProxy.js](../src/tools/runComfyProxy.js))
 - Required models installed in ComfyUI:
@@ -21,21 +22,25 @@ The following describes a future-proof system (kept for reference, but not curre
 ## Quick Start
 
 Generate a single asset:
+
 ```bash
 python tools/comfy/mcp_generator.py --asset sakshi_scenes/forest/background
 ```
 
 Generate all layers for a scene:
+
 ```bash
 python tools/comfy/mcp_generator.py --asset sakshi_scenes/forest/all
 ```
 
 Generate all assets with a specific model:
+
 ```bash
 python tools/comfy/mcp_generator.py --asset sakshi_scenes/all --model z-image-base
 ```
 
 Dry run (show what would be generated):
+
 ```bash
 python tools/comfy/mcp_generator.py --asset all --dry-run
 ```
@@ -81,7 +86,6 @@ sakshi_scenes:
 
 ### 3. Generator Script ([tools/comfy/mcp_generator.py](../tools/comfy/mcp_generator.py))
 
-
 ## Usage Patterns
 
 ### Asset Path Syntax
@@ -94,6 +98,7 @@ all                  → Generate everything in registry
 ```
 
 Examples:
+
 ```bash
 python tools/comfy/mcp_generator.py --asset sakshi_scenes/forest/background
 python tools/comfy/mcp_generator.py --asset sakshi_scenes/forest/all
@@ -162,5 +167,3 @@ python tools/comfy/mcp_generator.py --asset awareness_body_scan/head/visualizati
 3. Use `--dry-run` before large batches
 4. Keep `.json` metadata files for reproducibility
 5. Extend `assets.yml` instead of creating one-off scripts
-
-

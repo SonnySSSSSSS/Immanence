@@ -87,6 +87,7 @@ Program
 ### State Tracking
 
 `curriculumStore.js` tracks:
+
 - Active program ID
 - Curriculum start date (anchored at onboarding completion)
 - Leg completions as a map: `{ "1-1": timestamp, "1-2": timestamp, "2-1": timestamp }`
@@ -96,6 +97,7 @@ Program
 ### Day Status Resolution
 
 Each day resolves to one of four states:
+
 - `complete` — all legs for that day have completion timestamps
 - `today` — current calendar day based on start date offset
 - `missed` — past day with incomplete legs
@@ -104,12 +106,14 @@ Each day resolves to one of four states:
 ### Prerequisite System
 
 Path activation requires prerequisite validation (`src/utils/pathActivationGuards.js`):
+
 - **Breath benchmark gate**: `validateBenchmarkPrerequisite` checks that the user has achieved a minimum breath benchmark score before unlocking secondary practice types
 - **Time slot validation**: `validatePathActivationSelections` ensures schedule commitments meet path contract requirements
 
 ### Path Contracts
 
 Each navigation path can define a contract (`src/utils/pathContract.js`) specifying:
+
 - Total days in the path
 - Required practice days per week
 - Required time slots
@@ -158,11 +162,13 @@ Reduced to a stage-token abstraction with five core stages and a rune variation 
 Each stage has exactly one set of assets (`src/config/avatarStageAssets.js`): wallpaper, background, rune ring, glass ring, and plant foreground. No per-path visual branching at the asset level.
 
 **Path differentiation** is handled through:
+
 - Text-based path identity (name, symbol, interface label)
 - Practice mode weights (`photic`, `haptic`, `sonic`, `ritual`) calculated from 42-day session windows
 - Path definitions in `src/data/pathDefinitions.js` with symbols: Yantra (△), Kaya (◍), Chitra (✶), Nada (≋)
 
 **Path inference** (`src/state/pathStore.js`):
+
 - 90-day rolling window with minimum 45 signal minutes
 - Path emergence requires 90 days of sustained dominant signal
 - Path shift requires 180 days of new dominant signal
@@ -189,6 +195,7 @@ Three cycle lengths enforce sustained consistency:
 | Integration | 180 days | Advanced, long-term integration |
 
 Two consistency modes:
+
 - **Consecutive**: 100% adherence required
 - **Flexible**: 67% adherence required
 

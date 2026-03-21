@@ -1,4 +1,5 @@
 # BASELINE JEWEL VISUAL INSPECTION
+
 ## Phase 0 Validation — 2025-12-28
 
 **Purpose**: Validate the 5 core baseline jewel candidates against Jewel Lock criteria.
@@ -27,6 +28,7 @@ Each baseline must pass ALL checks:
 **Size**: 1.19 MB
 
 ### Stage Specification
+
 - **Rings**: 6-7 internal rings
 - **Palette**: Indigo (#818cf8, #6366f1)
 - **Character**: Faint, soft glow, slow pulse, fragile and nascent
@@ -55,6 +57,7 @@ Each baseline must pass ALL checks:
 **Size**: 1.44 MB
 
 ### Stage Specification
+
 - **Rings**: 5-6 internal rings
 - **Palette**: Orange (#fb923c, #f97316)
 - **Character**: Medium glow, faster pulse, awakening
@@ -83,6 +86,7 @@ Each baseline must pass ALL checks:
 **Size**: 1.41 MB
 
 ### Stage Specification
+
 - **Rings**: 4-5 internal rings
 - **Palette**: Gold (#fcd34d, #f59e0b)
 - **Character**: Sharper geometry, deliberate pulse, purpose
@@ -111,6 +115,7 @@ Each baseline must pass ALL checks:
 **Size**: 374 KB
 
 ### Stage Specification
+
 - **Rings**: 3-4 internal rings
 - **Palette**: Cyan (#22d3ee, #06b6d4)
 - **Character**: Multi-color halo, faceted edges, precision
@@ -139,6 +144,7 @@ Each baseline must pass ALL checks:
 **Size**: 434 KB
 
 ### Stage Specification
+
 - **Rings**: 2-3 internal rings
 - **Palette**: Violet (#a78bfa, #8b5cf6)
 - **Character**: Fractal spirals, cosmic complexity, transcendence
@@ -162,6 +168,7 @@ Each baseline must pass ALL checks:
 ## SUMMARY
 
 ### Approved Baselines
+
 - [ ] Seedling_Base
 - [ ] Ember_Base
 - [ ] Flame_Base
@@ -169,9 +176,11 @@ Each baseline must pass ALL checks:
 - [ ] Stellar_Base
 
 ### Rejected Baselines
+
 _[List any rejections with reasons]_
 
 ### Next Actions
+
 1. If all approved → Proceed to Phase 1 (Retrofit existing avatars)
 2. If any rejected → Select alternative candidates or generate new baselines
 3. Update `AVATAR_JEWEL_SPEC.md` with approved baseline file references

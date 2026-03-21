@@ -87,9 +87,11 @@ docs/
 ## CHANGES MADE (January 3, 2026)
 
 ### New Files Created
+
 - âœ… `docs/WORKFLOW.md` - Dual-AI development model & collaboration rules
 
 ### Files to Rename
+
 - [ ] `4 Modes User Manual.md` â†’ `GUIDES/FOUR_MODES_USER_GUIDE.md`
 - [ ] `AVATAR_JEWEL_SPEC.md` â†’ `SYSTEMS/AVATAR_SYSTEM_JEWELS.md`
 - [ ] `AVATAR_RETROFIT.md` â†’ `RESEARCH/AVATAR_RETROFIT_NOTES.md`
@@ -100,9 +102,11 @@ docs/
 - [ ] `research on 4 modes.md` â†’ `RESEARCH/RESEARCH_FOUR_MODES_NOTES.md`
 
 ### Files to Review/Merge
+
 - [ ] `INTEGRATION.md` - Check if should merge with LLM_INTEGRATION.md
 
 ### New Docs to Create
+
 - [ ] `GUIDES/GETTING_STARTED.md` - Quick start for new users
 - [ ] `INTEGRATION/RITUAL_CURRICULUM.md` - Ritual system design (when built)
 - [ ] `INTEGRATION/CIRCUIT_TRAINING.md` - Circuit training system design
@@ -124,5 +128,3 @@ docs/
 - File names should answer: "What is this?" in 3-5 words
 - Avoid abbreviations unless well-established (LLM, AI, etc.)
 - Each file should have "Last Updated" date and purpose statement
-
-

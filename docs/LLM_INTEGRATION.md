@@ -3,7 +3,6 @@
 STATUS: May be outdated if Four Modes has been removed/paused; verify before using.
 Use docs/DOCS_INDEX.md for the current doc map.
 
-
 ## Overview
 
 Immanence OS uses local LLM (Ollama) for AI-powered validation in the Four Modes practice. The LLM validates:
@@ -194,4 +193,3 @@ const WORKER_URL = 'https://your-worker.your-subdomain.workers.dev';
 | llama3:8b | 5GB+ | Slow | Best | Complex analysis |
 
 For Four Modes validation, `gemma3:1b` is sufficient and recommended.
-

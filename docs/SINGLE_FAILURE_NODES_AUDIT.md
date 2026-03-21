@@ -126,4 +126,3 @@ Policy target for all nodes:
 - This file is the runtime-proof gate for Phase 4A only.
 - No behavior changes are included in this phase.
 - Implementation should proceed as atomic fixes in Phase 4B+ after human pass/fail.
-

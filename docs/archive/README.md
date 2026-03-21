@@ -25,6 +25,7 @@ These files served important purposes during development but have been supersede
 ## When to Add Files
 
 Move files here when:
+
 - Task is complete and won't be referenced frequently
 - Phase handoff is done and status moves to PROJECT_STATUS.md
 - Implementation spec has been consolidated into feature docs

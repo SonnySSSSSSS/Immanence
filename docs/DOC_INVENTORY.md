@@ -73,6 +73,7 @@
 ### AVATAR subsystem (5+ files)
 
 Current:
+
 - `docs/AVATAR_SYSTEM.md` (core)
 - `docs/AVATAR_ANIMATION_IMPLEMENTATION.md` (spec)
 - `docs/AVATAR_CONTAINER_CORE_SPEC.md` (spec)
@@ -83,10 +84,12 @@ Current:
 - `docs/BASELINE_*.md` (3 files, baseline selection)
 
 **Recommendation**: Consolidate into two docs:
+
 1. `docs/AVATAR_SYSTEM.md` — Main reference (merge CONTRACT, ANIMATION, JEWEL, attention-axis)
 2. `docs/AVATAR_IMPLEMENTATION.md` — Spec-level detail (CONTAINER_CORE_SPEC, BASELINE_*)
 
-**Action**: 
+**Action**:
+
 - [ ] Review each file's content
 - [ ] Merge into consolidated structure
 - [ ] Delete or archive redundant files
@@ -95,12 +98,14 @@ Current:
 ### Task Logs (6 files)
 
 Currently in root `docs/`:
+
 - `TASK-2026-01-05-A.md` → `E.md`
 - `TASK-2026-01-07-A.md`
 
 **Recommendation**: Keep recent (< 3 months) in `docs/`, archive older to `docs/archive/TASKS/`
 
 **Action**:
+
 - [ ] Create `docs/archive/TASKS/` folder
 - [ ] Move completed/old task logs
 - [ ] Link from Deprecated / Historical to archive for historical reference
@@ -114,6 +119,7 @@ Currently in root `docs/`:
 **Recommendation**: Archive to `docs/archive/PHASES/` for historical reference
 
 **Action**:
+
 - [ ] Create `docs/archive/PHASES/` folder
 - [ ] Move phase docs
 - [ ] Update CHANGELOG.md with reference
@@ -138,7 +144,7 @@ git commit -m "refactor: organize docs into archive structure per DOC_ORGANIZATI
 
 ## Quick Reference: Where to Find What
 
-### As an agent starting on the Immanence OS codebase:
+### As an agent starting on the Immanence OS codebase
 
 1. **First 5 minutes**: Read `.github/copilot-instructions.md`
 2. **Before major changes**: Skim `docs/ARCHITECTURE.md` + `docs/AGENTS.md`
@@ -146,7 +152,7 @@ git commit -m "refactor: organize docs into archive structure per DOC_ORGANIZATI
 4. **For task context**: Check Deprecated / Historical + PROJECT_STATUS.md
 5. **When stuck**: Reference `docs/DOC_ORGANIZATION_STANDARD.md` (this folder structure)
 
-### As a project lead coordinating agents:
+### As a project lead coordinating agents
 
 1. **Daily standup**: Check `Deprecated / Historical`
 2. **Planning**: Review `PROJECT_STATUS.md` + `CHANGELOG.md`
@@ -182,4 +188,3 @@ git commit -m "refactor: organize docs into archive structure per DOC_ORGANIZATI
 ## Questions?
 
 Refer to `docs/DOC_ORGANIZATION_STANDARD.md` for full rationale and examples.
-

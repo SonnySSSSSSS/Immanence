@@ -3,11 +3,13 @@
 Goal: a checklist of the highest-risk user journeys across app boot + HomeHub + Practice + Navigation + persisted Zustand stores.
 
 Related runtime-proof matrix for fail-safe design:
+
 - `docs/SINGLE_FAILURE_NODES_AUDIT.md`
 
 ---
 
 ## 1) App Boot → HomeHub Renders (No Crash)
+
 - **Entry point (route/screen):** `src/main.jsx` `getRoute()` → default `'app'` (any path except `/trace` and dev `/__playground`)
 - **Exact render path (files/components):** `src/main.jsx:RootComponent` → `src/App.jsx:AppWithBoundary` → `src/components/ErrorBoundary.jsx:ErrorBoundary` → `src/components/auth/AuthGate.jsx:AuthGate` → `src/context/ThemeContext.jsx:ThemeProvider` → `src/App.jsx:App` → `src/components/HomeHub.jsx:HomeHub`
 - **Stores touched:** `useDisplayModeStore`, `useTutorialStore`, (inside `HomeHub`) `useProgressStore`, `useLunarStore`, `useAvatarV3State`, `usePathStore`, `useCurriculumStore`, `useNavigationStore`, `useUiStore`
@@ -18,6 +20,7 @@ Related runtime-proof matrix for fail-safe design:
   - Store getters called from `getState()` are missing or not functions (e.g., schedule getters used by `HomeHub`).
 
 ## 2) Hub → Section Navigation (Practice/Wisdom/Application/Navigation)
+
 - **Entry point (route/screen):** `HomeHub` mode buttons (`SimpleModeButton`) or other hub UI calling `onSelectSection`
 - **Exact render path (files/components):** `src/components/HomeHub.jsx:HomeHub` → `src/App.jsx:handleSectionSelect` → `src/App.jsx:SectionView` → one of:
   - `src/components/PracticeSection.jsx:PracticeSection`
@@ -31,6 +34,7 @@ Related runtime-proof matrix for fail-safe design:
   - Section transitions accidentally unmount/remount stateful session trees (practice) causing resets mid-session.
 
 ## 3) Navigation View Selector Modal (Paths ⇄ Compass)
+
 - **Entry point (route/screen):** `Navigation` section → click the selector button (“◇ Paths” / “◈ Compass”)
 - **Exact render path (files/components):** `src/components/NavigationSection.jsx:NavigationSection` → `src/components/NavigationSelectionModal.jsx:NavigationSelectionModal`
 - **Stores touched:** none (local UI state only: `showCodex`, `navModalOpen`)
@@ -40,6 +44,7 @@ Related runtime-proof matrix for fail-safe design:
   - Escape-key listener not attached/detached correctly (modal becomes “stuck” or leaks handlers).
 
 ## 4) Begin an Initiation Path → Enforce Time-Slot Rule UI
+
 - **Entry point (route/screen):** `Navigation` → Paths view → select **Initiation Path** (id: `initiation`) from the grid
 - **Exact render path (files/components):** `src/components/NavigationSection.jsx:NavigationSection` → `src/components/PathSelectionGrid.jsx:PathSelectionGrid` → (portal overlay) `src/components/PathOverviewPanel.jsx:PathOverviewPanel` → `src/components/schedule/PracticeTimesPicker.jsx:PracticeTimesPicker` → `src/state/navigationStore.js:beginPath`
 - **Stores touched:** `useNavigationStore` (sets `activePath`, persists), `useCurriculumStore` (authors canonical `practiceTimeSlots`), `useDisplayModeStore`, `useBreathBenchmarkStore`, `useUiStore` (content launch context from path)
@@ -50,6 +55,7 @@ Related runtime-proof matrix for fail-safe design:
   - `crypto.randomUUID()` unavailable → `beginPath()` fails to generate `runId` in some environments.
 
 ## 5) Begin Path → Active Path State Renders + Persists
+
 - **Entry point (route/screen):** `PathOverviewPanel` → click “BEGIN THIS PATH” with valid slots selected
 - **Exact render path (files/components):** `src/components/PathOverviewPanel.jsx:handleBegin` → `src/state/navigationStore.js:beginPath` → back to `src/components/NavigationSection.jsx` → `src/components/ActivePathState.jsx:ActivePathState` + `src/components/navigation/NavigationPathReport.jsx:NavigationPathReport`
 - **Stores touched:** `useNavigationStore` (`activePath`, `scheduleAdherenceLog` later), `useCurriculumStore` (`practiceTimeSlots`)
@@ -59,6 +65,7 @@ Related runtime-proof matrix for fail-safe design:
   - Overlay state (selected/overlay path) rehydrates and auto-opens (should remain local-only).
 
 ## 6) HomeHub Daily Practice Card → Start Slot (Window Gating + Launch Context)
+
 - **Entry point (route/screen):** HomeHub → “Today’s Practice” card → click a slot action (e.g., “Start”)
 - **Exact render path (files/components):** `src/components/HomeHub.jsx:handleStartPractice` → `src/state/uiStore.js:setPracticeLaunchContext` → `src/App.jsx:handleSectionSelect('practice')` → `src/components/PracticeSection.jsx:PracticeSection` (consumes launch context)
 - **Stores touched:** `useUiStore` (`practiceLaunchContext`), `useNavigationStore` (active path + schedule metrics), `useCurriculumStore` (today’s legs/slots), `useProgressStore` (sessions history), `useBreathBenchmarkStore`
@@ -68,6 +75,7 @@ Related runtime-proof matrix for fail-safe design:
   - Launch context is set but not consumed/cleared correctly, causing wrong practice to start or stale params to apply.
 
 ## 7) Practice Session → Complete → “SESSION COMPLETE” Summary Visible
+
 - **Entry point (route/screen):** Practice section → start a session (either via DailyPracticeCard launch or PracticeOptionsCard “Start”)
 - **Exact render path (files/components):** `src/components/PracticeSection.jsx:PracticeSection` → `src/components/practice/PracticeOptionsCard.jsx:PracticeOptionsCard` → session surface (varies by practice: `BreathingRing`, `SensorySession`, `VisualizationCanvas`, etc.) → stop/complete handler → `src/components/practice/SessionSummaryModal.jsx:SessionSummaryModal`
 - **Stores touched:** `useCurriculumStore` (active practice session/leg completion), `useProgressStore` (session history), `useNavigationStore` (schedule adherence logging), `useTempoAudioStore` / `useTempoSync*` (audio/timing), `useJournalStore`, `useSessionOverrideStore`
@@ -78,6 +86,7 @@ Related runtime-proof matrix for fail-safe design:
   - Audio/tempo sessions not stopped/ended, leaving background audio or timers running after completion.
 
 ## 8) Reload → Persisted State Rehydrates Without Auto-Opening Overlays
+
 - **Entry point (route/screen):** Browser reload after starting a path and/or completing sessions
 - **Exact render path (files/components):** Zustand `persist()` rehydrate → `src/state/navigationStore.js` `onRehydrateStorage` + migrations → `src/state/curriculumStore.js` migrations → `src/components/HomeHub.jsx:HomeHub` + `src/components/NavigationSection.jsx:NavigationSection`
 - **Stores touched:** persisted keys: `immanenceOS.navigationState` (`useNavigationStore`), `immanenceOS.curriculum` (`useCurriculumStore`) + other persisted stores as applicable (e.g., `useProgressStore`)
@@ -89,6 +98,7 @@ Related runtime-proof matrix for fail-safe design:
 ---
 
 ## Manual Smoke Checklist (2 minutes)
+
 - Hard reload the app (`Ctrl+Shift+R`) and confirm the HomeHub renders (see “Today’s Practice” / “START SETUP”).
 - Click **Navigation** from the hub and confirm the selector button (“◇ Paths” / “◈ Compass”) is visible.
 - Click the selector button, choose **◇ Paths**, and confirm the modal closes.

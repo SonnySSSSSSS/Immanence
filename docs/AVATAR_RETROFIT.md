@@ -1,4 +1,5 @@
 # AVATAR RETROFIT MAPPING
+
 ## Phase 1 — Reverse-Mapping Existing Assets to Stage/Path/Vector
 
 **Date**: 2025-12-28  
@@ -11,6 +12,7 @@
 ### Current Naming Convention
 
 Found in `dist/avatars/`:
+
 - **Pattern 1**: `{Stage}-{Mode}.png` (e.g., `Flame-Dhyana.png`)
 - **Pattern 2**: `avatar-{stage}-{mode}-{path}_00001_.png` (e.g., `avatar-flame-dhyana-ekagrata_00001_.png`)
 
@@ -36,6 +38,7 @@ Based on existing naming, the "mode" appears to correlate with paths:
 ### Option A: Strict Mapping (Recommended)
 
 Only retrofit assets that clearly fit the 3-path model:
+
 - Ekagrata (precision-cut)
 - Sahaja (natural flow)
 - Vigilance (multi-faceted)
@@ -75,6 +78,7 @@ For each existing avatar asset:
    - Or NEUTRAL if baseline?
 
 5. **Tag Assignment**: Create metadata file
+
    ```json
    {
      "stage": "FLAME",
@@ -93,11 +97,13 @@ For each existing avatar asset:
 **File**: `dist/avatars/Flame-Dhyana.png`
 
 ### Analysis
+
 - **Stage**: FLAME (gold palette, 4-5 rings) ✅
 - **Path**: Likely Ekagrata (appears symmetric, clean cuts)
 - **Vector**: Likely Stable (steady glow, no obvious jitter)
 
 ### Proposed Tag
+
 ```json
 {
   "stage": "FLAME",

@@ -43,6 +43,7 @@ npm run dev
 ### DevPanel Access
 
 Press **Ctrl+Shift+D** to open the developer panel for:
+
 - Avatar preview with stage/path selection
 
 ### Server Hygiene
@@ -107,6 +108,7 @@ cd ../..
 ### Learn More
 
 See [ComfyUI CLI Guide](COMFYUI_CLI.md) for:
+
 - Full command reference
 - Model presets and performance
 - Troubleshooting
@@ -117,7 +119,7 @@ See [ComfyUI CLI Guide](COMFYUI_CLI.md) for:
 
 ## Key Coding Rules
 
-### From `.agent/workflows/immanence-rules.md`:
+### From `.agent/workflows/immanence-rules.md`
 
 1. **Avoid multi-line replacements** — Use single-line anchors for edits
 2. **Always increment version** — Update `App.jsx` build version after changes
@@ -168,6 +170,7 @@ export const useProgressStore = create(
 ```
 
 **Storage Keys:**
+
 - `immanence-progress` — Sessions, streaks
 - `immanence-chains` — Four Modes data
 - `immanence-wave-profile` — Personality data
@@ -221,6 +224,7 @@ npm run dev
 DevPanel → Data Management → Clear All Data
 
 Or manually clear localStorage:
+
 ```javascript
 localStorage.clear();
 location.reload();

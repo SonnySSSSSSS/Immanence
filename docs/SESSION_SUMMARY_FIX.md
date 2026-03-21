@@ -14,6 +14,7 @@ After stopping a curriculum circuit practice (e.g., Day 2), the session summary 
 ## Root Causes
 
 ### 1. Missing Circuit Initialization (v3.15.9)
+
 **Location**: `src/components/PracticeSection.jsx` lines 217-235
 
 **Problem**: When curriculum loaded a multi-leg day, it set `circuitConfig` but never set `activeCircuitId`.
@@ -21,6 +22,7 @@ After stopping a curriculum circuit practice (e.g., Day 2), the session summary 
 **Impact**: The circuit detection check `activeCircuitId && circuitConfig` always failed, causing `handleStop()` to use single-practice logic instead of circuit logic.
 
 **Fix**:
+
 ```javascript
 // When curriculum has multiple legs (circuit mode)
 setCircuitConfig({
@@ -34,9 +36,11 @@ setTimeLeft(totalDuration * 60);   // ← ADDED
 ```
 
 ### 2. Wrong Duration Calculation (v3.15.10)
+
 **Location**: `src/components/PracticeSection.jsx` lines 573-575
 
 **Problem**: The `actualDuration` calculation relied on the `duration` state variable:
+
 ```javascript
 const actualDuration = duration * 60 - capturedTimeLeft;
 ```
@@ -44,17 +48,20 @@ const actualDuration = duration * 60 - capturedTimeLeft;
 For circuits, `duration` was `0`, resulting in negative values like `-268 seconds`, which failed the `actualDuration >= 30` check.
 
 **Fix**: Use instrumentation data which tracks actual elapsed time:
+
 ```javascript
 const actualDurationSeconds = Math.floor(instrumentationData.duration_ms / 1000);
 const shouldJournal = practice !== 'Ritual' && actualDurationSeconds >= 30;
 ```
 
 ### 3. Circuit Detection in handleStop (v3.15.8)
+
 **Location**: `src/components/PracticeSection.jsx` lines 476-485
 
 **Problem**: `handleStop()` didn't check if it was a circuit session, so it never delegated to `handleCircuitComplete()`.
 
 **Fix**:
+
 ```javascript
 const handleStop = () => {
   const savedActivePracticeSession = activePracticeSession;
@@ -73,6 +80,7 @@ const handleStop = () => {
 ## Code Flow
 
 ### Before Fix
+
 ```
 1. User starts curriculum Day 2 (2 legs)
 2. Curriculum loads → sets circuitConfig ❌ but NOT activeCircuitId
@@ -86,6 +94,7 @@ const handleStop = () => {
 ```
 
 ### After Fix
+
 ```
 1. User starts curriculum Day 2 (2 legs)
 2. Curriculum loads → sets circuitConfig ✅ AND activeCircuitId ✅
@@ -105,6 +114,7 @@ const handleStop = () => {
 **1. `src/components/PracticeSection.jsx`**
 
 **Lines 217-235**: Curriculum circuit initialization
+
 ```javascript
 // Handle circuit mode if curriculum has multiple legs
 if (curriculumDay.legs?.length > 1) {
@@ -133,6 +143,7 @@ if (curriculumDay.legs?.length > 1) {
 ```
 
 **Lines 476-485**: Circuit detection in handleStop
+
 ```javascript
 const handleStop = () => {
   // Capture curriculum context BEFORE clearing
@@ -150,6 +161,7 @@ const handleStop = () => {
 ```
 
 **Lines 573-575**: Instrumentation-based duration
+
 ```javascript
 // Use instrumentation duration (in milliseconds) for accurate session length
 const actualDurationSeconds = Math.floor(instrumentationData.duration_ms / 1000);
@@ -171,11 +183,13 @@ const shouldJournal = practice !== 'Ritual' && actualDurationSeconds >= 30;
 ### Circuit vs Single Practice Sessions
 
 **Circuit Session Indicators**:
+
 - `activeCircuitId` is truthy (set to `'curriculum'` or `'custom'`)
 - `circuitConfig` has exercises array
 - `practice` state = `'Circuit'`
 
 **Single Practice Session Indicators**:
+
 - `activeCircuitId` is `null`
 - `circuitConfig` is `null`
 - `practice` state = specific practice name (e.g., "Breath & Stillness")
@@ -183,11 +197,13 @@ const shouldJournal = practice !== 'Ritual' && actualDurationSeconds >= 30;
 ### Why Instrumentation Data?
 
 The `useSessionInstrumentation` hook tracks:
+
 - `start_time`: `performance.now()` when session begins
 - `end_time`: `performance.now()` when session ends
 - `duration_ms`: Exact elapsed time in milliseconds
 
 **Advantages over state-based calculation**:
+
 1. ✅ Independent of `duration` state being correct
 2. ✅ Works for all session types (single, circuit, curriculum)
 3. ✅ Accounts for any timing edge cases
@@ -232,6 +248,7 @@ handleCircuitComplete() {
 ## Testing Checklist
 
 ✅ **Verified Working**:
+
 - Curriculum Day 2 (2 legs) shows summary after 30+ seconds
 - Curriculum Day 1 (1 leg) shows summary after 30+ seconds
 - Manual circuit practice shows summary
@@ -244,6 +261,7 @@ handleCircuitComplete() {
 **None modified in this fix.**
 
 The following files remain untouched per `CLAUDE.md` protected files list:
+
 - `src/components/Avatar.jsx`
 - `src/components/MoonOrbit.jsx`
 - `src/components/MoonGlowLayer.jsx`
@@ -251,19 +269,24 @@ The following files remain untouched per `CLAUDE.md` protected files list:
 ## Known Issues & Edge Cases
 
 ### Issue 1: Circuit name is generic
+
 Currently all curriculum circuits show "Custom Circuit" as the name. Could be improved to show curriculum day title.
 
 ### Issue 2: Duration state still set to 0 initially
+
 Even though we now use instrumentation, the `duration` state is still 0 for circuits on first load. This doesn't break anything but could cause confusion.
 
 **Potential improvement**:
+
 ```javascript
 // Could set duration to totalDuration earlier
 setDuration(totalDuration);
 ```
 
 ### Issue 3: Summary format mismatch
+
 `handleCircuitComplete()` sets:
+
 ```javascript
 sessionSummary = {
   type: 'circuit',
@@ -274,6 +297,7 @@ sessionSummary = {
 ```
 
 But the summary modal expects:
+
 ```javascript
 sessionSummary = {
   practice: string,
@@ -287,27 +311,31 @@ Currently works because the modal renders circuit data differently, but schema c
 
 ## Debugging Tips
 
-### If summary doesn't show:
+### If summary doesn't show
 
 1. **Check activeCircuitId**:
+
    ```javascript
    console.log('activeCircuitId:', activeCircuitId);
    console.log('circuitConfig:', circuitConfig);
    ```
 
 2. **Check instrumentation data**:
+
    ```javascript
    console.log('duration_ms:', instrumentationData.duration_ms);
    console.log('actualDurationSeconds:', Math.floor(instrumentationData.duration_ms / 1000));
    ```
 
 3. **Check circuit detection**:
+
    ```javascript
    const isCircuitSession = activeCircuitId && circuitConfig;
    console.log('isCircuitSession:', isCircuitSession);
    ```
 
 4. **Verify dev server location**:
+
    ```bash
    pwd  # Should be: C:\Users\trinh\.claude-worktrees\immanence-os\suspicious-cori
    ```
@@ -335,17 +363,20 @@ Currently works because the modal renders circuit data differently, but schema c
 **For Deprecated / Historical**:
 
 ⚠️ **DO NOT MODIFY** these lines without coordination:
+
 - `PracticeSection.jsx` lines 217-235 (circuit initialization)
 - `PracticeSection.jsx` lines 476-485 (handleStop circuit detection)
 - `PracticeSection.jsx` lines 573-575 (instrumentation duration)
 
 ✅ **Safe to modify** (with Deprecated / Historical entry):
+
 - Summary modal styling/layout
 - Circuit completion message text
 - Additional telemetry/logging
 - Circuit name customization
 
 📋 **Before touching PracticeSection.jsx**:
+
 1. Read `Deprecated / Historical`
 2. Check if Claude has it marked IN-PROGRESS
 3. Add your own Deprecated / Historical entry
@@ -354,4 +385,3 @@ Currently works because the modal renders circuit data differently, but schema c
 ---
 
 **End of Documentation**
-

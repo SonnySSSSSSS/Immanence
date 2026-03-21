@@ -8,4 +8,3 @@ Historical content moved to `docs/_archive/WORKFLOW_OLD.md`.
 
 - Rules and roles: `docs/AGENTS.md`
 - Coordination: `docs/MULTI_AI_WORKFLOW.md`
-

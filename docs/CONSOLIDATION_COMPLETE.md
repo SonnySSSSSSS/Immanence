@@ -11,6 +11,7 @@
 ### 1. Created docs/README.md ✅
 
 A comprehensive navigation guide that tells agents:
+
 - Where to start (5-minute quick start)
 - What each tier of docs contains
 - Common questions with direct answers
@@ -24,6 +25,7 @@ A comprehensive navigation guide that tells agents:
 ### 2. Organized into 5 Tiers ✅
 
 **Tier 1-2: Core (20 active files)**
+
 ```
 Active docs in /docs/:
 - AGENTS.md (task specs)
@@ -48,6 +50,7 @@ Active docs in /docs/:
 ```
 
 **Tier 4-5: Archive (18+ files)**
+
 ```
 docs/archive/
 ├── TASKS/
@@ -81,6 +84,7 @@ docs/archive/
 ### 3. Removed Redundant Files ✅
 
 **Deleted (6 files)**:
+
 - ❌ FOR_Deprecated / Historical.md (task-specific notes)
 - ❌ DOCUMENTATION_AUDIT.md (unclear/transient)
 - ❌ WORKFLOW.md (redundant with Deprecated / Historical)
@@ -89,6 +93,7 @@ docs/archive/
 - ❌ attention-axis-logic.md (subsection of Avatar)
 
 **Archived (13 files)**:
+
 - 6 TASK-*.md files → archive/TASKS/
 - 3 PHASE_2_*.md files → archive/PHASES/
 - 7 AVATAR spec files → archive/SPECS/
@@ -133,6 +138,7 @@ immanence-os/
 ## Agent Experience: Before vs After
 
 ### BEFORE (Confusing)
+
 ```
 docs/
 ├── README.md (outdated)
@@ -154,6 +160,7 @@ Answer: ❌ Unclear
 ---
 
 ### AFTER (Clear)
+
 ```
 docs/
 ├── README.md ← Clear navigation guide (NEW!)
@@ -207,6 +214,7 @@ Answer: ✅ "Start with docs/README.md → then .github/copilot-instructions.md 
 ## How Agents Use This Now
 
 ### Step 1: Agent reads docs/README.md
+
 ```
 Purpose: Know what's available and which docs to read
 Time: 2 minutes
@@ -216,6 +224,7 @@ Outcome: Clear reading path selected
 ### Step 2: Agent follows the reading path
 
 **Example: New agent getting productive**
+
 ```
 1. .github/copilot-instructions.md (5 min)
 2. AGENTS.md (2 min)
@@ -223,6 +232,7 @@ Outcome: Clear reading path selected
 ```
 
 **Example: Agent modifying components**
+
 ```
 1. .github/copilot-instructions.md (5 min)
 2. docs/ARCHITECTURE.md (15 min)
@@ -233,6 +243,7 @@ Outcome: Clear reading path selected
 ### Step 3: Quick lookup for specific needs
 
 All answered via docs/README.md Common Questions table:
+
 - "Where do I create a store?" → See table
 - "How do I understand the Avatar?" → See table
 - "What's the project status?" → See table
@@ -268,26 +279,33 @@ rm -f docs/*_DRAFT.md docs/FOR_*.md
 ## What Stays Where
 
 ### docs/README.md (Navigation)
+
 Lives here and points agents to:
+
 - `.github/copilot-instructions.md` (quick patterns)
 - `AGENTS.md` (task specs)
 - Feature-specific docs (AVATAR_SYSTEM.md, etc.)
 
 ### .github/copilot-instructions.md (Entry Point #1)
+
 Primary agent entry point with:
+
 - Quick start commands
 - Architecture patterns
 - Code examples
 - Verification checklist
 
 ### docs/ (Entry Point #2)
+
 Secondary agent entry point (after copilot-instructions.md) with:
+
 - Full architecture reference
 - Feature-specific guides
 - Development setup
 - LLM integration
 
 ### Root files (Status & History)
+
 - Deprecated / Historical (recent work)
 - PROJECT_STATUS.md (current phase)
 - CHANGELOG.md (version history)
@@ -297,6 +315,7 @@ Secondary agent entry point (after copilot-instructions.md) with:
 ## File Manifest
 
 ### Deleted (6 files - no longer needed)
+
 ```
 FOR_Deprecated / Historical.md
 DOCUMENTATION_AUDIT.md
@@ -307,6 +326,7 @@ attention-axis-logic.md
 ```
 
 ### Archived (13 files - historical reference)
+
 ```
 archive/TASKS/
   TASK-2026-01-05-A.md through E.md
@@ -328,6 +348,7 @@ archive/SPECS/
 ```
 
 ### Active (20 files - in daily use)
+
 ```
 docs/README.md (NEW - Navigation)
 AGENTS.md
@@ -369,4 +390,3 @@ CHANGELOG.md
 **Status**: ✅ Complete and ready for use  
 **Date**: 2026-01-10  
 **Next**: Agents can now start with docs/README.md or .github/copilot-instructions.md
-

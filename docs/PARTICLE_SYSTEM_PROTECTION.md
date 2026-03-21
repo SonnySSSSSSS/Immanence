@@ -39,12 +39,14 @@ useEffect(() => {
 ```
 
 **How it works:**
+
 - When `displayMode` changes, we generate a new React `key` for the canvas element
 - React sees the key change and **completely unmounts the old canvas**
 - A brand new canvas is mounted with correct dimensions
 - No stretched particles can survive the unmount/remount cycle
 
 **Why this is critical:**
+
 - This is the **primary protection** - even if other layers fail, this ensures correctness
 - React's reconciliation algorithm guarantees complete state reset on key change
 - No way for old particles to persist into new canvas
@@ -61,12 +63,14 @@ style={{
 ```
 
 **How it works:**
+
 - Old canvas fades to `opacity: 0` over 300ms
 - After fade completes, key changes → unmount/remount
 - New canvas fades back to `opacity: 1`
 - User sees smooth transition instead of abrupt change
 
 **Why this matters:**
+
 - Prevents jarring visual experience
 - Masks the unmount/remount process
 - Professional-grade UX
@@ -86,11 +90,13 @@ function initParticles() {
 ```
 
 **How it works:**
+
 - `initializedRef` tracks whether particles have been created for this canvas mount
 - Prevents duplicate initialization during canvas lifetime
 - Resize handler only reinitializes if width changes by >50px
 
 **Why this matters:**
+
 - Prevents edge cases where React might trigger multiple effect runs
 - Ensures particle count stays consistent
 - Protects against developer errors in future modifications
@@ -126,6 +132,7 @@ function initParticles() {
 ### Automated Testing (Future)
 
 Consider adding:
+
 - Visual regression tests capturing particle canvas at different modes
 - Performance tests ensuring 60fps during transitions
 - Unit tests for particle count consistency
@@ -139,6 +146,7 @@ Consider adding:
 The following code sections are **protected patterns** - modifying them may reintroduce particle stretching:
 
 1. **Canvas key prop** (line 250)
+
    ```javascript
    key={canvasKey} // ⚠️ DO NOT REMOVE
    ```
@@ -149,6 +157,7 @@ The following code sections are **protected patterns** - modifying them may rein
    - Do not skip the key update
 
 3. **initializedRef guard** (line 108)
+
    ```javascript
    if (initializedRef.current) return; // ⚠️ DO NOT REMOVE
    ```
@@ -159,6 +168,7 @@ The following code sections are **protected patterns** - modifying them may rein
 ### Safe Modifications
 
 You CAN safely modify:
+
 - Particle count (`particleCount` variable)
 - Particle size (`FIXED_PARTICLE_SIZE` constant)
 - Stage colors (`STAGE_PARTICLE_COLORS` object)
@@ -180,6 +190,7 @@ You CAN safely modify:
 ### Why React keys instead of conditional rendering?
 
 **Considered alternatives:**
+
 - Conditional rendering: `{displayMode === 'hearth' ? <Canvas1/> : <Canvas2/>}`
   - ❌ Requires duplicate Canvas components
   - ❌ More complex code
@@ -193,6 +204,7 @@ You CAN safely modify:
   - ❌ Still visible during resize
 
 **Why keys won:**
+
 - ✅ Leverages React's built-in reconciliation
 - ✅ Guaranteed complete state reset
 - ✅ Simplest implementation

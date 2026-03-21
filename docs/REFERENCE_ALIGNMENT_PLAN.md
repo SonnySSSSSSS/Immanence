@@ -12,6 +12,7 @@
 Extensive visual audit comparing Reference Image vs. Current UI reveals **fundamental architectural mismatch**. The current implementation uses opaque backgrounds and teal accents, while the reference uses **cosmic glassmorphism** with golden serif typography and visible nebula layers.
 
 **Critical Blockers Identified**:
+
 1. Solid black side masks (z-50) blocking all background light → **REMOVE or make transparent**
 2. Opaque card backgrounds hiding cosmic nebula → **Convert to rgba(0, 0, 0, 0.35) max**
 3. Teal color scheme (wrong) → **Replace with warm gold (#D4A84B, #F5E6D3)**
@@ -46,6 +47,7 @@ background: 'transparent', // was '#000'
 ### TASK 1.2: Make All Card Backgrounds Translucent
 
 **Files**:
+
 - `src/components/PracticeSection.jsx` (Practice selector cards)
 - `src/styles/cardMaterial.js` (Global material system)
 
@@ -83,6 +85,7 @@ backdropFilter: 'blur(28px)',
 | Any `teal` variants | `#C9A961` | Secondary accent |
 
 **Files to Audit**:
+
 - `src/theme/stageColors.js`
 - `src/components/PracticeSection.jsx`
 - `src/styles/cardMaterial.js`
@@ -124,6 +127,7 @@ backdropFilter: 'blur(28px)',
 ```
 
 **Apply to**:
+
 - All card labels
 - Practice card title
 - Button text
@@ -138,11 +142,13 @@ backdropFilter: 'blur(28px)',
 **File**: `src/components/PracticeSection.jsx` (PracticeSelector)
 
 **Current**:
+
 ```javascript
 <span>{p.label}</span> // "Breath & Stillness" (single line)
 ```
 
 **New**:
+
 ```javascript
 <div style={{
   fontFamily: 'var(--font-display)',
@@ -159,6 +165,7 @@ backdropFilter: 'blur(28px)',
 ```
 
 **Update PRACTICE_REGISTRY**:
+
 ```javascript
 breath: {
   label: "BREATH\nPRACTICES", // Two-line format
@@ -177,6 +184,7 @@ breath: {
 **File**: `src/components/PracticeSection.jsx`
 
 **Add below title**:
+
 ```javascript
 <div style={{
   fontFamily: 'var(--font-display)',
@@ -200,9 +208,11 @@ breath: {
 **File**: `src/components/BreathPathChart.jsx` (or wherever waveform is rendered)
 
 **Changes**:
+
 - Remove teal gradient fill → use transparent background
 - Thin stroke (2px) in dim white `rgba(255, 255, 255, 0.3)`
 - Add **single emerald glow** at peak point:
+
   ```javascript
   <circle
     cx={peakX}
@@ -223,8 +233,10 @@ breath: {
 **File**: `src/components/SacredTimeSlider.jsx`
 
 **Changes**:
+
 - **Rail**: Thin golden line (2px) `border-bottom: 2px solid rgba(213, 168, 75, 0.4)`
 - **Handle**:
+
   ```javascript
   <div style={{
     width: '28px',
@@ -235,7 +247,9 @@ breath: {
     boxShadow: '0 0 12px rgba(0, 200, 150, 0.6)'
   }} />
   ```
+
 - **Active number**: Wrap "10" in golden ring:
+
   ```javascript
   {isActive && (
     <div style={{
@@ -260,6 +274,7 @@ breath: {
 **File**: `src/components/PracticeSection.jsx`
 
 **Replace current button with**:
+
 ```javascript
 <button
   onClick={onStart}
@@ -309,12 +324,14 @@ breath: {
 **File**: `src/components/PracticeSection.jsx` (PracticeSelector)
 
 **Current**:
+
 ```javascript
 gridTemplateColumns: 'repeat(3, 1fr)',
 gap: '16px'
 ```
 
 **New**:
+
 ```javascript
 gridTemplateColumns: 'repeat(2, 1fr)',
 gap: '24px',
@@ -322,6 +339,7 @@ maxWidth: '480px' // Constrain grid width
 ```
 
 **Reorder PRACTICE_IDS array** to match 2×4 layout:
+
 ```javascript
 const PRACTICE_IDS_LAYOUT = [
   'breath', 'ritual',
@@ -340,6 +358,7 @@ const PRACTICE_IDS_LAYOUT = [
 **File**: `src/App.jsx` (SectionView component)
 
 **Changes**:
+
 - Avatar container: Increase from 280px → 320px diameter
 - Margin adjustments for better vertical rhythm
 
@@ -352,11 +371,13 @@ const PRACTICE_IDS_LAYOUT = [
 ### TASK 7.1: Replace ALL Thick Borders with Hairlines
 
 **Global rule**:
+
 - All card borders: `1px solid rgba(213, 168, 75, 0.5)` (golden hairline)
 - Remove ALL diffuse glows from borders
 - Keep inner highlights only: `inset 0 1px 0 rgba(255, 255, 255, 0.08)`
 
 **Files to update**:
+
 - `src/components/PracticeSection.jsx` (all cards)
 - `src/styles/cardMaterial.js` (border definitions)
 
@@ -400,6 +421,7 @@ const PRACTICE_IDS_LAYOUT = [
 ## 🚨 CRITICAL DEPENDENCIES
 
 **Must complete BEFORE starting**:
+
 1. Remove or neutralize black side masks (`App.jsx` lines 291-310)
 2. Verify Background component is rendering (check z-index: 0)
 3. Add Cinzel or Playfair Display to font imports
@@ -421,6 +443,7 @@ const PRACTICE_IDS_LAYOUT = [
 **Image 2 (Current)**: Opaque teal UI blocking nebula
 
 **Key Visual Differences**:
+
 - Reference shows **visible cosmic particles** through glass
 - Reference uses **warm golden palette**, not teal
 - Reference has **serif typography** with wide tracking

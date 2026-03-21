@@ -31,6 +31,7 @@ These files orient agents to the codebase:
 | `README.md` | Public overview, feature list, setup instructions | Humans + agents |
 
 **How agents use Tier 1:**
+
 - Start with `.github/copilot-instructions.md` → 5 minutes to understand big picture
 - Reference `CLAUDE.md` for rules/state keys
 - Reference `docs/AGENTS.md` for task format & planning constraint
@@ -51,6 +52,7 @@ These docs explain "how things work" across the system:
 | `docs/PHILOSOPHY.md` | Design principles, why constraints exist | Project intent | Understanding "why" behind decisions |
 
 **How agents use Tier 2:**
+
 - Read before major refactors across multiple stores
 - Reference when modifying data flow or component hierarchy
 - Cite for justification when making architectural decisions
@@ -70,6 +72,7 @@ These docs explain specific subsystems or features:
 | `docs/4 Modes User Manual.md` | End-user guide for Four Modes training | UX reference | Understanding feature from user POV |
 
 **How agents use Tier 3:**
+
 - Reference when modifying specific subsystem
 - Use to understand feature context before coding
 - Link from Tier 2 docs for detailed reference
@@ -88,6 +91,7 @@ These docs track work and changes:
 | `PROJECT_STATUS.md` | Maintained | Current phase, blockers, next steps | All agents |
 
 **How agents use Tier 4:**
+
 - Check `Deprecated / Historical` before starting to see recent context
 - Reference `CHANGELOG.md` when versioning
 - File new `TASK-{DATE}-{ID}.md` for complex multi-step work
@@ -188,7 +192,8 @@ All Tier 1–3 docs should follow this structure:
 
 ### From Agent Entry Points
 
-`.github/copilot-instructions.md` → 
+`.github/copilot-instructions.md` →
+
 - Links to `docs/AGENTS.md` (task specs)
 - Links to `docs/ARCHITECTURE.md` (deep dives)
 - Links to `docs/DEVELOPMENT.md` (commands)
@@ -238,12 +243,14 @@ All Tier 1–3 docs should follow this structure:
 ### For Agents
 
 ✅ **DO:**
+
 - Start with `.github/copilot-instructions.md`
 - Reference Tier 2 docs before making multi-file changes
 - File new TASK logs for complex work
 - Link to docs when explaining decisions
 
 ❌ **DON'T:**
+
 - Create new generic docs without approval
 - Leave `*_DRAFT.md` or `FOR_*.md` files uncleaned
 - Modify Tier 1–2 docs without understanding ownership (see AGENTS.md)
@@ -251,6 +258,7 @@ All Tier 1–3 docs should follow this structure:
 ### For Project Lead
 
 ✅ **DO:**
+
 - Maintain Deprecated / Historical and PROJECT_STATUS.md
 - Review Tier 1–2 docs quarterly
 - Assign doc ownership in complex features
@@ -327,7 +335,7 @@ Then fill each file using the **Document Structure Template** above.
 ## Questions?
 
 If doc organization is unclear, refer to:
+
 - `.github/copilot-instructions.md` — Quick overview
 - `docs/AGENTS.md` — Authority & file ownership
 - This file — Full standard with examples
-

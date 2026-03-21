@@ -10,7 +10,8 @@ You now have THREE batch files that prevent disasters:
 
 **What it does:** Saves your work to GitHub in 5 seconds
 
-**When to use:** 
+**When to use:**
+
 - Every time you finish a work session
 - Before taking a break
 - Before trying something risky
@@ -30,20 +31,24 @@ Put this on your desktop or taskbar and press it obsessively.
 
 **Options:**
 
-### DAILY WORK:
+### DAILY WORK
+
 - **Option 1: Save my work** - Full save with commit message
 - **Option 2: Deploy to web** - Publishes your app to GitHub Pages
 
-### BACKUPS:
+### BACKUPS
+
 - **Option 3: Create snapshot** - Timestamped immutable backup
 - **Option 4: Quick local backup** - Fast mirror backup
 
-### RECOVERY:
+### RECOVERY
+
 - **Option 5: Restore from backup-latest** - Get your recent work back
 - **Option 6: Restore from snapshot** - Choose from dated backups
 - **Option 7: Restore from GitHub** - Reset to GitHub's version
 
 **When to use:**
+
 - When you want to deploy to the web (option 2)
 - When you need to restore something (options 5-7)
 - When you want a formal snapshot (option 3)
@@ -58,21 +63,25 @@ The old file still works but use `work-manager.bat` instead.
 
 ## Your Daily Workflow
 
-### STARTING WORK:
+### STARTING WORK
+
 1. Open project
 2. Run `npm run dev`
 3. Work on your app
 
-### DURING WORK:
+### DURING WORK
+
 - Every 30-60 minutes: Double-click `quick-save.bat`
 - Or use `work-manager.bat` option 1
 
-### DEPLOYING TO WEB:
+### DEPLOYING TO WEB
+
 1. Run `work-manager.bat`
 2. Choose option 2 (Deploy to web)
 3. It checks everything and deploys safely
 
-### IF SOMETHING BREAKS:
+### IF SOMETHING BREAKS
+
 1. **DON'T PANIC**
 2. Run `work-manager.bat`
 3. Choose option 5 (Restore from backup-latest)
@@ -82,10 +91,12 @@ The old file still works but use `work-manager.bat` instead.
 
 ## What Changed That Saved You
 
-### The Problem:
+### The Problem
+
 You were working in `backup-latest` branch but the old batch file backed up `main` branch (old code). When things broke, restores gave you old code.
 
-### The Solution:
+### The Solution
+
 1. **Branch awareness** - New system shows you which branch you're on
 2. **Auto-switching** - Quick-save automatically uses backup-latest
 3. **Safety checks** - Won't let you deploy without confirming
@@ -103,19 +114,22 @@ The batch files handle all of this automatically.
 
 ---
 
-## If You Forget Everything, Remember This:
+## If You Forget Everything, Remember This
 
 **SAVE OFTEN:**
+
 ```
 quick-save.bat
 ```
 
 **DEPLOY:**
+
 ```
 work-manager.bat → option 2
 ```
 
 **OH SHIT I BROKE IT:**
+
 ```
 work-manager.bat → option 5
 ```

@@ -3,6 +3,7 @@
 ## Core Philosophy
 
 Immanence OS is a **constraint-based practice instrument**. It is not:
+
 - A self-improvement app
 - A gamified meditation tracker
 - A therapy replacement
@@ -27,6 +28,7 @@ It is a **structured environment** for observing experience, separating fact fro
 The central avatar is the user's **visual representation of practice identity**. It is not a character, mascot, or reward. It is a mirror.
 
 The avatar reflects:
+
 - **Stage** (temporal depth) — How long you have been practicing
 - **Path** (attender tendency) — What kind of attention you naturally express
 - **Status** (activity state) — Recent engagement level
@@ -52,6 +54,7 @@ Stages represent **accumulated practice days**. They are not achievements or lev
 ### Stellar Substages
 
 After Beacon, the practitioner enters Stellar, which has three sub-phases:
+
 - **Stellar I** (360-540 days) — Established practitioner
 - **Stellar II** (540-720 days) — Deepening mastery
 - **Stellar III** (720+ days) — Approaching transmission capacity
@@ -59,6 +62,7 @@ After Beacon, the practitioner enters Stellar, which has three sub-phases:
 ### Why These Durations?
 
 90 days (~3 months) is the minimum meaningful period to observe behavioral stability:
+
 - Less than 90 days: noise, motivation spikes, novelty effects
 - 90+ days: genuine habit formation, sustainable patterns
 
@@ -69,6 +73,7 @@ The system requires **2.5 years** to reach Stellar III. This is intentional. Pra
 ## Paths: Tendencies of Attention
 
 Paths represent **how attention naturally behaves** during practice. They are not:
+
 - Personality types
 - Spiritual identities
 - Better or worse approaches
@@ -89,6 +94,7 @@ They are **observed patterns** that emerge after sustained engagement.
 ### Path Emergence
 
 Paths do not appear immediately. The system requires:
+
 - **90 days** of practice before any path emerges
 - **Dominant practice** (>50% in one domain) to assign a path
 - **180 days** of sustained behavior to allow a path shift
@@ -96,6 +102,7 @@ Paths do not appear immediately. The system requires:
 ### Why Sanskrit Names?
 
 Sanskrit terminology was chosen:
+
 1. **Precision** — Sanskrit contemplative vocabulary is remarkably precise
 2. **Neutrality** — Avoids Western psychological framing ("body type," "visual learner")
 3. **Tradition** — Connects to established contemplative lineages without appropriation
@@ -104,6 +111,7 @@ Sanskrit terminology was chosen:
 ### Samyoga: The Integration Path
 
 Samyoga appears when:
+
 - All domains have ≥10% of practice time
 - No single domain exceeds 45%
 - At least 4 domains have ≥15%
@@ -132,6 +140,7 @@ While Paths describe *what* you practice, Attention Vectors describe *how* atten
 ### Ekagrata (One-Pointed)
 
 Attention expresses through:
+
 - Long session durations
 - High completion rates
 - Low interruptions
@@ -142,6 +151,7 @@ This is not "better focus." It is **a pattern of endurance**.
 ### Sahaja (Natural)
 
 Attention expresses through:
+
 - Regular practice rhythm
 - Consistent session lengths
 - Low variation week-to-week
@@ -152,6 +162,7 @@ This is not spiritual effortlessness. It is **low behavioral friction**.
 ### Vigilance (Field Awareness)
 
 Attention expresses through:
+
 - Active scanning across practices
 - Completion of scanning cycles
 - Coherent switching (not random hopping)
@@ -163,6 +174,7 @@ This is not distraction. It is **coherent distributed awareness**.
 ## Why Hysteresis?
 
 The system uses **hysteresis**—resistance to change—in all recognition:
+
 - Stages require 90 days to advance
 - Paths require 90 days to emerge, 180 days to shift
 - Attention vectors require weeks of consistent signals
@@ -170,11 +182,13 @@ The system uses **hysteresis**—resistance to change—in all recognition:
 ### Why This Matters
 
 Human attention is non-linear:
+
 - It fluctuates weekly
 - It regresses under stress
 - It oscillates naturally
 
 Without hysteresis:
+
 - Identities would flip constantly
 - The system would lie
 - Users would be misrepresented
@@ -217,6 +231,7 @@ See [4 Modes User Manual](../documentation/4%20Modes%20User%20Manual.md) for det
 ## What This System Refuses to Do
 
 Immanence OS explicitly refuses:
+
 - **Prediction** — It won't tell you what will happen
 - **Coaching** — It won't tell you what to do
 - **Correction** — It won't tell you you're wrong

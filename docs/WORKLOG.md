@@ -80,6 +80,7 @@ Each task must follow this structure:
 - **Dimensions**: ~120x100px base (scalable)
 - **Style**: Metallic slate-blue/gray gradient, beveled edges, subtle inner shadow
 - **Source**: ComfyUI generation with prompt:
+
   ```
   Slate blue metallic UI card, beveled edges, subtle inner glow, dark mode interface element,
   clean geometric, no text, centered, isolated on transparent background, UI asset
@@ -91,6 +92,7 @@ Each task must follow this structure:
 - **Dimensions**: ~400x500px (will be scaled)
 - **Style**: Art Deco gold frame with decorative corner flourishes, fine gold lines, subtle glow
 - **Source**: ComfyUI generation with prompt:
+
   ```
   Ornate Art Deco gold decorative frame, intricate corner flourishes, thin gold lines,
   dark transparent center, luxury UI element, baroque details, isolated on transparent background
@@ -442,7 +444,7 @@ Version: v3.24.0
 
 ## 📊 CURRENT STATE ANALYSIS (Latest User Feedback)
 
-### Refinements Needed:
+### Refinements Needed
 
 1. **Circuit Training Button**:
    - ✅ Remove the lightning bolt icon.
@@ -550,25 +552,25 @@ const keyTimes = `0; ${t1}; ${t2}; ${t3}; 1`;
 
 ## ✅ ACCEPTANCE CRITERIA
 
-### Circuit Button:
+### Circuit Button
 
 - [ ] NO icon.
 - [ ] Compact height.
 - [ ] Aligned perfectly with sections below.
 
-### Breath Controls:
+### Breath Controls
 
 - [ ] NO +/– buttons.
 - [ ] Direct number inputs (1-60).
 - [ ] Changes reflect instantly in graph.
 
-### Breath Graph:
+### Breath Graph
 
 - [ ] Trapezoidal shape matches durations.
 - [ ] Dot follows the line exactly.
 - [ ] Dot takes specified seconds for each segment.
 
-### General:
+### General
 
 - [ ] Begin Practice button is filled with accent color.
 - [ ] All components share identical `560px` max-width.
@@ -617,7 +619,7 @@ Version: v3.22.0
 
 ## 📊 CURRENT STATE ANALYSIS (Screenshot 2026-01-11 21:41)
 
-### What's Working:
+### What's Working
 
 - ✅ Circuit Training button is now full-width at top
 - ✅ 2×4 grid of 8 practice cards implemented
@@ -625,7 +627,7 @@ Version: v3.22.0
 - ✅ Options panel has translucent background
 - ✅ Begin Practice button exists
 
-### 🔴 CRITICAL ISSUES REMAINING:
+### 🔴 CRITICAL ISSUES REMAINING
 
 #### Issue 1: PARTICLES TOO LOW
 
@@ -1057,19 +1059,19 @@ const particleFieldHeight = windowHeight * 0.45; // 30% higher = 0.15 + 0.30 = 0
 
 ## ✅ ACCEPTANCE CRITERIA
 
-### Width Consistency:
+### Width Consistency
 
 - [ ] Circuit button, practice grid, and options panel have IDENTICAL widths
 - [ ] All components perfectly left/right aligned
 - [ ] No visual offset between sections
 
-### Breath Phase Controls:
+### Breath Phase Controls
 
 - [ ] 4 input controls visible: Inhale, Hold 1, Exhale, Hold 2
 - [ ] Values can be adjusted (range: 0-12 for holds, 1-12 for inhale/exhale)
 - [ ] Subtitle updates dynamically: "Inhale X · Hold X · Exhale X · Hold X"
 
-### Breath Graph:
+### Breath Graph
 
 - [ ] Graph shape is TRAPEZOIDAL (rise → flat → fall → flat)
 - [ ] Graph shape updates when input values change
@@ -1077,13 +1079,13 @@ const particleFieldHeight = windowHeight * 0.45; // 30% higher = 0.15 + 0.30 = 0
 - [ ] Hold durations affect width of plateaus
 - [ ] NOT a smooth sine wave
 
-### Particle Field:
+### Particle Field
 
 - [ ] Particles extend ~30% higher than before
 - [ ] Particles reach approximately 45% of screen height
 - [ ] No stretching/distortion
 
-### General:
+### General
 
 - [ ] `npm run build` completes with no errors
 - [ ] Version bump: v3.21.0
@@ -1136,7 +1138,7 @@ Execute ONLY the task above dated 2026-01-11 21:41.
 
 ## 📊 CURRENT vs. REFERENCE GAP ANALYSIS (Updated 2026-01-11 21:12)
 
-### Current State — Remaining Problems:
+### Current State — Remaining Problems
 
 #### 🔴 CRITICAL: Particle System (Bottom of Screen)
 
@@ -1182,7 +1184,7 @@ Execute ONLY the task above dated 2026-01-11 21:41.
 
 ---
 
-### Reference Design Excellence Points:
+### Reference Design Excellence Points
 
 1. **Layout**: Full-width Circuit button → 2×4 equal card grid
 2. **Breath Visualization**: Trapezoidal 4-phase waveform (not sine wave)
@@ -1195,7 +1197,7 @@ Execute ONLY the task above dated 2026-01-11 21:41.
 
 ## 🎨 COLOR SYSTEM — DUAL-COLOR ARCHITECTURE
 
-### Fixed Colors (Never Change with Theme):
+### Fixed Colors (Never Change with Theme)
 
 | Token                 | Value                     | Usage                                                                |
 | --------------------- | ------------------------- | -------------------------------------------------------------------- |
@@ -1204,7 +1206,7 @@ Execute ONLY the task above dated 2026-01-11 21:41.
 | `--brand-gold-border` | `rgba(201, 169, 97, 0.6)` | Active card borders, panel outlines                                  |
 | `--parchment-cream`   | `#F5E6D3`                 | Icon color when selected, highlight text                             |
 
-### Dynamic Colors (Change with Avatar Stage via `--accent-*` CSS vars):
+### Dynamic Colors (Change with Avatar Stage via `--accent-*` CSS vars)
 
 | Token                   | Usage                                    |
 | ----------------------- | ---------------------------------------- |
@@ -1213,7 +1215,7 @@ Execute ONLY the task above dated 2026-01-11 21:41.
 | `var(--accent-40)`      | Subtle background tints                  |
 | `var(--text-accent)`    | Secondary highlighted text               |
 
-### Color Application Rules:
+### Color Application Rules
 
 1. **Selected Card**: Gold border (`--brand-gold-border`), gold text glow (`--brand-gold-glow`)
 2. **Inactive Cards**: White/8% border, no glow
@@ -1221,7 +1223,7 @@ Execute ONLY the task above dated 2026-01-11 21:41.
 4. **Begin Practice Button**: Gold border (`--brand-gold-border`), gold text (`--brand-gold`)
 5. **Icons**: Inactive = `rgba(255, 255, 255, 0.4)`, Active = `#D4AF37` (brand gold)
 
-### Stage-to-Accent Color Mapping (from AVATAR_SYSTEM.md):
+### Stage-to-Accent Color Mapping (from AVATAR_SYSTEM.md)
 
 The `--accent-*` CSS variables are set by `ThemeContext.jsx` based on the current avatar stage:
 
@@ -1854,14 +1856,14 @@ style={{
 
 ## ✅ ACCEPTANCE CRITERIA
 
-### Layout Checklist:
+### Layout Checklist
 
 - [ ] Circuit button is full-width above the practice grid
 - [ ] Practice grid shows 4 cards per row (2×4 layout for 8 practices)
 - [ ] All 8 practice cards are equal size
 - [ ] Grid excludes Circuit (Circuit is separate button above)
 
-### Card Styling Checklist:
+### Card Styling Checklist
 
 - [ ] Cards are translucent (cosmic background visible through)
 - [ ] Selected card has golden text glow (luminous text-shadow)
@@ -1869,7 +1871,7 @@ style={{
 - [ ] Inactive cards have subtle white border, no glow
 - [ ] Icons proportional to card size
 
-### Breath Options Panel Checklist:
+### Breath Options Panel Checklist
 
 - [ ] Small ✦ star icon at top (not large icon)
 - [ ] Title: "BREATH & STILLNESS" in small caps
@@ -1880,19 +1882,19 @@ style={{
 - [ ] Duration picker shows selected value prominently larger
 - [ ] Options panel is translucent (cosmic background visible)
 
-### Particle System Checklist:
+### Particle System Checklist
 
 - [ ] Particles remain **uniform circles** in both Hearth and Sanctuary modes
 - [ ] No stretching/distortion when viewport width changes
 - [ ] Particles use fixed pixel sizing
 
-### General Checklist:
+### General Checklist
 
 - [ ] Begin Practice button is full-width pill with golden border
 - [ ] Cosmic background visible through all glassmorphic elements
 - [ ] Version bump: v3.20.0
 
-### Technical Checklist:
+### Technical Checklist
 
 - [ ] `npm run build` completes with no errors
 - [ ] No console errors in browser
@@ -1903,25 +1905,25 @@ style={{
 
 ## 📁 FILES TO MODIFY
 
-### Primary Changes:
+### Primary Changes
 
 - `src/components/PracticeSection.jsx` — Circuit button extraction, 2×4 grid, card transparency
 - `src/components/SacredTimeSlider.jsx` — Restyle for horizontal picker look
 
-### New Files:
+### New Files
 
 - `src/components/BreathCycleGraph.jsx` — 4-phase trapezoidal graph with dot tracer
 
-### Particle Fix:
+### Particle Fix
 
 - `src/components/Background.jsx` or `src/components/IndrasNet.jsx` — Fix particle sizing
 
-### Deprecate/Remove:
+### Deprecate/Remove
 
 - `src/components/BreathPhaseIndicator.jsx` — Remove usage
 - `src/components/BreathPathChart.jsx` — Replace with BreathCycleGraph
 
-### Style Updates:
+### Style Updates
 
 - `src/App.css` — Add `--brand-gold`, `--brand-gold-glow`, `--brand-gold-border` CSS vars if not present
 - `src/App.jsx` — Version bump to v3.20.0
@@ -1952,7 +1954,7 @@ style={{
 
 1. `npm run build` — Must complete with no errors
 2. `npm run dev` — Start dev server
-3. Open http://localhost:5175/Immanence/
+3. Open <http://localhost:5175/Immanence/>
 4. Navigate to Practice section
 5. **Layout Verification**:
    - Circuit button should span full width above the grid
@@ -2231,6 +2233,7 @@ opacity: isActive ? 1 : 0.85,
 1. **Line 364**: REPLACE `background: linear-gradient(180deg, ${tokens.accent}...)`
    WITH `background: '#00A382'`
 2. **Line 367**: REPLACE multi-layer boxShadow with:
+
    ```javascript
    boxShadow: `
      0 0 24px rgba(0, 163, 130, 0.6),
@@ -2238,6 +2241,7 @@ opacity: isActive ? 1 : 0.85,
      inset 0 1px 0 rgba(255, 255, 255, 0.25)
    `;
    ```
+
 3. **Line 372**: ADD `border: '1px solid rgba(255, 255, 255, 0.3)'`
 4. **Line 366**: Change `fontFamily` → `'Montserrat, Inter, Outfit, sans-serif'`
 5. **Line 370**: Change `letterSpacing: '0.02em'` → `'0.05em'`
@@ -2322,13 +2326,16 @@ onMouseLeave={(e) => {
 **Changes:**
 
 1. **Line 138-140**: Update `inactiveGlow` to remove diffuse shadows:
+
    ```javascript
    // Dark mode
    const inactiveGlow = isLight
      ? "0 2px 8px rgba(60, 50, 35, 0.08)"
      : "0 4px 12px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.05)";
    ```
+
 2. **Line 141-144**: Update `hoverGlow` to structural only:
+
    ```javascript
    const hoverGlow = isLight
      ? "0 4px 12px rgba(60, 50, 35, 0.12)"
@@ -2352,6 +2359,7 @@ onMouseLeave={(e) => {
 **Changes:**
 
 1. **Line 346**: Update label styling:
+
    ```javascript
    className="uppercase text-center"
    style={{
