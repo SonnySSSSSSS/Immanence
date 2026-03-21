@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Sri Yantra - Outline only version for visualization -->
+<svg height="800px" width="800px" version="1.1" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 504 504">
+  <!-- Outer circle -->
+  <circle cx="252" cy="252" r="244" fill="none" stroke="#000000" stroke-width="8"/>
+  
+  <!-- Large upward triangle (outer) -->
+  <path d="M252,347.2 L87.2,74.4 L409.6,74.4 Z" fill="none" stroke="#000000" stroke-width="4"/>
+  
+  <!-- Large downward triangle (outer) -->
+  <path d="M94.4,436 L252,158.4 L409.6,436 Z" fill="none" stroke="#000000" stroke-width="4"/>
+  
+  <!-- Medium upward triangle -->
+  <path d="M252,347.2 L108,76 L396,76 Z" fill="none" stroke="#000000" stroke-width="3"/>
+  
+  <!-- Medium downward triangle -->
+  <path d="M108,420 L252,176 L396,420 Z" fill="none" stroke="#000000" stroke-width="3"/>
+  
+  <!-- Inner upward triangle -->
+  <path d="M108,332 L252,88 L396,332 Z" fill="none" stroke="#000000" stroke-width="2"/>
+  
+  <!-- Inner downward triangle -->
+  <path d="M108,164 L252,408 L396,164 Z" fill="none" stroke="#000000" stroke-width="2"/>
+  
+  <!-- Center eye shape - upper arc -->
+  <path d="M205.6,252 C205.6,239.2 226.4,221.6 252,221.6 C277.6,221.6 298.4,239.2 298.4,252" fill="none" stroke="#000000" stroke-width="3"/>
+  
+  <!-- Center eye shape - lower arc -->
+  <path d="M298.4,252 C298.4,264.8 277.6,282.4 252,282.4 C226.4,282.4 205.6,264.8 205.6,252" fill="none" stroke="#000000" stroke-width="3"/>
+  
+  <!-- Center dot (bindu) -->
+  <circle cx="252" cy="252" r="16" fill="#000000"/>
+</svg>

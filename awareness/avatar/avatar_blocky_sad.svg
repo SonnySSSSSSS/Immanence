@@ -1,0 +1,53 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="256" height="256" viewBox="0 0 256 256">
+  <defs>
+    <linearGradient id="shirt" x1="0" x2="0" y1="0" y2="1">
+      <stop offset="0" stop-color="#2f8d86"/>
+      <stop offset="1" stop-color="#1f6f6a"/>
+    </linearGradient>
+    <linearGradient id="pants" x1="0" x2="0" y1="0" y2="1">
+      <stop offset="0" stop-color="#2d3036"/>
+      <stop offset="1" stop-color="#17191d"/>
+    </linearGradient>
+    <filter id="soft" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="0" dy="4" stdDeviation="4" flood-color="#000" flood-opacity="0.18"/>
+    </filter>
+  </defs>
+
+  <!-- Body group -->
+  <g filter="url(#soft)">
+    <!-- Head -->
+    <rect x="78" y="22" width="100" height="92" rx="38" fill="#d9b98c"/>
+    <!-- Hair band -->
+    <path d="M86 54 C104 34, 152 34, 170 54" fill="none" stroke="#2e3b52" stroke-width="14" stroke-linecap="round"/>
+
+    <!-- Face -->
+    <circle cx="112" cy="70" r="8" fill="#1b1e24"/>
+    <circle cx="144" cy="70" r="8" fill="#1b1e24"/>
+    <!-- Mouth sad -->
+    <path d="M112 100 C122 86, 134 86, 144 100" fill="none" stroke="#1b1e24" stroke-width="8" stroke-linecap="round"/>
+
+    <!-- Neck -->
+    <rect x="112" y="108" width="32" height="16" rx="8" fill="#caa77d"/>
+
+    <!-- Torso -->
+    <rect x="54" y="118" width="148" height="82" rx="26" fill="url(#shirt)"/>
+    <!-- Chest panel -->
+    <rect x="88" y="134" width="80" height="54" rx="18" fill="#ffffff" opacity="0.08"/>
+
+    <!-- Arms -->
+    <rect x="28" y="132" width="44" height="66" rx="22" fill="#2a7c77"/>
+    <rect x="184" y="132" width="44" height="66" rx="22" fill="#2a7c77"/>
+
+    <!-- Hands -->
+    <circle cx="50" cy="200" r="16" fill="#d9b98c"/>
+    <circle cx="206" cy="200" r="16" fill="#d9b98c"/>
+
+    <!-- Legs -->
+    <rect x="78" y="196" width="44" height="48" rx="16" fill="url(#pants)"/>
+    <rect x="134" y="196" width="44" height="48" rx="16" fill="url(#pants)"/>
+
+    <!-- Shoes -->
+    <rect x="72" y="232" width="56" height="22" rx="11" fill="#0f1114"/>
+    <rect x="128" y="232" width="56" height="22" rx="11" fill="#0f1114"/>
+  </g>
+</svg>
