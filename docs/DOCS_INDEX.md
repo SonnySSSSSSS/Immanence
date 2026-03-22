@@ -1,6 +1,6 @@
 # Documentation Index
 
-Canonical doc map for `immanence-os`, refreshed on 2026-03-09.
+Canonical doc map for `immanence-os`, refreshed on 2026-03-22.
 
 ## Canonical Entry Points
 
@@ -10,7 +10,7 @@ Canonical doc map for `immanence-os`, refreshed on 2026-03-09.
 
 ## Core Repo Docs
 
-- [README.md](README.md) - quick orientation to the docs folder
+- [README.md](README.md) - project overview, setup, and architecture links
 - [DEVELOPMENT.md](DEVELOPMENT.md) - environment and development setup
 - [WORKFLOW.md](WORKFLOW.md) - workflow guidance and handoff habits
 - [LLM_INTEGRATION.md](LLM_INTEGRATION.md) - Four Modes LLM proxy integration and setup

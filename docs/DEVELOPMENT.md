@@ -34,7 +34,7 @@ Set `VITE_LLM_PROXY_URL` in your local environment if you want to exercise Four 
 # Start development server
 npm run dev
 
-# Opens at http://localhost:5175/Immanence/
+# Opens at http://localhost:5173/ (dev mode uses base path "/", not "/Immanence/")
 ```
 
 ### DevPanel Access
@@ -42,21 +42,15 @@ npm run dev
 Press **Ctrl+Shift+D** to open the developer panel for:
 
 - Avatar preview with stage/path selection
-
-### Server Hygiene
-
-Use the helper scripts when ports or versions get stuck:
-
-```powershell
 - Lunar progress controls
 - Path ceremony triggers
 - Attention tracking data
 - LLM connection testing
 - Data management (export/import/reset)
 
----
+### Server Hygiene
 
-Expected port: `http://localhost:5173/`. If Vite starts on `5174`, another process is holding `5173`. Run the reset scripts and try again from the main folder.
+Expected default port: `http://localhost:5173/`. If Vite starts on `5174` or higher, another process is holding the port. Run `dev-reset.ps1` or kill the conflicting process and restart from the main folder.
 
 ## Project Scripts
 
@@ -67,7 +61,6 @@ Expected port: `http://localhost:5173/`. If Vite starts on `5174`, another proce
 | `npm run preview` | Preview production build |
 | `npm run lint` | Run ESLint |
 | `npm run deploy` | Deploy to GitHub Pages |
-| `npm run gen:assets` | Generate Sakshi scene assets (if configured) |
 
 ---
 
@@ -170,8 +163,9 @@ export const useProgressStore = create(
 
 - `immanence-progress` — Sessions, streaks
 - `immanence-chains` — Four Modes data
-- `immanence-wave-profile` — Personality data
 - `immanence-lunar` — Lunar tracking
+
+For the full canonical storage key list see [ARCHITECTURE.md](../ARCHITECTURE.md) → Persistence Boundaries.
 
 To reset all data: DevPanel → Data Management → Clear All Data
 

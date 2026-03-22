@@ -33,8 +33,8 @@ Run this checklist before any production deployment.
   - Run: `git ls-files .env.local` — if it returns a result, it's tracked
 
 - [ ] **Auth can be disabled via source code**
-  - Auth enablement must be env-gated in both `src/lib/supabaseClient.js` and `src/components/auth/AuthGate.jsx`
-  - `VITE_ENABLE_AUTH` should accept only `true` / `false` and default to enabled when missing or malformed
+  - Auth enablement is env-gated in both `src/lib/supabaseClient.js` and `src/components/auth/AuthGate.jsx` via `src/config/runtimeEnv.js`
+  - `VITE_ENABLE_AUTH` accepts `true` / `false` (case-insensitive) and defaults to enabled when missing or malformed
 
 - [ ] **Session expiry / idle timeout**
   - Supabase handles JWT refresh automatically — ✅ acceptable

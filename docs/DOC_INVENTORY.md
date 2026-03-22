@@ -2,7 +2,7 @@
 
 **Purpose**: Organize existing docs against the new standard; identify gaps and cleanup needs.
 
-**Last Updated**: 2026-01-10
+**Last Updated**: 2026-03-22
 
 ---
 
@@ -12,7 +12,7 @@
 |------|--------|-------|
 | `.github/copilot-instructions.md` | ✅ Ready | Updated with examples, diagrams, photic description |
 | `CLAUDE.md` | ✅ Ready | Covers rules, commands, architecture overview |
-| `docs/AGENTS.md` | ✅ Ready | Defines authority, task specs, reuse-first |
+| `AGENTS.md` (root) | ✅ Ready | Defines authority, task specs, reuse-first |
 | `README.md` | ✅ Ready | Feature overview + setup |
 
 ---
@@ -21,7 +21,7 @@
 
 | File | Status | Notes |
 |------|--------|-------|
-| `docs/ARCHITECTURE.md` | ✅ Ready | Component ownership, store wiring, critical flows |
+| `ARCHITECTURE.md` (root) | ✅ Ready | Canonical system map — use this. `docs/ARCHITECTURE.md` is legacy, retained for reference only. |
 | `docs/DEVELOPMENT.md` | ✅ Ready | Setup, scripts, state persistence |
 | `docs/LLM_INTEGRATION.md` | ✅ Ready | LLM proxy setup, validation functions, API |
 | `docs/PHILOSOPHY.md` | ✅ Ready | Design principles, core philosophy |
@@ -36,7 +36,7 @@
 | `docs/AVATAR_SYSTEM.md` | ✅ Ready | ARCHITECTURE.md | Avatar rendering, stage/path/attention axes |
 | `docs/CYCLE_SYSTEM.md` | ✅ Ready | ARCHITECTURE.md | Consistency cycles, checkpoints |
 | `docs/INTEGRATION.md` | ✅ Ready | — | Multi-AI workflow |
-| `docs/MULTI_AI_WORKFLOW.md` | ✅ Ready | AGENTS.md | Cross-agent coordination |
+| `docs/INTEGRATION.md` | ✅ Ready | — | Multi-AI workflow (see INTEGRATION.md) |
 | `docs/HOW-TO-USE-SAFELY.md` | ✅ Ready | — | User-facing safety |
 | `docs/4 Modes User Manual.md` | ✅ Ready | — | End-user Four Modes guide |
 | `docs/BASELINE_*.md` (3 files) | 🟡 Unclear | — | Avatar baseline selection — needs review |
@@ -147,7 +147,7 @@ git commit -m "refactor: organize docs into archive structure per DOC_ORGANIZATI
 ### As an agent starting on the Immanence OS codebase
 
 1. **First 5 minutes**: Read `.github/copilot-instructions.md`
-2. **Before major changes**: Skim `docs/ARCHITECTURE.md` + `docs/AGENTS.md`
+2. **Before major changes**: Skim `ARCHITECTURE.md` (root) + `AGENTS.md` (root)
 3. **For specific feature**: Jump to relevant Tier 3 doc (AVATAR_SYSTEM.md, CYCLE_SYSTEM.md, etc.)
 4. **For task context**: Check Deprecated / Historical + PROJECT_STATUS.md
 5. **When stuck**: Reference `docs/DOC_ORGANIZATION_STANDARD.md` (this folder structure)

@@ -11,7 +11,7 @@ Immanence OS uses a configured LLM proxy for AI-powered validation in the Four M
 - **Wave** — Emotional coherence
 - **Sword** — Commitment clarity
 
-The app sends requests through `src/services/llmService.js` to the endpoint defined by `VITE_LLM_PROXY_URL`.
+The app sends requests through `src/services/llmService.js` to the endpoint defined by `VITE_LLM_PROXY_URL`, resolved by `src/config/runtimeEnv.js` (via `requireLlmProxyUrl()`), with runtime failure normalization in `src/utils/runtimeFailure.js`.
 
 ---
 

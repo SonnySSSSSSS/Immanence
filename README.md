@@ -1,6 +1,6 @@
 # Immanence OS
 
-A local-first meditation training application built with React, Three.js, and Zustand. Structured progression through breathwork, awareness practices, entrainment, and cognitive processing, with browser-first state. Supabase auth is **enabled for beta access** (sign-in/sign-up/sign-out active). Public launch is still gated behind remaining hardening items — see `SECURITY_AUDIT_SUPABASE_GH_PAGES.md`.
+A local-first meditation training application built with React, Three.js, and Zustand. Structured progression through breathwork, awareness practices, entrainment, and cognitive processing, with browser-first state. Supabase auth is runtime-configurable via `VITE_ENABLE_AUTH` and is enabled by default for beta access (sign-in/sign-up/sign-out active). Public launch is still gated behind remaining hardening items — see `SECURITY_CHECKLIST.md`.
 
 ## What It Is
 
@@ -8,7 +8,7 @@ Immanence OS is a practice instrument for building attentional and regulatory ca
 
 The system provides two usage modes, a curriculum engine with capacity-based gating, symbolic identity progression, and a full internal developer tooling layer for rapid iteration.
 
-Practice and progression data stay in browser storage. Supabase auth is active for beta users (`ENABLE_AUTH = true` across all auth files); sign-in is required to access the app. Public launch requires completing the remaining Supabase hardening checklist. No telemetry.
+Practice and progression data stay in browser storage. Supabase auth is active for beta users via `VITE_ENABLE_AUTH` controlled at runtime; sign-in is required to access the app in the current default configuration. Public launch requires completing the remaining Supabase hardening checklist. No telemetry.
 
 **Smoke test coverage note:** The CI smoke suite (Tests 1–5) injects a synthetic Supabase session into localStorage to bypass the auth gate. This proves the gate blocks unauthenticated boot and that the app renders correctly when a session is present, but does **not** verify real `signInWithPassword` flows, token refresh, or `user_documents` RLS. TEST 5 tests `supabase.auth.signOut()` via a route-intercepted logout call.
 
@@ -44,7 +44,7 @@ $env:BETA_TEST_PASSWORD_B="secret-b"
 npm run test:smoke
 ```
 
-See `SECURITY_AUDIT_SUPABASE_GH_PAGES.md` for the full audit status. Remaining blocked items (redirect allowlist, rate limits/CAPTCHA, email confirmation posture) require Supabase Dashboard inspection before public launch.
+See `SECURITY_CHECKLIST.md` for the full audit status. Remaining blocked items (redirect allowlist, rate limits/CAPTCHA, email confirmation posture) require Supabase Dashboard inspection before public launch.
 
 ## Core Philosophy
 

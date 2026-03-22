@@ -1,6 +1,6 @@
 # Architecture
 
-Current technical map for the repo, checked against local files on 2026-03-17.
+Current technical map for the repo, checked against local files on 2026-03-22.
 This is the canonical top-level system map. Use [docs/DOCS_INDEX.md](docs/DOCS_INDEX.md) for the wider doc set.
 
 ## System At A Glance
@@ -86,9 +86,9 @@ Current behavior in [src/App.jsx](src/App.jsx):
 
 ### Auth Gate
 
-[src/components/auth/AuthGate.jsx](src/components/auth/AuthGate.jsx) currently ships with `ENABLE_AUTH = true`.
+[src/components/auth/AuthGate.jsx](src/components/auth/AuthGate.jsx) now reads `VITE_ENABLE_AUTH` at runtime through `src/config/runtimeEnv.js` and supports both enabled and disabled modes. `runtimeEnv.enableAuth` controls whether Supabase initialization occurs.
 
-- it lazy-loads Supabase so auth can still be disabled later if needed
+- it lazy-loads Supabase so auth can be disabled for local/offline modes when required
 - it blocks the shell until `supabase.auth.getSession()` resolves
 - it renders built-in sign-in and sign-up UI when there is no session
 - it hands the resolved user to [src/state/useAuthUser.js](src/state/useAuthUser.js)
