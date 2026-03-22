@@ -7,7 +7,7 @@ import { normalizeStageKey } from '../config/avatarStageAssets.js';
 import { DEFAULT_AVATAR_PRESETS, DEFAULT_AVATAR_PRESETS_LIGHT } from '../components/avatarV3/avatarDefaultPresets.js';
 
 export const AVATAR_STAGE_DEFAULTS_PERSIST_KEY = 'immanence-avatar-stage-defaults-v1';
-const AVATAR_STAGE_DEFAULTS_PERSIST_VERSION = 2;
+const AVATAR_STAGE_DEFAULTS_PERSIST_VERSION = 3;
 export const AVATAR_STAGE_DEFAULT_KEYS = ['seedling', 'ember', 'flame', 'beacon', 'stellar'];
 export const AVATAR_STAGE_DEFAULT_SCHEMES = ['dark', 'light'];
 const AVATAR_STAGE_DEFAULT_LAYER_IDS = ['bg', 'stage', 'glass', 'ring'];
@@ -318,8 +318,8 @@ export const useAvatarStageDefaultsStore = create(
     partialize: (state) => ({
       overridesByScheme: state.overridesByScheme,
     }),
-    migrate: (persistedState, version) => ({
-      overridesByScheme: sanitizePersistedAvatarStageDefaultsState(persistedState, version),
+    migrate: () => ({
+      overridesByScheme: { dark: {}, light: {} },
     }),
     merge: (persisted, current) => {
       const persistedOverrides = sanitizePersistedAvatarStageDefaultsState(

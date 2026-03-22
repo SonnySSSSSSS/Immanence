@@ -61,10 +61,16 @@
   z-index: 6;
 }
 
-.avatar-composite__ring-spin {
+.avatar-composite__ring-wrap {
   position: absolute;
   inset: 0;
   z-index: 6;
+  pointer-events: none;
+}
+
+.avatar-composite__ring-spin {
+  position: absolute;
+  inset: 0;
   pointer-events: none;
   transform-origin: center center;
   backface-visibility: hidden;

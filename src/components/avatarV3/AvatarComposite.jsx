@@ -23,10 +23,6 @@ const BASE_TRANSFORM_BY_LAYER = {
   glass: { opacity: 1, scale: 1, rotateDeg: 0, x: 0, y: 0 },
   ring: { opacity: 1, scale: 1, rotateDeg: 0, x: 0, y: 0 },
 };
-const GLOBE_CLIP_OFFSET_BY_SCHEME = {
-  light: { x: 4, y: 4 },
-  dark: { x: 2, y: 2 },
-};
 
 function handleLayerImageError(event) {
   console.error('AvatarComposite failed to load:', event?.target?.src);
@@ -124,142 +120,6 @@ function getLastPathSegment(publicPath) {
   return index === -1 ? normalized : normalized.slice(index + 1);
 }
 
-// PROBE:AVATAR_LAYER_OWNER:START
-const AVATAR_LAYER_OWNER_PROBE = Object.freeze({
-  targetScheme: 'light',
-  targetStage: 'ember',
-  fallbackStage: 'beacon',
-  dimOpacity: 0.12,
-});
-
-function isAvatarLayerOwnerProbeMode(value) {
-  return ['all', 'wrapper', 'globe', 'bg', 'stage', 'glass', 'ring'].includes(value);
-}
-
-function readAvatarLayerOwnerProbeMode() {
-  if (typeof window === 'undefined') return 'all';
-
-  const fromGlobal = window.__IMMANENCE_AVATAR_LAYER_OWNER_PROBE_MODE__;
-  if (isAvatarLayerOwnerProbeMode(fromGlobal)) {
-    return fromGlobal;
-  }
-
-  try {
-    const fromStorage = window.localStorage?.getItem?.('immanence.avatarLayerOwnerProbe.mode');
-    if (isAvatarLayerOwnerProbeMode(fromStorage)) {
-      return fromStorage;
-    }
-  } catch {
-    // ignore storage failures in privacy mode
-  }
-
-  return 'all';
-}
-
-function resolveProbeLayerOpacity(layerId, isolationMode) {
-  if (isolationMode === 'all') return 1;
-  return isolationMode === layerId ? 1 : AVATAR_LAYER_OWNER_PROBE.dimOpacity;
-}
-
-function resolveProbeOverlayOpacity(layerId, isolationMode) {
-  if (isolationMode === 'all') return 0.95;
-  return isolationMode === layerId ? 0.95 : 0.22;
-}
-
-function createProbeBoundsStyle({
-  color,
-  opacity,
-  zIndex = 12,
-  borderRadius = '0px',
-  label,
-  transform = undefined,
-}) {
-  return {
-    position: 'absolute',
-    inset: 0,
-    transform,
-    borderRadius,
-    outline: `1px solid ${color}`,
-    boxShadow: `inset 0 0 0 1px ${color}, 0 0 10px ${color}`,
-    opacity,
-    pointerEvents: 'none',
-    zIndex,
-    ['--probe-label']: `"${label}"`,
-  };
-}
-
-function createProbeCrosshairWrapStyle(opacity, zIndex = 13) {
-  return {
-    position: 'absolute',
-    left: '50%',
-    top: '50%',
-    width: '18px',
-    height: '18px',
-    transform: 'translate(-50%, -50%)',
-    opacity,
-    pointerEvents: 'none',
-    zIndex,
-  };
-}
-
-function createProbeCrosshairLineStyle(color, axis) {
-  return axis === 'horizontal'
-    ? {
-      position: 'absolute',
-      left: 0,
-      top: '50%',
-      width: '100%',
-      height: '1px',
-      transform: 'translateY(-50%)',
-      background: color,
-      boxShadow: `0 0 8px ${color}`,
-    }
-    : {
-      position: 'absolute',
-      left: '50%',
-      top: 0,
-      width: '1px',
-      height: '100%',
-      transform: 'translateX(-50%)',
-      background: color,
-      boxShadow: `0 0 8px ${color}`,
-    };
-}
-
-function createProbeCenterDotStyle(color) {
-  return {
-    position: 'absolute',
-    left: '50%',
-    top: '50%',
-    width: '4px',
-    height: '4px',
-    transform: 'translate(-50%, -50%)',
-    borderRadius: '9999px',
-    background: color,
-    boxShadow: `0 0 8px ${color}`,
-  };
-}
-
-function createProbeLabelStyle(color, opacity) {
-  return {
-    position: 'absolute',
-    left: '4px',
-    top: '4px',
-    padding: '1px 4px',
-    borderRadius: '9999px',
-    background: 'rgba(0, 0, 0, 0.72)',
-    color,
-    fontSize: '8px',
-    lineHeight: 1.2,
-    letterSpacing: '0.08em',
-    textTransform: 'uppercase',
-    opacity,
-    pointerEvents: 'none',
-    zIndex: 14,
-  };
-}
-// PROBE:AVATAR_LAYER_OWNER:END
-
 export function AvatarComposite({ stage, size }) {
   const normalizedStage = normalizeStageKey(stage);
   const colorScheme = useDisplayModeStore((s) => s.colorScheme);
@@ -274,10 +134,6 @@ export function AvatarComposite({ stage, size }) {
   const glassSrc = resolvePublicAssetUrl(stageAssets.glassRing);
   const ringSrc = resolvePublicAssetUrl(stageAssets.runeRing);
   const compositeSizeStyle = resolveSizeStyle(size);
-  const globeClipOffset = GLOBE_CLIP_OFFSET_BY_SCHEME[colorScheme] || GLOBE_CLIP_OFFSET_BY_SCHEME.light;
-  const globeClipStyle = {
-    transform: `translate(${globeClipOffset.x}px, ${globeClipOffset.y}px)`,
-  };
   const useDraftTransforms = Boolean(
     avatarCompositeDevState?.enabled && avatarCompositeDevState?.previewDraft
   );
@@ -301,74 +157,19 @@ export function AvatarComposite({ stage, size }) {
   const glassStyle = getDevStyleForLayer('glass', effectiveLayers.glass);
   const ringStyle = getDevStyleForLayer('ring', effectiveLayers.ring);
 
-  // PROBE:AVATAR_LAYER_OWNER:START
-  const probeEnabled = showDebugOverlay;
-  const probeMode = probeEnabled ? readAvatarLayerOwnerProbeMode() : 'all';
-  const isCanonicalProbeCase =
-    probeEnabled
-    && colorScheme === AVATAR_LAYER_OWNER_PROBE.targetScheme
-    && normalizedStage === AVATAR_LAYER_OWNER_PROBE.targetStage;
-  const isFallbackProbeCase =
-    probeEnabled
-    && colorScheme === AVATAR_LAYER_OWNER_PROBE.targetScheme
-    && normalizedStage === AVATAR_LAYER_OWNER_PROBE.fallbackStage;
-  const probeCaseLabel = isCanonicalProbeCase
-    ? 'canonical'
-    : isFallbackProbeCase
-      ? 'fallback'
-      : 'inactive';
-  const probeActive = probeEnabled && (isCanonicalProbeCase || isFallbackProbeCase);
-  const probeBgStyle = probeActive
-    ? { ...bgStyle, opacity: bgStyle.opacity * resolveProbeLayerOpacity('bg', probeMode) }
-    : bgStyle;
-  const probeStageStyle = probeActive
-    ? { ...stageStyle, opacity: stageStyle.opacity * resolveProbeLayerOpacity('stage', probeMode) }
-    : stageStyle;
-  const probeGlassStyle = probeActive
-    ? { ...glassStyle, opacity: glassStyle.opacity * resolveProbeLayerOpacity('glass', probeMode) }
-    : glassStyle;
-  const probeRingStyle = probeActive
-    ? { ...ringStyle, opacity: ringStyle.opacity * resolveProbeLayerOpacity('ring', probeMode) }
-    : ringStyle;
-  const wrapperOverlayOpacity = resolveProbeOverlayOpacity('wrapper', probeMode);
-  const globeOverlayOpacity = resolveProbeOverlayOpacity('globe', probeMode);
-  const bgOverlayOpacity = resolveProbeOverlayOpacity('bg', probeMode);
-  const stageOverlayOpacity = resolveProbeOverlayOpacity('stage', probeMode);
-  const glassOverlayOpacity = resolveProbeOverlayOpacity('glass', probeMode);
-  const ringOverlayOpacity = resolveProbeOverlayOpacity('ring', probeMode);
-  // PROBE:AVATAR_LAYER_OWNER:END
-
   return (
     <div
       className={`avatar-composite ${showDebugOverlay ? 'avatar-composite--debug' : ''}`}
       data-testid="avatar-composite-root"
       style={compositeSizeStyle}
     >
-      {probeActive && (
-        <>
-          <div style={createProbeBoundsStyle({
-            color: 'rgba(236, 72, 153, 0.98)',
-            opacity: wrapperOverlayOpacity,
-            zIndex: 10,
-            label: 'wrapper',
-          })} />
-          <div style={createProbeCrosshairWrapStyle(wrapperOverlayOpacity, 11)}>
-            <div style={createProbeCrosshairLineStyle('rgba(236, 72, 153, 0.98)', 'horizontal')} />
-            <div style={createProbeCrosshairLineStyle('rgba(236, 72, 153, 0.98)', 'vertical')} />
-            <div style={createProbeCenterDotStyle('rgba(236, 72, 153, 0.98)')} />
-          </div>
-          <div style={createProbeLabelStyle('rgba(236, 72, 153, 0.98)', wrapperOverlayOpacity)}>
-            wrapper
-          </div>
-        </>
-      )}
-      <div className="avatar-composite__globe-clip" style={globeClipStyle}>
+      <div className="avatar-composite__globe-clip">
         <img
           className="avatar-composite__layer avatar-composite__layer--bg"
           src={backgroundSrc}
           alt=""
           draggable="false"
-          style={probeBgStyle}
+          style={bgStyle}
           onError={handleLayerImageError}
         />
         <img
@@ -376,7 +177,7 @@ export function AvatarComposite({ stage, size }) {
           src={stageSrc}
           alt=""
           draggable="false"
-          style={probeStageStyle}
+          style={stageStyle}
           onError={handleLayerImageError}
         />
         <img
@@ -384,108 +185,20 @@ export function AvatarComposite({ stage, size }) {
           src={glassSrc}
           alt=""
           draggable="false"
-          style={probeGlassStyle}
+          style={glassStyle}
           onError={handleLayerImageError}
         />
-        {probeActive && (
-          <>
-            <div style={createProbeBoundsStyle({
-              color: 'rgba(34, 211, 238, 0.98)',
-              opacity: globeOverlayOpacity,
-              zIndex: 11,
-              borderRadius: '9999px',
-              label: 'globe',
-            })} />
-            <div style={createProbeCrosshairWrapStyle(globeOverlayOpacity, 12)}>
-              <div style={createProbeCrosshairLineStyle('rgba(34, 211, 238, 0.98)', 'horizontal')} />
-              <div style={createProbeCrosshairLineStyle('rgba(34, 211, 238, 0.98)', 'vertical')} />
-              <div style={createProbeCenterDotStyle('rgba(34, 211, 238, 0.98)')} />
-            </div>
-            <div style={createProbeLabelStyle('rgba(34, 211, 238, 0.98)', globeOverlayOpacity)}>
-              globe
-            </div>
-            <div style={createProbeBoundsStyle({
-              color: 'rgba(59, 130, 246, 0.98)',
-              opacity: bgOverlayOpacity,
-              zIndex: 13,
-              borderRadius: '9999px',
-              label: 'bg',
-              transform: probeBgStyle.transform,
-            })}>
-              <div style={createProbeCrosshairWrapStyle(bgOverlayOpacity)}>
-                <div style={createProbeCrosshairLineStyle('rgba(59, 130, 246, 0.98)', 'horizontal')} />
-                <div style={createProbeCrosshairLineStyle('rgba(59, 130, 246, 0.98)', 'vertical')} />
-                <div style={createProbeCenterDotStyle('rgba(59, 130, 246, 0.98)')} />
-              </div>
-              <div style={createProbeLabelStyle('rgba(59, 130, 246, 0.98)', bgOverlayOpacity)}>
-                bg
-              </div>
-            </div>
-            <div style={createProbeBoundsStyle({
-              color: 'rgba(34, 197, 94, 0.98)',
-              opacity: stageOverlayOpacity,
-              zIndex: 14,
-              borderRadius: '9999px',
-              label: 'stage',
-              transform: probeStageStyle.transform,
-            })}>
-              <div style={createProbeCrosshairWrapStyle(stageOverlayOpacity)}>
-                <div style={createProbeCrosshairLineStyle('rgba(34, 197, 94, 0.98)', 'horizontal')} />
-                <div style={createProbeCrosshairLineStyle('rgba(34, 197, 94, 0.98)', 'vertical')} />
-                <div style={createProbeCenterDotStyle('rgba(34, 197, 94, 0.98)')} />
-              </div>
-              <div style={createProbeLabelStyle('rgba(34, 197, 94, 0.98)', stageOverlayOpacity)}>
-                stage
-              </div>
-            </div>
-            <div style={createProbeBoundsStyle({
-              color: 'rgba(255, 255, 255, 0.98)',
-              opacity: glassOverlayOpacity,
-              zIndex: 15,
-              borderRadius: '9999px',
-              label: 'glass',
-              transform: probeGlassStyle.transform,
-            })}>
-              <div style={createProbeCrosshairWrapStyle(glassOverlayOpacity)}>
-                <div style={createProbeCrosshairLineStyle('rgba(255, 255, 255, 0.98)', 'horizontal')} />
-                <div style={createProbeCrosshairLineStyle('rgba(255, 255, 255, 0.98)', 'vertical')} />
-                <div style={createProbeCenterDotStyle('rgba(255, 255, 255, 0.98)')} />
-              </div>
-              <div style={createProbeLabelStyle('rgba(255, 255, 255, 0.98)', glassOverlayOpacity)}>
-                glass
-              </div>
-            </div>
-          </>
-        )}
       </div>
-      <div className="avatar-composite__ring-spin">
-        <img
-          className="avatar-composite__ring"
-          src={ringSrc}
-          alt=""
-          draggable="false"
-          style={probeRingStyle}
-          onError={handleLayerImageError}
-        />
-        {probeActive && (
-          <div style={createProbeBoundsStyle({
-            color: 'rgba(255, 179, 71, 0.98)',
-            opacity: ringOverlayOpacity,
-            zIndex: 16,
-            borderRadius: '9999px',
-            label: 'ring',
-            transform: probeRingStyle.transform,
-          })}>
-            <div style={createProbeCrosshairWrapStyle(ringOverlayOpacity)}>
-              <div style={createProbeCrosshairLineStyle('rgba(255, 179, 71, 0.98)', 'horizontal')} />
-              <div style={createProbeCrosshairLineStyle('rgba(255, 179, 71, 0.98)', 'vertical')} />
-              <div style={createProbeCenterDotStyle('rgba(255, 179, 71, 0.98)')} />
-            </div>
-            <div style={createProbeLabelStyle('rgba(255, 179, 71, 0.98)', ringOverlayOpacity)}>
-              ring
-            </div>
-          </div>
-        )}
+      <div className="avatar-composite__ring-wrap" style={ringStyle}>
+        <div className="avatar-composite__ring-spin">
+          <img
+            className="avatar-composite__ring"
+            src={ringSrc}
+            alt=""
+            draggable="false"
+            onError={handleLayerImageError}
+          />
+        </div>
       </div>
       {showDebugOverlay && (
         <div className="avatar-composite__debug-readout" aria-hidden="true">
@@ -500,15 +213,6 @@ export function AvatarComposite({ stage, size }) {
           </div>
           <div className="avatar-composite__debug-line avatar-composite__debug-line--ring">
             ring o:{effectiveLayers.ring.opacity.toFixed(2)} s:{effectiveLayers.ring.scale.toFixed(2)} r:{effectiveLayers.ring.rotateDeg.toFixed(0)} x:{effectiveLayers.ring.x.toFixed(0)} y:{effectiveLayers.ring.y.toFixed(0)}
-          </div>
-          <div className="avatar-composite__debug-line">
-            probe case:{probeCaseLabel} mode:{probeMode}
-          </div>
-          <div className="avatar-composite__debug-line">
-            probe canonical:{AVATAR_LAYER_OWNER_PROBE.targetScheme}/{AVATAR_LAYER_OWNER_PROBE.targetStage} fallback:{AVATAR_LAYER_OWNER_PROBE.targetScheme}/{AVATAR_LAYER_OWNER_PROBE.fallbackStage}
-          </div>
-          <div className="avatar-composite__debug-line">
-            probe dim opacity:{AVATAR_LAYER_OWNER_PROBE.dimOpacity.toFixed(2)}
           </div>
           <div className="avatar-composite__debug-line">
             stage key:{normalizedStage} scheme:{colorScheme}

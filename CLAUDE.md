@@ -4,6 +4,20 @@ This file is the Claude-specific overlay for this repo.
 `AGENTS.md` is the authoritative policy file for task format, authority, and implementation gates.
 Use `docs/DOCS_INDEX.md` for the doc map and `ARCHITECTURE.md` for the current system map.
 
+## CRITICAL RULES
+
+- NEVER run destructive git commands (git reset --hard, git clean -fd, force push, branch deletion) without explicit user approval. Always explain what will be lost.
+
+## UI/Styling
+
+- When making UI/styling changes, show the specific CSS properties and values you're changing BEFORE applying them. Never assume element purposes — ask if unclear.
+- When iterating on visual changes, make adjustments MORE pronounced than you think necessary on the first attempt. Subtle changes are consistently rejected as imperceptible.
+
+## Git & Commits
+
+- Always decompose work into atomic commits. Never bundle unrelated changes into a single commit. Ask before combining if scope is ambiguous.
+- After making code changes, always verify with a build/lint check before committing. Use `npm run build` or the project's equivalent.
+
 ## Workspace
 
 - Work only in `D:\Unity Apps\immanence-os`.
