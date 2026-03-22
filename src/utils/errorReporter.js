@@ -21,8 +21,11 @@ function normalizeError(errorLike) {
 export function reportError(errorLike, context = {}) {
   const error = normalizeError(errorLike);
   const payload = {
+    code: error.code || null,
+    category: error.category || null,
     message: error.message,
     stack: error.stack || null,
+    details: error.details || null,
     context,
     timestamp: new Date().toISOString(),
   };

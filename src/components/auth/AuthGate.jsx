@@ -1,6 +1,8 @@
 import React, { useEffect, useState } from "react";
 import { runtimeEnv } from "../../config/runtimeEnv.js";
+import { reportError } from "../../utils/errorReporter.js";
 import { createLogger } from "../../utils/logger.js";
+import { RuntimeFailureCode, normalizeRuntimeFailure } from "../../utils/runtimeFailure.js";
 
 const logger = createLogger("AuthGate");
 
@@ -29,6 +31,28 @@ export default function AuthGate({ children, onAuthChange }) {
       return;
     }
 
+    const handleAuthFailure = (errorLike, code, message, source) => {
+      const failure = normalizeRuntimeFailure(errorLike, {
+        code,
+        category: "auth",
+        message,
+      });
+      logger.error(source, {
+        code: failure.code,
+        category: failure.category,
+        message: failure.message,
+        details: failure.details || null,
+      });
+      reportError(failure.cause, {
+        source,
+        code: failure.code,
+        category: failure.category,
+        details: failure.details || null,
+      });
+      setErr(failure.message);
+      return failure;
+    };
+
     let mounted = true;
     let unsubscribe = null;
 
@@ -38,7 +62,14 @@ export default function AuthGate({ children, onAuthChange }) {
         const { data, error } = await supabase.auth.getSession();
         if (!mounted) return;
 
-        if (error) logger.error("getSession error", error);
+        if (error) {
+          handleAuthFailure(
+            error,
+            RuntimeFailureCode.AUTH_SESSION_RESTORE_FAILED,
+            "Failed to restore auth session.",
+            "auth-session-restore"
+          );
+        }
         const nextSession = data?.session ?? null;
         setSession(nextSession);
         setAuthUser(nextSession?.user ?? null);
@@ -55,7 +86,12 @@ export default function AuthGate({ children, onAuthChange }) {
         unsubscribe = () => sub?.subscription?.unsubscribe?.();
       } catch (error) {
         if (!mounted) return;
-        logger.error("init error", error);
+        handleAuthFailure(
+          error,
+          RuntimeFailureCode.AUTH_INIT_FAILED,
+          "Failed to initialize auth runtime.",
+          "auth-init"
+        );
         setLoading(false);
       }
     };

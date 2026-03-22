@@ -3,6 +3,8 @@
 import { requireLlmProxyUrl } from "../config/runtimeEnv.js";
 import { LLM_CLIENT_VERSION } from "../config/appMeta.js";
 import { createLogger } from "../utils/logger.js";
+import { reportError } from "../utils/errorReporter.js";
+import { RuntimeFailureCode, normalizeRuntimeFailure, toFailureResult } from "../utils/runtimeFailure.js";
 
 const DEFAULT_MODEL = 'gemini-1.5-flash';
 const logger = createLogger('llmService');
@@ -37,6 +39,28 @@ function isValidGeminiResponseShape(data) {
     );
 }
 
+function logAndReturnLlmFailure(errorLike, defaults, extra = {}) {
+    const failure = normalizeRuntimeFailure(errorLike, defaults);
+    logger.warn("failure", {
+        code: failure.code,
+        category: failure.category,
+        message: failure.message,
+        details: failure.details || null,
+    });
+    reportError(failure.cause, {
+        source: "llm-service",
+        code: failure.code,
+        category: failure.category,
+        details: failure.details || null,
+    });
+
+    return toFailureResult(failure.cause, {
+        code: failure.code,
+        category: failure.category,
+        message: failure.message,
+    }, extra);
+}
+
 /**
  * Send a prompt to the LLM and get a response
  * @param {string} systemPrompt - System instructions for the model
@@ -56,11 +80,11 @@ export async function sendToLLM(systemPrompt, userPrompt, options = {}) {
     try {
         workerUrl = requireLlmProxyUrl();
     } catch (error) {
-        return {
-            success: false,
-            error: 'configuration_error',
-            message: error.message,
-        };
+        return logAndReturnLlmFailure(error, {
+            code: RuntimeFailureCode.LLM_CONFIGURATION_ERROR,
+            category: 'llm',
+            message: 'LLM service is not configured. Set VITE_LLM_PROXY_URL before making LLM calls.',
+        });
     }
 
     try {
@@ -101,35 +125,57 @@ ${buildUserPayload(userPrompt)}`
 
         // Handle errors
         if (!response.ok) {
-            const data = await response.json().catch(() => ({}));
-            return {
-                success: false,
-                error: 'api_error',
-                message: data.message || data.error || `Request failed with status ${response.status}`,
-            };
+            let data = {};
+            try {
+                data = await response.json();
+            } catch (parseError) {
+                const parseFailure = normalizeRuntimeFailure(parseError, {
+                    code: RuntimeFailureCode.LLM_PARSE_ERROR,
+                    category: 'llm',
+                    message: 'Failed to parse LLM error response body.',
+                    details: { status: response.status },
+                });
+                logger.warn('failure', {
+                    code: parseFailure.code,
+                    category: parseFailure.category,
+                    message: parseFailure.message,
+                    details: parseFailure.details || null,
+                });
+                reportError(parseFailure.cause, {
+                    source: 'llm-service',
+                    code: parseFailure.code,
+                    category: parseFailure.category,
+                    details: parseFailure.details || null,
+                });
+            }
+
+            const message = data.message || data.error || `LLM request failed with status ${response.status}.`;
+            return logAndReturnLlmFailure(new Error(message), {
+                code: RuntimeFailureCode.LLM_API_ERROR,
+                category: 'llm',
+                message,
+                details: { status: response.status },
+            });
         }
 
         const data = await response.json();
 
         if (!isValidGeminiResponseShape(data)) {
-            logger.warn('unexpected response shape', data);
-            return {
-                success: false,
-                error: 'invalid_response_shape',
+            return logAndReturnLlmFailure(new Error('LLM service returned an unexpected response shape.'), {
+                code: RuntimeFailureCode.LLM_INVALID_RESPONSE_SHAPE,
+                category: 'llm',
                 message: 'LLM service returned an unexpected response shape.',
-                raw: data,
-            };
+            }, { raw: data });
         }
 
         const text = getResponseText(data);
 
         if (!text) {
-            return {
-                success: false,
-                error: 'empty_response',
-                message: 'No response generated',
-                raw: data,
-            };
+            return logAndReturnLlmFailure(new Error('No response generated.'), {
+                code: RuntimeFailureCode.LLM_EMPTY_RESPONSE,
+                category: 'llm',
+                message: 'LLM service returned an empty response.',
+            }, { raw: data });
         }
 
         return {
@@ -139,12 +185,11 @@ ${buildUserPayload(userPrompt)}`
         };
 
     } catch (error) {
-        // Network error or other failure
-        return {
-            success: false,
-            error: 'network_error',
-            message: error.message || 'Failed to connect to LLM service',
-        };
+        return logAndReturnLlmFailure(error, {
+            code: RuntimeFailureCode.LLM_NETWORK_ERROR,
+            category: 'llm',
+            message: 'Failed to connect to LLM service.',
+        });
     }
 }
 
@@ -180,13 +225,12 @@ export async function sendToLLMForJSON(systemPrompt, userPrompt, options = {}) {
             raw: result.raw,
         };
 
-    } catch {
-        return {
-            success: false,
-            error: 'parse_error',
-            message: 'Failed to parse JSON response',
-            text: result.text,
-        };
+    } catch (error) {
+        return logAndReturnLlmFailure(error, {
+            code: RuntimeFailureCode.LLM_PARSE_ERROR,
+            category: 'llm',
+            message: 'Failed to parse JSON response from LLM service.',
+        }, { text: result.text });
     }
 }
 
@@ -198,8 +242,21 @@ export async function checkLLMAvailability() {
     try {
         const workerUrl = requireLlmProxyUrl();
         const response = await fetch(workerUrl, { method: 'OPTIONS' });
+        if (!response.ok) {
+            logAndReturnLlmFailure(new Error(`LLM availability check failed with status ${response.status}.`), {
+                code: RuntimeFailureCode.LLM_API_ERROR,
+                category: 'llm',
+                message: `LLM availability check failed with status ${response.status}.`,
+                details: { status: response.status },
+            });
+        }
         return response.ok;
-    } catch {
+    } catch (error) {
+        logAndReturnLlmFailure(error, {
+            code: RuntimeFailureCode.LLM_NETWORK_ERROR,
+            category: 'llm',
+            message: 'Failed to reach LLM service during availability check.',
+        });
         return false;
     }
 }

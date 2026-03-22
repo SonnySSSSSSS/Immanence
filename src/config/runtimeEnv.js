@@ -1,3 +1,5 @@
+import { RuntimeFailureCode, createRuntimeFailure } from "../utils/runtimeFailure.js";
+
 const TRUE_VALUES = new Set(["true"]);
 const FALSE_VALUES = new Set(["false"]);
 
@@ -19,10 +21,14 @@ function parseEnableAuth() {
 }
 
 function createAuthEnvError(missingNames) {
-  return new Error(
-    `Missing required runtime environment variables for auth-enabled startup: ${missingNames.join(", ")}. ` +
-      "Set them in your local environment or disable auth explicitly with VITE_ENABLE_AUTH=false."
-  );
+  return createRuntimeFailure(null, {
+    code: RuntimeFailureCode.RUNTIME_CONFIG_MISSING,
+    category: "startup",
+    message:
+      `Missing required runtime environment variables for auth-enabled startup: ${missingNames.join(", ")}. ` +
+      "Set them in your local environment or disable auth explicitly with VITE_ENABLE_AUTH=false.",
+    details: { missingNames },
+  });
 }
 
 export const runtimeEnv = {
@@ -60,9 +66,13 @@ export function assertAuthRuntimeEnvConfigured() {
 
 export function requireLlmProxyUrl() {
   if (!runtimeEnv.llmProxyUrl) {
-    throw new Error(
-      "Missing required runtime environment variable VITE_LLM_PROXY_URL for LLM calls. Configure it before invoking Four Modes validation."
-    );
+    throw createRuntimeFailure(null, {
+      code: RuntimeFailureCode.LLM_PROXY_MISSING,
+      category: "llm",
+      message:
+        "Missing required runtime environment variable VITE_LLM_PROXY_URL for LLM calls. Configure it before invoking Four Modes validation.",
+      details: { envVar: "VITE_LLM_PROXY_URL" },
+    });
   }
 
   return runtimeEnv.llmProxyUrl;

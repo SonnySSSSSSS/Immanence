@@ -6,8 +6,11 @@ import { TracePage } from "./pages/TracePage.jsx";
 import { Playground } from "./dev/Playground.jsx";
 import { runtimeEnv, validateStartupRuntimeEnv } from "./config/runtimeEnv.js";
 import { installGlobalErrorHandlers, reportError } from "./utils/errorReporter.js";
+import { createLogger } from "./utils/logger.js";
 import "./immanence.css";
 import "./index.css";
+
+const logger = createLogger("main");
 
 installGlobalErrorHandlers();
 
@@ -23,13 +26,17 @@ if (runtimeEnv.isDev && "serviceWorker" in navigator) {
   navigator.serviceWorker
     .getRegistrations()
     .then((regs) => regs.forEach((r) => r.unregister()))
-    .catch(() => {});
+    .catch((error) => {
+      logger.warn("service worker cleanup failed", error);
+    });
 
   if ("caches" in window) {
     caches
       .keys()
       .then((keys) => keys.forEach((k) => caches.delete(k)))
-      .catch(() => {});
+      .catch((error) => {
+        logger.warn("cache cleanup failed", error);
+      });
   }
 }
 
