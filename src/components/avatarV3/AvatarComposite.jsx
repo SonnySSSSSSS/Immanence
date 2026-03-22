@@ -1,8 +1,8 @@
 import React from 'react';
 import './AvatarComposite.css';
 import { useDevPanelStore } from '../../state/devPanelStore.js';
+import { useAvatarStageDefaultsStore } from '../../state/avatarV3Store.js';
 import { useDisplayModeStore } from '../../state/displayModeStore.js';
-import { DEFAULT_AVATAR_PRESETS, DEFAULT_AVATAR_PRESETS_LIGHT } from './avatarDefaultPresets.js';
 import { getDevPanelProdGate } from '../../lib/devPanelGate.js';
 import { getStageAssets, normalizeStageKey } from '../../config/avatarStageAssets.js';
 
@@ -120,22 +120,14 @@ function getLastPathSegment(publicPath) {
   return index === -1 ? normalized : normalized.slice(index + 1);
 }
 
-function buildAvatarDraftLayers(getRoleTransform, stageKey, colorScheme) {
-  const stageLayers = {};
-  LAYER_IDS.forEach((layerId) => {
-    stageLayers[layerId] = getRoleTransform(stageKey, layerId, colorScheme);
-  });
-  return stageLayers;
-}
-
 export function AvatarComposite({ stage, size }) {
   const normalizedStage = normalizeStageKey(stage);
   const colorScheme = useDisplayModeStore((s) => s.colorScheme);
   const devPanelGateEnabled = getDevPanelProdGate();
   const avatarCompositeDevState = useDevPanelStore((s) => s.avatarComposite);
-  const getAvatarCompositeRoleTransform = useDevPanelStore((s) => s.getAvatarCompositeRoleTransform);
+  const getAvatarCompositeStageDraft = useDevPanelStore((s) => s.getAvatarCompositeStageDraft);
+  const getResolvedStageDefault = useAvatarStageDefaultsStore((s) => s.getResolvedStageDefault);
   const stageAssets = getStageAssets(normalizedStage, colorScheme);
-  const activePresets = colorScheme === 'light' ? DEFAULT_AVATAR_PRESETS_LIGHT : DEFAULT_AVATAR_PRESETS;
 
   const backgroundSrc = resolvePublicAssetUrl(stageAssets.background);
   const stageSrc = resolvePublicAssetUrl(stageAssets.plantForeground);
@@ -149,9 +141,10 @@ export function AvatarComposite({ stage, size }) {
     devPanelGateEnabled && avatarCompositeDevState?.showDebugOverlay
   );
 
+  const resolvedDefaults = getResolvedStageDefault(normalizedStage, colorScheme);
   const baseLayers = useDraftTransforms
-    ? buildAvatarDraftLayers(getAvatarCompositeRoleTransform, normalizedStage, colorScheme)
-    : (activePresets[normalizedStage] || activePresets.seedling);
+    ? getAvatarCompositeStageDraft(normalizedStage, colorScheme)
+    : resolvedDefaults;
 
   const mergedLayers = mergeLayers(baseLayers);
   const effectiveLayers = {};

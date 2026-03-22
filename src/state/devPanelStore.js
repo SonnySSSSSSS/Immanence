@@ -1,7 +1,7 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import { normalizeStageKey } from '../config/avatarStageAssets.js';
-import { DEFAULT_AVATAR_PRESETS, DEFAULT_AVATAR_PRESETS_LIGHT } from '../components/avatarV3/avatarDefaultPresets.js';
+import { getCanonicalAvatarStageDefaultTransforms } from './avatarV3Store.js';
 
 export const DEV_PANEL_PERSIST_KEY = 'immanence-dev-panel';
 export const AVATAR_COMPOSITE_LAYER_IDS = ['bg', 'stage', 'glass', 'ring'];
@@ -47,10 +47,15 @@ function createDefaultLayer() {
 
 function createDefaultStageTransforms(stageKey = 'seedling', colorScheme = 'dark') {
   const normalizedStageKey = normalizeStageId(stageKey);
-  const presets = colorScheme === 'light' ? DEFAULT_AVATAR_PRESETS_LIGHT : DEFAULT_AVATAR_PRESETS;
-  return sanitizeStageTransforms(
-    presets[normalizedStageKey] || presets.seedling
-  );
+  return sanitizeStageTransforms(getCanonicalAvatarStageDefaultTransforms(normalizedStageKey, colorScheme));
+}
+
+function createDefaultTransformsByStage(colorScheme = 'dark') {
+  const next = {};
+  AVATAR_COMPOSITE_STAGE_KEYS.forEach((stageKey) => {
+    next[stageKey] = createDefaultStageTransforms(stageKey, colorScheme);
+  });
+  return next;
 }
 
 function createDefaultAvatarComposite() {
@@ -58,8 +63,8 @@ function createDefaultAvatarComposite() {
     enabled: true,
     previewDraft: false,
     showDebugOverlay: false,
-    transformsByStage: sanitizeTransformsByStage(DEFAULT_AVATAR_PRESETS),
-    transformsByStageLight: sanitizeTransformsByStage(DEFAULT_AVATAR_PRESETS_LIGHT),
+    transformsByStage: createDefaultTransformsByStage('dark'),
+    transformsByStageLight: createDefaultTransformsByStage('light'),
   };
 }
 

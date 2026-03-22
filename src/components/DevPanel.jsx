@@ -4,6 +4,7 @@
 
 import React, { useState, useCallback, useEffect, useRef, Suspense } from 'react';
 import { generateMockSessions, MOCK_PATTERNS } from '../utils/devDataGenerator';
+import { readRuntimeChecksSnapshot, RUNTIME_CHECKS_EVENT } from '../utils/runtimeChecks.js';
 import { useProgressStore } from '../state/progressStore';
 import { useSettingsStore } from '../state/settingsStore';
 import { useDisplayModeStore } from '../state/displayModeStore';
@@ -11,8 +12,8 @@ import { useCurriculumStore } from '../state/curriculumStore';
 import { useNavigationStore } from '../state/navigationStore';
 import { useTutorialStore } from '../state/tutorialStore';
 import { normalizeStageKey } from '../config/avatarStageAssets.js';
-import { DEFAULT_AVATAR_PRESETS, DEFAULT_AVATAR_PRESETS_LIGHT } from './avatarV3/avatarDefaultPresets.js';
-import { AVATAR_COMPOSITE_LAYER_IDS, useDevPanelStore } from '../state/devPanelStore.js';
+import { useAvatarStageDefaultsStore } from '../state/avatarV3Store.js';
+import { AVATAR_COMPOSITE_LAYER_IDS, AVATAR_COMPOSITE_STAGE_KEYS, useDevPanelStore } from '../state/devPanelStore.js';
 import { CoordinateHelper } from './dev/CoordinateHelper.jsx';
 import { OnboardingContentEditor, TutorialEditor } from './dev/TutorialEditor.jsx';
 import { getQuickDashboardTiles, getCurriculumPracticeBreakdown, getPracticeDetailMetrics } from '../reporting/dashboardProjection.js';
@@ -76,14 +77,6 @@ import { getDevPanelProdGate } from '../lib/devPanelGate.js';
 // Available stages and paths for dropdowns
 const STAGE_OPTIONS = ['Seedling', 'Ember', 'Flame', 'Beacon', 'Stellar'];
 
-function buildAvatarStageSnapshot(getRoleTransform, stageKey, colorScheme = 'dark') {
-    const snapshot = {};
-    AVATAR_COMPOSITE_LAYER_IDS.forEach((layerId) => {
-        snapshot[layerId] = getRoleTransform(stageKey, layerId, colorScheme);
-    });
-    return snapshot;
-}
-
 function normalizeAvatarStageSnapshot(stageTransforms = {}) {
     const normalized = {};
     AVATAR_COMPOSITE_LAYER_IDS.forEach((layerId) => {
@@ -132,6 +125,66 @@ function TutorialAnchorCountReadout() {
     return <span className="text-white/70 font-mono">{count}</span>;
 }
 
+function formatRuntimeStatus(check) {
+    if (!check) {
+        return { status: 'unpublished', code: '-' };
+    }
+
+    return {
+        status: check.phase || check.mode || check.config || (check.ok ? 'valid' : 'unknown'),
+        code: check.failureCode || check.code || '-',
+    };
+}
+
+function RuntimeVerificationReadout({ isLight, isDevBuild }) {
+    const [snapshot, setSnapshot] = useState(() => readRuntimeChecksSnapshot());
+
+    useEffect(() => {
+        if (!isDevBuild) return undefined;
+
+        const handleUpdate = () => {
+            setSnapshot(readRuntimeChecksSnapshot());
+        };
+
+        handleUpdate();
+        window.addEventListener(RUNTIME_CHECKS_EVENT, handleUpdate);
+        return () => window.removeEventListener(RUNTIME_CHECKS_EVENT, handleUpdate);
+    }, [isDevBuild]);
+
+    if (!isDevBuild) {
+        return null;
+    }
+
+    const startup = formatRuntimeStatus(snapshot.startup);
+    const auth = formatRuntimeStatus(snapshot.auth);
+    const llm = formatRuntimeStatus(snapshot.llm);
+
+    return (
+        <div
+            className="rounded-xl border px-3 py-3"
+            style={{
+                borderColor: isLight ? 'rgba(180, 155, 110, 0.25)' : 'rgba(255, 255, 255, 0.12)',
+                background: isLight ? 'rgba(255,255,255,0.7)' : 'rgba(255,255,255,0.04)',
+            }}
+        >
+            <div
+                className="text-[11px] font-semibold uppercase tracking-[0.18em] mb-2"
+                style={{ color: isLight ? 'rgba(60, 50, 40, 0.75)' : 'rgba(255, 255, 255, 0.72)' }}
+            >
+                Runtime Verification
+            </div>
+            <div className="space-y-1 font-mono text-[11px]" style={{ color: isLight ? 'rgba(45, 40, 35, 0.9)' : 'rgba(255, 255, 255, 0.86)' }}>
+                <div>startup: {startup.status} | code: {startup.code}</div>
+                <div>auth: {auth.status} | code: {auth.code}</div>
+                <div>llm: {llm.status} | code: {llm.code}</div>
+            </div>
+            <div className="mt-2 text-[10px]" style={{ color: isLight ? 'rgba(60, 50, 40, 0.55)' : 'rgba(255, 255, 255, 0.5)' }}>
+                updated: {snapshot.updatedAt || 'never'}
+            </div>
+        </div>
+    );
+}
+
 export function DevPanel({
     isOpen,
     onClose,
@@ -166,10 +219,11 @@ export function DevPanel({
     const avatarStage = avatarStageProp ?? avatarStageLocal;
     const setAvatarStage = setAvatarStageProp ?? setAvatarStageLocal;
     const normalizedAvatarStageKey = normalizeStageKey(avatarStage);
+    const getResolvedAvatarStageDefault = useAvatarStageDefaultsStore(s => s.getResolvedStageDefault);
     const avatarCompositeDraftsByStage = useDevPanelStore(s =>
         isLight ? s.avatarComposite?.transformsByStageLight : s.avatarComposite?.transformsByStage
     );
-    const getAvatarCompositeRoleTransform = useDevPanelStore(s => s.getAvatarCompositeRoleTransform);
+    const getAvatarCompositeStageDraft = useDevPanelStore(s => s.getAvatarCompositeStageDraft);
     const setAvatarCompositePreviewDraft = useDevPanelStore(s => s.setAvatarCompositePreviewDraft);
     const hydrateAvatarCompositeDrafts = useDevPanelStore(s => s.hydrateAvatarCompositeDrafts);
     const replaceAvatarCompositeStageDraft = useDevPanelStore(s => s.replaceAvatarCompositeStageDraft);
@@ -185,11 +239,18 @@ export function DevPanel({
         }
         setAvatarCompositePreviewDraft(true);
         if (!avatarDraftHydratedRef.current) {
-            hydrateAvatarCompositeDrafts(DEFAULT_AVATAR_PRESETS, 'dark');
-            hydrateAvatarCompositeDrafts(DEFAULT_AVATAR_PRESETS_LIGHT, 'light');
+            const resolvedDarkDrafts = {};
+            const resolvedLightDrafts = {};
+            AVATAR_COMPOSITE_STAGE_KEYS.forEach((stageKey) => {
+                resolvedDarkDrafts[stageKey] = getResolvedAvatarStageDefault(stageKey, 'dark');
+                resolvedLightDrafts[stageKey] = getResolvedAvatarStageDefault(stageKey, 'light');
+            });
+            hydrateAvatarCompositeDrafts(resolvedDarkDrafts, 'dark');
+            hydrateAvatarCompositeDrafts(resolvedLightDrafts, 'light');
             avatarDraftHydratedRef.current = true;
         }
     }, [
+        getResolvedAvatarStageDefault,
         hydrateAvatarCompositeDrafts,
         isOpen,
         setAvatarCompositePreviewDraft,
@@ -201,13 +262,10 @@ export function DevPanel({
         };
     }, [setAvatarCompositePreviewDraft]);
 
-    const activeAvatarPresets = isLight ? DEFAULT_AVATAR_PRESETS_LIGHT : DEFAULT_AVATAR_PRESETS;
     const currentAvatarDraft =
         avatarCompositeDraftsByStage?.[normalizedAvatarStageKey] ||
-        buildAvatarStageSnapshot(getAvatarCompositeRoleTransform, normalizedAvatarStageKey, colorScheme);
-    const currentAvatarDefault =
-        activeAvatarPresets[normalizedAvatarStageKey] ||
-        activeAvatarPresets.seedling;
+        getAvatarCompositeStageDraft(normalizedAvatarStageKey, colorScheme);
+    const currentAvatarDefault = getResolvedAvatarStageDefault(normalizedAvatarStageKey, colorScheme);
     const hasUnsavedAvatarDraft = !areAvatarStageSnapshotsEqual(currentAvatarDraft, currentAvatarDefault);
     const avatarDraftStatusLabel = hasUnsavedAvatarDraft
         ? 'Unsaved Draft changes'
@@ -234,20 +292,16 @@ export function DevPanel({
             setAvatarPromoteAck(`Promote acknowledged at ${nowLabel}; copy snippet manually.`);
         }
 
-        setAvatarDefaultStatus(
-            `Preview-only draft. Promote by updating src/components/avatarV3/avatarDefaultPresets.js for ${normalizedAvatarStageKey} (${colorScheme} scheme).`
-        );
+        setAvatarDefaultStatus(`Preview-only draft. Promote by updating src/components/avatarV3/avatarDefaultPresets.js (and avatar defaults ownership if needed) for ${normalizedAvatarStageKey} (${colorScheme} scheme).`);
     }, [colorScheme, currentAvatarDraft, normalizedAvatarStageKey, setAvatarDefaultStatus, setAvatarPromoteAck]);
 
     const handleResetDraftToDefault = useCallback(() => {
-        const stageDefault =
-            activeAvatarPresets[normalizedAvatarStageKey] ||
-            activeAvatarPresets.seedling;
+        const stageDefault = getResolvedAvatarStageDefault(normalizedAvatarStageKey, colorScheme);
         if (!stageDefault) return;
         replaceAvatarCompositeStageDraft(normalizedAvatarStageKey, stageDefault, colorScheme);
         setAvatarPromoteAck('');
         setAvatarDefaultStatus(`Restored Draft from canonical code Default for ${normalizedAvatarStageKey} (${colorScheme} scheme).`);
-    }, [activeAvatarPresets, colorScheme, normalizedAvatarStageKey, replaceAvatarCompositeStageDraft, setAvatarDefaultStatus, setAvatarPromoteAck]);
+    }, [colorScheme, getResolvedAvatarStageDefault, normalizedAvatarStageKey, replaceAvatarCompositeStageDraft, setAvatarDefaultStatus, setAvatarPromoteAck]);
 
     // Collapsible sections
     const [expandedSections, setExpandedSections] = useState({
@@ -988,6 +1042,8 @@ export function DevPanel({
 
                 {/* Content */}
                 <div className="devpanel-content p-4 space-y-4">
+
+                    <RuntimeVerificationReadout isLight={isLight} isDevBuild={isDevBuild} />
 
                     {/* ═══════════════════════════════════════════════════════════════ */}
                     {/* AVATAR STAGE */}
