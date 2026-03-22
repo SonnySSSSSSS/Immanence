@@ -17,7 +17,7 @@ export const useSettingsStore = create(
     persist(
         (set) => ({
             // LLM model preference
-            llmModel: 'gemma3:1b',
+            llmModel: 'gemini-1.5-flash',
 
             // Theme stage override (null = use user's actual stage)
             themeStageOverride: null,
@@ -154,7 +154,7 @@ export const useSettingsStore = create(
 
             // Reset to defaults
             resetSettings: () => set({
-                llmModel: 'gemma3:1b',
+                llmModel: 'gemini-1.5-flash',
                 themeStageOverride: null,
                 masterVolume: 0.7,
                 soundVolume: 0.5,

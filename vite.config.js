@@ -34,14 +34,5 @@ export default defineConfig(({ mode }) => ({
     __DEPLOY_GIT_SHA__: JSON.stringify(DEPLOY_GIT_SHA),
     __DEPLOY_BUILD_TIME__: JSON.stringify(DEPLOY_BUILD_TIME),
   },
-  // PROBE:DEPLOY_BUILD_ID_V1:END
- server: {
-    proxy: {
-      '/api/ollama': {
-        target: 'http://localhost:11434',
-        changeOrigin: true,
-        rewrite: (path) => path.replace(/^\/api\/ollama/, '')
-      }
-    }
-  }
+    // PROBE:DEPLOY_BUILD_ID_V1:END
 }))
