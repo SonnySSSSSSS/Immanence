@@ -1048,59 +1048,100 @@ function HomeHub({ onSelectSection, activeSection = null, currentStage, previewP
           ...SANCTUARY_RAIL_STYLE,
           borderTop: `1px solid ${isLight ? 'rgba(100, 80, 60, 0.15)' : 'rgba(255, 255, 255, 0.08)'}`,
         }}>
-          {activePath && (
+          {/* Card toolbar: PATH ACTIONS (left) + posture toggle (right) */}
+          <div
+            className="flex items-center justify-between mb-1 px-1"
+            style={{ minHeight: '28px' }}
+          >
+            {/* Left: Path Actions */}
+            {activePath ? (
+              <button
+                type="button"
+                onClick={openStudentActiveActions}
+                data-testid="student-active-actions-trigger"
+                className="inline-flex items-center rounded-full border px-3 py-0.5 text-[10px] font-black uppercase tracking-[0.18em] transition-all hover:scale-[1.02] active:scale-[0.98]"
+                style={{
+                  borderColor: isLight ? 'rgba(100, 80, 60, 0.22)' : 'rgba(255,255,255,0.14)',
+                  background: isLight ? 'rgba(255,255,255,0.52)' : 'rgba(255,255,255,0.06)',
+                  color: isLight ? 'rgba(60,50,35,0.78)' : 'rgba(253,251,245,0.72)',
+                  boxShadow: isLight ? '0 2px 8px rgba(80,60,35,0.08)' : '0 2px 10px rgba(0,0,0,0.22)',
+                }}
+              >
+                Path Actions
+              </button>
+            ) : (
+              <span />
+            )}
+            {/* Right: Guided / Full Access pill toggle */}
             <button
               type="button"
-              onClick={openStudentActiveActions}
-              data-testid="student-active-actions-trigger"
-              className="mb-2 inline-flex rounded-full border px-3 py-1 text-[10px] font-black uppercase tracking-[0.18em] transition-all hover:scale-[1.02]"
+              role="switch"
+              aria-checked={accessPosture === 'full'}
+              data-testid="posture-pill-toggle"
+              onClick={() => setAccessPosture(accessPosture === 'guided' ? 'full' : 'guided')}
+              className="relative inline-flex items-center rounded-full border select-none"
               style={{
-                borderColor: isLight ? 'rgba(100, 80, 60, 0.18)' : 'rgba(255,255,255,0.12)',
-                background: isLight ? 'rgba(255,255,255,0.55)' : 'rgba(255,255,255,0.05)',
-                color: isLight ? 'rgba(60,50,35,0.78)' : 'rgba(253,251,245,0.72)',
-                boxShadow: isLight ? '0 8px 18px rgba(80, 60, 35, 0.08)' : '0 10px 24px rgba(0, 0, 0, 0.24)',
+                height: '22px',
+                padding: '2px',
+                gap: 0,
+                borderColor: isLight ? 'rgba(100, 130, 160, 0.28)' : 'rgba(160, 200, 255, 0.22)',
+                background: isLight ? 'rgba(220,230,240,0.45)' : 'rgba(20,30,50,0.55)',
+                backdropFilter: 'blur(6px)',
+                WebkitBackdropFilter: 'blur(6px)',
+                transition: 'border-color 200ms',
               }}
             >
-              Path Actions
-            </button>
-          )}
-          {/* PATH ACTIONS: access posture toggle */}
-          <div className="mb-2 flex gap-2">
-            <button
-              type="button"
-              data-testid="posture-toggle-guided"
-              aria-pressed={accessPosture === 'guided'}
-              onClick={() => setAccessPosture('guided')}
-              className="inline-flex rounded-full border px-3 py-1 text-[10px] font-black uppercase tracking-[0.18em] transition-colors duration-150"
-              style={{
-                borderColor: isLight ? 'rgba(80, 120, 90, 0.45)' : 'rgba(100, 200, 130, 0.45)',
-                background: accessPosture === 'guided'
-                  ? (isLight ? 'rgba(100, 160, 110, 0.22)' : 'rgba(60, 140, 80, 0.38)')
-                  : (isLight ? 'rgba(255,255,255,0.08)' : 'rgba(255,255,255,0.06)'),
-                color: accessPosture === 'guided'
-                  ? (isLight ? 'rgba(30, 80, 45, 0.92)' : 'rgba(180, 240, 200, 0.92)')
-                  : (isLight ? 'rgba(60, 80, 65, 0.60)' : 'rgba(200, 220, 205, 0.55)'),
-              }}
-            >
-              GUIDED
-            </button>
-            <button
-              type="button"
-              data-testid="posture-toggle-full"
-              aria-pressed={accessPosture === 'full'}
-              onClick={() => setAccessPosture('full')}
-              className="inline-flex rounded-full border px-3 py-1 text-[10px] font-black uppercase tracking-[0.18em] transition-colors duration-150"
-              style={{
-                borderColor: isLight ? 'rgba(60, 100, 150, 0.40)' : 'rgba(100, 160, 220, 0.42)',
-                background: accessPosture === 'full'
-                  ? (isLight ? 'rgba(80, 130, 190, 0.20)' : 'rgba(50, 100, 170, 0.38)')
-                  : (isLight ? 'rgba(255,255,255,0.08)' : 'rgba(255,255,255,0.06)'),
-                color: accessPosture === 'full'
-                  ? (isLight ? 'rgba(25, 65, 120, 0.92)' : 'rgba(160, 210, 255, 0.92)')
-                  : (isLight ? 'rgba(50, 70, 100, 0.60)' : 'rgba(180, 205, 230, 0.55)'),
-              }}
-            >
-              FULL ACCESS
+              {/* Sliding indicator */}
+              <span
+                aria-hidden="true"
+                style={{
+                  position: 'absolute',
+                  top: '2px',
+                  bottom: '2px',
+                  borderRadius: '999px',
+                  width: '50%',
+                  left: accessPosture === 'guided' ? '2px' : 'calc(50% - 2px)',
+                  transition: 'left 200ms cubic-bezier(0.4,0,0.2,1)',
+                  background: accessPosture === 'guided'
+                    ? (isLight ? 'rgba(80,150,100,0.32)' : 'rgba(60,140,90,0.55)')
+                    : (isLight ? 'rgba(60,110,180,0.28)' : 'rgba(50,100,180,0.60)'),
+                  boxShadow: accessPosture === 'guided'
+                    ? '0 1px 4px rgba(40,120,60,0.18)'
+                    : '0 1px 4px rgba(30,80,160,0.22)',
+                }}
+              />
+              {/* GUIDED label */}
+              <span
+                className="relative z-10 font-black uppercase tracking-[0.14em]"
+                style={{
+                  fontSize: '9px',
+                  padding: '0 8px',
+                  color: accessPosture === 'guided'
+                    ? (isLight ? 'rgba(25,80,45,0.95)' : 'rgba(160,240,190,0.95)')
+                    : (isLight ? 'rgba(80,100,90,0.45)' : 'rgba(160,200,170,0.38)'),
+                  transition: 'color 200ms',
+                  userSelect: 'none',
+                  WebkitUserSelect: 'none',
+                }}
+              >
+                GUIDED
+              </span>
+              {/* FULL ACCESS label */}
+              <span
+                className="relative z-10 font-black uppercase tracking-[0.14em]"
+                style={{
+                  fontSize: '9px',
+                  padding: '0 8px',
+                  color: accessPosture === 'full'
+                    ? (isLight ? 'rgba(25,65,130,0.95)' : 'rgba(150,205,255,0.95)')
+                    : (isLight ? 'rgba(70,90,120,0.45)' : 'rgba(150,185,220,0.38)'),
+                  transition: 'color 200ms',
+                  userSelect: 'none',
+                  WebkitUserSelect: 'none',
+                }}
+              >
+                FULL
+              </span>
             </button>
           </div>
           <div className="w-full">
