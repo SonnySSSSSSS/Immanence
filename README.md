@@ -119,7 +119,7 @@ Multi-step guided practices with dwell-time enforcement. Awareness compass (gest
 
 ### Cognitive Processing (Four Modes)
 
-Sequential chain: Mirror → Prism → Wave → Sword. Each mode gates behind the previous. LLM-validated (local Ollama) at each step:
+Sequential chain: Mirror → Prism → Wave → Sword. Each mode gates behind the previous. LLM-validated at each step through the configured LLM proxy:
 
 - **Mirror**: Neutral observation with E-Prime compliance checking
 - **Prism**: Interpretation separation (supported vs. unsupported)
@@ -162,7 +162,7 @@ Not production-facing. Dev-only tooling gated behind feature flag.
 - **React Three Fiber** for 3D rendering
 - **Framer Motion** for animation
 - **Tailwind CSS 3.4** + custom CSS
-- **Ollama** (local LLM) for cognitive mode validation
+- **Worker-backed LLM validation** for cognitive mode checks
 
 ## Local Development
 
@@ -185,11 +185,7 @@ npm run deploy
 
 Dev panel: `Ctrl+Shift+D` or tap the version number 5 times.
 
-LLM features require Ollama running locally with `gemma3:1b` model:
-
-```bash
-ollama pull gemma3:1b
-```
+LLM features require a reachable proxy configured via `VITE_LLM_PROXY_URL`.
 
 ## Documentation
 

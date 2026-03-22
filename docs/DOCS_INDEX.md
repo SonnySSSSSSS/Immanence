@@ -13,7 +13,7 @@ Canonical doc map for `immanence-os`, refreshed on 2026-03-09.
 - [README.md](README.md) - quick orientation to the docs folder
 - [DEVELOPMENT.md](DEVELOPMENT.md) - environment and development setup
 - [WORKFLOW.md](WORKFLOW.md) - workflow guidance and handoff habits
-- [LLM_INTEGRATION.md](LLM_INTEGRATION.md) - local Ollama integration and setup
+- [LLM_INTEGRATION.md](LLM_INTEGRATION.md) - Four Modes LLM proxy integration and setup
 - [PHILOSOPHY.md](PHILOSOPHY.md) - product and design philosophy
 - [STATE_TRAINING_DOCTRINE.md](STATE_TRAINING_DOCTRINE.md) - core framing from reactivity to agency
 - [POSITIONING_AND_CLAIMS_PLAYBOOK.md](POSITIONING_AND_CLAIMS_PLAYBOOK.md) - messaging stack, claims policy, and education roadmap

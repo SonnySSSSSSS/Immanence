@@ -18,7 +18,7 @@ Checked against local files on 2026-03-21:
 - major client state: Zustand stores under `src/state/` with offline-first persistence
 - visual runtime: React Three Fiber 8.17.0 plus standard React surfaces
 - auth: Supabase session auth in `src/components/auth/AuthGate.jsx` and `src/lib/supabaseClient.js` (required for app access)
-- local AI integration: `/api/ollama` proxy in `vite.config.js` for local model inference
+- LLM integration: worker-backed requests configured in `src/services/llmService.js`
 - deployment base: `/` in dev; `/Immanence/` as production base path for GitHub Pages hosting
 
 ## Commands
@@ -37,7 +37,7 @@ npm run deploy    # Deploy to GitHub Pages at /Immanence/
 
 - Node 18+ and npm 9+
 - Supabase project (free tier OK) with auth enabled
-- Optional: local Ollama instance for AI features (defaults gracefully if unavailable)
+- Optional: reachable LLM proxy endpoint for AI features
 
 **Environment variables** — create `.env.local`:
 

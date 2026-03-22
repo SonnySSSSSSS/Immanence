@@ -81,7 +81,7 @@ Tier 1: Entry Points (Agents read first)
 Tier 2: Architecture & Reference (Deep dive)
   ├─ docs/ARCHITECTURE.md (component wiring, data flows)
   ├─ docs/DEVELOPMENT.md (setup, troubleshooting)
-  ├─ docs/LLM_INTEGRATION.md (Ollama, validation)
+  ├─ docs/LLM_INTEGRATION.md (LLM proxy, validation)
   ├─ docs/PHILOSOPHY.md (design principles)
   └─ docs/DOC_ORGANIZATION_STANDARD.md (THIS standard)
 

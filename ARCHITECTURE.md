@@ -12,7 +12,7 @@ This is the canonical top-level system map. Use [docs/DOCS_INDEX.md](docs/DOCS_I
 - Auth and sync: Supabase browser auth in [src/lib/supabaseClient.js](src/lib/supabaseClient.js) and offline-first sync helpers in [src/state/offlineFirstUserStateSync.js](src/state/offlineFirstUserStateSync.js).
 - Shared shell chrome: practice housing primitives in [src/components/practice/practiceHousing.jsx](src/components/practice/practiceHousing.jsx) are now reused by practice cards directly and by wisdom through [src/components/wisdom/WisdomCardHousing.jsx](src/components/wisdom/WisdomCardHousing.jsx). Navigation and application now mirror the same Arwes-style shell pattern in-place.
 - Tutorials: app-owned tutorial IDs, schema, and progress state now feed a Driver.js presentation runtime through [src/components/tutorial/TutorialOverlay.jsx](src/components/tutorial/TutorialOverlay.jsx) and [src/tutorials/driverAdapter.js](src/tutorials/driverAdapter.js).
-- Local AI integration: Vite proxies `/api/ollama` to the local Ollama service in [vite.config.js](vite.config.js).
+- LLM integration: Four Modes validation requests are sent through the configured proxy URL in [src/services/llmService.js](src/services/llmService.js).
 
 ## Boot And Shell
 

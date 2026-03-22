@@ -96,7 +96,7 @@ immanence-os/
 │   ├─ State layer (26 stores, keys, wiring)
 │   └─ Critical flows (navigation → practice → completion)
 └─ docs/LLM_INTEGRATION.md
-   ├─ Ollama setup
+    ├─ LLM proxy setup
    ├─ Four Modes validation chain
    └─ Testing via DevPanel
 ```

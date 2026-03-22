@@ -63,7 +63,7 @@ docs/SESSION_FLOW_MAP.md           [Canonical end-to-end session runtime]
 docs/PERSISTENCE_AUDIT.md          [Persistence keys, ownership, overlap risks]
 docs/SINGLE_FAILURE_NODES_AUDIT.md [Runtime proof matrix for fail-safe nodes]
 docs/DEVELOPMENT.md                [Setup + troubleshooting]
-docs/LLM_INTEGRATION.md            [Ollama + validation]
+docs/LLM_INTEGRATION.md            [LLM proxy + validation]
 docs/PHILOSOPHY.md                 [Design principles]
 docs/DOC_ORGANIZATION_STANDARD.md  [THIS standard (reusable)]
 ```

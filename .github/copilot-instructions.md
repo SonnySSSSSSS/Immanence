@@ -6,7 +6,7 @@ Follow repository-specific rules, workflows, and examples — not generic advice
 ## Quick start
 - Dev server: `npm run dev` (opens at http://localhost:5175/Immanence/)
 - Build: `npm run build`; Preview: `npm run preview`; Deploy: `npm run deploy`
-- LLM (local) proxy: `/api/ollama` — see `docs/LLM_INTEGRATION.md` and `src/services/llmService.js`
+- LLM integration: see `docs/LLM_INTEGRATION.md` and `src/services/llmService.js`
 - Lint: `npm run lint` (run before committing)
 
 ## Auto-Approval Policy
@@ -35,7 +35,7 @@ Follow repository-specific rules, workflows, and examples — not generic advice
 - `src/components/MoonGlowLayer.jsx`
 
 ## LLM & verification
-- Ollama is expected locally (`ollama`); recommended model `gemma3:1b`. Pull with `ollama pull gemma3:1b`.
+- LLM calls go through `src/services/llmService.js`. Ensure `VITE_LLM_PROXY_URL` points to a reachable endpoint when validating Four Modes flows.
 - LLM calls go through `src/services/llmService.js`. Tests and quick checks available in DevPanel (Ctrl+Shift+D) → LLM Test Panel.
 - Use dev panel tests and browser visual checks when changing visuals or flows (DevPanel is canonical verification UI).
 
@@ -48,7 +48,7 @@ Follow repository-specific rules, workflows, and examples — not generic advice
 - Vite uses a base path `/Immanence/` (see `vite.config.js`) — verify routing when previewing or deploying.
 - Dev mode uses base `/`, production uses `/Immanence/` to avoid MIME-type errors with double-base paths.
 - If dev server fails: remove `node_modules/.vite` and restart: `rm -rf node_modules/.vite && npm run dev`.
-- Ollama troubleshooting: `ollama list`, `ollama --version`, ensure `http://localhost:11434` reachable.
+- LLM troubleshooting: verify `VITE_LLM_PROXY_URL`, ensure the proxy responds, and confirm the DevPanel LLM Test Panel passes.
 - Port conflicts: Expected port is `5175`. If server starts on `5174+`, another process is holding the port — run reset scripts.
 - Protected patterns: Particle system in `IndrasNet.jsx` uses 3-layer protection (React `key` prop critical) — see `docs/PARTICLE_SYSTEM_PROTECTION.md`.
 

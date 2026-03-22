@@ -23,7 +23,7 @@
 |------|--------|-------|
 | `docs/ARCHITECTURE.md` | ✅ Ready | Component ownership, store wiring, critical flows |
 | `docs/DEVELOPMENT.md` | ✅ Ready | Setup, scripts, state persistence |
-| `docs/LLM_INTEGRATION.md` | ✅ Ready | Ollama setup, validation functions, API |
+| `docs/LLM_INTEGRATION.md` | ✅ Ready | LLM proxy setup, validation functions, API |
 | `docs/PHILOSOPHY.md` | ✅ Ready | Design principles, core philosophy |
 | `docs/DOC_ORGANIZATION_STANDARD.md` | ✅ NEW | Standard for organizing all docs across agents |
 

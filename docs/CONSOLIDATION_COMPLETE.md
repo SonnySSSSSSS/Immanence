@@ -31,7 +31,7 @@ Active docs in /docs/:
 - AGENTS.md (task specs)
 - ARCHITECTURE.md (component wiring)
 - DEVELOPMENT.md (setup)
-- LLM_INTEGRATION.md (Ollama validation)
+- LLM_INTEGRATION.md (LLM proxy validation)
 - PHILOSOPHY.md (design principles)
 - DOC_ORGANIZATION_STANDARD.md (doc standard)
 - AVATAR_SYSTEM.md (Avatar rendering)

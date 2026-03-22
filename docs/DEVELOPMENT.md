@@ -7,7 +7,7 @@
 - Node.js 18+
 - npm or pnpm
 - Git
-- Ollama (for AI validation)
+- LLM proxy endpoint for AI validation when testing Four Modes
 
 ### Clone & Install
 
@@ -20,12 +20,9 @@ cd immanence-os
 npm install
 ```
 
-### Ollama Setup (Optional but Recommended)
+### LLM Proxy Setup (Optional)
 
-```bash
-# Install Ollama from https://ollama.com/
-ollama pull gemma3:1b
-```
+Set `VITE_LLM_PROXY_URL` in your local environment if you want to exercise Four Modes validation during development.
 
 ---
 
@@ -215,7 +212,7 @@ npm run dev
 
 ### LLM validation not working
 
-1. Check Ollama is running: `ollama list`
+1. Check `VITE_LLM_PROXY_URL` points to a reachable endpoint
 2. Check DevPanel → LLM Test Panel → Test Connection
 3. See [LLM_INTEGRATION.md](LLM_INTEGRATION.md)
 

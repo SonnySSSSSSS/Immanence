@@ -47,7 +47,7 @@ These docs explain "how things work" across the system:
 |------|---------|-------|--------------|
 | `docs/ARCHITECTURE.md` | Component ownership, store wiring, data flows | Full app | Understanding data flow or modifying multiple files |
 | `docs/DEVELOPMENT.md` | Setup, scripts, state persistence, troubleshooting | Development environment | Setting up dev or fixing build issues |
-| `docs/LLM_INTEGRATION.md` | Ollama setup, API reference, validation functions | LLM subsystem | Modifying Four Modes or validation logic |
+| `docs/LLM_INTEGRATION.md` | LLM proxy setup, API reference, validation functions | LLM subsystem | Modifying Four Modes or validation logic |
 | `docs/CYCLE_SYSTEM.md` | Consistency cycles, checkpoints, mode switching | Cycle feature | Modifying cycle/streak tracking |
 | `docs/PHILOSOPHY.md` | Design principles, why constraints exist | Project intent | Understanding "why" behind decisions |
 

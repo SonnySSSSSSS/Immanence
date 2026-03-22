@@ -61,7 +61,7 @@ Immanence OS is **production-ready at the framework and messaging layers**, with
 - **Styling**: Tailwind CSS 3.4 with PostCSS
 - **Auth & Sync**: Supabase auth (user sessions) + offline-first localStorage sync
 - **UI UX**: Framer Motion 12.23.24, Driver.js 1.4.0 (for tutorials), react-swipeable, react-collapse
-- **Audio**: web-audio-beat-detector 8.2.33, local Ollama proxy (via Vite config)
+- **Audio**: web-audio-beat-detector 8.2.33
 - **Testing**: Playwright (smoke tests, including Supabase auth verification)
 
 ### Boot & Navigation Model

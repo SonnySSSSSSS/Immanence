@@ -297,7 +297,7 @@ Dev panel state persists in `devPanelStore.js` so tuning values survive page rel
 
 ## LLM Integration
 
-Local Ollama instance at `localhost:11434`, proxied through Vite as `/api/ollama`.
+Four Modes validation is routed through the configured proxy URL read by `src/services/llmService.js`.
 
 Used exclusively for Four Modes cognitive validation:
 
@@ -308,7 +308,7 @@ Used exclusively for Four Modes cognitive validation:
 | `evaluateWaveCoherence()` | Emotional coherence validation |
 | `validateSwordCommitment()` | Action commitment clarity check |
 
-Model: `gemma3:1b`. Runs entirely on the user's machine. No data leaves the device.
+Default model: `gemini-1.5-flash`. Deployment behavior depends on the configured proxy implementation.
 
 ## Component Hierarchy
 
@@ -380,6 +380,6 @@ public/
 
 - All data in browser localStorage (one store uses IndexedDB for binary sigil data)
 - No telemetry, analytics, or usage tracking
-- LLM runs locally via Ollama — no API calls to external services
+- LLM requests go through the configured proxy endpoint used by Four Modes validation
 - Static site deployment (GitHub Pages) — no backend server
 - No accounts, no authentication, no cloud sync
