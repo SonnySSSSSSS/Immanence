@@ -63,6 +63,13 @@ App launches at `http://localhost:5173`. Auth gate will prompt login (sign up wo
 - For multi-file behavior work, identify the actual source-of-truth store, helper, or service before editing the UI layer.
 - For documentation work, update touched cross-references so they point to canonical files rather than duplicate summaries.
 
+## Security Checklist
+
+Before any production deployment, run `docs/PRODUCTION_SECURITY_CHECKLIST.md`.
+It is the standing release gate for this project — covering secrets, auth, CORS, rate limiting, LLM prompt safety, observability, and scalability.
+All Critical and High failures block release unless explicitly waived with reason, owner, and fix date.
+A project-specific audit using this checklist already exists at `SECURITY_CHECKLIST.md` (root).
+
 ## High-Risk Surfaces
 
 - `src/App.jsx` coordinates shell state, auth handoff, section navigation, overlays, and dev gates.

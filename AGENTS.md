@@ -199,6 +199,13 @@ Before proposing any new component, hook, store, or utility, planning agents mus
 
 If reuse is possible, the plan must prefer reuse.
 
+## Security Review
+
+Before any production deployment, run `docs/PRODUCTION_SECURITY_CHECKLIST.md`.
+That checklist is the release gate for all Critical and High security items.
+It covers: secrets handling, authentication, authorization, rate limiting, input safety, LLM prompt injection, CORS, observability, dependency review, and scalability.
+Use the Audit Record Template in section 15 to document findings per item.
+
 ## Definition of Done
 
 A task is done only when:
