@@ -23,15 +23,6 @@ import { useDisplayModeStore } from "./state/displayModeStore.js";
 import { useUserModeStore } from "./state/userModeStore.js";
 import { useUiStore } from "./state/uiStore.js";
 import { useCurriculumStore } from "./state/curriculumStore.js";
-import { useNavigationStore } from "./state/navigationStore.js";
-import { useProgressStore } from "./state/progressStore.js";
-import { useLunarStore } from "./state/lunarStore.js";
-import { useApplicationStore } from "./state/applicationStore.js";
-import { useWisdomStore } from "./state/wisdomStore.js";
-import { useVideoStore } from "./state/videoStore.js";
-import { useModeTrainingStore } from "./state/modeTrainingStore.js";
-import { useChainStore } from "./state/chainStore.js";
-import { useCircuitJournalStore } from "./state/circuitJournalStore.js";
 import { useTempoAudioStore } from "./state/tempoAudioStore.js";
 import { useDevOverrideStore } from "./dev/devOverrideStore.js";
 import { ThemeProvider } from "./context/ThemeContext.jsx";
@@ -56,7 +47,7 @@ import AuthGate from "./components/auth/AuthGate";
 const DISABLE_SELECTION = false;
 const USER_STATE_SYNC_DEBUG = false;
 
-function SectionView({ section, isPracticing, onPracticingChange, onBreathStateChange, onStageChange, currentStage, showFxGallery, onNavigate, onOpenHardwareGuide, onOpenPhotic, hideCards, isActiveBreathSession = false, isBreathLayoutLocked = false }) {
+function SectionView({ section, isPracticing, onPracticingChange, onBreathStateChange, onStageChange, currentStage, previewPath, previewShowCore, previewAttention, showFxGallery, onNavigate, onOpenHardwareGuide, onOpenPhotic, hideCards, isActiveBreathSession = false, isBreathLayoutLocked = false }) {
   // NOTE: Previously had a special vipassana branch that rendered PracticeSection without wrapper divs.
   // This caused unmount/remount when transitioning to vipassana practices because the tree structure changed.
   // REMOVED: The vipassana InsightMeditationPortal uses createPortal to render to document.body,
@@ -73,6 +64,8 @@ function SectionView({ section, isPracticing, onPracticingChange, onBreathStateC
           <PracticeSection 
             onPracticingChange={onPracticingChange} 
             onBreathStateChange={onBreathStateChange}
+            avatarPath={previewPath} 
+            showCore={previewShowCore}
             showFxGallery={showFxGallery} 
             isActiveBreathSession={isActiveBreathSession}
             onNavigate={onNavigate} 
@@ -96,11 +89,11 @@ function SectionView({ section, isPracticing, onPracticingChange, onBreathStateC
               <div className="type-label normal-case text-white/50">Loading Application...</div>
             </div>
           }>
-            <ApplicationSection onNavigate={onNavigate} />
+            <ApplicationSection onStageChange={onStageChange} currentStage={currentStage} previewPath={previewPath} previewShowCore={previewShowCore} previewAttention={previewAttention} onNavigate={onNavigate} />
           </Suspense>
         )}
 
-        {section === "navigation" && !hideCards && <NavigationSection onStageChange={onStageChange} currentStage={currentStage} onNavigate={onNavigate} onOpenHardwareGuide={onOpenHardwareGuide} isPracticing={isPracticing} />}
+        {section === "navigation" && !hideCards && <NavigationSection onStageChange={onStageChange} currentStage={currentStage} previewPath={previewPath} previewShowCore={previewShowCore} previewAttention={previewAttention} onNavigate={onNavigate} onOpenHardwareGuide={onOpenHardwareGuide} isPracticing={isPracticing} />}
       </div>
     </div>
   );
@@ -111,38 +104,24 @@ function App({ playgroundMode = false, playgroundBottomLayer = true }) {
   // Color scheme (dark/light)
   const colorScheme = useDisplayModeStore((s) => s.colorScheme);
   const overrideStage = useDevOverrideStore((s) => s.stage);
+  const overridePath = useDevOverrideStore((s) => s.avatarPath);
   const setOverrideStage = useDevOverrideStore((s) => s.setStage);
+  const setOverridePath = useDevOverrideStore((s) => s.setAvatarPath);
   const userMode = useUserModeStore((s) => s.userMode);
+  const accessPosture = useUserModeStore((s) => s.accessPosture);
   const hasChosenUserMode = useUserModeStore((s) => s.hasChosenUserMode);
   const modeByUserId = useUserModeStore((s) => s.modeByUserId);
-  const setUserMode = useUserModeStore((s) => s.setUserMode);
   const setActiveUserModeUserId = useUserModeStore((s) => s.setActiveUserId);
-  const navigationActivePath = useNavigationStore((s) => s.activePath);
-  const navigationOwnerUserId = useNavigationStore((s) => s.ownerUserId);
-  const setNavigationActiveUserId = useNavigationStore((s) => s.setActiveUserId);
-  const resetNavigationForIdentityBoundary = useNavigationStore((s) => s.resetForIdentityBoundary);
-  const curriculumOwnerUserId = useCurriculumStore((s) => s.ownerUserId);
-  const setCurriculumActiveUserId = useCurriculumStore((s) => s.setActiveUserId);
-  const resetCurriculumForIdentityBoundary = useCurriculumStore((s) => s.resetForIdentityBoundary);
-  const setProgressActiveUserId = useProgressStore((s) => s.setActiveUserId);
-  const setLunarActiveUserId = useLunarStore((s) => s.setActiveUserId);
-  const setApplicationActiveUserId = useApplicationStore((s) => s.setActiveUserId);
-  const setWisdomActiveUserId = useWisdomStore((s) => s.setActiveUserId);
-  const setVideoActiveUserId = useVideoStore((s) => s.setActiveUserId);
-  const setModeTrainingActiveUserId = useModeTrainingStore((s) => s.setActiveUserId);
-  const setChainActiveUserId = useChainStore((s) => s.setActiveUserId);
-  const setCircuitJournalActiveUserId = useCircuitJournalStore((s) => s.setActiveUserId);
-  const resetUiLaunchContext = useUiStore((s) => s.resetLaunchContext);
   const practiceLaunchContext = useUiStore((s) => s.practiceLaunchContext);
   const onboardingComplete = useCurriculumStore((s) => s.onboardingComplete);
   const practiceTimeSlots = useCurriculumStore((s) => s.practiceTimeSlots);
+  const needsSetup = !onboardingComplete && (!practiceTimeSlots || practiceTimeSlots.length === 0);
   const isLight = colorScheme === 'light';
 
   const outerBackground = isLight
     ? 'linear-gradient(135deg, #F5F0E6 0%, #EDE5D8 100%)'
     : '#000';
   const APP_FRAME_WIDTH = 'min(100vw, calc(100dvh * 1080 / 1920))';
-  const entryHeroSrc = `${import.meta.env.BASE_URL}open meditation.webp`;
   // Single, authoritative content rail width. Individual cards can be narrower, but sections
   // should not invent their own viewport widths.
   const UI_RAIL_MAX_WIDTH = 'min(430px, 94vw)';
@@ -191,15 +170,7 @@ function App({ playgroundMode = false, playgroundBottomLayer = true }) {
   const [showDevPanel, setShowDevPanel] = useState(() => (isDev ? false : devPanelGateEnabled)); // Dev Panel (🎨 button)
   const [, setDevtoolsGateTick] = useState(0);
   const [showSettings, setShowSettings] = useState(false); // Settings panel
-  const [studentNavigationOverride, setStudentNavigationOverride] = useState(false);
   const [authUser, setAuthUser] = useState(null);
-  const authUserId = authUser?.id ?? null;
-  const navigationStateOwnedByCurrentUser = Boolean(authUserId && navigationOwnerUserId === authUserId);
-  const curriculumStateOwnedByCurrentUser = Boolean(authUserId && curriculumOwnerUserId === authUserId);
-  const ownedActivePath = navigationStateOwnedByCurrentUser ? navigationActivePath : null;
-  const ownedPracticeTimeSlots = curriculumStateOwnedByCurrentUser ? practiceTimeSlots : [];
-  const ownedOnboardingComplete = curriculumStateOwnedByCurrentUser ? onboardingComplete : false;
-  const needsSetup = !ownedActivePath && !ownedOnboardingComplete && ownedPracticeTimeSlots.length === 0;
   const [hideCards, setHideCards] = useState(false); // Dev mode: hide cards to view wallpaper
   // GRAVEYARD: Top layer removed
   // const [showBackgroundTopLayer, setShowBackgroundTopLayer] = useState(true);
@@ -226,13 +197,14 @@ function App({ playgroundMode = false, playgroundBottomLayer = true }) {
 
   useEffect(() => {
     const currentIsHub = activeSection === null;
-    const decision = !hasChosenUserMode ? 'chooser' : ((currentIsHub || playgroundMode) ? 'hub' : 'section');
+    const decision = (currentIsHub || playgroundMode) ? 'hub' : 'section';
     const snapshot = {
       authUserId: authUser?.id ?? null,
       authUserEmail: authUser?.email ?? null,
       appAuthLoadingFlag: 'none-in-App',
       hasChosenUserMode,
       userMode,
+      accessPosture,
       decision,
       activeSection,
       isHub: currentIsHub,
@@ -243,7 +215,7 @@ function App({ playgroundMode = false, playgroundBottomLayer = true }) {
     if (typeof window !== 'undefined') {
       window.__IMMANENCE_USER_MODE_RESOLVE_PROBE__ = snapshot;
     }
-  }, [activeSection, authUser?.email, authUser?.id, hasChosenUserMode, playgroundMode, userMode]);
+  }, [accessPosture, activeSection, authUser?.email, authUser?.id, hasChosenUserMode, playgroundMode, userMode]);
 
   const handleClosePhotic = useCallback(() => {
     setIsPhoticOpen(false);
@@ -405,8 +377,12 @@ function App({ playgroundMode = false, playgroundBottomLayer = true }) {
 
   // Preview state (lifted from AvatarPreview to persist and apply to all avatars)
   const [previewStage, setPreviewStage] = useState('Seedling');
+  const [previewPath, setPreviewPath] = useState(null);
+  const [previewShowCore, setPreviewShowCore] = useState(true);
+  const [previewAttention, setPreviewAttention] = useState('none');
 
   const effectivePreviewStage = playgroundMode ? overrideStage : previewStage;
+  const effectivePreviewPath = playgroundMode ? overridePath : previewPath;
   const effectiveAvatarStage = playgroundMode ? overrideStage : avatarStage;
 
   const handlePreviewStageChange = useCallback((nextStage) => {
@@ -417,6 +393,14 @@ function App({ playgroundMode = false, playgroundBottomLayer = true }) {
     setPreviewStage(nextStage);
   }, [playgroundMode, setOverrideStage]);
 
+  const handlePreviewPathChange = useCallback((nextPath) => {
+    if (playgroundMode) {
+      setOverridePath(nextPath);
+      return;
+    }
+    setPreviewPath(nextPath);
+  }, [playgroundMode, setOverridePath]);
+
   const handleAvatarStageSelection = useCallback((stageName) => {
     if (playgroundMode) {
       setOverrideStage(stageName);
@@ -426,82 +410,32 @@ function App({ playgroundMode = false, playgroundBottomLayer = true }) {
     setPreviewStage(stageName);
   }, [playgroundMode, setOverrideStage]);
 
-  const handleSectionSelect = useCallback((section, options = {}) => {
-    const forceStudentNavigation = options?.forceStudentNavigation === true;
+  const handleSectionSelect = useCallback((section) => {
     if (playgroundMode) {
-      setStudentNavigationOverride(false);
       setActiveSection(null);
       return;
     }
-    if (userMode !== 'student') {
-      setStudentNavigationOverride(false);
+    if (accessPosture !== 'guided') {
       setActiveSection(section);
       return;
     }
     if (section === null) {
-      setStudentNavigationOverride(false);
       setActiveSection(null);
       return;
     }
     if (section === 'navigation') {
-      if (needsSetup || forceStudentNavigation) {
-        setStudentNavigationOverride(forceStudentNavigation);
+      if (needsSetup) {
         setActiveSection('navigation');
       }
       return;
     }
     if (section === 'practice') {
-      if (practiceLaunchContext || forceStudentNavigation) {
-        setStudentNavigationOverride(false);
+      if (practiceLaunchContext) {
         setActiveSection('practice');
       }
       return;
     }
-    setStudentNavigationOverride(false);
-  }, [needsSetup, playgroundMode, practiceLaunchContext, userMode]);
-
-  useEffect(() => {
-    if (playgroundMode) return;
-    if (!authUserId) return;
-    if (!hasChosenUserMode) return;
-
-    if (userMode === 'student') {
-      if (!ownedActivePath) {
-        if (studentNavigationOverride) {
-          setStudentNavigationOverride(false);
-        }
-        if (activeSection !== 'navigation') {
-          setActiveSection('navigation');
-        }
-        return;
-      }
-
-      if (activeSection === 'navigation' && !studentNavigationOverride) {
-        setActiveSection(null);
-      }
-    }
-  }, [activeSection, authUserId, hasChosenUserMode, ownedActivePath, playgroundMode, studentNavigationOverride, userMode]);
-
-  useEffect(() => {
-    if (!studentNavigationOverride) return;
-    if (activeSection === 'navigation') return;
-    setStudentNavigationOverride(false);
-  }, [activeSection, studentNavigationOverride]);
-
-  const handleChooseStudentMode = useCallback(() => {
-    setUserMode('student');
-    setActiveSection('navigation');
-  }, [setUserMode]);
-
-  const handleChooseExplorerMode = useCallback((event) => {
-    if (!event?.shiftKey) return;
-    if (authUserId) {
-      resetNavigationForIdentityBoundary(authUserId);
-      resetCurriculumForIdentityBoundary(authUserId);
-    }
-    setUserMode('explorer');
-    setActiveSection(null);
-  }, [authUserId, resetCurriculumForIdentityBoundary, resetNavigationForIdentityBoundary, setUserMode]);
+  }, [accessPosture, needsSetup, playgroundMode, practiceLaunchContext]);
 
   // Sync avatarStage with previewStage so theme colors update
   useEffect(() => {
@@ -525,22 +459,7 @@ function App({ playgroundMode = false, playgroundBottomLayer = true }) {
   // }, [curriculumOnboardingComplete, isCurriculumComplete]);
 
 
-  // v3.27.284 - fix(video): guard YouTube script re-insertion; chain onYouTubeIframeAPIReady instead of overwriting
-  // v3.27.285 - fix(minor): FeedbackModal localStorage parse safety; useWakeLock re-acquire condition; audioGuidance fade interval cleanup
-  // v3.27.283 - chore(lint): fix all react-hooks/exhaustive-deps and no-unused-vars warnings across 25 files (65→0)
-  // v3.27.282 - fix(practice): add numeric minute labels to duration slider; add dialog role/aria + pre-select + Cancel border to VipassanaVariantSelector
-  // v3.27.281 - feat(application): add sigil-slot habit assignment UI and tutorial video modal entry
-  // v3.27.280 - feat(application): deterministic 3-stroke sigil decoder with live legend popup and awareness-win wiring
-  // v3.27.279 - chore(sync): classify Supabase sync failures with transport/auth diagnostics
-  // v3.27.278 - chore(tutorial): remove temporary unmount probe instrumentation
-  // v3.27.277 - fix(tutorial): defer nested root unmount to avoid render-time race warning
-  // v3.27.276 - feat(navigation): apply arwes housing to inner cards and stage pill
-  // v3.27.275 - feat(navigation): apply arwes housing to program grid — outer chrome, inner plate, scan line, corner brackets
-  // v3.27.274 - feat(navigation): stage carousel — swipeable, dot selectors, per-stage program view
-  // v3.27.273 - feat(navigation): stage carousel — 5 lanes seedling→stellar, thought ritual→ember
-  // v3.27.272 - fix(navigation): remove PathFinderCard, frame instruction text
-  // v3.27.271 - fix(navigation): boost instruction prominence, remove Posted Notice badges
-  // v3.27.270 - fix(navigation): audit-driven legibility pass — reduce card chamfer, stack footer, drop emoji/double-border, boost instruction opacity
+  // v3.27.270 - feat(access): replace chooser with persisted home hub posture toggle
   // v3.27.269 - fix(precision-rail): constrain legend popup to rail width with 2-column layout
   // v3.27.268 - fix(dedup): remove duplicate restart/abandon buttons from active path state component
   // v3.27.267 - fix(legibility): add dark background container with white text for path actions
@@ -692,7 +611,6 @@ function App({ playgroundMode = false, playgroundBottomLayer = true }) {
 
   // PROBE:OFFLINE_FIRST_USER_STATE_SYNC:START
   const userStateSyncCleanupRef = useRef(null);
-  const previousAuthUserIdRef = useRef(null);
 
   const stopUserStateSync = useCallback(() => {
     try {
@@ -718,7 +636,6 @@ function App({ playgroundMode = false, playgroundBottomLayer = true }) {
       userStateSyncCleanupRef.current = initOfflineFirstUserStateSync({
         supabase,
         keys: OFFLINE_FIRST_USER_STATE_KEYS,
-        userId,
         debug: USER_STATE_SYNC_DEBUG,
       });
     } catch (e) {
@@ -734,16 +651,6 @@ function App({ playgroundMode = false, playgroundBottomLayer = true }) {
     if (event === "SIGNED_OUT") {
       setAuthUser(null);
       setActiveUserModeUserId(null);
-      setNavigationActiveUserId(null);
-      setCurriculumActiveUserId(null);
-      setProgressActiveUserId(null);
-      setLunarActiveUserId(null);
-      setApplicationActiveUserId(null);
-      setWisdomActiveUserId(null);
-      setVideoActiveUserId(null);
-      setModeTrainingActiveUserId(null);
-      setChainActiveUserId(null);
-      setCircuitJournalActiveUserId(null);
       stopUserStateSync();
       setShowSettings(false);
       setActiveSection(null);
@@ -753,93 +660,22 @@ function App({ playgroundMode = false, playgroundBottomLayer = true }) {
     if (event === "USER_UPDATED" && session) {
       setAuthUser(session?.user ?? null);
       setActiveUserModeUserId(session?.user?.id ?? null);
-      setNavigationActiveUserId(session?.user?.id ?? null);
-      setCurriculumActiveUserId(session?.user?.id ?? null);
-      setProgressActiveUserId(session?.user?.id ?? null);
-      setLunarActiveUserId(session?.user?.id ?? null);
-      setApplicationActiveUserId(session?.user?.id ?? null);
-      setWisdomActiveUserId(session?.user?.id ?? null);
-      setVideoActiveUserId(session?.user?.id ?? null);
-      setModeTrainingActiveUserId(session?.user?.id ?? null);
-      setChainActiveUserId(session?.user?.id ?? null);
-      setCircuitJournalActiveUserId(session?.user?.id ?? null);
       return;
     }
 
     if ((event === "SIGNED_IN" || event === "INITIAL_SESSION") && session) {
       setAuthUser(session?.user ?? null);
       setActiveUserModeUserId(session?.user?.id ?? null);
-      setNavigationActiveUserId(session?.user?.id ?? null);
-      setCurriculumActiveUserId(session?.user?.id ?? null);
-      setProgressActiveUserId(session?.user?.id ?? null);
-      setLunarActiveUserId(session?.user?.id ?? null);
-      setApplicationActiveUserId(session?.user?.id ?? null);
-      setWisdomActiveUserId(session?.user?.id ?? null);
-      setVideoActiveUserId(session?.user?.id ?? null);
-      setModeTrainingActiveUserId(session?.user?.id ?? null);
-      setChainActiveUserId(session?.user?.id ?? null);
-      setCircuitJournalActiveUserId(session?.user?.id ?? null);
       stopUserStateSync();
       startUserStateSync(session);
       setShowSettings(false);
       setActiveSection(null);
     }
-  }, [
-    setActiveUserModeUserId,
-    setCurriculumActiveUserId,
-    setNavigationActiveUserId,
-    setProgressActiveUserId,
-    setLunarActiveUserId,
-    setApplicationActiveUserId,
-    setWisdomActiveUserId,
-    setVideoActiveUserId,
-    setModeTrainingActiveUserId,
-    setChainActiveUserId,
-    setCircuitJournalActiveUserId,
-    startUserStateSync,
-    stopUserStateSync,
-  ]);
+  }, [setActiveUserModeUserId, startUserStateSync, stopUserStateSync]);
 
   useEffect(() => {
-    const previousUserId = previousAuthUserIdRef.current;
-    const currentUserId = authUser?.id ?? null;
-    const identityChanged = previousUserId !== currentUserId;
-
-    setActiveUserModeUserId(currentUserId);
-    setNavigationActiveUserId(currentUserId);
-    setCurriculumActiveUserId(currentUserId);
-    setProgressActiveUserId(currentUserId);
-    setLunarActiveUserId(currentUserId);
-    setApplicationActiveUserId(currentUserId);
-    setWisdomActiveUserId(currentUserId);
-    setVideoActiveUserId(currentUserId);
-    setModeTrainingActiveUserId(currentUserId);
-    setChainActiveUserId(currentUserId);
-    setCircuitJournalActiveUserId(currentUserId);
-
-    if (identityChanged) {
-      resetUiLaunchContext();
-      setShowSettings(false);
-      setActiveSection(null);
-    }
-
-    previousAuthUserIdRef.current = currentUserId;
-  }, [
-    authUser?.id,
-    modeByUserId,
-    resetUiLaunchContext,
-    setActiveUserModeUserId,
-    setCurriculumActiveUserId,
-    setNavigationActiveUserId,
-    setProgressActiveUserId,
-    setLunarActiveUserId,
-    setApplicationActiveUserId,
-    setWisdomActiveUserId,
-    setVideoActiveUserId,
-    setModeTrainingActiveUserId,
-    setChainActiveUserId,
-    setCircuitJournalActiveUserId,
-  ]);
+    setActiveUserModeUserId(authUser?.id ?? null);
+  }, [authUser?.id, modeByUserId, setActiveUserModeUserId]);
   // PROBE:OFFLINE_FIRST_USER_STATE_SYNC:END
 
   return (
@@ -870,6 +706,12 @@ function App({ playgroundMode = false, playgroundBottomLayer = true }) {
             onClose={() => setShowDevPanel(false)}
             avatarStage={effectivePreviewStage}
             setAvatarStage={handlePreviewStageChange}
+            avatarPath={effectivePreviewPath}
+            setAvatarPath={handlePreviewPathChange}
+            showCore={previewShowCore}
+            setShowCore={setPreviewShowCore}
+            avatarAttention={previewAttention}
+            setAvatarAttention={setPreviewAttention}
           />
         </Suspense>
       )}
@@ -1064,7 +906,7 @@ function App({ playgroundMode = false, playgroundBottomLayer = true }) {
                         }}
                         style={{ background: 'transparent' }}
                       >
-                        v3.27.279
+                        v3.27.270
                       </button>
                     </div>
                   </div>
@@ -1093,575 +935,10 @@ function App({ playgroundMode = false, playgroundBottomLayer = true }) {
               }}
               inert={isMinimized ? "" : undefined}
             >
-              {!hasChosenUserMode ? (
-                <div className="imm-chooser">
-                  <style>{`
-                    .imm-chooser {
-                      --amber: #c8832a;
-                      --amber-bright: #f0a840;
-                      --amber-glow: rgba(200,131,42,0.4);
-                      --teal: #2a8fa0;
-                      --teal-bright: #40d0e8;
-                      --teal-glow: rgba(42,143,160,0.4);
-                      --bg-deep: #04080f;
-                      --bg-card: #080e18;
-                      --text-primary: #d8e8f0;
-                      --text-secondary: #7a9ab0;
-                      --text-dim: #3a5568;
-                      background: #04080f;
-                      min-height: 100%;
-                      width: 100%;
-                      color: var(--text-primary);
-                      position: relative;
-                      overflow: hidden;
-                    }
-                    .imm-chooser .ic-col {
-                      max-width: 520px;
-                      margin: 0 auto;
-                      padding: 32px 20px 48px;
-                      position: relative;
-                      z-index: 1;
-                    }
-                    .imm-chooser .ic-hero {
-                      position: relative;
-                      border: 1px solid rgba(42,143,160,0.28);
-                      border-radius: 4px;
-                      overflow: hidden;
-                      aspect-ratio: 21/9;
-                      margin-bottom: 28px;
-                      animation: immFadeUp 0.5s ease forwards, immHeroGlow 5s ease-in-out 0.6s infinite;
-                    }
-                    .imm-chooser .ic-hero::before {
-                      content: '';
-                      position: absolute;
-                      top: 6px; left: 6px;
-                      width: 20px; height: 20px;
-                      border-top: 2px solid var(--teal-bright);
-                      border-left: 2px solid var(--teal-bright);
-                      box-shadow: var(--teal-glow);
-                      z-index: 3;
-                      pointer-events: none;
-                    }
-                    .imm-chooser .ic-hero::after {
-                      content: '';
-                      position: absolute;
-                      top: 6px; right: 6px;
-                      width: 20px; height: 20px;
-                      border-top: 2px solid var(--teal-bright);
-                      border-right: 2px solid var(--teal-bright);
-                      box-shadow: var(--teal-glow);
-                      z-index: 3;
-                      pointer-events: none;
-                    }
-                    .imm-chooser .hc-bl {
-                      position: absolute;
-                      bottom: 6px; left: 6px;
-                      width: 20px; height: 20px;
-                      border-bottom: 2px solid var(--teal-bright);
-                      border-left: 2px solid var(--teal-bright);
-                      box-shadow: var(--teal-glow);
-                      z-index: 3;
-                      pointer-events: none;
-                    }
-                    .imm-chooser .hc-br {
-                      position: absolute;
-                      bottom: 6px; right: 6px;
-                      width: 20px; height: 20px;
-                      border-bottom: 2px solid var(--teal-bright);
-                      border-right: 2px solid var(--teal-bright);
-                      box-shadow: var(--teal-glow);
-                      z-index: 3;
-                      pointer-events: none;
-                    }
-                    .imm-chooser .ic-hero-veil {
-                      position: absolute;
-                      inset: 0;
-                      background: linear-gradient(to bottom, rgba(64,208,232,0.05) 0%, transparent 25%, transparent 70%, rgba(4,8,15,0.5) 100%);
-                      pointer-events: none;
-                      z-index: 2;
-                    }
-                    .imm-chooser .ic-hero img {
-                      position: absolute;
-                      inset: 0;
-                      width: 100%;
-                      height: 100%;
-                      object-fit: cover;
-                      object-position: center;
-                    }
-                    .imm-chooser .ic-text {
-                      text-align: center;
-                      padding: 0 8px;
-                      margin-bottom: 12px;
-                      opacity: 0;
-                      animation: immFadeUp 0.5s 0.15s ease forwards;
-                    }
-                    .imm-chooser .ic-overline {
-                      font-size: 11px;
-                      letter-spacing: 0.32em;
-                      text-transform: uppercase;
-                      color: var(--text-dim);
-                      margin-bottom: 10px;
-                    }
-                    .imm-chooser .ic-h1 {
-                      font-size: 28px;
-                      font-weight: 700;
-                      line-height: 1.15;
-                      color: #e8f0f8;
-                      text-shadow: 0 0 40px rgba(64,208,232,0.12);
-                      margin-bottom: 14px;
-                    }
-                    .imm-chooser .ic-body {
-                      font-size: 13px;
-                      font-weight: 300;
-                      line-height: 1.65;
-                      color: var(--text-secondary);
-                      margin: 0 auto 18px;
-                      max-width: 420px;
-                    }
-                    .imm-chooser-divider {
-                      display: flex;
-                      align-items: center;
-                      gap: 6px;
-                      margin: 0 auto 16px;
-                      max-width: 320px;
-                      opacity: 0.35;
-                    }
-                    .imm-chooser-divider-line {
-                      flex: 1;
-                      height: 1px;
-                      background: linear-gradient(90deg, transparent, var(--teal-bright));
-                    }
-                    .imm-chooser-divider-line:last-of-type {
-                      background: linear-gradient(90deg, var(--teal-bright), transparent);
-                    }
-                    .imm-chooser-divider-ticks {
-                      display: flex;
-                      align-items: flex-end;
-                      gap: 3px;
-                    }
-                    .imm-chooser-divider-ticks span {
-                      display: block;
-                      width: 1px;
-                      background: var(--teal-bright);
-                    }
-                    .imm-chooser-divider-ticks span:nth-child(1) { height: 4px; }
-                    .imm-chooser-divider-ticks span:nth-child(2) { height: 7px; }
-                    .imm-chooser-divider-ticks span:nth-child(3) { height: 10px; }
-                    .imm-chooser-divider-ticks span:nth-child(4) { height: 7px; }
-                    .imm-chooser-divider-ticks span:nth-child(5) { height: 4px; }
-                    .imm-chooser-divider-diamond {
-                      font-size: 8px;
-                      color: var(--teal-bright);
-                      line-height: 1;
-                    }
-                    .imm-chooser .ic-cta-label {
-                      font-size: 13px;
-                      font-weight: 600;
-                      letter-spacing: 0.22em;
-                      text-transform: uppercase;
-                      color: var(--teal-bright);
-                    }
-                    .imm-chooser .ic-cards {
-                      display: grid;
-                      grid-template-columns: 1fr 1fr;
-                      gap: 12px;
-                      align-items: stretch;
-                      margin-bottom: 20px;
-                      opacity: 0;
-                      animation: immFadeUp 0.5s 0.3s ease forwards;
-                    }
-                    @media (max-width: 480px) {
-                      .imm-chooser .ic-cards {
-                        grid-template-columns: 1fr;
-                      }
-                    }
-                    .imm-chooser .ic-card {
-                      position: relative;
-                      border-radius: 4px;
-                      overflow: hidden;
-                      display: flex;
-                      flex-direction: column;
-                    }
-                    .imm-chooser .ic-card-student {
-                      background: #0d1526;
-                      border: 1px solid rgba(200,131,42,0.22);
-                      box-shadow: inset 0 1px 0 rgba(255,255,255,0.04), 0 4px 24px rgba(0,0,0,0.4), 0 0 20px rgba(200,131,42,0.05);
-                    }
-                    .imm-chooser .ic-card-student::after {
-                      content: '';
-                      position: absolute;
-                      top: 0; left: 0; right: 0;
-                      height: 1px;
-                      background-image: linear-gradient(90deg, transparent, var(--amber), transparent);
-                      background-size: 200% 100%;
-                      opacity: 0.5;
-                      z-index: 1;
-                      animation: immSweepLine 7s ease-in-out 1s infinite;
-                    }
-                    .imm-chooser .ic-card-explorer {
-                      background: #0d1526;
-                      border: 1px solid rgba(42,143,160,0.25);
-                      box-shadow: inset 0 1px 0 rgba(255,255,255,0.04), 0 4px 24px rgba(0,0,0,0.4), 0 0 20px rgba(42,143,160,0.06);
-                    }
-                    .imm-chooser .ic-card-explorer::after {
-                      content: '';
-                      position: absolute;
-                      top: 0; left: 0; right: 0;
-                      height: 1px;
-                      background-image: linear-gradient(90deg, transparent, var(--teal-bright), transparent);
-                      background-size: 200% 100%;
-                      opacity: 0.4;
-                      z-index: 1;
-                      animation: immSweepLine 7s ease-in-out 3.5s infinite;
-                    }
-                    .imm-chooser .c-tl,
-                    .imm-chooser .c-tr,
-                    .imm-chooser .c-bl,
-                    .imm-chooser .c-br {
-                      position: absolute;
-                      width: 13px;
-                      height: 13px;
-                      pointer-events: none;
-                      z-index: 2;
-                    }
-                    .imm-chooser .c-tl { top: 5px; left: 5px; }
-                    .imm-chooser .c-tr { top: 5px; right: 5px; }
-                    .imm-chooser .c-bl { bottom: 5px; left: 5px; }
-                    .imm-chooser .c-br { bottom: 5px; right: 5px; }
-                    .imm-chooser .ic-card-student .c-tl { border-top: 2px solid var(--amber-bright); border-left: 2px solid var(--amber-bright); box-shadow: var(--amber-glow); }
-                    .imm-chooser .ic-card-student .c-tr { border-top: 2px solid var(--amber-bright); border-right: 2px solid var(--amber-bright); box-shadow: var(--amber-glow); }
-                    .imm-chooser .ic-card-student .c-bl { border-bottom: 2px solid var(--amber-bright); border-left: 2px solid var(--amber-bright); box-shadow: var(--amber-glow); }
-                    .imm-chooser .ic-card-student .c-br { border-bottom: 2px solid var(--amber-bright); border-right: 2px solid var(--amber-bright); box-shadow: var(--amber-glow); }
-                    .imm-chooser .ic-card-explorer .c-tl { border-top: 2px solid var(--teal-bright); border-left: 2px solid var(--teal-bright); box-shadow: var(--teal-glow); }
-                    .imm-chooser .ic-card-explorer .c-tr { border-top: 2px solid var(--teal-bright); border-right: 2px solid var(--teal-bright); box-shadow: var(--teal-glow); }
-                    .imm-chooser .ic-card-explorer .c-bl { border-bottom: 2px solid var(--teal-bright); border-left: 2px solid var(--teal-bright); box-shadow: var(--teal-glow); }
-                    .imm-chooser .ic-card-explorer .c-br { border-bottom: 2px solid var(--teal-bright); border-right: 2px solid var(--teal-bright); box-shadow: var(--teal-glow); }
-                    .imm-chooser .ic-content {
-                      position: relative;
-                      z-index: 1;
-                      padding: 16px 14px 14px;
-                      display: flex;
-                      flex-direction: column;
-                      flex: 1;
-                    }
-                    .imm-chooser .ic-card-label {
-                      font-size: 9px;
-                      letter-spacing: 0.28em;
-                      text-transform: uppercase;
-                      margin-bottom: 4px;
-                      font-family: monospace;
-                    }
-                    .imm-chooser .ic-card-title {
-                      font-size: 22px;
-                      font-weight: 700;
-                      color: #e8f0f8;
-                      margin-bottom: 12px;
-                    }
-                    .imm-chooser .ic-features {
-                      list-style: none;
-                      padding: 0;
-                      margin: 0 0 16px;
-                    }
-                    .imm-chooser .ic-features li {
-                      position: relative;
-                      padding: 3px 0 3px 14px;
-                      border-bottom: 1px solid rgba(255,255,255,0.025);
-                      font-size: 11px;
-                      font-weight: 300;
-                      line-height: 1.5;
-                      color: var(--text-secondary);
-                    }
-                    .imm-chooser .ic-features li:last-child {
-                      border-bottom: none;
-                    }
-                    .imm-chooser .ic-bullet {
-                      position: absolute;
-                      left: 0;
-                      top: 4px;
-                      font-size: 9px;
-                    }
-                    .imm-chooser .ic-btn {
-                      margin-top: auto;
-                      width: 100%;
-                      padding: 10px 8px;
-                      font-size: 11px;
-                      font-weight: 700;
-                      letter-spacing: 0.16em;
-                      text-transform: uppercase;
-                      border-radius: 3px;
-                      cursor: pointer;
-                      font-family: monospace;
-                      transition: background 0.15s ease, box-shadow 0.15s ease;
-                    }
-                    .imm-chooser .ic-btn-student {
-                      background: rgba(200,131,42,0.1);
-                      border: 1px solid rgba(200,131,42,0.45);
-                      color: var(--amber-bright);
-                      box-shadow: 0 0 10px rgba(200,131,42,0.08);
-                    }
-                    .imm-chooser .ic-btn-student:hover {
-                      background: rgba(200,131,42,0.2);
-                      box-shadow: 0 0 22px rgba(200,131,42,0.22);
-                    }
-                    .imm-chooser .ic-btn-explorer {
-                      background: rgba(42,143,160,0.1);
-                      border: 1px solid rgba(64,208,232,0.38);
-                      color: var(--teal-bright);
-                      box-shadow: 0 0 10px rgba(42,143,160,0.08);
-                    }
-                    .imm-chooser .ic-btn-explorer:hover {
-                      background: rgba(42,143,160,0.2);
-                      box-shadow: 0 0 22px rgba(42,143,160,0.22);
-                    }
-                    .imm-chooser .ic-bottom {
-                      font-family: monospace;
-                      font-size: 10px;
-                      color: var(--text-dim);
-                      text-align: center;
-                      margin: 0;
-                      opacity: 0;
-                      animation: immFadeUp 0.5s 0.42s ease forwards;
-                    }
-                    .imm-chooser::before {
-                      content: '';
-                      position: absolute;
-                      top: 0;
-                      left: 0;
-                      width: 1px;
-                      height: 1px;
-                      pointer-events: none;
-                      z-index: 0;
-                      box-shadow:
-                        12px 87px 0 0 rgba(255,255,255,0.20),
-                        67px 234px 0 0 rgba(255,255,255,0.18),
-                        145px 412px 0 0 rgba(255,255,255,0.22),
-                        289px 56px 0 0 rgba(255,255,255,0.17),
-                        456px 178px 0 0 rgba(255,255,255,0.15),
-                        601px 334px 0 0 rgba(255,255,255,0.19),
-                        712px 567px 0 0 rgba(255,255,255,0.21),
-                        34px 689px 0 0 rgba(255,255,255,0.16),
-                        178px 812px 0 0 rgba(255,255,255,0.22),
-                        523px 945px 0 0 rgba(255,255,255,0.18),
-                        668px 1067px 0 0 rgba(255,255,255,0.25),
-                        90px 1134px 0 0 rgba(255,255,255,0.28),
-                        234px 1267px 0 0 rgba(255,255,255,0.26),
-                        378px 1389px 0 0 rgba(255,255,255,0.23),
-                        545px 145px 0 0 rgba(255,255,255,0.27),
-                        700px 289px 0 0 rgba(255,255,255,0.24),
-                        156px 523px 0 0 rgba(255,255,255,0.29),
-                        412px 667px 0 0 rgba(255,255,255,0.22),
-                        589px 890px 0 0 rgba(255,255,255,0.26),
-                        23px 1023px 0 0 rgba(255,255,255,0.28),
-                        312px 189px 0 0 rgba(255,255,255,0.35),
-                        467px 345px 0 0 rgba(255,255,255,0.32),
-                        78px 478px 0 0 rgba(255,255,255,0.38),
-                        634px 612px 0 0 rgba(255,255,255,0.33),
-                        189px 745px 0 0 rgba(255,255,255,0.36),
-                        501px 868px 0 0 rgba(255,255,255,0.31),
-                        267px 1000px 0 0 rgba(255,255,255,0.37),
-                        712px 1112px 0 0 rgba(255,255,255,0.34),
-                        45px 1234px 0 0 rgba(255,255,255,0.39),
-                        400px 1367px 0 0 rgba(255,255,255,0.33),
-                        123px 23px 0 0 rgba(255,255,255,0.45),
-                        567px 156px 0 0 rgba(255,255,255,0.42),
-                        234px 312px 0 0 rgba(255,255,255,0.47),
-                        689px 445px 0 0 rgba(255,255,255,0.41),
-                        345px 578px 0 0 rgba(255,255,255,0.44),
-                        56px 711px 0 0 rgba(255,255,255,0.48),
-                        489px 834px 0 0 rgba(255,255,255,0.43),
-                        678px 978px 0 0 rgba(255,255,255,0.46),
-                        156px 1089px 0 0 rgba(255,255,255,0.41),
-                        423px 1212px 0 0 rgba(255,255,255,0.49),
-                        89px 367px 0 0 rgba(255,255,255,0.44),
-                        534px 500px 0 0 rgba(255,255,255,0.42),
-                        278px 634px 0 0 rgba(255,255,255,0.46),
-                        612px 756px 0 0 rgba(255,255,255,0.43),
-                        167px 889px 0 0 rgba(255,255,255,0.47),
-                        456px 1012px 0 0 rgba(255,255,255,0.44),
-                        701px 1145px 0 0 rgba(255,255,255,0.41),
-                        312px 1278px 0 0 rgba(255,255,255,0.48),
-                        23px 145px 0 0 rgba(255,255,255,0.43),
-                        578px 267px 0 0 rgba(255,255,255,0.46),
-                        89px 412px 0 0 rgba(255,255,255,0.55),
-                        434px 545px 0 0 rgba(255,255,255,0.52),
-                        623px 678px 0 0 rgba(255,255,255,0.57),
-                        178px 823px 0 0 rgba(255,255,255,0.54),
-                        512px 956px 0 0 rgba(255,255,255,0.51),
-                        267px 1089px 0 0 rgba(255,255,255,0.56),
-                        689px 1222px 0 0 rgba(255,255,255,0.53),
-                        34px 1345px 0 0 rgba(255,255,255,0.58),
-                        345px 67px 0 0 rgba(255,255,255,0.52),
-                        600px 200px 0 0 rgba(255,255,255,0.55),
-                        156px 456px 0 0 rgba(255,255,255,0.57),
-                        489px 589px 0 0 rgba(255,255,255,0.54),
-                        712px 734px 0 0 rgba(255,255,255,0.59),
-                        234px 867px 0 0 rgba(255,255,255,0.52),
-                        556px 1000px 0 0 rgba(255,255,255,0.56),
-                        89px 1112px 0 0 rgba(255,255,255,0.53),
-                        423px 1245px 0 0 rgba(255,255,255,0.58),
-                        668px 1378px 0 0 rgba(255,255,255,0.51),
-                        312px 34px 0 0 rgba(255,255,255,0.55),
-                        45px 289px 0 0 rgba(255,255,255,0.57),
-                        234px 523px 0 0 rgba(255,255,255,0.65),
-                        567px 645px 0 0 rgba(255,255,255,0.62),
-                        123px 778px 0 0 rgba(255,255,255,0.68),
-                        456px 912px 0 0 rgba(255,255,255,0.63),
-                        700px 1045px 0 0 rgba(255,255,255,0.66),
-                        278px 1167px 0 0 rgba(255,255,255,0.61),
-                        612px 1300px 0 0 rgba(255,255,255,0.69),
-                        67px 78px 0 0 rgba(255,255,255,0.64),
-                        400px 212px 0 0 rgba(255,255,255,0.67),
-                        556px 456px 0 0 rgba(255,255,255,0.62),
-                        89px 623px 0 0 rgba(255,255,255,0.65),
-                        434px 756px 0 0 rgba(255,255,255,0.70),
-                        678px 889px 0 0 rgba(255,255,255,0.63),
-                        156px 1023px 0 0 rgba(255,255,255,0.68),
-                        512px 1156px 0 0 rgba(255,255,255,0.65),
-                        267px 1289px 0 0 rgba(255,255,255,0.71),
-                        23px 345px 0 0 rgba(255,255,255,0.64),
-                        601px 478px 0 0 rgba(255,255,255,0.67),
-                        312px 600px 0 0 rgba(255,255,255,0.62),
-                        712px 123px 0 0 rgba(255,255,255,0.66),
-                        178px 367px 0 0 rgba(255,255,255,0.38),
-                        523px 501px 0 0 rgba(255,255,255,0.42),
-                        345px 712px 0 0 rgba(255,255,255,0.29),
-                        89px 934px 0 0 rgba(255,255,255,0.51),
-                        456px 1112px 0 0 rgba(255,255,255,0.35),
-                        623px 1267px 0 0 rgba(255,255,255,0.44),
-                        234px 89px 0 0 rgba(255,255,255,0.33),
-                        567px 78px 0 0 rgba(255,255,255,0.48),
-                        112px 1389px 0 0 rgba(255,255,255,0.21),
-                        689px 712px 0 0 rgba(255,255,255,0.56),
-                        45px 512px 0 0 rgba(255,255,255,0.39),
-                        401px 289px 0 0 rgba(255,255,255,0.26),
-                        634px 1023px 0 0 rgba(255,255,255,0.47),
-                        178px 167px 0 0 rgba(255,255,255,0.60),
-                        512px 823px 0 0 rgba(255,255,255,0.33),
-                        267px 1145px 0 0 rgba(255,255,255,0.52),
-                        700px 456px 0 0 rgba(255,255,255,0.28),
-                        123px 678px 0 0 rgba(255,255,255,0.64),
-                        389px 934px 0 0 rgba(255,255,255,0.41),
-                        567px 1189px 0 0 rgba(255,255,255,0.35),
-                        345px 178px 0 0 rgba(255,255,255,0.85),
-                        578px 734px 0 0 rgba(255,255,255,0.90),
-                        123px 512px 0 0 rgba(255,255,255,0.80),
-                        456px 1089px 0 0 rgba(255,255,255,0.88),
-                        701px 267px 0 0 rgba(255,255,255,0.82),
-                        89px 956px 0 0 rgba(255,255,255,0.95),
-                        312px 1345px 0 0 rgba(255,255,255,0.83),
-                        634px 89px 0 0 rgba(255,255,255,0.87),
-                        200px 600px 0 0 rgba(255,255,255,0.91),
-                        445px 400px 0 0 rgba(255,255,255,0.86);
-                      animation: starfieldDrift 60s linear infinite;
-                    }
-                    .imm-chooser::after {
-                      content: '';
-                      position: absolute;
-                      inset: 0;
-                      pointer-events: none;
-                      z-index: 0;
-                      background:
-                        radial-gradient(ellipse 70% 40% at 25% 60%, rgba(20,55,85,0.25) 0%, transparent 70%),
-                        radial-gradient(ellipse 50% 35% at 78% 35%, rgba(15,40,70,0.2) 0%, transparent 70%),
-                        radial-gradient(ellipse 40% 30% at 55% 80%, rgba(30,20,60,0.15) 0%, transparent 70%);
-                      animation: nebulaDrift 40s ease-in-out infinite;
-                    }
-                    .imm-chooser .ic-card-student::before,
-                    .imm-chooser .ic-card-explorer::before {
-                      content: '';
-                      position: absolute;
-                      inset: 0;
-                      pointer-events: none;
-                      z-index: 0;
-                      opacity: 0.4;
-                      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.08'/%3E%3C/svg%3E");
-                      background-size: 200px 200px;
-                      border-radius: 4px;
-                    }
-                    @keyframes immFadeUp {
-                      from { opacity: 0; transform: translateY(14px); }
-                      to   { opacity: 1; transform: translateY(0); }
-                    }
-                    @keyframes immHeroGlow {
-                      0%,100% { box-shadow: 0 0 0 1px rgba(64,208,232,0.08), 0 0 18px rgba(42,143,160,0.1); }
-                      50%     { box-shadow: 0 0 0 1px rgba(64,208,232,0.22), 0 0 40px rgba(42,143,160,0.22); }
-                    }
-                    @keyframes immSweepLine {
-                      0%   { background-position: -200% 0; }
-                      100% { background-position: 300% 0; }
-                    }
-                    @keyframes starfieldDrift {
-                      from { transform: translateY(0); }
-                      to   { transform: translateY(40px); }
-                    }
-                    @keyframes nebulaDrift {
-                      0%   { opacity: 0.6; transform: scale(1) translateX(0); }
-                      33%  { opacity: 0.8; transform: scale(1.02) translateX(8px); }
-                      66%  { opacity: 0.65; transform: scale(0.98) translateX(-6px); }
-                      100% { opacity: 0.6; transform: scale(1) translateX(0); }
-                    }
-                  `}</style>
-                  <div className="ic-col">
-                    <div className="ic-hero" aria-hidden="true">
-                      <div className="ic-hero-veil" />
-                      <div className="hc-bl" />
-                      <div className="hc-br" />
-                      <img src={entryHeroSrc} alt="" />
-                    </div>
-                    <div className="ic-text">
-                      <div className="ic-overline">IMMANENCE OS</div>
-                      <h1 className="ic-h1">A spiritual dojo for the serious practitioner.</h1>
-                      <p className="ic-body">Traditional practices, modern frameworks — applied to living well, resilience, and self-mastery through training the mind and nervous system.</p>
-                      <div className="imm-chooser-divider">
-                        <div className="imm-chooser-divider-line" />
-                        <div className="imm-chooser-divider-ticks">
-                          <span /><span /><span /><span /><span />
-                        </div>
-                        <div className="imm-chooser-divider-diamond">◆</div>
-                        <div className="imm-chooser-divider-ticks">
-                          <span /><span /><span /><span /><span />
-                        </div>
-                        <div className="imm-chooser-divider-line" />
-                      </div>
-                      <div className="ic-cta-label">CHOOSE YOUR PATH</div>
-                    </div>
-                    <div className="ic-cards">
-                      <div className="ic-card ic-card-student">
-                        <div className="c-tl" /><div className="c-tr" /><div className="c-bl" /><div className="c-br" />
-                        <div className="ic-content">
-                          <div className="ic-card-label" style={{ color: 'var(--amber)' }}>GUIDED PRACTICE</div>
-                          <div className="ic-card-title">Student</div>
-                          <ul className="ic-features">
-                            <li><span className="ic-bullet" style={{ color: 'var(--amber)' }}>▸</span>Start with curriculum flow</li>
-                            <li><span className="ic-bullet" style={{ color: 'var(--amber)' }}>▸</span>Fewer sections until setup</li>
-                            <li><span className="ic-bullet" style={{ color: 'var(--amber)' }}>▸</span>Best for structured progression</li>
-                          </ul>
-                          <button type="button" className="ic-btn ic-btn-student" onClick={handleChooseStudentMode}>
-                            Enter as Student
-                          </button>
-                        </div>
-                      </div>
-                      <div className="ic-card ic-card-explorer">
-                        <div className="c-tl" /><div className="c-tr" /><div className="c-bl" /><div className="c-br" />
-                        <div className="ic-content">
-                          <div className="ic-card-label" style={{ color: 'var(--teal-bright)' }}>FULL ACCESS</div>
-                          <div className="ic-card-title">Explorer</div>
-                          <ul className="ic-features">
-                            <li><span className="ic-bullet" style={{ color: 'var(--teal-bright)' }}>▸</span>Full section access immediately</li>
-                            <li><span className="ic-bullet" style={{ color: 'var(--teal-bright)' }}>▸</span>Move freely across the app</li>
-                            <li><span className="ic-bullet" style={{ color: 'var(--teal-bright)' }}>▸</span>Best for self-directed use</li>
-                          </ul>
-                          <button type="button" className="ic-btn ic-btn-explorer" onClick={handleChooseExplorerMode}>
-                            Enter as Explorer
-                          </button>
-                        </div>
-                      </div>
-                    </div>
-                    <p className="ic-bottom">· Learn the difference ·</p>
-                  </div>
-                </div>
-              ) : (isHub || playgroundMode) ? (
+              {(isHub || playgroundMode) ? (
                 <div key="hub" className="section-enter">
+
+
                   {(debugBuildProbe && debugShadowScan) && (
                     <div
                       className="mx-6 mt-3 mb-2 rounded-lg px-3 py-2 text-[11px] uppercase tracking-[0.12em]"
@@ -1785,6 +1062,9 @@ function App({ playgroundMode = false, playgroundBottomLayer = true }) {
                       onStageChange={(hsl, stageName) => handleAvatarStageSelection(stageName)}
                       isPracticing={isPracticing}
                       currentStage={effectivePreviewStage}
+                      previewPath={effectivePreviewPath}
+                      previewShowCore={previewShowCore}
+                      previewAttention={previewAttention}
                       onOpenHardwareGuide={() => setIsHardwareGuideOpen(true)}
                       lockToHub={playgroundMode}
                       debugDisableDailyCard={debugDisableDailyCard}
@@ -1810,6 +1090,9 @@ function App({ playgroundMode = false, playgroundBottomLayer = true }) {
                   onBreathStateChange={setBreathState}
                   onStageChange={(hsl, stageName) => handleAvatarStageSelection(stageName)}
                   currentStage={effectivePreviewStage}
+                  previewPath={effectivePreviewPath}
+                  previewShowCore={previewShowCore}
+                  previewAttention={previewAttention}
                   showFxGallery={showFxGallery}
                   onNavigate={handleSectionSelect}
                   onOpenHardwareGuide={() => setIsHardwareGuideOpen(true)}

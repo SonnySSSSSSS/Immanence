@@ -73,6 +73,8 @@ function HomeHub({ onSelectSection, activeSection = null, currentStage, previewP
   const { stage: avatarStage, modeWeights, lastStageChange, lastModeChange, lastSessionComplete } = useAvatarV3State();
   const colorScheme = useDisplayModeStore(s => s.colorScheme);
   const userMode = useUserModeStore((s) => s.userMode);
+  const accessPosture = useUserModeStore((s) => s.accessPosture);
+  const setAccessPosture = useUserModeStore((s) => s.setAccessPosture);
   const activeUserId = useUserModeStore((s) => s.activeUserId);
   const isLight = colorScheme === 'light';
   const modeTileBgUrl = 'none';
@@ -362,7 +364,7 @@ function HomeHub({ onSelectSection, activeSection = null, currentStage, previewP
   // Compute dashboard policy for tiles
   const hubPolicy = getHomeDashboardPolicy({
     activeRunId: activePath?.runId,
-    userMode,
+    accessPosture,
   });
 
   // Compute hub tiles for side panels (moved from swipe rail page 2)
@@ -1062,6 +1064,45 @@ function HomeHub({ onSelectSection, activeSection = null, currentStage, previewP
               Path Actions
             </button>
           )}
+          {/* PATH ACTIONS: access posture toggle */}
+          <div className="mb-2 flex gap-2">
+            <button
+              type="button"
+              data-testid="posture-toggle-guided"
+              aria-pressed={accessPosture === 'guided'}
+              onClick={() => setAccessPosture('guided')}
+              className="inline-flex rounded-full border px-3 py-1 text-[10px] font-black uppercase tracking-[0.18em] transition-colors duration-150"
+              style={{
+                borderColor: isLight ? 'rgba(80, 120, 90, 0.45)' : 'rgba(100, 200, 130, 0.45)',
+                background: accessPosture === 'guided'
+                  ? (isLight ? 'rgba(100, 160, 110, 0.22)' : 'rgba(60, 140, 80, 0.38)')
+                  : (isLight ? 'rgba(255,255,255,0.08)' : 'rgba(255,255,255,0.06)'),
+                color: accessPosture === 'guided'
+                  ? (isLight ? 'rgba(30, 80, 45, 0.92)' : 'rgba(180, 240, 200, 0.92)')
+                  : (isLight ? 'rgba(60, 80, 65, 0.60)' : 'rgba(200, 220, 205, 0.55)'),
+              }}
+            >
+              GUIDED
+            </button>
+            <button
+              type="button"
+              data-testid="posture-toggle-full"
+              aria-pressed={accessPosture === 'full'}
+              onClick={() => setAccessPosture('full')}
+              className="inline-flex rounded-full border px-3 py-1 text-[10px] font-black uppercase tracking-[0.18em] transition-colors duration-150"
+              style={{
+                borderColor: isLight ? 'rgba(60, 100, 150, 0.40)' : 'rgba(100, 160, 220, 0.42)',
+                background: accessPosture === 'full'
+                  ? (isLight ? 'rgba(80, 130, 190, 0.20)' : 'rgba(50, 100, 170, 0.38)')
+                  : (isLight ? 'rgba(255,255,255,0.08)' : 'rgba(255,255,255,0.06)'),
+                color: accessPosture === 'full'
+                  ? (isLight ? 'rgba(25, 65, 120, 0.92)' : 'rgba(160, 210, 255, 0.92)')
+                  : (isLight ? 'rgba(50, 70, 100, 0.60)' : 'rgba(180, 205, 230, 0.55)'),
+              }}
+            >
+              FULL ACCESS
+            </button>
+          </div>
           <div className="w-full">
             <div data-tutorial={ANCHORS.HOME_DAILY_CARD}>
               <DailyPracticeCard

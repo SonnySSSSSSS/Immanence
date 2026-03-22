@@ -66,7 +66,9 @@ async function dismissNamePromptIfPresent(page: Page): Promise<void> {
 async function forceAuthenticatedUserMode(page: Page, mode: 'student' | 'explorer'): Promise<void> {
   await page.evaluate(async (nextMode: 'student' | 'explorer') => {
     const [{ supabase }, { useUserModeStore }] = await Promise.all([
+      // @ts-ignore — runtime browser import; TypeScript cannot resolve Vite src paths from Node
       import('/src/lib/supabaseClient.js'),
+      // @ts-ignore — runtime browser import; TypeScript cannot resolve Vite src paths from Node
       import('/src/state/userModeStore.js'),
     ]);
     const { data } = await supabase.auth.getSession();
@@ -81,6 +83,7 @@ async function forceAuthenticatedUserMode(page: Page, mode: 'student' | 'explore
 async function waitForAuthenticatedUserId(page: Page): Promise<void> {
   await expect
     .poll(async () => page.evaluate(async () => {
+      // @ts-ignore — runtime browser import; TypeScript cannot resolve Vite src paths from Node
       const { supabase } = await import('/src/lib/supabaseClient.js');
       const { data } = await supabase.auth.getSession();
       return data?.session?.user?.id ?? null;
@@ -120,6 +123,7 @@ async function startFromCleanState(page: Page, userMode: 'student' | 'explorer' 
       total: 16,
       measuredAt,
     };
+    const posture = mode === 'student' ? 'guided' : 'full';
     window.localStorage.setItem(
       'immanence-user-mode',
       JSON.stringify({
@@ -127,8 +131,14 @@ async function startFromCleanState(page: Page, userMode: 'student' | 'explorer' 
           modeByUserId: {
             [smokeUserId]: mode,
           },
+          hasCompletedAccessChoiceByUserId: {
+            [smokeUserId]: true,
+          },
+          accessPostureByUserId: {
+            [smokeUserId]: posture,
+          },
         },
-        version: 2,
+        version: 3,
       })
     );
     window.localStorage.setItem(
@@ -155,13 +165,6 @@ async function startFromCleanState(page: Page, userMode: 'student' | 'explorer' 
   await injectSmokeSession(page);
   await page.reload();
   await page.waitForLoadState('domcontentloaded');
-
-  const studentChooser = getUserModeButton(page, 'Student');
-  await studentChooser.waitFor({ state: 'visible', timeout: 1500 }).catch(() => {});
-  const chooserVisible = await studentChooser.isVisible().catch(() => false);
-  if (chooserVisible) {
-    await chooseUserMode(page, userMode === 'student' ? 'Student' : 'Explorer');
-  }
 }
 
 async function areHubButtonsVisible(page: Page): Promise<boolean> {
@@ -279,7 +282,7 @@ test('TEST 1 — Boot → HomeHub renders (Flow #1)', async ({ page }) => {
   await gotoAppRoot(page);
   await expect(page.getByPlaceholder('Email')).toBeVisible();
 
-  // With session injected, chooser renders first and can unlock student mode
+  // With session injected, hub renders directly — no chooser (chooser removed)
   await gotoAppRoot(page);
   await page.evaluate(() => {
     window.localStorage.clear();
@@ -288,19 +291,83 @@ test('TEST 1 — Boot → HomeHub renders (Flow #1)', async ({ page }) => {
   await injectSmokeSession(page);
   await page.reload();
   await page.waitForLoadState('domcontentloaded');
-  await expect(getUserModeButton(page, 'Student')).toBeVisible();
-  await expect(getUserModeButton(page, 'Explorer')).toBeVisible();
+  await expectHubVisible(page);
 
-  await chooseUserMode(page, 'Student');
-  await expect(page.getByText('START SETUP', { exact: false }).first()).toBeVisible();
+  // Posture toggle (GUIDED/FULL ACCESS) is visible in hub
+  await expect(page.getByTestId('posture-toggle-guided')).toBeVisible();
+  await expect(page.getByTestId('posture-toggle-full')).toBeVisible();
 
-  const persistedMode = await page.evaluate(() => window.localStorage.getItem('immanence-user-mode'));
-  expect(persistedMode).toContain(SMOKE_USER_ID);
-  expect(persistedMode).toContain('student');
+  // Selecting full posture persists to accessPostureByUserId
+  await page.getByTestId('posture-toggle-full').click();
+  const persistedMode = await page.evaluate(() => {
+    const raw = window.localStorage.getItem('immanence-user-mode');
+    return raw ? JSON.parse(raw) : null;
+  });
+  expect(persistedMode?.state?.accessPostureByUserId?.[SMOKE_USER_ID]).toBe('full');
+  expect(persistedMode?.state?.modeByUserId?.[SMOKE_USER_ID]).toBe('explorer');
 
-  // With chooser satisfied, hub renders
+  // Hub renders with clean state (posture pre-set by fixture)
   await startFromCleanState(page, 'explorer');
   await expectHubVisible(page);
+});
+
+test('TEST 1A — resetUserMode clears posture and hub still boots (no chooser reappears)', async ({ page }) => {
+  await gotoAppRoot(page);
+  await page.evaluate(([smokeUserId]) => {
+    window.localStorage.clear();
+    window.sessionStorage.clear();
+    window.localStorage.setItem(
+      'immanence-user-mode',
+      JSON.stringify({
+        state: {
+          modeByUserId: {
+            [smokeUserId]: 'explorer',
+          },
+          hasCompletedAccessChoiceByUserId: {
+            [smokeUserId]: true,
+          },
+          accessPostureByUserId: {
+            [smokeUserId]: 'full',
+          },
+        },
+        version: 3,
+      })
+    );
+  }, [SMOKE_USER_ID] as const);
+  await injectSmokeSession(page);
+  await page.reload();
+  await page.waitForLoadState('domcontentloaded');
+  await expectHubVisible(page);
+
+  await page.evaluate(async () => {
+    const [{ supabase }, { useUserModeStore }] = await Promise.all([
+      // @ts-ignore — runtime browser import; TypeScript cannot resolve Vite src paths from Node
+      import('/src/lib/supabaseClient.js'),
+      // @ts-ignore — runtime browser import; TypeScript cannot resolve Vite src paths from Node
+      import('/src/state/userModeStore.js'),
+    ]);
+    const { data } = await supabase.auth.getSession();
+    const userId = data?.session?.user?.id ?? null;
+    if (!userId) return;
+    const store = useUserModeStore.getState();
+    store.setActiveUserId(userId);
+    store.resetUserMode();
+  });
+
+  const persistedMode = await page.evaluate(() => {
+    const raw = window.localStorage.getItem('immanence-user-mode');
+    return raw ? JSON.parse(raw) : null;
+  });
+  expect(persistedMode?.state?.modeByUserId?.[SMOKE_USER_ID]).toBeUndefined();
+  expect(persistedMode?.state?.hasCompletedAccessChoiceByUserId?.[SMOKE_USER_ID]).toBeUndefined();
+  expect(persistedMode?.state?.accessPostureByUserId?.[SMOKE_USER_ID]).toBeUndefined();
+
+  // After reset, hub still renders — no chooser reappears
+  await page.reload();
+  await page.waitForLoadState('domcontentloaded');
+  await expectHubVisible(page);
+  // Verify posture toggle is visible (hub is accessible, no gate)
+  await expect(page.getByTestId('posture-toggle-guided')).toBeVisible();
 });
 
 test('TEST 2 — Hub → Section navigation works (Flow #2)', async ({ page }) => {
@@ -361,6 +428,7 @@ test('TEST 4 — Student prestart contract shows Day 0 before first slot opens',
   await beginStudentInitiationContract(page, alreadyMissedSlot);
 
   const prestartSnapshot = await page.evaluate(async () => {
+    // @ts-ignore — runtime browser import; TypeScript cannot resolve Vite src paths from Node
     const nav = await import('/src/state/navigationStore.js');
     const raw = window.localStorage.getItem('immanenceOS.navigationState');
     const parsed = raw ? JSON.parse(raw) : null;

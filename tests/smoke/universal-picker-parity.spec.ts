@@ -3,20 +3,65 @@ import { expect, test, type Page } from '@playwright/test';
 test.use({ video: 'on', trace: 'on' });
 test.setTimeout(180_000);
 
+const SUPABASE_STORAGE_KEY = 'sb-snyozqiselfxfifpavmj-auth-token';
+const SMOKE_USER_ID = '00000000-0000-0000-0000-000000000001';
+const SMOKE_FAKE_JWT = [
+  'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9',
+  'eyJleHAiOjk5OTk5OTk5OTl9',
+  'fakesig',
+].join('.');
+
+async function injectSmokeSession(page: Page): Promise<void> {
+  await page.evaluate(
+    ([key, token, smokeUserId]) => {
+      const session = {
+        access_token: token,
+        token_type: 'bearer',
+        expires_in: 3600,
+        expires_at: 9999999999,
+        refresh_token: 'smoke-refresh-token',
+        user: {
+          id: smokeUserId,
+          aud: 'authenticated',
+          role: 'authenticated',
+          email: 'smoke@test.example',
+          email_confirmed_at: '2021-01-01T00:00:00.000Z',
+          created_at: '2021-01-01T00:00:00.000Z',
+          updated_at: '2021-01-01T00:00:00.000Z',
+          user_metadata: { name: 'Smoke Test' },
+        },
+      };
+      window.localStorage.setItem(key, JSON.stringify(session));
+    },
+    [SUPABASE_STORAGE_KEY, SMOKE_FAKE_JWT, SMOKE_USER_ID] as const,
+  );
+}
+
 async function startFromCleanState(page: Page): Promise<void> {
   await page.goto('/');
   await page.waitForLoadState('domcontentloaded');
-  await page.evaluate(() => {
+  await page.evaluate(([smokeUserId]) => {
     window.localStorage.clear();
     window.sessionStorage.clear();
     window.localStorage.setItem(
       'immanence-user-mode',
       JSON.stringify({
-        state: { userMode: 'explorer', hasChosenUserMode: true },
-        version: 0,
+        state: {
+          modeByUserId: {
+            [smokeUserId]: 'explorer',
+          },
+          hasCompletedAccessChoiceByUserId: {
+            [smokeUserId]: true,
+          },
+          accessPostureByUserId: {
+            [smokeUserId]: 'full',
+          },
+        },
+        version: 3,
       })
     );
-  });
+  }, [SMOKE_USER_ID] as const);
+  await injectSmokeSession(page);
   await page.reload();
   await page.waitForLoadState('domcontentloaded');
 }
