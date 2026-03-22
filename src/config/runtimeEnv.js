@@ -1,4 +1,9 @@
 import { RuntimeFailureCode, createRuntimeFailure } from "../utils/runtimeFailure.js";
+import {
+  getAuthModeCheck,
+  getLlmConfigCheck,
+  getStartupRuntimeCheck,
+} from "../utils/runtimeChecks.js";
 
 const TRUE_VALUES = new Set(["true"]);
 const FALSE_VALUES = new Set(["false"]);
@@ -40,6 +45,18 @@ export const runtimeEnv = {
   isProd: readEnvBoolean("PROD"),
   baseUrl: readEnvString("BASE_URL") || "/",
 };
+
+export function getAuthRuntimeMode() {
+  return getAuthModeCheck(runtimeEnv);
+}
+
+export function getStartupRuntimeVerification() {
+  return getStartupRuntimeCheck(runtimeEnv, getMissingAuthEnvNames());
+}
+
+export function getLlmRuntimeVerification() {
+  return getLlmConfigCheck(runtimeEnv);
+}
 
 export function getMissingAuthEnvNames() {
   if (!runtimeEnv.enableAuth) return [];

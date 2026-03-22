@@ -1,10 +1,12 @@
 // src/services/llmService.js
 // Client for Immanence LLM using the configured worker-backed provider.
-import { requireLlmProxyUrl } from "../config/runtimeEnv.js";
+import { getLlmRuntimeVerification, requireLlmProxyUrl, runtimeEnv } from "../config/runtimeEnv.js";
 import { LLM_CLIENT_VERSION } from "../config/appMeta.js";
 import { createLogger } from "../utils/logger.js";
-import { reportError } from "../utils/errorReporter.js";
+import { reportDiagnostic } from "../utils/errorReporter.js";
+import { createDiagnostic, emitDiagnostic } from "../utils/diagnostics.js";
 import { RuntimeFailureCode, normalizeRuntimeFailure, toFailureResult } from "../utils/runtimeFailure.js";
+import { createLlmVerification, publishRuntimeCheck } from "../utils/runtimeChecks.js";
 
 const DEFAULT_MODEL = 'gemini-1.5-flash';
 const logger = createLogger('llmService');
@@ -40,24 +42,38 @@ function isValidGeminiResponseShape(data) {
 }
 
 function logAndReturnLlmFailure(errorLike, defaults, extra = {}) {
-    const failure = normalizeRuntimeFailure(errorLike, defaults);
-    logger.warn("failure", {
-        code: failure.code,
-        category: failure.category,
-        message: failure.message,
-        details: failure.details || null,
-    });
-    reportError(failure.cause, {
+    const diagnostic = createDiagnostic(errorLike, {
         source: "llm-service",
-        code: failure.code,
-        category: failure.category,
-        details: failure.details || null,
+        code: defaults?.code,
+        category: defaults?.category,
+        message: defaults?.message,
+        details: defaults?.details,
+    });
+    emitDiagnostic({
+        logger,
+        reportDiagnostic,
+        diagnostic,
+        level: "warn",
     });
 
-    return toFailureResult(failure.cause, {
-        code: failure.code,
-        category: failure.category,
-        message: failure.message,
+    publishRuntimeCheck(
+        "llm",
+        createLlmVerification({
+            runtimeEnv,
+            failure: {
+                code: diagnostic.code,
+                category: diagnostic.category,
+                message: diagnostic.message,
+                details: diagnostic.details,
+                cause: diagnostic.cause,
+            },
+        })
+    );
+
+    return toFailureResult(diagnostic.cause, {
+        code: diagnostic.code,
+        category: diagnostic.category,
+        message: diagnostic.message,
     }, extra);
 }
 
@@ -76,6 +92,14 @@ export async function sendToLLM(systemPrompt, userPrompt, options = {}) {
     } = options;
 
     let workerUrl;
+
+    publishRuntimeCheck(
+        "llm",
+        createLlmVerification({
+            runtimeEnv,
+            phase: getLlmRuntimeVerification().configured ? "idle" : "missing_config",
+        })
+    );
 
     try {
         workerUrl = requireLlmProxyUrl();
@@ -135,17 +159,17 @@ ${buildUserPayload(userPrompt)}`
                     message: 'Failed to parse LLM error response body.',
                     details: { status: response.status },
                 });
-                logger.warn('failure', {
-                    code: parseFailure.code,
-                    category: parseFailure.category,
-                    message: parseFailure.message,
-                    details: parseFailure.details || null,
-                });
-                reportError(parseFailure.cause, {
-                    source: 'llm-service',
-                    code: parseFailure.code,
-                    category: parseFailure.category,
-                    details: parseFailure.details || null,
+                emitDiagnostic({
+                    logger,
+                    reportDiagnostic,
+                    diagnostic: createDiagnostic(parseFailure.cause, {
+                        source: 'llm-service',
+                        code: parseFailure.code,
+                        category: parseFailure.category,
+                        message: parseFailure.message,
+                        details: parseFailure.details,
+                    }),
+                    level: 'warn',
                 });
             }
 
@@ -177,6 +201,14 @@ ${buildUserPayload(userPrompt)}`
                 message: 'LLM service returned an empty response.',
             }, { raw: data });
         }
+
+        publishRuntimeCheck(
+            "llm",
+            createLlmVerification({
+                runtimeEnv,
+                phase: "success",
+            })
+        );
 
         return {
             success: true,
@@ -249,6 +281,15 @@ export async function checkLLMAvailability() {
                 message: `LLM availability check failed with status ${response.status}.`,
                 details: { status: response.status },
             });
+        }
+        if (response.ok) {
+            publishRuntimeCheck(
+                "llm",
+                createLlmVerification({
+                    runtimeEnv,
+                    phase: "available",
+                })
+            );
         }
         return response.ok;
     } catch (error) {

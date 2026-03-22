@@ -4,9 +4,15 @@ import ReactDOM from "react-dom/client";
 import App from "./App.jsx";
 import { TracePage } from "./pages/TracePage.jsx";
 import { Playground } from "./dev/Playground.jsx";
-import { runtimeEnv, validateStartupRuntimeEnv } from "./config/runtimeEnv.js";
-import { installGlobalErrorHandlers, reportError } from "./utils/errorReporter.js";
+import {
+  getStartupRuntimeVerification,
+  runtimeEnv,
+  validateStartupRuntimeEnv,
+} from "./config/runtimeEnv.js";
+import { installGlobalErrorHandlers, reportDiagnostic } from "./utils/errorReporter.js";
+import { createDiagnostic, emitDiagnostic } from "./utils/diagnostics.js";
 import { createLogger } from "./utils/logger.js";
+import { publishRuntimeCheck } from "./utils/runtimeChecks.js";
 import "./immanence.css";
 import "./index.css";
 
@@ -14,10 +20,32 @@ const logger = createLogger("main");
 
 installGlobalErrorHandlers();
 
+const startupRuntimeVerification = getStartupRuntimeVerification();
+
 try {
   validateStartupRuntimeEnv();
+  publishRuntimeCheck("startup", startupRuntimeVerification);
 } catch (error) {
-  reportError(error, { source: "startup-validation" });
+  publishRuntimeCheck("startup", {
+    ...startupRuntimeVerification,
+    ok: false,
+    phase: "invalid",
+    failureCode: error?.code || null,
+    message: error?.message || null,
+    details: error?.details || null,
+  });
+  emitDiagnostic({
+    logger,
+    reportDiagnostic,
+    diagnostic: createDiagnostic(error, {
+      source: "startup-validation",
+      category: "startup",
+      code: error?.code,
+      message: error?.message,
+      details: error?.details,
+    }),
+    level: "error",
+  });
   throw error;
 }
 

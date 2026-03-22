@@ -1,8 +1,10 @@
-import React, { useEffect, useState } from "react";
-import { runtimeEnv } from "../../config/runtimeEnv.js";
-import { reportError } from "../../utils/errorReporter.js";
+import React, { useEffect, useRef, useState } from "react";
+import { getAuthRuntimeMode, runtimeEnv } from "../../config/runtimeEnv.js";
+import { reportDiagnostic } from "../../utils/errorReporter.js";
+import { createDiagnostic, emitDiagnostic } from "../../utils/diagnostics.js";
 import { createLogger } from "../../utils/logger.js";
 import { RuntimeFailureCode, normalizeRuntimeFailure } from "../../utils/runtimeFailure.js";
+import { createAuthVerification, publishRuntimeCheck } from "../../utils/runtimeChecks.js";
 
 const logger = createLogger("AuthGate");
 
@@ -11,8 +13,10 @@ const getSupabase = () => import("../../lib/supabaseClient").then(m => m.supabas
 const getSetAuthUser = () => import("../../state/useAuthUser").then(m => m.setAuthUser);
 
 export default function AuthGate({ children, onAuthChange }) {
+  const authRuntimeMode = getAuthRuntimeMode();
   const [session, setSession] = useState(null);
-  const [loading, setLoading] = useState(runtimeEnv.enableAuth);
+  const [loading, setLoading] = useState(authRuntimeMode.enabled);
+  const authDisabledReportedRef = useRef(false);
 
   const [mode, setMode] = useState("signin"); // "signin" | "signup"
   const [name, setName] = useState("");
@@ -26,10 +30,46 @@ export default function AuthGate({ children, onAuthChange }) {
 
   useEffect(() => {
     // Skip auth initialization when disabled
-    if (!runtimeEnv.enableAuth) {
+    if (!authRuntimeMode.enabled) {
+      if (!authDisabledReportedRef.current) {
+        emitDiagnostic({
+          logger,
+          reportDiagnostic,
+          diagnostic: createDiagnostic(null, {
+            source: "auth-disabled-mode",
+            code: RuntimeFailureCode.AUTH_DISABLED,
+            category: "auth",
+            message: "Auth is disabled by runtime configuration.",
+          }),
+          level: "warn",
+        });
+        authDisabledReportedRef.current = true;
+      }
+      publishRuntimeCheck(
+        "auth",
+        createAuthVerification({
+          runtimeEnv,
+          phase: "disabled",
+          event: "INITIAL_SESSION",
+          session: null,
+          failure: {
+            code: RuntimeFailureCode.AUTH_DISABLED,
+            category: "auth",
+            message: "Auth is disabled by runtime configuration.",
+          },
+        })
+      );
       onAuthChange?.("INITIAL_SESSION", null);
       return;
     }
+
+    publishRuntimeCheck(
+      "auth",
+      createAuthVerification({
+        runtimeEnv,
+        phase: "initializing",
+      })
+    );
 
     const handleAuthFailure = (errorLike, code, message, source) => {
       const failure = normalizeRuntimeFailure(errorLike, {
@@ -37,17 +77,17 @@ export default function AuthGate({ children, onAuthChange }) {
         category: "auth",
         message,
       });
-      logger.error(source, {
-        code: failure.code,
-        category: failure.category,
-        message: failure.message,
-        details: failure.details || null,
-      });
-      reportError(failure.cause, {
-        source,
-        code: failure.code,
-        category: failure.category,
-        details: failure.details || null,
+      emitDiagnostic({
+        logger,
+        reportDiagnostic,
+        diagnostic: createDiagnostic(failure.cause, {
+          source,
+          code: failure.code,
+          category: failure.category,
+          message: failure.message,
+          details: failure.details,
+        }),
+        level: "error",
       });
       setErr(failure.message);
       return failure;
@@ -63,11 +103,20 @@ export default function AuthGate({ children, onAuthChange }) {
         if (!mounted) return;
 
         if (error) {
-          handleAuthFailure(
+          const failure = handleAuthFailure(
             error,
             RuntimeFailureCode.AUTH_SESSION_RESTORE_FAILED,
             "Failed to restore auth session.",
             "auth-session-restore"
+          );
+          publishRuntimeCheck(
+            "auth",
+            createAuthVerification({
+              runtimeEnv,
+              event: "INITIAL_SESSION",
+              session: data?.session ?? null,
+              failure,
+            })
           );
         }
         const nextSession = data?.session ?? null;
@@ -75,22 +124,49 @@ export default function AuthGate({ children, onAuthChange }) {
         setAuthUser(nextSession?.user ?? null);
         onAuthChange?.("INITIAL_SESSION", nextSession);
         setLoading(false);
+        if (!error) {
+          publishRuntimeCheck(
+            "auth",
+            createAuthVerification({
+              runtimeEnv,
+              event: "INITIAL_SESSION",
+              session: nextSession,
+            })
+          );
+        }
 
         const { data: sub } = supabase.auth.onAuthStateChange((event, newSession) => {
           if (!mounted) return;
           const nextAuthSession = newSession ?? null;
           setSession(nextAuthSession);
           setAuthUser(nextAuthSession?.user ?? null);
+          publishRuntimeCheck(
+            "auth",
+            createAuthVerification({
+              runtimeEnv,
+              event,
+              session: nextAuthSession,
+            })
+          );
           onAuthChange?.(event, nextAuthSession);
         });
         unsubscribe = () => sub?.subscription?.unsubscribe?.();
       } catch (error) {
         if (!mounted) return;
-        handleAuthFailure(
+        const failure = handleAuthFailure(
           error,
           RuntimeFailureCode.AUTH_INIT_FAILED,
           "Failed to initialize auth runtime.",
           "auth-init"
+        );
+        publishRuntimeCheck(
+          "auth",
+          createAuthVerification({
+            runtimeEnv,
+            event: "INITIAL_SESSION",
+            session: null,
+            failure,
+          })
         );
         setLoading(false);
       }
@@ -102,7 +178,7 @@ export default function AuthGate({ children, onAuthChange }) {
       mounted = false;
       unsubscribe?.();
     };
-  }, [onAuthChange]);
+  }, [authRuntimeMode.enabled, onAuthChange]);
 
   useEffect(() => {
     if (mode !== "signup") setNameErr("");
@@ -223,7 +299,7 @@ export default function AuthGate({ children, onAuthChange }) {
   if (loading) return null;
 
   // When auth is disabled, just render children
-  if (!runtimeEnv.enableAuth) {
+  if (!authRuntimeMode.enabled) {
     return <>{children}</>;
   }
 

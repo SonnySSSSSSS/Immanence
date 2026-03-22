@@ -1,6 +1,12 @@
 import { createClient } from '@supabase/supabase-js';
-import { assertAuthRuntimeEnvConfigured, runtimeEnv } from '../config/runtimeEnv.js';
+import { assertAuthRuntimeEnvConfigured, getAuthRuntimeMode, runtimeEnv } from '../config/runtimeEnv.js';
+import { createLogger } from '../utils/logger.js';
+import { reportDiagnostic } from '../utils/errorReporter.js';
+import { createDiagnostic, emitDiagnostic } from '../utils/diagnostics.js';
 import { RuntimeFailureCode, createRuntimeFailure } from '../utils/runtimeFailure.js';
+
+const logger = createLogger('supabaseClient');
+const authRuntimeMode = getAuthRuntimeMode();
 
 function createAuthDisabledError() {
   return createRuntimeFailure(null, {
@@ -22,13 +28,32 @@ const createMockClient = () => ({
   }
 });
 
-if (runtimeEnv.enableAuth) {
+if (authRuntimeMode.enabled) {
   assertAuthRuntimeEnvConfigured();
 }
 
-export const supabase = runtimeEnv.enableAuth
-  ? createClient(
-      runtimeEnv.supabaseUrl,
-      runtimeEnv.supabaseAnonKey
-    )
-  : createMockClient();
+function createSupabaseClient() {
+  if (!authRuntimeMode.enabled) {
+    return createMockClient();
+  }
+
+  try {
+    return createClient(runtimeEnv.supabaseUrl, runtimeEnv.supabaseAnonKey);
+  } catch (error) {
+    const diagnostic = createDiagnostic(error, {
+      source: 'supabase-client-init',
+      code: RuntimeFailureCode.AUTH_INIT_FAILED,
+      category: 'auth',
+      message: 'Failed to initialize Supabase auth client.',
+    });
+    emitDiagnostic({
+      logger,
+      reportDiagnostic,
+      diagnostic,
+      level: 'error',
+    });
+    throw diagnostic.cause;
+  }
+}
+
+export const supabase = createSupabaseClient();

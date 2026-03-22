@@ -1,4 +1,5 @@
 import { createLogger } from "./logger.js";
+import { getDiagnosticErrorContext } from "./diagnostics.js";
 
 const errorLogger = createLogger("errorReporter");
 
@@ -23,6 +24,7 @@ export function reportError(errorLike, context = {}) {
   const payload = {
     code: error.code || null,
     category: error.category || null,
+    source: context.source || null,
     message: error.message,
     stack: error.stack || null,
     details: error.details || null,
@@ -37,6 +39,11 @@ export function reportError(errorLike, context = {}) {
   }
 
   return payload;
+}
+
+export function reportDiagnostic(diagnostic, context = {}) {
+  const errorLike = diagnostic?.cause || diagnostic?.message || "Unknown diagnostic error";
+  return reportError(errorLike, getDiagnosticErrorContext(diagnostic, context));
 }
 
 let globalHandlersInstalled = false;
