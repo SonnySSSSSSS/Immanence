@@ -11,6 +11,8 @@ import { useBreathBenchmarkStore } from '../state/breathBenchmarkStore.js';
 import { getScheduleConstraintForPath, validateSelectedTimes } from '../utils/scheduleSelectionConstraints.js';
 import { getPathContract, validatePathActivationSelections } from '../utils/pathContract.js';
 import { InstructionVideoModal } from './InstructionVideoModal.jsx';
+import { getResumableNavigationPathId } from '../state/curriculumStore.js';
+
 const ACCEPTANCE_STEP_VIDEO_MAP = Object.freeze({
     1: {
         title: 'The Mechanics of Meaning',
@@ -22,6 +24,7 @@ const ACCEPTANCE_STEP_VIDEO_MAP = Object.freeze({
     },
 });
 const ACCEPTANCE_PATH_ID = 'initiation';
+const normalizeInitiationPathIdentity = (pathId) => (pathId === 'initiation-2' ? 'initiation' : pathId);
 
 export function PathOverviewPanel({ path, onBegin, onClose, onNavigate }) {
     const colorScheme = useDisplayModeStore(s => s.colorScheme);
@@ -29,14 +32,16 @@ export function PathOverviewPanel({ path, onBegin, onClose, onNavigate }) {
     const setContentLaunchContext = useUiStore(s => s.setContentLaunchContext);
     const goldLabelColor = isLight ? 'rgba(180, 120, 40, 0.75)' : 'var(--gold-80)';
 
-    const { beginPath } = useNavigationStore();
+    const { beginPath, activePath, restoreCurriculumPath } = useNavigationStore();
     const {
+        activeCurriculumId,
         practiceTimeSlots,
         setPracticeTimeSlots,
         selectedDaysOfWeekDraft,
         setSelectedDaysOfWeekDraft,
         getSelectedDaysOfWeekDraft,
     } = useCurriculumStore();
+    const resumablePathId = useCurriculumStore(getResumableNavigationPathId);
     const [expandedWeeks, setExpandedWeeks] = useState([]);
     const [scheduleError, setScheduleError] = useState(null);
     const [daysError, setDaysError] = useState(null);
@@ -59,27 +64,14 @@ export function PathOverviewPanel({ path, onBegin, onClose, onNavigate }) {
     const attemptUsesPrevious = attemptBenchmark?.source === 'reuse';
     const canReuseForAttempt = Boolean(attemptRunId && canReuseLastBenchmark(14));
 
-    useEffect(() => {
-        if (!path || path.placeholder) return;
-        const isAcceptancePath_ = path.id === ACCEPTANCE_PATH_ID;
-        const targetVideo = isAcceptancePath_ ? ACCEPTANCE_STEP_VIDEO_MAP[currentStep] ?? null : null;
-        const targetKey = targetVideo ? `${path.id}:${currentStep}` : null;
-
-        if (!targetKey) {
-            lastAutoOpenedVideoKeyRef.current = null;
-            return;
-        }
-
-        if (lastAutoOpenedVideoKeyRef.current === targetKey) {
-            return;
-        }
-
-        lastAutoOpenedVideoKeyRef.current = targetKey;
-        queueMicrotask(() => setActiveInstructionVideo(targetVideo));
-    }, [currentStep, path, setActiveInstructionVideo]);
-
     if (!path || path.placeholder) return null;
     const isInitiationPath = path.id === ACCEPTANCE_PATH_ID;
+    const isAcceptancePath = path.id === ACCEPTANCE_PATH_ID;
+    const normalizedViewedPathId = normalizeInitiationPathIdentity(path.id);
+    const normalizedActivePathId = normalizeInitiationPathIdentity(activePath?.activePathId ?? null);
+    const normalizedResumablePathId = normalizeInitiationPathIdentity(resumablePathId);
+    const isViewedPathActive = normalizedViewedPathId === normalizedActivePathId;
+    const isViewedPathResumable = normalizedViewedPathId === normalizedResumablePathId;
     const contract = getPathContract(path);
     const orderedDayOptions = [
         { value: 1, label: 'Mon' },
@@ -289,9 +281,33 @@ export function PathOverviewPanel({ path, onBegin, onClose, onNavigate }) {
         return null;
     };
 
-    const lastBenchmarkDateLabel = lastBenchmark?.measuredAt
-        ? new Date(lastBenchmark.measuredAt).toLocaleDateString()
-        : 'previous';
+    useEffect(() => {
+        const targetVideo = isAcceptancePath ? ACCEPTANCE_STEP_VIDEO_MAP[currentStep] ?? null : null;
+        const targetKey = targetVideo ? `${path.id}:${currentStep}` : null;
+
+        if (!targetKey) {
+            lastAutoOpenedVideoKeyRef.current = null;
+            return;
+        }
+
+        if (lastAutoOpenedVideoKeyRef.current === targetKey) {
+            return;
+        }
+
+        lastAutoOpenedVideoKeyRef.current = targetKey;
+        setActiveInstructionVideo(targetVideo);
+    }, [currentStep, isAcceptancePath, path.id]);
+
+    const ensureViewedPathLoaded = () => {
+        if (isViewedPathActive) return true;
+        if (!isViewedPathResumable) return false;
+        const result = restoreCurriculumPath(activeCurriculumId || null);
+        if (result?.ok === false) {
+            setScheduleError(result.error || 'Unable to restore this path.');
+            return false;
+        }
+        return true;
+    };
 
     return (
         <div
@@ -449,9 +465,9 @@ export function PathOverviewPanel({ path, onBegin, onClose, onNavigate }) {
                     >
                         <div className="font-semibold mb-1">Morning (10 min)</div>
                         <div className="mb-3">• Resonance breathing</div>
-                        <div className="font-semibold mb-1">Evening Focus Reset (10 min)</div>
-                        <div>• 30s focus / 15s rest intervals</div>
-                        <div>• 1 min guided decompression after the timer</div>
+                        <div className="font-semibold mb-1">Evening Circuit (14 min)</div>
+                        <div>• 7 min stillness meditation</div>
+                        <div>• 7 min body scan</div>
                     </div>
                 </div>
             )}
@@ -770,7 +786,7 @@ export function PathOverviewPanel({ path, onBegin, onClose, onNavigate }) {
                                     transition: 'background 250ms ease, border-color 250ms ease, color 250ms ease',
                                 }}
                             >
-                                {`Use previous benchmark (${lastBenchmarkDateLabel})`}
+                                {`Use previous benchmark (${new Date(lastBenchmark?.measuredAt || Date.now()).toLocaleDateString()})`}
                             </button>
                         </div>
                     )}

@@ -934,7 +934,10 @@ export function DailyPracticeCard({ onStartPractice, onViewCurriculum, onNavigat
         position: 'absolute',
         width: '16px',
         height: '16px',
-        borderColor: isLight ? 'rgba(59, 144, 156, 0.56)' : 'rgba(117, 231, 240, 0.62)',
+            borderTopColor: isLight ? 'rgba(59, 144, 156, 0.56)' : 'rgba(117, 231, 240, 0.62)',
+            borderRightColor: isLight ? 'rgba(59, 144, 156, 0.56)' : 'rgba(117, 231, 240, 0.62)',
+            borderBottomColor: isLight ? 'rgba(59, 144, 156, 0.56)' : 'rgba(117, 231, 240, 0.62)',
+            borderLeftColor: isLight ? 'rgba(59, 144, 156, 0.56)' : 'rgba(117, 231, 240, 0.62)',
         pointerEvents: 'none',
         zIndex: 1,
     };
@@ -959,10 +962,10 @@ export function DailyPracticeCard({ onStartPractice, onViewCurriculum, onNavigat
             <div style={cardHousingInnerPlateStyle} />
             <div style={{ ...cardHousingRailStyle, top: '14px' }} />
             <div style={{ ...cardHousingRailStyle, bottom: '14px' }} />
-            <div style={{ ...cardHousingCornerStyle, top: '12px', left: '12px', borderTop: '1px solid', borderLeft: '1px solid' }} />
-            <div style={{ ...cardHousingCornerStyle, top: '12px', right: '12px', borderTop: '1px solid', borderRight: '1px solid' }} />
-            <div style={{ ...cardHousingCornerStyle, bottom: '12px', left: '12px', borderBottom: '1px solid', borderLeft: '1px solid' }} />
-            <div style={{ ...cardHousingCornerStyle, bottom: '12px', right: '12px', borderBottom: '1px solid', borderRight: '1px solid' }} />
+            <div style={{ ...cardHousingCornerStyle, top: '12px', left: '12px', borderTopWidth: '1px', borderTopStyle: 'solid', borderLeftWidth: '1px', borderLeftStyle: 'solid' }} />
+            <div style={{ ...cardHousingCornerStyle, top: '12px', right: '12px', borderTopWidth: '1px', borderTopStyle: 'solid', borderRightWidth: '1px', borderRightStyle: 'solid' }} />
+            <div style={{ ...cardHousingCornerStyle, bottom: '12px', left: '12px', borderBottomWidth: '1px', borderBottomStyle: 'solid', borderLeftWidth: '1px', borderLeftStyle: 'solid' }} />
+            <div style={{ ...cardHousingCornerStyle, bottom: '12px', right: '12px', borderBottomWidth: '1px', borderBottomStyle: 'solid', borderRightWidth: '1px', borderRightStyle: 'solid' }} />
         </>
     );
 
@@ -1267,13 +1270,19 @@ export function DailyPracticeCard({ onStartPractice, onViewCurriculum, onNavigat
                                 background: isSetupEmptyState
                                     ? (isLight ? 'rgba(241, 250, 252, 0.18)' : 'rgba(8, 18, 27, 0.18)')
                                     : 'transparent',
-                                borderLeft: isSetupEmptyState
-                                    ? 'none'
-                                    : cardHousingDividerStyle.borderLeft,
-                                boxShadow: isSetupEmptyState ? 'none' : cardHousingDividerStyle.boxShadow,
-                                border: isSetupEmptyState
+                                borderTop: isSetupEmptyState
                                     ? (isLight ? '1px solid rgba(91, 165, 177, 0.16)' : '1px solid rgba(101, 211, 224, 0.12)')
                                     : 'none',
+                                borderRight: isSetupEmptyState
+                                    ? (isLight ? '1px solid rgba(91, 165, 177, 0.16)' : '1px solid rgba(101, 211, 224, 0.12)')
+                                    : 'none',
+                                borderBottom: isSetupEmptyState
+                                    ? (isLight ? '1px solid rgba(91, 165, 177, 0.16)' : '1px solid rgba(101, 211, 224, 0.12)')
+                                    : 'none',
+                                borderLeft: isSetupEmptyState
+                                    ? (isLight ? '1px solid rgba(91, 165, 177, 0.16)' : '1px solid rgba(101, 211, 224, 0.12)')
+                                    : cardHousingDividerStyle.borderLeft,
+                                boxShadow: isSetupEmptyState ? 'none' : cardHousingDividerStyle.boxShadow,
                                 color: isLight ? '#3c3020' : '#fdfbf5',
                             }}
                         >
