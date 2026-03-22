@@ -463,6 +463,8 @@ function App({ playgroundMode = false, playgroundBottomLayer = true }) {
   // }, [curriculumOnboardingComplete, isCurriculumComplete]);
 
 
+  // v3.27.275 - fix(lint): address all remaining lint errors in DevPanel and PathOverviewPanel
+  // v3.27.274 - chore(repo): prune dead surface scripts and unused dependencies
   // v3.27.273 - refactor(runtime): consolidate config auth logging and version ownership
   // v3.27.272 - security: harden env auth worker prompt boundaries and observability
   // v3.27.271 - remove(ai): delete local LLM proxy integration and align security checklist

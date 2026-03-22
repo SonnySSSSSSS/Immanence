@@ -214,6 +214,7 @@ export function DevPanel({
         : 'Draft matches canonical code Default';
 
     useEffect(() => {
+        // eslint-disable-next-line react-hooks/set-state-in-effect
         setAvatarPromoteAck('');
     }, [normalizedAvatarStageKey]);
 
@@ -236,7 +237,7 @@ export function DevPanel({
         setAvatarDefaultStatus(
             `Preview-only draft. Promote by updating src/components/avatarV3/avatarDefaultPresets.js for ${normalizedAvatarStageKey} (${colorScheme} scheme).`
         );
-    }, [colorScheme, currentAvatarDraft, normalizedAvatarStageKey]);
+    }, [colorScheme, currentAvatarDraft, normalizedAvatarStageKey, setAvatarDefaultStatus, setAvatarPromoteAck]);
 
     const handleResetDraftToDefault = useCallback(() => {
         const stageDefault =
@@ -246,7 +247,7 @@ export function DevPanel({
         replaceAvatarCompositeStageDraft(normalizedAvatarStageKey, stageDefault, colorScheme);
         setAvatarPromoteAck('');
         setAvatarDefaultStatus(`Restored Draft from canonical code Default for ${normalizedAvatarStageKey} (${colorScheme} scheme).`);
-    }, [activeAvatarPresets, colorScheme, normalizedAvatarStageKey, replaceAvatarCompositeStageDraft]);
+    }, [activeAvatarPresets, colorScheme, normalizedAvatarStageKey, replaceAvatarCompositeStageDraft, setAvatarDefaultStatus, setAvatarPromoteAck]);
 
     // Collapsible sections
     const [expandedSections, setExpandedSections] = useState({

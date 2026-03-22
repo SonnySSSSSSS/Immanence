@@ -109,8 +109,6 @@ See [ComfyUI CLI Guide](COMFYUI_CLI.md) for:
 
 ## Key Coding Rules
 
-### From `.agent/workflows/immanence-rules.md`
-
 1. **Avoid multi-line replacements** — Use single-line anchors for edits
 2. **Always increment version** — Update `App.jsx` build version after changes
 3. **Protected files require approval:**
