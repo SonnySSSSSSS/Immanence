@@ -40,6 +40,8 @@ import { useTutorialStore } from "./state/tutorialStore.js";
 import { TUTORIALS } from "./tutorials/tutorialRegistry.js";
 import { hasDevtoolsQueryFlag, isDevtoolsUnlocked, setDevtoolsUnlocked } from "./dev/uiDevtoolsGate.js";
 import { getDevPanelProdGate } from "./lib/devPanelGate.js";
+import { APP_VERSION_LABEL } from "./config/appMeta.js";
+import { runtimeEnv } from "./config/runtimeEnv.js";
 import { createLogger } from "./utils/logger.js";
 // import { VerificationGallery } from "./components/avatar/VerificationGallery.jsx"; // Dev tool - not used
 import "./App.css";
@@ -167,7 +169,7 @@ function App({ playgroundMode = false, playgroundBottomLayer = true }) {
   const [breathState, setBreathState] = useState({ phase: 'rest', progress: 0, isPracticing: false });
   const [avatarStage, setAvatarStage] = useState("Seedling"); // Track avatar stage name for theme
   const showFxGallery = true; // FX Gallery dev mode
-  const isDev = import.meta.env.DEV;
+  const isDev = runtimeEnv.isDev;
   const devPanelGateEnabled = getDevPanelProdGate();
   const [showDevPanel, setShowDevPanel] = useState(() => (isDev ? false : devPanelGateEnabled)); // Dev Panel (🎨 button)
   const [, setDevtoolsGateTick] = useState(0);
@@ -447,7 +449,7 @@ function App({ playgroundMode = false, playgroundBottomLayer = true }) {
 
   // Preload critical images on app start
   useEffect(() => {
-    startImagePreloading(import.meta.env.BASE_URL);
+    startImagePreloading(runtimeEnv.baseUrl);
   }, []);
 
   // Viewport width modes were removed; no resize listener needed.
@@ -461,6 +463,7 @@ function App({ playgroundMode = false, playgroundBottomLayer = true }) {
   // }, [curriculumOnboardingComplete, isCurriculumComplete]);
 
 
+  // v3.27.273 - refactor(runtime): consolidate config auth logging and version ownership
   // v3.27.272 - security: harden env auth worker prompt boundaries and observability
   // v3.27.271 - remove(ai): delete local LLM proxy integration and align security checklist
   // v3.27.270 - feat(access): replace chooser with persisted home hub posture toggle
@@ -725,7 +728,7 @@ function App({ playgroundMode = false, playgroundBottomLayer = true }) {
           <PracticeButtonElectricBorderOverlay />
           <SelectedControlElectricBorderOverlay />
           <SelectedPlateOverlay />
-          {import.meta.env.DEV && <SelectedCardElectricBorderOverlay />}
+          {isDev && <SelectedCardElectricBorderOverlay />}
         </Suspense>
       )}
 
@@ -910,7 +913,7 @@ function App({ playgroundMode = false, playgroundBottomLayer = true }) {
                         }}
                         style={{ background: 'transparent' }}
                       >
-                        v3.27.272
+                        {APP_VERSION_LABEL}
                       </button>
                     </div>
                   </div>

@@ -1,11 +1,10 @@
 // src/components/SettingsPanel.jsx
 // Settings panel with reset functionality for pilot testing
 import React, { useEffect, useMemo, useState } from 'react';
+import { runtimeEnv } from '../config/runtimeEnv.js';
 import { useDisplayModeStore } from '../state/displayModeStore.js';
 import { clearSettingsPersistedState, useSettingsStore } from '../state/settingsStore';
 import { setAuthUser, useAuthUser } from '../state/useAuthUser.js';
-// NOTE: Auth enabled for beta access - sign-out and account-update UI active when signed in
-const ENABLE_AUTH = true;
 const getSupabase = () => import('../lib/supabaseClient').then(m => m.supabase);
 
 export function SettingsPanel({ isOpen, onClose, onSignedOut }) {
@@ -63,7 +62,7 @@ export function SettingsPanel({ isOpen, onClose, onSignedOut }) {
   if (!isOpen) return null;
 
   const handleSignOut = async () => {
-    if (ENABLE_AUTH) {
+    if (runtimeEnv.enableAuth) {
       const supabase = await getSupabase();
       await supabase.auth.signOut();
     }
@@ -72,14 +71,13 @@ export function SettingsPanel({ isOpen, onClose, onSignedOut }) {
     onClose?.();
     onSignedOut?.();
     try {
-      const baseUrl = import.meta.env.BASE_URL || "/";
-      window.history.replaceState(null, "", baseUrl);
+      window.history.replaceState(null, "", runtimeEnv.baseUrl);
     } catch {
       // Ignore history errors in non-browser contexts
     }
   };
 
-  const isAuthed = ENABLE_AUTH && Boolean(authUser?.id);
+  const isAuthed = runtimeEnv.enableAuth && Boolean(authUser?.id);
   const canUpdateName = isAuthed && String(nameDraft || '').trim().length >= 2 && !nameSaving;
   const canUpdateEmail = isAuthed && !emailSaving;
   const canUpdatePassword = isAuthed && !passwordSaving;

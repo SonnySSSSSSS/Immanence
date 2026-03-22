@@ -2,7 +2,6 @@ import React, { useEffect, useState } from "react";
 import { runtimeEnv } from "../../config/runtimeEnv.js";
 import { createLogger } from "../../utils/logger.js";
 
-const ENABLE_AUTH = runtimeEnv.enableAuth;
 const logger = createLogger("AuthGate");
 
 // Lazy import to avoid Supabase initialization when auth is disabled
@@ -11,7 +10,7 @@ const getSetAuthUser = () => import("../../state/useAuthUser").then(m => m.setAu
 
 export default function AuthGate({ children, onAuthChange }) {
   const [session, setSession] = useState(null);
-  const [loading, setLoading] = useState(ENABLE_AUTH);
+  const [loading, setLoading] = useState(runtimeEnv.enableAuth);
 
   const [mode, setMode] = useState("signin"); // "signin" | "signup"
   const [name, setName] = useState("");
@@ -25,7 +24,7 @@ export default function AuthGate({ children, onAuthChange }) {
 
   useEffect(() => {
     // Skip auth initialization when disabled
-    if (!ENABLE_AUTH) {
+    if (!runtimeEnv.enableAuth) {
       onAuthChange?.("INITIAL_SESSION", null);
       return;
     }
@@ -188,7 +187,7 @@ export default function AuthGate({ children, onAuthChange }) {
   if (loading) return null;
 
   // When auth is disabled, just render children
-  if (!ENABLE_AUTH) {
+  if (!runtimeEnv.enableAuth) {
     return <>{children}</>;
   }
 

@@ -1,8 +1,6 @@
 import { createClient } from '@supabase/supabase-js';
 import { assertAuthRuntimeEnvConfigured, runtimeEnv } from '../config/runtimeEnv.js';
 
-const ENABLE_AUTH = runtimeEnv.enableAuth;
-
 // Create a mock client that does nothing when auth is disabled
 const createMockClient = () => ({
   auth: {
@@ -15,11 +13,11 @@ const createMockClient = () => ({
   }
 });
 
-if (ENABLE_AUTH) {
+if (runtimeEnv.enableAuth) {
   assertAuthRuntimeEnvConfigured();
 }
 
-export const supabase = ENABLE_AUTH
+export const supabase = runtimeEnv.enableAuth
   ? createClient(
       runtimeEnv.supabaseUrl,
       runtimeEnv.supabaseAnonKey

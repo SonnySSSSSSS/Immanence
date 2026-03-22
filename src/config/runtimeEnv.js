@@ -6,6 +6,11 @@ function readEnvString(name) {
   return typeof value === "string" ? value.trim() : "";
 }
 
+function readEnvBoolean(name, fallback = false) {
+  const value = import.meta.env[name];
+  return typeof value === "boolean" ? value : fallback;
+}
+
 function parseEnableAuth() {
   const rawValue = readEnvString("VITE_ENABLE_AUTH").toLowerCase();
   if (TRUE_VALUES.has(rawValue)) return true;
@@ -25,6 +30,9 @@ export const runtimeEnv = {
   supabaseAnonKey: readEnvString("VITE_SUPABASE_ANON_KEY"),
   enableAuth: parseEnableAuth(),
   llmProxyUrl: readEnvString("VITE_LLM_PROXY_URL"),
+  isDev: readEnvBoolean("DEV"),
+  isProd: readEnvBoolean("PROD"),
+  baseUrl: readEnvString("BASE_URL") || "/",
 };
 
 export function getMissingAuthEnvNames() {

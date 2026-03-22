@@ -1,6 +1,7 @@
 // src/services/llmService.js
 // Client for Immanence LLM using the configured worker-backed provider.
 import { requireLlmProxyUrl } from "../config/runtimeEnv.js";
+import { LLM_CLIENT_VERSION } from "../config/appMeta.js";
 import { createLogger } from "../utils/logger.js";
 
 const DEFAULT_MODEL = 'gemini-1.5-flash';
@@ -93,7 +94,7 @@ ${buildUserPayload(userPrompt)}`
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
-                'X-Client-Version': '2.96.0',
+                'X-Client-Version': LLM_CLIENT_VERSION,
             },
             body: JSON.stringify(requestBody),
         });

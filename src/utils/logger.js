@@ -1,4 +1,6 @@
-const isProduction = import.meta.env.PROD;
+import { runtimeEnv } from "../config/runtimeEnv.js";
+
+const isProduction = runtimeEnv.isProd;
 
 function formatArgs(scope, args) {
   return [`[${scope}]`, ...args];

@@ -4,7 +4,7 @@ import ReactDOM from "react-dom/client";
 import App from "./App.jsx";
 import { TracePage } from "./pages/TracePage.jsx";
 import { Playground } from "./dev/Playground.jsx";
-import { validateStartupRuntimeEnv } from "./config/runtimeEnv.js";
+import { runtimeEnv, validateStartupRuntimeEnv } from "./config/runtimeEnv.js";
 import { installGlobalErrorHandlers, reportError } from "./utils/errorReporter.js";
 import "./immanence.css";
 import "./index.css";
@@ -19,7 +19,7 @@ try {
 }
 
 // DEV: ensure no stale SW/caches (Edge commonly keeps old PWA assets)
-if (import.meta.env.DEV && "serviceWorker" in navigator) {
+if (runtimeEnv.isDev && "serviceWorker" in navigator) {
   navigator.serviceWorker
     .getRegistrations()
     .then((regs) => regs.forEach((r) => r.unregister()))
@@ -36,7 +36,7 @@ if (import.meta.env.DEV && "serviceWorker" in navigator) {
 // Simple path-based routing (no React Router needed)
 const getRoute = () => {
   const path = window.location.pathname;
-  if (import.meta.env.DEV && path === "/__playground") {
+  if (runtimeEnv.isDev && path === "/__playground") {
     return "playground";
   }
   // Handle both /Immanence/trace and /trace
