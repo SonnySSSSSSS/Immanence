@@ -40,12 +40,14 @@ import { useTutorialStore } from "./state/tutorialStore.js";
 import { TUTORIALS } from "./tutorials/tutorialRegistry.js";
 import { hasDevtoolsQueryFlag, isDevtoolsUnlocked, setDevtoolsUnlocked } from "./dev/uiDevtoolsGate.js";
 import { getDevPanelProdGate } from "./lib/devPanelGate.js";
+import { createLogger } from "./utils/logger.js";
 // import { VerificationGallery } from "./components/avatar/VerificationGallery.jsx"; // Dev tool - not used
 import "./App.css";
 import AuthGate from "./components/auth/AuthGate";
 
 const DISABLE_SELECTION = false;
 const USER_STATE_SYNC_DEBUG = false;
+const logger = createLogger("App");
 
 function SectionView({ section, isPracticing, onPracticingChange, onBreathStateChange, onStageChange, currentStage, previewPath, previewShowCore, previewAttention, showFxGallery, onNavigate, onOpenHardwareGuide, onOpenPhotic, hideCards, isActiveBreathSession = false, isBreathLayoutLocked = false }) {
   // NOTE: Previously had a special vipassana branch that rendered PracticeSection without wrapper divs.
@@ -211,7 +213,7 @@ function App({ playgroundMode = false, playgroundBottomLayer = true }) {
       playgroundMode,
       timestamp: new Date().toISOString(),
     };
-    console.log('[PROBE:user-mode-resolve]', snapshot);
+    logger.info('[PROBE:user-mode-resolve]', snapshot);
     if (typeof window !== 'undefined') {
       window.__IMMANENCE_USER_MODE_RESOLVE_PROBE__ = snapshot;
     }
@@ -341,7 +343,7 @@ function App({ playgroundMode = false, playgroundBottomLayer = true }) {
   // Listen for dev panel events (hide cards for wallpaper viewing)
   useEffect(() => {
     const handleHideCards = (e) => {
-      console.log('App: hideCards event received, detail:', e.detail);
+      logger.info('hideCards event received', e.detail);
       setHideCards(e.detail);
     };
     // GRAVEYARD: Top layer removed
@@ -350,12 +352,12 @@ function App({ playgroundMode = false, playgroundBottomLayer = true }) {
     //   setShowBackgroundTopLayer(e.detail);
     // };
     const handleBottomLayer = (e) => {
-      console.log('App: background-bottom event received, detail:', e.detail);
+      logger.info('background-bottom event received', e.detail);
       setShowBackgroundBottomLayer(e.detail);
     };
     const handleAvatarStage = (e) => {
       if (playgroundMode) return;
-      console.log('App: dev-avatar-stage event received, detail:', e.detail);
+      logger.info('dev-avatar-stage event received', e.detail);
       const stageName = e.detail.stage;
       setAvatarStage(stageName);
     };
@@ -459,6 +461,8 @@ function App({ playgroundMode = false, playgroundBottomLayer = true }) {
   // }, [curriculumOnboardingComplete, isCurriculumComplete]);
 
 
+  // v3.27.272 - security: harden env auth worker prompt boundaries and observability
+  // v3.27.271 - remove(ai): delete local LLM proxy integration and align security checklist
   // v3.27.270 - feat(access): replace chooser with persisted home hub posture toggle
   // v3.27.269 - fix(precision-rail): constrain legend popup to rail width with 2-column layout
   // v3.27.268 - fix(dedup): remove duplicate restart/abandon buttons from active path state component
@@ -640,7 +644,7 @@ function App({ playgroundMode = false, playgroundBottomLayer = true }) {
       });
     } catch (e) {
       if (USER_STATE_SYNC_DEBUG) {
-        console.log("[userStateSync] init failed (local-only mode continues)", e);
+        logger.info('[userStateSync] init failed (local-only mode continues)', e);
       }
     }
   }, []);
@@ -900,13 +904,13 @@ function App({ playgroundMode = false, playgroundBottomLayer = true }) {
                             if (!isDevtoolsUnlocked()) {
                               setDevtoolsUnlocked(true);
                               setDevtoolsGateTick(t => t + 1);
-                              console.info('[devtools] unlocked');
+                              logger.info('[devtools] unlocked');
                             }
                           }
                         }}
                         style={{ background: 'transparent' }}
                       >
-                        v3.27.270
+                        v3.27.272
                       </button>
                     </div>
                   </div>

@@ -4,8 +4,19 @@ import ReactDOM from "react-dom/client";
 import App from "./App.jsx";
 import { TracePage } from "./pages/TracePage.jsx";
 import { Playground } from "./dev/Playground.jsx";
+import { validateStartupRuntimeEnv } from "./config/runtimeEnv.js";
+import { installGlobalErrorHandlers, reportError } from "./utils/errorReporter.js";
 import "./immanence.css";
 import "./index.css";
+
+installGlobalErrorHandlers();
+
+try {
+  validateStartupRuntimeEnv();
+} catch (error) {
+  reportError(error, { source: "startup-validation" });
+  throw error;
+}
 
 // DEV: ensure no stale SW/caches (Edge commonly keeps old PWA assets)
 if (import.meta.env.DEV && "serviceWorker" in navigator) {

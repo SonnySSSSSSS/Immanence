@@ -1,10 +1,7 @@
 import { createClient } from '@supabase/supabase-js';
+import { assertAuthRuntimeEnvConfigured, runtimeEnv } from '../config/runtimeEnv.js';
 
-// NOTE: Multi-user sync is enabled for beta access.
-// Set ENABLE_AUTH to false to disable the auth gate (e.g. for smoke testing without a session).
-const ENABLE_AUTH = true;
-const SUPABASE_URL = 'https://snyozqiselfxfifpavmj.supabase.co';
-const SUPABASE_ANON_KEY = 'sb_publishable_fVQsaU3JzAhoIa2znapxBA_dlSm6quO';
+const ENABLE_AUTH = runtimeEnv.enableAuth;
 
 // Create a mock client that does nothing when auth is disabled
 const createMockClient = () => ({
@@ -14,12 +11,17 @@ const createMockClient = () => ({
     signUp: () => Promise.resolve({ error: new Error('Auth disabled') }),
     signInWithPassword: () => Promise.resolve({ error: new Error('Auth disabled') }),
     signOut: () => Promise.resolve({ error: null }),
+    updateUser: () => Promise.resolve({ data: { user: null }, error: new Error('Auth disabled') }),
   }
 });
 
+if (ENABLE_AUTH) {
+  assertAuthRuntimeEnvConfigured();
+}
+
 export const supabase = ENABLE_AUTH
   ? createClient(
-      SUPABASE_URL,
-      SUPABASE_ANON_KEY
+      runtimeEnv.supabaseUrl,
+      runtimeEnv.supabaseAnonKey
     )
   : createMockClient();

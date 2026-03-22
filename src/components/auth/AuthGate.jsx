@@ -1,7 +1,9 @@
 import React, { useEffect, useState } from "react";
-// NOTE: Auth is enabled for beta access. Supabase CORS must be configured for the deployment origin.
-// To disable the auth gate (e.g. for smoke testing), set ENABLE_AUTH to false.
-const ENABLE_AUTH = true;
+import { runtimeEnv } from "../../config/runtimeEnv.js";
+import { createLogger } from "../../utils/logger.js";
+
+const ENABLE_AUTH = runtimeEnv.enableAuth;
+const logger = createLogger("AuthGate");
 
 // Lazy import to avoid Supabase initialization when auth is disabled
 const getSupabase = () => import("../../lib/supabaseClient").then(m => m.supabase);
@@ -37,7 +39,7 @@ export default function AuthGate({ children, onAuthChange }) {
         const { data, error } = await supabase.auth.getSession();
         if (!mounted) return;
 
-        if (error) console.error("[AuthGate] getSession error", error);
+        if (error) logger.error("getSession error", error);
         const nextSession = data?.session ?? null;
         setSession(nextSession);
         setAuthUser(nextSession?.user ?? null);
@@ -54,7 +56,7 @@ export default function AuthGate({ children, onAuthChange }) {
         unsubscribe = () => sub?.subscription?.unsubscribe?.();
       } catch (error) {
         if (!mounted) return;
-        console.error("[AuthGate] init error", error);
+        logger.error("init error", error);
         setLoading(false);
       }
     };

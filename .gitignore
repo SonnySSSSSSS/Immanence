@@ -10,6 +10,10 @@ lerna-debug.log*
 node_modules
 dist
 dist-ssr
+.env
+.env.local
+.env.*
+!.env.example
 *.local
 
 # ComfyUI (should not be committed)
@@ -38,7 +42,6 @@ weights/
 gemma/
 python_env/
 __pycache__/
-.ollama/
 
 # Windows reserved device names
 [Nn][Uu][Ll]

@@ -8,13 +8,12 @@ Run this checklist before any production deployment.
 ## 1. API Cost Protection
 
 - [ ] **Rate limiting on AI proxy endpoints**
-  - `vite.config.js` Ollama proxy has no rate limiting — unlimited requests passthrough to `localhost:11434`
   - `worker/src/index.js` Gemini proxy: ✅ 100 req/hour per IP via Cloudflare KV
-  - Fix: Add middleware in `tools/ollama-proxy.js` to throttle requests
+  - Verify any internal proxy or worker path has explicit throttling and abuse controls
 
-- [ ] **Open CORS on Ollama proxy**
-  - `tools/ollama-proxy.js` lines 11-12: `Access-Control-Allow-Origin: *` — anyone can call it
-  - Fix: Restrict to `http://localhost:5173` only
+- [ ] **Internal-only HTTP tools are not broadly exposed**
+  - Local or internal tools exposed over HTTP are not open to arbitrary network access
+  - Internal-only endpoints are clearly marked and protected
 
 - [ ] **No cost caps or usage tracking on LLM service**
   - `src/services/llmService.js`: No token counting, no budget cap, no per-user quota
@@ -25,8 +24,8 @@ Run this checklist before any production deployment.
 ## 2. Authentication & Sessions
 
 - [ ] **Hardcoded Supabase credentials in source**
-  - `src/lib/supabaseClient.js` lines 6-7: URL and anon key hardcoded — they appear in git history
-  - Fix: Move to `.env.local` only; reference via `import.meta.env.VITE_SUPABASE_URL`
+  - Ensure `src/lib/supabaseClient.js` reads `VITE_SUPABASE_URL` and `VITE_SUPABASE_ANON_KEY` through the runtime env helper
+  - Keep real values out of tracked source; rotate the key if the repo has ever been public
   - Rotate the key if the repo has ever been public
 
 - [ ] **`.env.local` committed to repo**
@@ -34,8 +33,8 @@ Run this checklist before any production deployment.
   - Run: `git ls-files .env.local` — if it returns a result, it's tracked
 
 - [ ] **Auth can be disabled via source code**
-  - `src/lib/supabaseClient.js` line 5: `const ENABLE_AUTH = true` — this is a code constant, not env-gated
-  - Fix: Replace with `const ENABLE_AUTH = import.meta.env.VITE_ENABLE_AUTH !== 'false'`
+  - Auth enablement must be env-gated in both `src/lib/supabaseClient.js` and `src/components/auth/AuthGate.jsx`
+  - `VITE_ENABLE_AUTH` should accept only `true` / `false` and default to enabled when missing or malformed
 
 - [ ] **Session expiry / idle timeout**
   - Supabase handles JWT refresh automatically — ✅ acceptable
@@ -81,8 +80,8 @@ Run this checklist before any production deployment.
   - Missing: email format regex, password strength (min 8 chars), XSS sanitization on display name
 
 - [ ] **Prompt injection in LLM calls**
-  - `src/services/llmService.js` lines 208-218: user text interpolated directly into prompt strings
-  - Fix: validate and limit input length before passing to LLM; consider structured data format
+  - `src/services/llmService.js` should keep system instructions separate from user-provided data
+  - Treat user input as bounded data payloads, not appended control instructions
 
 - [ ] **XSS in markdown rendering**
   - `react-markdown` is installed — verify `rehype-sanitize` is also in use wherever user content renders
@@ -116,33 +115,31 @@ Run this checklist before any production deployment.
 - [ ] **No role-based access control needed** — ✅ all users are equal; not applicable currently
 
 - [ ] **CORS too permissive on Worker**
-  - `worker/src/index.js` line 21: `Access-Control-Allow-Origin: *`
-  - Fix: change to your GitHub Pages domain: `https://<username>.github.io`
+  - `worker/src/index.js` should allow only the production GitHub Pages origin and required localhost dev origins
+  - No wildcard fallback for active LLM traffic
 
 ---
 
 ## 8. Operational Readiness
 
 - [ ] **No startup environment variable validation**
-  - App will fail silently if `VITE_SUPABASE_URL` or `VITE_SUPABASE_ANON_KEY` is missing
-  - Fix: add validation block to `src/main.jsx` before rendering:
-    ```js
-    const required = ['VITE_SUPABASE_URL', 'VITE_SUPABASE_ANON_KEY'];
-    const missing = required.filter(k => !import.meta.env[k]);
-    if (missing.length) throw new Error(`Missing env vars: ${missing.join(', ')}`);
-    ```
+  - `src/config/runtimeEnv.js` should fail fast when auth is enabled and `VITE_SUPABASE_URL` / `VITE_SUPABASE_ANON_KEY` is missing
+  - `VITE_LLM_PROXY_URL` should fail clearly when LLM features are invoked, not as a global startup blocker
 
 - [ ] **No comprehensive health check endpoint**
   - `src/services/llmService.js` has LLM availability check — ✅ partial
   - Missing: Supabase connectivity check, app version endpoint
 
+- [ ] **Workers, proxies, and internal services validate origin and input where applicable**
+  - Confirm request origin rules, schema validation, and method restrictions match the deployed architecture
+
 - [ ] **Console logs in production**
-  - `console.log` calls are widespread across `src/` — these appear in browser DevTools for all users
-  - Fix: set `vite.config.js` `build.minify` + `drop_console: true`, or use a log level gate
+  - Route debug/info logs in sensitive bootstrap/auth/runtime files through a shared log-level gate
+  - Preserve warnings and errors needed for troubleshooting
 
 - [ ] **No error tracking (Sentry or equivalent)**
-  - Silent failures in production are invisible
-  - Recommendation: add Sentry with `import.meta.env.PROD` guard
+  - Install a minimal dependency-free reporter for unhandled errors and promise rejections at app bootstrap
+  - External observability remains optional
 
 - [ ] **No data export / backup for user data**
   - `src/lib/resetLocalData.js` can wipe data with no export step
@@ -165,8 +162,6 @@ Run this checklist before any production deployment.
 
 ## 10. CORS
 
-- [ ] **Ollama proxy CORS open** — see section 1
-
 - [ ] **Worker CORS open** — see section 7
 
 - [ ] **Supabase CORS**
@@ -178,22 +173,25 @@ Run this checklist before any production deployment.
 ## Priority Order
 
 ### Do immediately
+
 1. Rotate Supabase anon key (it's in git history)
 2. Remove hardcoded credentials — use `.env.local` exclusively
 3. Confirm `.env.local` is in `.gitignore` and untracked
-4. Lock Ollama proxy CORS to localhost only
-5. Add startup env var validation to `src/main.jsx`
+4. Add startup env validation through `src/config/runtimeEnv.js` and `src/main.jsx`
+5. Lock worker origins to the GitHub Pages deployment origin plus required localhost origins
 
 ### Do before next deploy
-6. Add email + password strength validation in `AuthGate.jsx`
-7. Add input length cap on LLM prompt inputs
-8. Lock Worker CORS to your GitHub Pages domain
-9. Verify RLS is enabled on all Supabase tables
-10. Remove / gate console logs from production build
+
+1. Add email + password strength validation in `AuthGate.jsx`
+2. Add input length cap on LLM prompt inputs
+3. Confirm worker origin allowlist matches the deployed GitHub Pages origin exactly
+4. Verify RLS is enabled on all Supabase tables
+5. Extend production log gating beyond bootstrap/auth/runtime files if more client surfaces become sensitive
 
 ### Do when scaling
-11. Add per-user rate limiting on LLM service
-12. Add token counting and cost caps
-13. Integrate error tracking (Sentry)
-14. Add GDPR data export before reset
-15. Begin incremental TypeScript migration
+
+1. Add per-user rate limiting on LLM service
+2. Add token counting and cost caps
+3. Integrate error tracking (Sentry)
+4. Add GDPR data export before reset
+5. Begin incremental TypeScript migration

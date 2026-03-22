@@ -13,18 +13,47 @@ const ALLOWED_MODELS = [
     'gemini-1.5-pro',
 ];
 
+const ALLOWED_ORIGINS = new Set([
+    'https://sonnysssssss.github.io',
+    'http://localhost:4173',
+    'http://localhost:5173',
+    'http://localhost:5175',
+]);
+
+function getCorsHeaders(origin) {
+    return {
+        'Access-Control-Allow-Origin': origin,
+        'Access-Control-Allow-Methods': 'POST, OPTIONS',
+        'Access-Control-Allow-Headers': 'Content-Type, X-Client-Version',
+        'Vary': 'Origin',
+    };
+}
+
+function createOriginErrorResponse(origin) {
+    return new Response(
+        JSON.stringify({
+            error: 'Origin not allowed',
+            message: `Request origin is not allowed: ${origin || 'missing origin'}`,
+        }),
+        {
+            status: 403,
+            headers: { 'Content-Type': 'application/json' },
+        }
+    );
+}
+
 export default {
     async fetch(request, env, _ctx) {
         void _ctx;
-        // CORS headers
-        const corsHeaders = {
-            'Access-Control-Allow-Origin': '*',
-            'Access-Control-Allow-Methods': 'POST, OPTIONS',
-            'Access-Control-Allow-Headers': 'Content-Type, X-Client-Version',
-        };
+        const origin = request.headers.get('Origin');
+        const isAllowedOrigin = typeof origin === 'string' && ALLOWED_ORIGINS.has(origin);
+        const corsHeaders = isAllowedOrigin ? getCorsHeaders(origin) : null;
 
         // Handle preflight
         if (request.method === 'OPTIONS') {
+            if (!isAllowedOrigin) {
+                return createOriginErrorResponse(origin);
+            }
             return new Response(null, { headers: corsHeaders });
         }
 
@@ -32,8 +61,12 @@ export default {
         if (request.method !== 'POST') {
             return new Response(JSON.stringify({ error: 'Method not allowed' }), {
                 status: 405,
-                headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+                headers: { 'Content-Type': 'application/json' },
             });
+        }
+
+        if (!isAllowedOrigin) {
+            return createOriginErrorResponse(origin);
         }
 
         try {
@@ -70,7 +103,7 @@ export default {
             const body = await request.json();
 
             // Validate required fields
-            if (!body.model || !body.contents) {
+            if (!body.model || !Array.isArray(body.contents)) {
                 return new Response(JSON.stringify({
                     error: 'Invalid request',
                     message: 'Missing required fields: model, contents',
@@ -106,13 +139,6 @@ export default {
             // Build Gemini API URL
             const geminiUrl = `https://generativelanguage.googleapis.com/v1beta/models/${body.model}:generateContent?key=${apiKey}`;
 
-            // Debug logging
-            console.log('Making request to:', geminiUrl.replace(apiKey, 'REDACTED'));
-            console.log('Request body:', JSON.stringify({
-                contents: body.contents,
-                generationConfig: body.generationConfig || { temperature: 0.7, maxOutputTokens: 2048 }
-            }, null, 2));
-
             // Forward request to Gemini
             const geminiResponse = await fetch(geminiUrl, {
                 method: 'POST',
@@ -120,6 +146,7 @@ export default {
                     'Content-Type': 'application/json',
                 },
                 body: JSON.stringify({
+                    systemInstruction: body.systemInstruction,
                     contents: body.contents,
                     generationConfig: body.generationConfig || {
                         temperature: 0.7,
