@@ -17,6 +17,9 @@ import { PhoticControlPanel } from '../PhoticControlPanel.jsx';
 import { EmotionConfig } from '../EmotionConfig.jsx';
 import { getPracticeHousingStyles, PracticeHousingChrome } from './practiceHousing.jsx';
 
+const PRACTICE_CARD_GRAIN_SVG = `<svg xmlns="http://www.w3.org/2000/svg" width="240" height="240" viewBox="0 0 240 240"><filter id="n"><feTurbulence type="fractalNoise" baseFrequency="0.9" numOctaves="3" stitchTiles="stitch"/><feColorMatrix type="saturate" values="0"/><feComponentTransfer><feFuncA type="table" tableValues="0 0.08"/></feComponentTransfer></filter><rect width="240" height="240" filter="url(#n)"/></svg>`;
+const PRACTICE_CARD_GRAIN_DATA_URI = `data:image/svg+xml,${encodeURIComponent(PRACTICE_CARD_GRAIN_SVG)}`;
+
 // Map string names to actual components (direct imports, not lazy)
 const CONFIG_COMPONENTS = {
   CircuitConfig,
@@ -170,7 +173,21 @@ export function PracticeOptionsCard({
               : 'linear-gradient(180deg, rgba(8, 18, 27, 0.06) 0%, rgba(4, 9, 16, 0.12) 100%)',
           }}
         />
-      
+        <div
+          aria-hidden="true"
+          data-ui="practice-card-grain"
+          style={{
+            position: 'absolute',
+            inset: 0,
+            pointerEvents: 'none',
+            zIndex: 2,
+            opacity: tokens?.isLight ? 0.065 : 0.045,
+            backgroundImage: `url("${PRACTICE_CARD_GRAIN_DATA_URI}")`,
+            backgroundRepeat: 'repeat',
+            backgroundSize: '240px 240px',
+          }}
+        />
+       
       {isCollapsed ? (
         <div className="h-[88px] flex items-center justify-center" style={housing.content}>
           <span style={{ 

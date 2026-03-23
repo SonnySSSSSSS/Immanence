@@ -74,6 +74,7 @@ function CollapsedSummaryCard({
     breathSubmode === 'breath' && breathMethod === 'traditional'
       ? getTraditionalPatternSummary(pattern)
       : null;
+  const shouldHideCycleField = Boolean(traditionalPatternSummary) && breathSubmode === 'breath' && breathMethod === 'traditional';
 
   return (
     <div style={{
@@ -98,23 +99,33 @@ function CollapsedSummaryCard({
           marginBottom="12px"
         />
       )}
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '10px', marginBottom: '10px' }}>
+      <div
+        style={{
+          position: 'relative',
+          display: 'grid',
+          gridTemplateColumns: shouldHideCycleField ? '1fr 1fr' : '1fr 1fr 1fr',
+          gap: '10px',
+          marginBottom: '10px',
+        }}
+      >
         <div>
           <div style={{ fontSize: '9px', color: labelColor, marginBottom: '4px', textTransform: 'uppercase', letterSpacing: '0.08em' }}>Method</div>
           <div style={{ fontSize: '12px', color: valueColor, fontWeight: 500 }}>
             {breathSubmode === 'stillness' ? 'Stillness' : (breathMethod === 'expansion' ? 'Expansion' : 'Traditional')}
           </div>
         </div>
-        <div>
-          <div style={{ fontSize: '9px', color: labelColor, marginBottom: '4px', textTransform: 'uppercase', letterSpacing: '0.08em' }}>
-            {breathSubmode === 'stillness' ? 'Focus/Rest' : 'Cycle'}
+        {!shouldHideCycleField && (
+          <div>
+            <div style={{ fontSize: '9px', color: labelColor, marginBottom: '4px', textTransform: 'uppercase', letterSpacing: '0.08em' }}>
+              {breathSubmode === 'stillness' ? 'Focus/Rest' : 'Cycle'}
+            </div>
+            <div style={{ fontSize: '12px', color: valueColor, fontWeight: 500 }}>
+              {breathSubmode === 'stillness'
+                ? `${focusSec}s / ${restSec}s`
+                : `${pattern?.inhale ?? 4}–${pattern?.hold1 ?? 0}–${pattern?.exhale ?? 4}–${pattern?.hold2 ?? 0}`}
+            </div>
           </div>
-          <div style={{ fontSize: '12px', color: valueColor, fontWeight: 500 }}>
-            {breathSubmode === 'stillness'
-              ? `${focusSec}s / ${restSec}s`
-              : `${pattern?.inhale ?? 4}–${pattern?.hold1 ?? 0}–${pattern?.exhale ?? 4}–${pattern?.hold2 ?? 0}`}
-          </div>
-        </div>
+        )}
         <div>
           <div style={{ fontSize: '9px', color: labelColor, marginBottom: '4px', textTransform: 'uppercase', letterSpacing: '0.08em' }}>
             {breathSubmode === 'stillness' ? 'Intensity' : 'Duration'}

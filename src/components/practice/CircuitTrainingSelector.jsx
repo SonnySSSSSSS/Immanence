@@ -2,6 +2,7 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { PRACTICE_REGISTRY } from "../PracticeSection/constants.js";
+import { useDisplayModeStore } from "../../state/displayModeStore.js";
 import { Z } from "../../tokens/zIndex.js";
 
 // Build DEFAULT_ITEMS from registry to ensure labels stay synchronized
@@ -34,11 +35,24 @@ export function CircuitTrainingSelector({
   const buttonRef = useRef(null);
   const rootRef = useRef(null);
 
+  const colorScheme = useDisplayModeStore((s) => s.colorScheme);
+  const isLight = colorScheme === "light";
+
   const activeId = value ?? items[0]?.id;
   const active = useMemo(
     () => items.find((x) => x.id === activeId) ?? items[0],
     [items, activeId]
   );
+
+  const bgImageUrl = `${import.meta.env.BASE_URL}bg/practice-breath-mandala.webp`;
+  const selectorBgImage = isLight
+    ? `linear-gradient(180deg, rgba(248, 252, 252, 0.92) 0%, rgba(231, 242, 244, 0.86) 100%), url("${bgImageUrl}")`
+    : `linear-gradient(rgba(20, 15, 25, 0.35), rgba(20, 15, 25, 0.55)), url("${bgImageUrl}")`;
+  const selectorBorder = isLight ? "rgba(97, 177, 190, 0.26)" : "rgba(255,255,255,0.10)";
+  const selectorHoverBorder = isLight ? "rgba(97, 177, 190, 0.40)" : "rgba(255,255,255,0.20)";
+  const selectorShadow = isLight
+    ? (open ? "0 14px 28px rgba(18, 40, 52, 0.10)" : "0 10px 22px rgba(18, 40, 52, 0.08)")
+    : "none";
 
   // Animation state management
   useEffect(() => {
@@ -108,20 +122,26 @@ export function CircuitTrainingSelector({
         data-ui-id="practice:dropdown:method"
         data-ui-fx-surface="true"
         className={
-          "w-full text-left rounded-lg border transition-all duration-200 " +
-          "flex items-center gap-3 px-4 py-3 " +
-          "border-white/10 overflow-hidden " +
-          "hover:border-white/20"
+          "relative w-full text-left rounded-lg border transition-all duration-200 " +
+          "flex items-center gap-3 px-4 py-3 overflow-hidden"
         }
         style={{
           fontFamily: 'var(--font-display)',
-          backgroundImage: `linear-gradient(rgba(20, 15, 25, 0.35), rgba(20, 15, 25, 0.55)), url("${import.meta.env.BASE_URL}bg/practice-breath-mandala.webp")`,
+          backgroundImage: selectorBgImage,
           backgroundSize: 'auto, cover',
           backgroundPosition: 'center, center',
           backgroundRepeat: 'no-repeat',
+          backgroundBlendMode: isLight ? "normal, luminosity" : "normal, normal",
+          borderColor: open ? `${active.rail}55` : selectorBorder,
           boxShadow: open
-            ? `0 0 0 1px ${active.rail}40`
-            : "0 0 0 1px rgba(255,255,255,0.08)",
+            ? `0 0 0 1px ${active.rail}33, ${selectorShadow}`
+            : selectorShadow,
+        }}
+        onMouseEnter={(e) => {
+          e.currentTarget.style.borderColor = selectorHoverBorder;
+        }}
+        onMouseLeave={(e) => {
+          e.currentTarget.style.borderColor = open ? `${active.rail}55` : selectorBorder;
         }}
       >
         {/* Color rail indicator */}
@@ -141,7 +161,10 @@ export function CircuitTrainingSelector({
               alignItems: 'center',
               padding: '0 7px',
               borderRadius: '6px',
-              background: 'rgba(0, 0, 0, 0.33)',
+              background: isLight ? "rgba(255, 255, 255, 0.52)" : "rgba(0, 0, 0, 0.33)",
+              border: isLight ? "1px solid rgba(60, 50, 35, 0.10)" : "1px solid rgba(255,255,255,0.06)",
+              backdropFilter: isLight ? "blur(10px)" : undefined,
+              WebkitBackdropFilter: isLight ? "blur(10px)" : undefined,
               maxWidth: '100%',
             }}
           >
@@ -149,7 +172,7 @@ export function CircuitTrainingSelector({
               className="text-sm truncate font-medium"
               style={{
                 fontFamily: 'var(--font-display)',
-                color: 'rgba(255, 255, 255, 0.92)',
+                color: isLight ? "rgba(24, 47, 55, 0.92)" : "rgba(255, 255, 255, 0.92)",
                 lineHeight: 1,
               }}
             >
@@ -159,9 +182,11 @@ export function CircuitTrainingSelector({
         </div>
 
         {/* Chevron indicator */}
-        <div className="flex-shrink-0 text-white/40 transition-transform duration-200"
+        <div
+          className="flex-shrink-0 transition-transform duration-200"
           style={{
             transform: open ? 'rotate(180deg)' : 'rotate(0deg)',
+            color: isLight ? "rgba(60, 50, 35, 0.55)" : "rgba(255,255,255,0.40)",
           }}
         >
           <svg aria-hidden="true" width="10" height="6" viewBox="0 0 10 6" fill="none">
@@ -188,8 +213,9 @@ export function CircuitTrainingSelector({
           <div
             className={
               "fixed " +
-              "rounded-lg border border-white/10 " +
-              "shadow-[0_12px_40px_rgba(0,0,0,0.6)] " +
+              "rounded-lg border " +
+              (isLight ? "" : "border-white/10 ") +
+              (isLight ? "shadow-[0_12px_40px_rgba(18,40,52,0.18)] " : "shadow-[0_12px_40px_rgba(0,0,0,0.6)] ") +
               "transition-all duration-150 ease-out"
             }
             style={{
@@ -200,12 +226,14 @@ export function CircuitTrainingSelector({
               transformOrigin: 'top center',
               transform: animIn ? 'scaleY(1)' : 'scaleY(0.92)',
               opacity: animIn ? 1 : 0,
-              backgroundImage: `linear-gradient(rgba(20, 15, 25, 0.35), rgba(20, 15, 25, 0.55)), url("${import.meta.env.BASE_URL}bg/practice-breath-mandala.webp")`,
+              backgroundImage: selectorBgImage,
               backgroundSize: 'auto, cover',
               backgroundPosition: 'center, center',
               backgroundRepeat: 'no-repeat',
               backdropFilter: 'blur(8px)',
               WebkitBackdropFilter: 'blur(8px)',
+              backgroundBlendMode: isLight ? "normal, luminosity" : "normal, normal",
+              borderColor: isLight ? selectorBorder : undefined,
             }}
           >
             <div className="py-1.5">
@@ -214,12 +242,21 @@ export function CircuitTrainingSelector({
                   key={item.id}
                   type="button"
                   onClick={() => select(item.id)}
-                  className={
-                    "w-full text-left px-3 py-2 transition-colors " +
-                    (item.id === activeId
-                      ? "bg-white/8"
-                      : "hover:bg-white/5 active:bg-white/8")
-                  }
+                  className="w-full text-left px-3 py-2 transition-colors"
+                  style={{
+                    background:
+                      item.id === activeId
+                        ? (isLight ? "rgba(60, 50, 35, 0.08)" : "rgba(255,255,255,0.08)")
+                        : "transparent",
+                  }}
+                  onMouseEnter={(e) => {
+                    if (item.id === activeId) return;
+                    e.currentTarget.style.background = isLight ? "rgba(60, 50, 35, 0.05)" : "rgba(255,255,255,0.05)";
+                  }}
+                  onMouseLeave={(e) => {
+                    if (item.id === activeId) return;
+                    e.currentTarget.style.background = "transparent";
+                  }}
                 >
                   <div className="flex items-center gap-3">
                     {/* Color pill */}
@@ -239,7 +276,10 @@ export function CircuitTrainingSelector({
                           alignItems: 'center',
                           padding: '0 6px',
                           borderRadius: '6px',
-                          background: `rgba(0, 0, 0, ${item.id === activeId ? 0.40 : 0.30})`,
+                          background: isLight
+                            ? `rgba(255, 255, 255, ${item.id === activeId ? 0.52 : 0.46})`
+                            : `rgba(0, 0, 0, ${item.id === activeId ? 0.40 : 0.30})`,
+                          border: isLight ? "1px solid rgba(60, 50, 35, 0.10)" : "1px solid rgba(255,255,255,0.06)",
                           maxWidth: '100%',
                         }}
                       >
@@ -250,7 +290,9 @@ export function CircuitTrainingSelector({
                           }
                           style={{
                             fontFamily: 'var(--font-display)',
-                            color: item.id === activeId ? item.rail : 'rgba(255, 255, 255, 0.82)',
+                            color: isLight
+                              ? (item.id === activeId ? "rgba(24, 47, 55, 0.92)" : "rgba(24, 47, 55, 0.78)")
+                              : (item.id === activeId ? item.rail : "rgba(255, 255, 255, 0.82)"),
                             lineHeight: 1,
                           }}
                         >
