@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import { useTutorialStore } from "../../state/tutorialStore.js";
+import { useDisplayModeStore } from "../../state/displayModeStore.js";
 
 const TUTORIAL_HINT_KEY = "immanence.tutorialHintSeen";
 
@@ -34,6 +35,8 @@ export function PracticeMenuHeader({
   const openTutorial = useTutorialStore((s) => s.openTutorial);
   const isOpen = useTutorialStore((s) => s.isOpen);
   const tutorialHintVisible = showTutorialHint && !isOpen;
+  const colorScheme = useDisplayModeStore((s) => s.colorScheme);
+  const isLight = colorScheme === 'light';
 
   const dismissTutorialHint = () => {
     try {
@@ -69,20 +72,30 @@ export function PracticeMenuHeader({
                 display: 'inline-flex',
                 alignItems: 'center',
                 borderRadius: '8px',
-                border: '1px solid rgba(255,255,255,0.2)',
-                background: 'rgba(255,255,255,0.05)',
-                color: 'rgba(255,255,255,0.7)',
+                border: isLight ? '1px solid rgba(60,50,35,0.25)' : '1px solid rgba(255,255,255,0.2)',
+                background: isLight ? 'rgba(60,50,35,0.08)' : 'rgba(255,255,255,0.05)',
+                color: isLight ? 'rgba(35,20,10,0.8)' : 'rgba(255,255,255,0.7)',
                 cursor: 'pointer',
                 transition: 'all 200ms',
                 whiteSpace: 'nowrap',
               }}
               onMouseEnter={(e) => {
-                e.target.style.background = 'rgba(255,255,255,0.1)';
-                e.target.style.color = 'rgba(255,255,255,0.9)';
+                if (isLight) {
+                  e.target.style.background = 'rgba(60,50,35,0.15)';
+                  e.target.style.color = 'rgba(35,20,10,0.95)';
+                } else {
+                  e.target.style.background = 'rgba(255,255,255,0.1)';
+                  e.target.style.color = 'rgba(255,255,255,0.9)';
+                }
               }}
               onMouseLeave={(e) => {
-                e.target.style.background = 'rgba(255,255,255,0.05)';
-                e.target.style.color = 'rgba(255,255,255,0.7)';
+                if (isLight) {
+                  e.target.style.background = 'rgba(60,50,35,0.08)';
+                  e.target.style.color = 'rgba(35,20,10,0.8)';
+                } else {
+                  e.target.style.background = 'rgba(255,255,255,0.05)';
+                  e.target.style.color = 'rgba(255,255,255,0.7)';
+                }
               }}
             >
               TUTORIAL
@@ -116,7 +129,7 @@ export function PracticeMenuHeader({
             className="practiceMenuHeaderTitle type-h2"
             title={title}
             style={{
-              color: '#F5E6D3',
+              color: isLight ? 'rgba(35,20,10,0.95)' : '#F5E6D3',
             }}
           >
             {title}
