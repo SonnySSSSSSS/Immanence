@@ -328,7 +328,10 @@ export function GlassIconButton({
           marginRight: '4px',
           padding: '0 7px',
           borderRadius: '6px',
-          background: `rgba(0, 0, 0, ${labelOpacity})`,
+          background: isLight
+            ? `rgba(255, 255, 255, ${selected ? 0.82 : 0.68})`
+            : `rgba(0, 0, 0, ${labelOpacity})`,
+          border: isLight ? '1px solid rgba(100, 80, 60, 0.18)' : 'none',
           transition: 'background-color 130ms ease',
           display: 'flex',
           alignItems: 'center',
