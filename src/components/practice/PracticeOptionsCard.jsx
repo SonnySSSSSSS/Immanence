@@ -179,7 +179,7 @@ export function PracticeOptionsCard({
             letterSpacing: 'var(--tracking-mythic)', 
             textTransform: 'uppercase',
             color: tokens.textMuted,
-            opacity: 0.5
+            opacity: 0.78
           }}>
             Select a practice to begin config...
           </span>

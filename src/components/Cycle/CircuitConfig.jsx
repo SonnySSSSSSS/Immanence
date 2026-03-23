@@ -188,7 +188,7 @@ export function CircuitConfig({ value, onChange, isLight = false }) {
                             className="text-xs mb-2 tracking-wider uppercase font-medium"
                             style={{
                                 fontFamily: 'var(--font-body)',
-                                color: 'hsla(var(--accent-h), var(--accent-s), var(--accent-l), 0.6)',
+                                color: 'hsla(var(--accent-h), var(--accent-s), var(--accent-l), 0.78)',
                             }}
                         >
                             Total Circuit
@@ -197,7 +197,7 @@ export function CircuitConfig({ value, onChange, isLight = false }) {
                             className="text-xs mb-2 tracking-wider uppercase font-medium"
                             style={{
                                 fontFamily: 'var(--font-body)',
-                                color: 'hsla(var(--accent-h), var(--accent-s), var(--accent-l), 0.5)',
+                                color: 'hsla(var(--accent-h), var(--accent-s), var(--accent-l), 0.68)',
                                 fontSize: '10px',
                                 lineHeight: '1',
                                 whiteSpace: 'nowrap',
@@ -225,11 +225,11 @@ export function CircuitConfig({ value, onChange, isLight = false }) {
                             </div>
                             {/* Separator */}
                             <div
-                                className="text-3xl font-bold"
-                                style={{
-                                    opacity: 0.5,
-                                    lineHeight: '1',
-                                    fontFamily: 'var(--font-display)',
+                            className="text-3xl font-bold"
+                            style={{
+                                opacity: 0.75,
+                                lineHeight: '1',
+                                fontFamily: 'var(--font-display)',
                                 }}
                             >
                                 :
@@ -312,11 +312,14 @@ export function CircuitConfig({ value, onChange, isLight = false }) {
             {/* Swipable Exercise Carousel */}
             <div className="relative group" data-tutorial={ANCHORS.CIRCUIT_PRACTICE_PICKER}>
                 <div
-                    className="text-xs text-white/40 mb-4 uppercase tracking-[0.15em] flex justify-between font-medium px-1"
-                    style={{ fontFamily: 'var(--font-body)' }}
+                    className="text-xs mb-4 uppercase tracking-[0.15em] flex justify-between font-medium px-1"
+                    style={{
+                        fontFamily: 'var(--font-body)',
+                        color: isLight ? 'var(--text-secondary)' : 'rgba(255,255,255,0.62)',
+                    }}
                 >
                     <span>Select Practices</span>
-                    <span style={{ color: selectedExercises.length >= MAX_EXERCISES ? 'var(--accent-color)' : (isLight ? 'var(--text-muted)' : 'inherit') }}>
+                    <span style={{ color: selectedExercises.length >= MAX_EXERCISES ? 'var(--accent-color)' : (isLight ? 'var(--text-secondary)' : 'rgba(255,255,255,0.62)') }}>
                         {selectedExercises.length}/{MAX_EXERCISES}
                     </span>
                 </div>
@@ -393,7 +396,7 @@ export function CircuitConfig({ value, onChange, isLight = false }) {
                                                         letterSpacing: '0.04em',
                                                         color: isSelected
                                                             ? (isLight ? 'var(--text-primary)' : 'rgba(255,255,255,0.95)')
-                                                            : (isLight ? 'var(--text-muted)' : 'rgba(255,255,255,0.65)'),
+                                                            : (isLight ? 'var(--text-secondary)' : 'rgba(255,255,255,0.72)'),
                                                     }}
                                                 >
                                                     {exercise.name}
@@ -451,7 +454,7 @@ export function CircuitConfig({ value, onChange, isLight = false }) {
                     )}
                     <div
                         className="text-[10px] mb-3 uppercase tracking-[0.2em] font-bold"
-                        style={{ fontFamily: 'var(--font-display)', color: isLight ? 'var(--text-muted)' : 'rgba(255,255,255,0.4)' }}
+                        style={{ fontFamily: 'var(--font-display)', color: isLight ? 'var(--text-secondary)' : 'rgba(255,255,255,0.62)' }}
                     >
                         Energy Pathway
                     </div>
@@ -553,7 +556,7 @@ export function CircuitConfig({ value, onChange, isLight = false }) {
                                             style={{
                                                 fontFamily: 'var(--font-body)',
                                                 fontSize: '10px',
-                                                color: isLight ? 'var(--text-muted)' : 'rgba(255,255,255,0.35)',
+                                                color: isLight ? 'var(--text-secondary)' : 'rgba(255,255,255,0.56)',
                                                 letterSpacing: '0.05em',
                                                 flexShrink: 0,
                                             }}
@@ -562,7 +565,7 @@ export function CircuitConfig({ value, onChange, isLight = false }) {
                                         </span>
                                         <button
                                             onClick={() => handleRemoveExercise(index)}
-                                            className={`text-sm transition-colors ${isLight ? 'text-[#3D3425]/30 hover:text-[#3D3425]/70' : 'text-white/30 hover:text-white/70'}`}
+                                            className={`text-sm transition-colors ${isLight ? 'text-[#3D3425]/55 hover:text-[#3D3425]/85' : 'text-white/45 hover:text-white/80'}`}
                                             style={{ flexShrink: 0 }}
                                         >
                                             ✕
@@ -585,7 +588,7 @@ export function CircuitConfig({ value, onChange, isLight = false }) {
                 >
                     <p
                         className="text-sm font-medium"
-                        style={{ fontFamily: 'var(--font-body)', color: isLight ? 'var(--text-muted)' : 'rgba(255,255,255,0.4)' }}
+                        style={{ fontFamily: 'var(--font-body)', color: isLight ? 'var(--text-secondary)' : 'rgba(255,255,255,0.62)' }}
                     >
                         Select practices above to build your circuit
                     </p>

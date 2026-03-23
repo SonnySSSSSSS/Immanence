@@ -154,7 +154,7 @@ export function CymaticsConfig({
                     </div>
                     <div
                         className="text-[9px]"
-                        style={{ color: 'var(--text-muted)' }}
+                        style={{ color: isLight ? 'var(--text-secondary)' : 'var(--text-muted)' }}
                     >
                         {selectedFrequency?.quality || 'Tap to choose'}
                     </div>
@@ -284,7 +284,7 @@ export function CymaticsConfig({
                 </div>
                 <div
                     className="mt-1 text-center text-[8px]"
-                    style={{ color: 'var(--text-muted)' }}
+                    style={{ color: isLight ? 'var(--text-secondary)' : 'var(--text-muted)' }}
                 >
                     In → Hold → Out → Void
                 </div>

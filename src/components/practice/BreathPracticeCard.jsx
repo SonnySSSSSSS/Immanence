@@ -3,18 +3,78 @@ import { useDisplayModeStore } from "../../state/displayModeStore.js";
 import { SacredTimeSlider } from "../SacredTimeSlider.jsx";
 import { TrajectoryCard } from "../TrajectoryCard.jsx";
 import BreathWaveform from "../BreathWaveform.jsx";
-import { TraditionalBreathRatios } from "../PracticeSection/TraditionalBreathRatios.jsx";
+import {
+  TraditionalBreathRatios,
+  getTraditionalPatternSummary,
+} from "../PracticeSection/TraditionalBreathRatios.jsx";
 import { PracticeMenuHeader } from "./PracticeMenuHeader.jsx";
 import { STILLNESS_INTENSITY_META } from "../../data/stillnessIntensityMeta.js";
 import { ANCHORS } from "../../tutorials/anchorIds.js";
 import { BeginPracticeButton } from "./BeginPracticeButton.jsx";
+
+function BreathMethodToggle({
+  breathMethod,
+  setBreathMethod,
+  amberActiveColor,
+  inactiveColor,
+  amberActiveBg,
+  inactiveBg,
+  amberActiveBorder,
+  inactiveBorder,
+  isLight,
+  marginBottom = '18px',
+}) {
+  return (
+    <div
+      data-tutorial={ANCHORS.FOUNDATIONS_BREATH_METHOD}
+      className="flex flex-col items-center justify-center gap-2"
+      style={{ marginBottom }}
+    >
+      <div className="flex items-center justify-center gap-2">
+        {[
+          { id: 'expansion', label: 'Expansion' },
+          { id: 'traditional', label: 'Traditional' }
+        ].map((item) => {
+          const isActive = breathMethod === item.id;
+          return (
+            <button
+              key={item.id}
+              type="button"
+              onClick={() => setBreathMethod(item.id)}
+              className="px-3 py-1 rounded-full transition-all"
+              style={{
+                fontFamily: 'var(--font-display)',
+                fontSize: '9px',
+                fontWeight: 700,
+                letterSpacing: '0.12em',
+                textTransform: 'uppercase',
+                color: isActive ? amberActiveColor : inactiveColor,
+                background: isActive ? amberActiveBg : inactiveBg,
+                border: isActive ? `1px solid ${amberActiveBorder}` : `1px solid ${inactiveBorder}`,
+                boxShadow: isActive ? `0 0 12px ${isLight ? 'rgba(140,100,0,0.20)' : 'rgba(212,175,55,0.2)'}` : 'none',
+              }}
+            >
+              {item.label}
+            </button>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
 
 function CollapsedSummaryCard({
   surfaceBg, surfaceBorder, labelColor, valueColor, breathSubmode, breathMethod,
   focusSec, restSec, pattern, duration, stillnessIntensityLabel, stillnessPreDelaySec,
   isLight, editButtonRef, handleEditClick, isStillnessLocked,
   amberBg, amberBgHover, amberBorder, amberBorderHover, amberColor, surfaceShadow,
+  setBreathMethod, amberActiveColor, inactiveColor, amberActiveBg, inactiveBg, amberActiveBorder, inactiveBorder,
 }) {
+  const traditionalPatternSummary =
+    breathSubmode === 'breath' && breathMethod === 'traditional'
+      ? getTraditionalPatternSummary(pattern)
+      : null;
+
   return (
     <div style={{
       background: surfaceBg,
@@ -24,6 +84,20 @@ function CollapsedSummaryCard({
       marginBottom: '12px',
       boxShadow: surfaceShadow,
     }}>
+      {breathSubmode === 'breath' && (
+        <BreathMethodToggle
+          breathMethod={breathMethod}
+          setBreathMethod={setBreathMethod}
+          amberActiveColor={amberActiveColor}
+          inactiveColor={inactiveColor}
+          amberActiveBg={amberActiveBg}
+          inactiveBg={inactiveBg}
+          amberActiveBorder={amberActiveBorder}
+          inactiveBorder={inactiveBorder}
+          isLight={isLight}
+          marginBottom="12px"
+        />
+      )}
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '10px', marginBottom: '10px' }}>
         <div>
           <div style={{ fontSize: '9px', color: labelColor, marginBottom: '4px', textTransform: 'uppercase', letterSpacing: '0.08em' }}>Method</div>
@@ -50,10 +124,38 @@ function CollapsedSummaryCard({
           </div>
         </div>
       </div>
+      {traditionalPatternSummary && (
+        <div
+          style={{
+            marginBottom: '10px',
+            padding: isLight ? '8px 10px' : '8px 10px',
+            borderRadius: '8px',
+            background: isLight ? 'rgba(140,100,0,0.08)' : 'rgba(212,175,55,0.08)',
+            border: `1px solid ${isLight ? 'rgba(140,100,0,0.18)' : 'rgba(212,175,55,0.18)'}`,
+          }}
+        >
+          <div
+            style={{
+              fontSize: '9px',
+              color: labelColor,
+              marginBottom: '4px',
+              textTransform: 'uppercase',
+              letterSpacing: '0.08em',
+            }}
+          >
+            Queued Pattern
+          </div>
+          <div style={{ fontSize: '12px', color: valueColor, fontWeight: 600, lineHeight: 1.45 }}>
+            {traditionalPatternSummary.label
+              ? `${traditionalPatternSummary.label} • ${traditionalPatternSummary.ratioText}`
+              : traditionalPatternSummary.ratioText}
+          </div>
+        </div>
+      )}
       {breathSubmode === 'stillness' && (
         <div style={{
           fontSize: '11px',
-          color: isLight ? 'rgba(30,20,0,0.65)' : 'rgba(255,255,255,0.68)',
+          color: isLight ? 'rgba(30,20,0,0.74)' : 'rgba(255,255,255,0.74)',
           marginBottom: '10px',
         }}>
           Pre-delay {stillnessPreDelaySec}s
@@ -145,8 +247,8 @@ function BreathPracticeCard({
   const surfaceBg = isLight ? 'rgba(243, 239, 230, 1)' : 'rgba(255,255,255,0.03)';
   const surfaceBorder = isLight ? 'rgba(120, 102, 78, 0.16)' : 'rgba(255,255,255,0.1)';
   const surfaceShadow = isLight ? '0 2px 4px rgba(0,0,0,0.06)' : 'none';
-  const labelColor = isLight ? 'rgba(60,40,0,0.50)' : 'rgba(255,255,255,0.4)';
-  const valueColor = isLight ? 'rgba(30,20,0,0.85)' : 'rgba(255,255,255,0.9)';
+  const labelColor = isLight ? 'rgba(60,40,0,0.62)' : 'rgba(255,255,255,0.56)';
+  const valueColor = isLight ? 'rgba(30,20,0,0.92)' : 'rgba(255,255,255,0.92)';
   const amberBg = isLight ? 'rgba(140,100,0,0.12)' : 'rgba(212,175,55,0.12)';
   const amberBgHover = isLight ? 'rgba(140,100,0,0.20)' : 'rgba(212,175,55,0.20)';
   const amberBorder = isLight ? 'rgba(140,100,0,0.30)' : 'rgba(212,175,55,0.3)';
@@ -197,6 +299,13 @@ function BreathPracticeCard({
               handleEditClick={handleEditClick} isStillnessLocked={isStillnessLocked}
               amberBg={amberBg} amberBgHover={amberBgHover} amberBorder={amberBorder}
               amberBorderHover={amberBorderHover} amberColor={amberColor} surfaceShadow={surfaceShadow}
+              setBreathMethod={setBreathMethod}
+              amberActiveColor={amberActiveColor}
+              inactiveColor={inactiveColor}
+              amberActiveBg={amberActiveBg}
+              inactiveBg={inactiveBg}
+              amberActiveBorder={amberActiveBorder}
+              inactiveBorder={inactiveBorder}
             />
           </div>
         )}
@@ -244,41 +353,6 @@ function BreathPracticeCard({
         {/* Breath Mode Content */}
         {breathSubmode === 'breath' && !isFocusMode && (
           <>
-            {/* Expansion vs Traditional Toggle */}
-            <div
-              data-tutorial={ANCHORS.FOUNDATIONS_BREATH_METHOD}
-              className="flex items-center justify-center gap-2"
-              style={{ marginBottom: '18px' }}
-            >
-              {[
-                { id: 'expansion', label: 'Expansion' },
-                { id: 'traditional', label: 'Traditional' }
-              ].map((item) => {
-                const isActive = breathMethod === item.id;
-                return (
-                  <button
-                    key={item.id}
-                    type="button"
-                    onClick={() => setBreathMethod(item.id)}
-                    className="px-3 py-1 rounded-full transition-all"
-                    style={{
-                      fontFamily: 'var(--font-display)',
-                      fontSize: '9px',
-                      fontWeight: 700,
-                      letterSpacing: '0.12em',
-                      textTransform: 'uppercase',
-                      color: isActive ? amberActiveColor : inactiveColor,
-                      background: isActive ? amberActiveBg : inactiveBg,
-                      border: isActive ? `1px solid ${amberActiveBorder}` : `1px solid ${inactiveBorder}`,
-                      boxShadow: isActive ? `0 0 12px ${isLight ? 'rgba(140,100,0,0.20)' : 'rgba(212,175,55,0.2)'}` : 'none',
-                    }}
-                  >
-                    {item.label}
-                  </button>
-                );
-              })}
-            </div>
-
             {/* Waveform */}
             <div
               data-tutorial={ANCHORS.FOUNDATIONS_BREATH_WAVEFORM}

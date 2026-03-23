@@ -34,7 +34,7 @@ export function RitualSelectionDeck({ onSelectRitual, selectedRitualId }) {
     const textColors = {
         primary: isLight ? '#3D3425' : 'rgba(253,251,245,0.9)',
         secondary: isLight ? '#5A4D3C' : 'rgba(253,251,245,0.7)',
-        muted: isLight ? '#7A6D58' : 'rgba(253,251,245,0.4)',
+        muted: isLight ? '#6B5E4A' : 'rgba(253,251,245,0.58)',
     };
 
     useEffect(() => {
@@ -184,9 +184,9 @@ export function RitualSelectionDeck({ onSelectRitual, selectedRitualId }) {
                                     <div
                                         style={{
                                             fontFamily: 'var(--font-display)',
-                                            fontSize: '8px',
-                                            letterSpacing: '0.05em',
-                                            color: textColors.muted,
+                        fontSize: '8px',
+                        letterSpacing: '0.05em',
+                        color: textColors.secondary,
                                         }}
                                     >
                                         {formatDuration(ritual.duration)}
@@ -243,7 +243,7 @@ export function RitualSelectionDeck({ onSelectRitual, selectedRitualId }) {
                                     fontSize: '9px',
                                     letterSpacing: '0.06em',
                                     textTransform: 'uppercase',
-                                    color: textColors.muted,
+                                    color: textColors.secondary,
                                     textAlign: 'center',
                                 }}
                             >

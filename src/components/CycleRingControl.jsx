@@ -19,7 +19,7 @@ export function CycleRingControl({
         { key: 'fadeIn', label: 'IN', color: 'var(--accent-color)', min: 1, max: 5 },
         { key: 'display', label: 'HOLD', color: isLight ? 'var(--text-primary)' : 'rgba(255,255,255,0.8)', min: 1, max: 30 },
         { key: 'fadeOut', label: 'OUT', color: isLight ? 'var(--accent-60)' : 'var(--accent-60)', min: 1, max: 5 },
-        { key: 'void', label: 'VOID', color: isLight ? 'rgba(180,155,110,0.15)' : 'rgba(50,50,50,0.9)', min: 1, max: 30 }
+        { key: 'void', label: 'VOID', color: isLight ? 'rgba(165,140,98,0.42)' : 'rgba(50,50,50,0.9)', min: 1, max: 30 }
     ], [isLight]);
 
     const svgRef = useRef(null);
@@ -151,7 +151,7 @@ export function CycleRingControl({
                                     y={labelPos.y}
                                     textAnchor="middle"
                                     dominantBaseline="middle"
-                                    fill={arc.key === 'void' ? (isLight ? 'var(--text-muted)' : 'rgba(255,255,255,0.4)') : (isLight ? 'var(--text-primary)' : 'rgba(0,0,0,0.6)')}
+                                    fill={arc.key === 'void' ? (isLight ? 'var(--text-secondary)' : 'rgba(255,255,255,0.52)') : (isLight ? 'var(--text-primary)' : 'rgba(0,0,0,0.6)')}
                                     fontSize="9"
                                     fontFamily="var(--font-display)"
                                     fontWeight="bold"
@@ -169,7 +169,7 @@ export function CycleRingControl({
                     x={center}
                     y={center - 8}
                     textAnchor="middle"
-                    fill={isLight ? 'var(--text-muted)' : "rgba(255,255,255,0.5)"}
+                    fill={isLight ? 'var(--text-secondary)' : "rgba(255,255,255,0.58)"}
                     fontSize="9"
                     fontFamily="var(--font-display)"
                     fontWeight="600"
@@ -202,7 +202,7 @@ export function CycleRingControl({
                                         className="w-3 h-3 rounded-sm"
                                         style={{ background: arc.color, border: '1px solid rgba(255,255,255,0.2)' }}
                                     />
-                                    <span className={`text-[10px] ${isLight ? 'text-[var(--text-muted)]' : 'text-[rgba(253,251,245,0.5)]'} uppercase tracking-wider w-8`}>
+                                    <span className={`text-[10px] ${isLight ? 'text-[var(--text-secondary)]' : 'text-[rgba(253,251,245,0.58)]'} uppercase tracking-wider w-8`}>
                                         {arc.label}
                                     </span>
                                     <div className="flex items-center gap-1">
@@ -211,7 +211,7 @@ export function CycleRingControl({
                                             className="w-5 h-5 rounded-full text-xs flex items-center justify-center"
                                             style={{
                                                 background: isLight ? 'rgba(60,50,35,0.05)' : 'rgba(255,255,255,0.1)',
-                                                color: isLight ? 'var(--text-muted)' : 'rgba(255,255,255,0.6)',
+                                                color: isLight ? 'var(--text-secondary)' : 'rgba(255,255,255,0.7)',
                                                 border: isLight ? '1px solid var(--light-border)' : '1px solid rgba(255,255,255,0.15)'
                                             }}
                                             disabled={values[arc.key] <= phase.min}
@@ -226,7 +226,7 @@ export function CycleRingControl({
                                             className="w-5 h-5 rounded-full text-xs flex items-center justify-center"
                                             style={{
                                                 background: isLight ? 'rgba(60,50,35,0.05)' : 'rgba(255,255,255,0.1)',
-                                                color: isLight ? 'var(--text-muted)' : 'rgba(255,255,255,0.6)',
+                                                color: isLight ? 'var(--text-secondary)' : 'rgba(255,255,255,0.7)',
                                                 border: isLight ? '1px solid var(--light-border)' : '1px solid rgba(255,255,255,0.15)'
                                             }}
                                             disabled={values[arc.key] >= phase.max}
@@ -239,7 +239,7 @@ export function CycleRingControl({
                         })}
                     </div>
 
-                    <div className={`text-[9px] ${isLight ? 'text-[var(--text-muted)]' : 'text-[rgba(253,251,245,0.3)]'} mt-2`}>
+                    <div className={`text-[9px] ${isLight ? 'text-[var(--text-secondary)]' : 'text-[rgba(253,251,245,0.48)]'} mt-2`}>
                         Click arc to increase • Right-click to decrease
                     </div>
                 </>

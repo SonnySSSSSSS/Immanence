@@ -34,6 +34,60 @@ const TRADITIONAL_RATIOS = [
   },
 ];
 
+function gcd(a, b) {
+  let x = Math.abs(a);
+  let y = Math.abs(b);
+  while (y) {
+    [x, y] = [y, x % y];
+  }
+  return x || 1;
+}
+
+function coercePatternToArray(pattern) {
+  if (Array.isArray(pattern)) {
+    return pattern.map((value) => {
+      const numeric = Number(value);
+      return Number.isFinite(numeric) ? Math.max(0, Math.round(numeric)) : 0;
+    });
+  }
+
+  if (!pattern || typeof pattern !== "object") {
+    return [0, 0, 0, 0];
+  }
+
+  return [
+    Number(pattern.inhale) || 0,
+    Number(pattern.hold1) || 0,
+    Number(pattern.exhale) || 0,
+    Number(pattern.hold2) || 0,
+  ].map((value) => Math.max(0, Math.round(value)));
+}
+
+function normalizePatternSignature(pattern) {
+  const values = coercePatternToArray(pattern);
+  const nonZeroValues = values.filter((value) => value > 0);
+  if (!nonZeroValues.length) return null;
+  const divisor = nonZeroValues.reduce((acc, value) => gcd(acc, value), nonZeroValues[0]);
+  return values.map((value) => (value === 0 ? 0 : Math.round(value / divisor))).join(":");
+}
+
+export function formatTraditionalPatternCycle(pattern) {
+  return coercePatternToArray(pattern).join("–");
+}
+
+export function getTraditionalPatternSummary(pattern) {
+  const ratioText = formatTraditionalPatternCycle(pattern);
+  const signature = normalizePatternSignature(pattern);
+  const matchedRatio = signature
+    ? TRADITIONAL_RATIOS.find((ratio) => normalizePatternSignature(ratio.ratio) === signature)
+    : null;
+
+  return {
+    label: matchedRatio?.label || null,
+    ratioText,
+  };
+}
+
 export function TraditionalBreathRatios({ onSelectRatio }) {
   const [selectedId, setSelectedId] = useState(null);
   const [showAdvanced, setShowAdvanced] = useState(false);
@@ -133,7 +187,7 @@ export function TraditionalBreathRatios({ onSelectRatio }) {
             <div
               style={{
                 fontSize: "10px",
-                opacity: 0.6,
+                opacity: 0.82,
                 marginBottom: "4px",
               }}
             >
@@ -142,7 +196,7 @@ export function TraditionalBreathRatios({ onSelectRatio }) {
             <div
               style={{
                 fontSize: "9px",
-                opacity: 0.5,
+                opacity: 0.72,
               }}
             >
               {r.orientation}
@@ -183,7 +237,7 @@ export function TraditionalBreathRatios({ onSelectRatio }) {
                 fontFamily: "var(--font-display)",
                 letterSpacing: "0.08em",
                 textTransform: "uppercase",
-                color: "rgba(255, 255, 255, 0.5)",
+                color: "rgba(255, 255, 255, 0.72)",
                 marginBottom: "8px",
                 fontWeight: 600,
               }}
@@ -200,7 +254,7 @@ export function TraditionalBreathRatios({ onSelectRatio }) {
                   background: "rgba(255, 255, 255, 0.05)",
                   border: "1px solid rgba(255, 255, 255, 0.1)",
                   borderRadius: "4px",
-                  color: "rgba(255, 255, 255, 0.7)",
+                  color: "rgba(255, 255, 255, 0.86)",
                   cursor: "pointer",
                   fontSize: "14px",
                   fontWeight: "bold",
@@ -235,7 +289,7 @@ export function TraditionalBreathRatios({ onSelectRatio }) {
                   background: "rgba(255, 255, 255, 0.05)",
                   border: "1px solid rgba(255, 255, 255, 0.1)",
                   borderRadius: "4px",
-                  color: "rgba(255, 255, 255, 0.7)",
+                  color: "rgba(255, 255, 255, 0.86)",
                   cursor: "pointer",
                   fontSize: "14px",
                   fontWeight: "bold",

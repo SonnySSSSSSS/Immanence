@@ -71,6 +71,9 @@ function PracticeMenu({
   const isDirectPhoticConfig = ConfigComponent === PhoticControlPanel;
   const isSubmodePhoticConfig = ActiveSubModeConfig === PhoticControlPanel;
   const tutorialAnchorId = getTutorialAnchorId(practice?.id, isDirectPhoticConfig || isSubmodePhoticConfig);
+  const quietLabelColor = isLight ? 'rgba(61,52,37,0.76)' : 'rgba(253,251,245,0.68)';
+  const helperTextColor = isLight ? 'rgba(90,77,60,0.78)' : 'rgba(253,251,245,0.62)';
+
   return (
     <div 
       key={containerKey} 
@@ -87,7 +90,16 @@ function PracticeMenu({
     >
       {/* Inline subtitle for ritual */}
       {showRitualSubtitle && (
-        <p className="mt-2 uppercase text-center" style={{ fontFamily: 'Inter, Outfit, sans-serif', fontWeight: 500, letterSpacing: '0.03em', fontSize: '10px', opacity: 0.5 }}>
+        <p
+          className="mt-2 uppercase text-center"
+          style={{
+            fontFamily: 'Inter, Outfit, sans-serif',
+            fontWeight: 500,
+            letterSpacing: '0.03em',
+            fontSize: '10px',
+            color: quietLabelColor,
+          }}
+        >
           {ritualSubtitleText}
         </p>
       )}
@@ -113,7 +125,17 @@ function PracticeMenu({
               isEmbedded={isSubmodePhoticConfig}
             />
           ) : (
-            <div className="flex items-center justify-center py-12" style={{ fontFamily: 'Inter, Outfit, sans-serif', fontSize: '11px', textTransform: 'uppercase', letterSpacing: '0.02em', opacity: 0.4, fontWeight: 500 }}>
+            <div
+              className="flex items-center justify-center py-12"
+              style={{
+                fontFamily: 'Inter, Outfit, sans-serif',
+                fontSize: '11px',
+                textTransform: 'uppercase',
+                letterSpacing: '0.02em',
+                color: helperTextColor,
+                fontWeight: 500,
+              }}
+            >
               No additional configuration for {activeSubMode?.label}
             </div>
           )}
@@ -126,7 +148,17 @@ function PracticeMenu({
           isEmbedded={isDirectPhoticConfig}
         />
       ) : (
-        <div className="flex items-center justify-center py-12" style={{ fontFamily: 'Inter, Outfit, sans-serif', fontSize: '11px', textTransform: 'uppercase', letterSpacing: '0.02em', opacity: 0.4, fontWeight: 500 }}>
+        <div
+          className="flex items-center justify-center py-12"
+          style={{
+            fontFamily: 'Inter, Outfit, sans-serif',
+            fontSize: '11px',
+            textTransform: 'uppercase',
+            letterSpacing: '0.02em',
+            color: helperTextColor,
+            fontWeight: 500,
+          }}
+        >
           No additional configuration required
         </div>
       )}
@@ -173,7 +205,7 @@ function PracticeMenu({
           marginTop: '8px',
           fontFamily: 'var(--font-body)',
           fontSize: '8px',
-          color: 'rgba(245, 230, 211, 0.4)',
+          color: isLight ? 'rgba(90,77,60,0.74)' : 'rgba(245,230,211,0.62)',
           letterSpacing: '0.05em',
           textTransform: 'uppercase',
         }}>

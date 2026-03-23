@@ -35,8 +35,8 @@ export function EmotionConfig({
   const textColors = {
     primary: isLight ? '#3D3425' : 'rgba(253,251,245,0.7)',
     secondary: isLight ? '#5A4D3C' : 'rgba(253,251,245,0.55)',
-    muted: isLight ? '#7A6D58' : 'rgba(253,251,245,0.45)',
-    description: isLight ? '#6B5E4A' : 'rgba(253,251,245,0.5)',
+    muted: isLight ? '#6F624D' : 'rgba(253,251,245,0.52)',
+    description: isLight ? '#5E5240' : 'rgba(253,251,245,0.58)',
   };
 
   const currentPractice = EMOTION_PRACTICES[mode];

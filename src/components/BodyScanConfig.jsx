@@ -77,7 +77,7 @@ export function BodyScanConfig({
     const textColors = {
         primary: isLight ? '#3D3425' : 'rgba(253,251,245,0.9)',
         secondary: isLight ? '#5A4D3C' : 'rgba(253,251,245,0.7)',
-        muted: isLight ? '#7A6D58' : 'rgba(253,251,245,0.4)',
+        muted: isLight ? '#6F624D' : 'rgba(253,251,245,0.56)',
     };
 
     // Drag-scroll handlers (from SensorySession)

@@ -75,8 +75,8 @@ export function BinauralTrainerPanel({ isLight = false }) {
     const textColors = {
         primary: isLight ? '#3D3425' : 'rgba(253,251,245,0.85)',
         secondary: isLight ? '#5A4D3C' : 'rgba(253,251,245,0.7)',
-        muted: isLight ? '#7A6D58' : 'rgba(253,251,245,0.5)',
-        faint: isLight ? '#9A8D78' : 'rgba(253,251,245,0.4)',
+        muted: isLight ? '#6F624D' : 'rgba(253,251,245,0.58)',
+        faint: isLight ? '#8B7D67' : 'rgba(253,251,245,0.48)',
     };
 
     const sectionLabelStyle = {
