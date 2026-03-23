@@ -363,15 +363,17 @@ export function CircuitConfig({ value, onChange, isLight = false }) {
                                                 padding: '14px 12px',
                                                 borderRadius: '12px',
                                                 border: isSelected
-                                                    ? '1px solid hsla(var(--accent-h), var(--accent-s), var(--accent-l), 0.5)'
+                                                    ? (isLight ? '1px solid rgba(160,120,60,0.45)' : '1px solid rgba(212,175,55,0.45)')
                                                     : (isLight ? '1px solid var(--light-border)' : '1px solid rgba(255,255,255,0.08)'),
                                                 background: isSelected
-                                                    ? 'hsla(var(--accent-h), var(--accent-s), var(--accent-l), 0.15)'
+                                                    ? (isLight
+                                                        ? 'linear-gradient(180deg, rgba(160,120,60,0.12) 0%, rgba(255,255,255,0.85) 100%)'
+                                                        : 'linear-gradient(180deg, rgba(160,120,60,0.06) 0%, rgba(255,255,255,0.08) 100%)')
                                                     : (isLight ? 'rgba(60,50,35,0.03)' : 'rgba(255,255,255,0.03)'),
                                                 backdropFilter: 'blur(12px)',
                                                 transition: 'all 0.4s cubic-bezier(0.2, 0.8, 0.2, 1)',
                                                 boxShadow: isSelected
-                                                    ? `0 10px 30px -10px ${exercise.glow}, inset 0 0 20px hsla(var(--accent-h), var(--accent-s), var(--accent-l), 0.05)`
+                                                    ? (isLight ? '0 4px 16px rgba(160,120,60,0.15)' : '0 4px 16px rgba(212,175,55,0.12)')
                                                     : 'none',
                                                 opacity: isAtMax ? 0.4 : 1,
                                                 cursor: isAtMax ? 'not-allowed' : 'pointer',
@@ -395,7 +397,7 @@ export function CircuitConfig({ value, onChange, isLight = false }) {
                                                         fontSize: '11px',
                                                         letterSpacing: '0.04em',
                                                         color: isSelected
-                                                            ? (isLight ? 'var(--text-primary)' : 'rgba(255,255,255,0.95)')
+                                                            ? (isLight ? '#3D3425' : '#fff')
                                                             : (isLight ? 'var(--text-secondary)' : 'rgba(255,255,255,0.72)'),
                                                     }}
                                                 >
@@ -428,8 +430,8 @@ export function CircuitConfig({ value, onChange, isLight = false }) {
                             style={{
                                 width: i === pageIndex ? '16px' : '6px',
                                 height: '6px',
-                                background: i === pageIndex ? 'var(--accent-color)' : (isLight ? 'rgba(60,50,35,0.1)' : 'rgba(255,255,255,0.15)'),
-                                boxShadow: i === pageIndex ? '0 0 10px var(--accent-color)' : 'none'
+                                background: i === pageIndex ? (isLight ? 'rgba(160,120,60,0.7)' : 'rgba(212,175,55,0.7)') : (isLight ? 'rgba(60,50,35,0.1)' : 'rgba(255,255,255,0.15)'),
+                                boxShadow: 'none'
                             }}
                         />
                     ))}
@@ -466,7 +468,7 @@ export function CircuitConfig({ value, onChange, isLight = false }) {
                                     className="p-2 rounded"
                                     style={{
                                         background: isLight ? 'rgba(60,50,35,0.03)' : 'rgba(255,255,255,0.04)',
-                                        border: isLight ? '1px solid var(--light-border)' : '1px solid hsla(var(--accent-h), var(--accent-s), var(--accent-l), 0.15)',
+                                        border: isLight ? '1px solid var(--light-border)' : '1px solid rgba(255,255,255,0.09)',
                                         backdropFilter: 'blur(5px)',
                                         display: 'grid',
                                         gridTemplateColumns: '32px minmax(0, 1fr) 110px',
@@ -483,27 +485,16 @@ export function CircuitConfig({ value, onChange, isLight = false }) {
                                             <div
                                                 className="w-full h-full rounded-full flex items-center justify-center text-xs font-bold"
                                                 style={{
-                                                    background: 'var(--accent-color)',
-                                                    color: '#000',
-                                                    boxShadow: '0 0 12px var(--accent-50), 0 0 24px var(--accent-30)',
-                                                    border: '2px solid var(--accent-color)',
+                                                    background: isLight ? 'rgba(160,120,60,0.82)' : 'rgba(212,175,55,0.82)',
+                                                    color: '#fff',
+                                                    boxShadow: isLight ? '0 2px 8px rgba(160,120,60,0.25)' : '0 2px 8px rgba(212,175,55,0.2)',
+                                                    border: isLight ? '1.5px solid rgba(160,120,60,0.5)' : '1.5px solid rgba(212,175,55,0.45)',
                                                     position: 'relative',
                                                     zIndex: 2
                                                 }}
                                             >
                                                 {index + 1}
                                             </div>
-                                            {/* Outer energy ring */}
-                                            <div
-                                                className="absolute inset-0 rounded-full"
-                                                style={{
-                                                    border: '1px solid var(--accent-40)',
-                                                    transform: 'scale(1.4)',
-                                                    opacity: 0.4,
-                                                    animation: 'energy-pulse 2s ease-in-out infinite',
-                                                    animationDelay: `${index * 0.2}s`
-                                                }}
-                                            />
                                         </div>
                                     </div>
 
@@ -542,9 +533,9 @@ export function CircuitConfig({ value, onChange, isLight = false }) {
                                             style={{
                                                 fontFamily: 'var(--font-body)',
                                                 fontSize: '13px',
-                                                background: 'hsla(var(--accent-h), var(--accent-s), var(--accent-l), 0.15)',
-                                                color: 'var(--accent-color)',
-                                                border: '1px solid hsla(var(--accent-h), var(--accent-s), var(--accent-l), 0.3)',
+                                                background: isLight ? 'rgba(60,50,35,0.06)' : 'rgba(255,255,255,0.06)',
+                                                color: isLight ? 'rgba(60,50,35,0.85)' : 'rgba(255,255,255,0.82)',
+                                                border: isLight ? '1px solid rgba(160,120,60,0.2)' : '1px solid rgba(255,255,255,0.12)',
                                                 width: '52px',
                                                 height: '28px',
                                                 lineHeight: '28px',

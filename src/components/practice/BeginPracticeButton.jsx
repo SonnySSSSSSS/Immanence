@@ -21,32 +21,21 @@ export function BeginPracticeButton({ label, onStart, ...rest }) {
           textTransform: 'uppercase',
           padding: '18px 52px',
           borderRadius: '60px',
-          background: 'var(--ui-button-gradient, linear-gradient(135deg, var(--accent-primary), var(--accent-secondary)))',
-          color: '#0a0a0a',
-          textShadow: '0 0 5px var(--accent-color)',
-          boxShadow: `
-            0 0 30px rgba(var(--accent-r), var(--accent-g), var(--accent-b), 0.4),
-            inset 0 0 15px rgba(255, 255, 255, 0.12),
-            0 4px 10px rgba(var(--accent-r), var(--accent-g), var(--accent-b), 0.28)
-          `,
+          background: 'linear-gradient(135deg, rgba(212, 175, 55, 0.85), rgba(180, 140, 30, 0.75))',
+          color: 'rgba(255, 255, 255, 0.95)',
+          textShadow: 'none',
+          border: '1px solid rgba(212, 175, 55, 0.5)',
+          boxShadow: '0 0 30px rgba(212, 175, 55, 0.35), inset 0 0 15px rgba(255, 255, 255, 0.12), 0 4px 10px rgba(0, 0, 0, 0.2)',
           transition: 'all 0.25s ease-out',
           position: 'relative',
         }}
         onMouseEnter={(e) => {
           e.currentTarget.style.transform = 'scale(1.03)';
-          e.currentTarget.style.boxShadow = `
-            0 0 50px rgba(var(--accent-r), var(--accent-g), var(--accent-b), 0.5),
-            inset 0 0 18px rgba(255, 255, 255, 0.18),
-            0 6px 15px rgba(var(--accent-r), var(--accent-g), var(--accent-b), 0.38)
-          `;
+          e.currentTarget.style.boxShadow = '0 0 50px rgba(212, 175, 55, 0.55), inset 0 0 18px rgba(255, 255, 255, 0.18), 0 6px 15px rgba(0, 0, 0, 0.25)';
         }}
         onMouseLeave={(e) => {
           e.currentTarget.style.transform = 'scale(1)';
-          e.currentTarget.style.boxShadow = `
-            0 0 30px rgba(var(--accent-r), var(--accent-g), var(--accent-b), 0.4),
-            inset 0 0 15px rgba(255, 255, 255, 0.12),
-            0 4px 10px rgba(var(--accent-r), var(--accent-g), var(--accent-b), 0.28)
-          `;
+          e.currentTarget.style.boxShadow = '0 0 30px rgba(212, 175, 55, 0.35), inset 0 0 15px rgba(255, 255, 255, 0.12), 0 4px 10px rgba(0, 0, 0, 0.2)';
         }}
         {...rest}
       >
@@ -55,7 +44,7 @@ export function BeginPracticeButton({ label, onStart, ...rest }) {
           style={{
             position: 'absolute',
             inset: '-4px',
-            background: 'radial-gradient(circle at center, rgba(var(--accent-r), var(--accent-g), var(--accent-b), 0.3) 0%, transparent 70%)',
+            background: 'radial-gradient(circle at center, rgba(212, 175, 55, 0.3) 0%, transparent 70%)',
             opacity: 0.35,
             filter: 'blur(8px)',
             zIndex: -1,
