@@ -1331,7 +1331,6 @@ export function DailyPracticeCard({ onStartPractice, onViewCurriculum, onNavigat
                                                 <img
                                                     src={setupArtworkSrc}
                                                     alt="Temple entrance illustration"
-                                                    fetchPriority="high"
                                                     onError={() => {
                                                         setSetupArtworkAttempt(currentAttempt => (
                                                             currentAttempt < setupArtworkCandidates.length
