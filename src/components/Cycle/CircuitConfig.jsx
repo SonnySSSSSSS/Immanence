@@ -156,10 +156,10 @@ export function CircuitConfig({ value, onChange, isLight = false }) {
                 data-tutorial={ANCHORS.CIRCUIT_TOTAL_DURATION}
                 className="p-4 rounded relative"
                 style={{
-                    background: 'hsla(var(--accent-h), var(--accent-s), var(--accent-l), 0.08)',
+                    background: isLight ? 'rgba(60,50,35,0.04)' : 'rgba(255,255,255,0.04)',
                     backdropFilter: 'blur(10px)',
-                    border: '1px solid hsla(var(--accent-h), var(--accent-s), var(--accent-l), 0.12)',
-                    boxShadow: 'inset 0 0 18px hsla(var(--accent-h), var(--accent-s), var(--accent-l), 0.08)',
+                    border: isLight ? '1px solid rgba(160,120,60,0.18)' : '1px solid rgba(255,255,255,0.1)',
+                    boxShadow: 'none',
                 }}
             >
                 <style>{`
@@ -188,7 +188,7 @@ export function CircuitConfig({ value, onChange, isLight = false }) {
                             className="text-xs mb-2 tracking-wider uppercase font-medium"
                             style={{
                                 fontFamily: 'var(--font-body)',
-                                color: 'hsla(var(--accent-h), var(--accent-s), var(--accent-l), 0.78)',
+                                color: isLight ? 'rgba(90,77,60,0.72)' : 'rgba(253,251,245,0.55)',
                             }}
                         >
                             Total Circuit
@@ -197,7 +197,7 @@ export function CircuitConfig({ value, onChange, isLight = false }) {
                             className="text-xs mb-2 tracking-wider uppercase font-medium"
                             style={{
                                 fontFamily: 'var(--font-body)',
-                                color: 'hsla(var(--accent-h), var(--accent-s), var(--accent-l), 0.68)',
+                                color: isLight ? 'rgba(90,77,60,0.62)' : 'rgba(253,251,245,0.45)',
                                 fontSize: '10px',
                                 lineHeight: '1',
                                 whiteSpace: 'nowrap',
@@ -217,7 +217,7 @@ export function CircuitConfig({ value, onChange, isLight = false }) {
                                 style={{
                                     color: isLight ? 'var(--text-primary)' : 'rgba(255,255,255,0.95)',
                                     fontFamily: 'var(--font-display)',
-                                    animation: selectedExercises.length > 0 ? 'energy-pulse 2s ease-in-out infinite' : 'none',
+                                    animation: 'none',
                                     lineHeight: '1',
                                 }}
                             >
@@ -240,7 +240,7 @@ export function CircuitConfig({ value, onChange, isLight = false }) {
                                 style={{
                                     color: isLight ? 'var(--text-primary)' : 'rgba(255,255,255,0.95)',
                                     fontFamily: 'var(--font-display)',
-                                    animation: selectedExercises.length > 0 ? 'energy-pulse 2s ease-in-out infinite' : 'none',
+                                    animation: 'none',
                                     lineHeight: '1',
                                 }}
                             >
@@ -294,9 +294,9 @@ export function CircuitConfig({ value, onChange, isLight = false }) {
                                     className="text-lg font-bold rounded px-2 cursor-pointer text-center"
                                     style={{
                                         fontFamily: 'var(--font-display)',
-                                        background: 'hsla(var(--accent-h), var(--accent-s), var(--accent-l), 0.15)',
-                                        color: 'var(--accent-color)',
-                                        border: '1px solid hsla(var(--accent-h), var(--accent-s), var(--accent-l), 0.3)',
+                                        background: isLight ? 'rgba(60,50,35,0.06)' : 'rgba(255,255,255,0.06)',
+                                        color: isLight ? 'rgba(60,50,35,0.85)' : 'rgba(255,255,255,0.82)',
+                                        border: isLight ? '1px solid rgba(160,120,60,0.2)' : '1px solid rgba(255,255,255,0.12)',
                                         letterSpacing: '0.02em',
                                         height: '32px',
                                         lineHeight: '32px',

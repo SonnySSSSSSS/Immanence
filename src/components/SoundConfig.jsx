@@ -138,10 +138,14 @@ export function SoundConfig({
                                     fontSize: "11px",
                                     fontWeight: 500,
                                     letterSpacing: "var(--tracking-wide)",
-                                    background: soundType === type ? (isLight ? "var(--accent-10)" : "rgba(255,255,255,0.05)") : "transparent",                                                                                                                                          
-                                    border: `1px solid ${soundType === type ? "var(--accent-color)" : (isLight ? "var(--light-border)" : "var(--accent-10)")}`,
-                                    color: soundType === type ? "var(--accent-color)" : textColors.secondary,
-                                    boxShadow: soundType === type ? (isLight ? "0 2px 8px var(--light-shadow-tint)" : "0 0 15px var(--accent-10)") : "none",
+                                    background: soundType === type
+                                        ? (isLight ? 'linear-gradient(180deg, rgba(160,120,60,0.12) 0%, rgba(255,255,255,0.85) 100%)' : 'linear-gradient(180deg, rgba(160,120,60,0.06) 0%, rgba(255,255,255,0.08) 100%)')
+                                        : "transparent",
+                                    border: soundType === type
+                                        ? (isLight ? '1px solid rgba(160,120,60,0.45)' : '1px solid rgba(212,175,55,0.45)')
+                                        : (isLight ? '1px solid var(--light-border)' : '1px solid rgba(255,255,255,0.1)'),
+                                    color: soundType === type ? (isLight ? '#3D3425' : '#fff') : textColors.secondary,
+                                    boxShadow: soundType === type ? (isLight ? '0 4px 16px rgba(160,120,60,0.15)' : '0 4px 16px rgba(212,175,55,0.1)') : "none",
                                     transition: 'background 800ms cubic-bezier(0.4, 0, 0.2, 1), border-color 800ms ease-in-out, color 400ms ease, box-shadow 800ms ease',
                                 }}
                             >

@@ -41,6 +41,9 @@ export function VisualizationConfig({
     // Local UI toggles
     const [showPhaseEditor, setShowPhaseEditor] = useState(false);
 
+    const neutralBorder = isLight ? '1px solid rgba(160,120,60,0.2)' : '1px solid rgba(255,255,255,0.12)';
+    const labelColor = isLight ? 'rgba(90,77,60,0.72)' : 'rgba(253,251,245,0.55)';
+
     return (
         <div className="space-y-6">
             {/* Geometry Selector */}
@@ -50,10 +53,11 @@ export function VisualizationConfig({
                         onClick={() => setGeometry(OPTIONS[(currentIndex - 1 + OPTIONS.length) % OPTIONS.length])}
                         className="w-10 h-10 rounded-xl text-sm flex items-center justify-center"
                         style={{
-                            border: '1px solid var(--accent-25)',
+                            border: neutralBorder,
                             fontFamily: 'var(--font-display)',
                             fontWeight: 700,
-                            letterSpacing: '0.05em'
+                            letterSpacing: '0.05em',
+                            color: isLight ? 'rgba(60,50,35,0.7)' : 'rgba(255,255,255,0.7)',
                         }}
                         aria-label="Previous geometry"
                     >
@@ -61,12 +65,12 @@ export function VisualizationConfig({
                     </button>
                     <div className="flex flex-col items-center min-w-0">
                         <div
-                            className="text-[11px] uppercase tracking-[0.25em] text-[var(--accent-60)] font-bold text-center"
-                            style={{ fontFamily: 'var(--font-display)' }}
+                            className="text-[11px] uppercase tracking-[0.25em] font-bold text-center"
+                            style={{ fontFamily: 'var(--font-display)', color: isLight ? 'rgba(60,50,35,0.85)' : 'rgba(253,251,245,0.85)' }}
                         >
                             {geometry.replace(/-/g, ' ').toUpperCase()}
                         </div>
-                        <div className="text-[9px] text-[var(--text-muted)] mt-1" style={{ fontFamily: 'var(--font-display)' }}>
+                        <div className="text-[9px] mt-1" style={{ fontFamily: 'var(--font-display)', color: labelColor }}>
                             {currentIndex + 1} / {OPTIONS.length}
                         </div>
                     </div>
@@ -74,10 +78,11 @@ export function VisualizationConfig({
                         onClick={() => setGeometry(OPTIONS[(currentIndex + 1) % OPTIONS.length])}
                         className="w-10 h-10 rounded-xl text-sm flex items-center justify-center"
                         style={{
-                            border: '1px solid var(--accent-25)',
+                            border: neutralBorder,
                             fontFamily: 'var(--font-display)',
                             fontWeight: 700,
-                            letterSpacing: '0.05em'
+                            letterSpacing: '0.05em',
+                            color: isLight ? 'rgba(60,50,35,0.7)' : 'rgba(255,255,255,0.7)',
                         }}
                         aria-label="Next geometry"
                     >
@@ -88,8 +93,8 @@ export function VisualizationConfig({
                 <div
                     className="rounded-xl flex items-center justify-center min-w-0"
                     style={{
-                        border: '1px solid var(--accent-20)',
-                        background: 'var(--accent-10)',
+                        border: neutralBorder,
+                        background: isLight ? 'rgba(60,50,35,0.04)' : 'rgba(255,255,255,0.04)',
                         height: '104px'
                     }}
                 >
@@ -133,10 +138,11 @@ export function VisualizationConfig({
                     onClick={() => setShowPhaseEditor(v => !v)}
                     className="w-full px-3 py-2 rounded-xl text-xs transition-all text-center min-h-[44px] leading-tight whitespace-normal min-w-0"
                     style={{
-                        border: '1px solid var(--accent-25)',
+                        border: neutralBorder,
                         fontFamily: 'var(--font-display)',
                         fontWeight: 700,
-                        letterSpacing: '0.1em'
+                        letterSpacing: '0.1em',
+                        color: isLight ? 'rgba(60,50,35,0.8)' : 'rgba(253,251,245,0.8)',
                     }}
                 >
                     PHASE DURATIONS (Advanced)
@@ -168,8 +174,8 @@ export function VisualizationConfig({
                                 { key: 'fadeOut', label: 'OUT', value: fadeOutDuration, set: setFadeOutDuration, min: 1, max: 5 },
                                 { key: 'void', label: 'VOID', value: voidDuration, set: setVoidDuration, min: 1, max: 30 },
                             ].map((p) => (
-                                <div key={p.key} className="flex items-center justify-between px-2 py-1 rounded-xl" style={{ border: '1px solid var(--accent-20)' }}>
-                                    <span className="text-[10px] uppercase tracking-wider leading-tight">{p.label}</span>
+                                <div key={p.key} className="flex items-center justify-between px-2 py-1 rounded-xl" style={{ border: neutralBorder }}>
+                                    <span className="text-[10px] uppercase tracking-wider leading-tight" style={{ color: labelColor }}>{p.label}</span>
                                     <div className="flex items-center gap-1">
                                         <button
                                             onClick={() => p.set(Math.max(p.min, p.value - 1))}
@@ -183,7 +189,10 @@ export function VisualizationConfig({
                                         >
                                             −
                                         </button>
-                                        <span className="text-xs text-[var(--accent-color)] w-6 text-center font-bold">{p.value}</span>
+                                        <span
+                                            className="text-xs w-6 text-center font-bold"
+                                            style={{ color: isLight ? 'rgba(60,50,35,0.85)' : 'rgba(253,251,245,0.85)' }}
+                                        >{p.value}</span>
                                         <button
                                             onClick={() => p.set(Math.min(p.max, p.value + 1))}
                                             className="w-5 h-5 rounded-full text-xs flex items-center justify-center"
@@ -207,8 +216,8 @@ export function VisualizationConfig({
             {/* Audio Toggle */}
             <div>
                 <div
-                    className="text-[10px] uppercase tracking-[0.25em] mb-3 text-[var(--accent-60)] font-bold"
-                    style={{ fontFamily: 'var(--font-display)' }}
+                    className="text-[10px] uppercase tracking-[0.25em] mb-3 font-bold"
+                    style={{ fontFamily: 'var(--font-display)', color: labelColor }}
                 >
                     Audio Cues
                 </div>
@@ -216,9 +225,15 @@ export function VisualizationConfig({
                     onClick={() => setAudioEnabled(!audioEnabled)}
                     className="w-full px-4 py-3 rounded-xl text-sm transition-all"
                     style={{
-                        border: audioEnabled ? '1px solid var(--accent-40)' : '1px solid var(--accent-15)',
-                        background: audioEnabled ? 'var(--accent-10)' : 'transparent',
-                        color: audioEnabled ? 'var(--text-primary)' : 'var(--text-secondary)',
+                        border: audioEnabled
+                            ? (isLight ? '1px solid rgba(160,120,60,0.4)' : '1px solid rgba(212,175,55,0.4)')
+                            : neutralBorder,
+                        background: audioEnabled
+                            ? (isLight ? 'rgba(160,120,60,0.1)' : 'rgba(212,175,55,0.08)')
+                            : 'transparent',
+                        color: audioEnabled
+                            ? (isLight ? 'rgba(60,50,35,0.9)' : 'rgba(253,251,245,0.9)')
+                            : (isLight ? 'var(--text-secondary)' : 'rgba(253,251,245,0.55)'),
                     }}
                 >
                     {audioEnabled ? 'ON' : 'OFF'}
