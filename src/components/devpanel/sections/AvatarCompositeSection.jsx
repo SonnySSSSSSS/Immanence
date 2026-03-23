@@ -165,6 +165,10 @@ function AvatarCompositeSection({
                     };
                     const linkToValue = layer.linkTo || 'none';
                     const isLinked = Boolean(layer.linkTo);
+                    const linkedLayerLabel = isLinked
+                        ? (AVATAR_COMPOSITE_LAYER_LABELS[layer.linkTo] || layer.linkTo)
+                        : null;
+                    const linkStatusLabel = isLinked ? `Linked to: ${linkedLayerLabel}` : 'Unlinked';
                     const transformsLocked = isLinked;
                     const opacityLocked = isLinked && layer.linkOpacity;
                     return (
@@ -198,7 +202,7 @@ function AvatarCompositeSection({
                                         </button>
                                     </div>
 
-                                    <div className="grid grid-cols-[1fr_auto] gap-2 items-center">
+                                    <div className="grid grid-cols-[1fr_auto_auto] gap-2 items-center">
                                         <select
                                             value={linkToValue}
                                             onChange={(e) => setAvatarCompositeRoleTransformLink(normalizedEditingStageKey, layerId, e.target.value === 'none' ? null : e.target.value, colorScheme)}
@@ -220,14 +224,27 @@ function AvatarCompositeSection({
                                                 </option>
                                             ))}
                                         </select>
-                                        {isLinked && (
-                                            <button
-                                                onClick={() => setAvatarCompositeRoleTransformLinkOpacity(normalizedEditingStageKey, layerId, !layer.linkOpacity, colorScheme)}
-                                                className={`rounded-lg px-2 py-1.5 text-[11px] border transition-all ${layer.linkOpacity ? 'bg-cyan-500/20 border-cyan-400/50 text-cyan-100' : 'bg-white/5 border-white/15 text-white/70'}`}
-                                            >
-                                                {layer.linkOpacity ? 'Opacity Linked' : 'Opacity Free'}
-                                            </button>
-                                        )}
+                                        <button
+                                            onClick={() => setAvatarCompositeRoleTransformLink(normalizedEditingStageKey, layerId, null, colorScheme)}
+                                            disabled={!isLinked}
+                                            className="rounded-lg px-2 py-1.5 text-[11px] border transition-all bg-white/5 border-white/15 text-white/70 disabled:opacity-40 disabled:cursor-not-allowed"
+                                            title="Clear current layer link"
+                                        >
+                                            Unlink
+                                        </button>
+                                        <button
+                                            onClick={() => setAvatarCompositeRoleTransformLinkOpacity(normalizedEditingStageKey, layerId, !layer.linkOpacity, colorScheme)}
+                                            disabled={!isLinked}
+                                            className={`rounded-lg px-2 py-1.5 text-[11px] border transition-all ${layer.linkOpacity ? 'bg-cyan-500/20 border-cyan-400/50 text-cyan-100' : 'bg-white/5 border-white/15 text-white/70'} disabled:opacity-40 disabled:cursor-not-allowed`}
+                                        >
+                                            {layer.linkOpacity ? 'Opacity Linked' : 'Opacity Free'}
+                                        </button>
+                                    </div>
+                                    <div
+                                        className="text-[11px] px-1"
+                                        style={{ color: isLight ? 'rgba(40, 35, 28, 0.82)' : 'rgba(255, 255, 255, 0.72)' }}
+                                    >
+                                        {linkStatusLabel}
                                     </div>
 
                                     <RangeControl
