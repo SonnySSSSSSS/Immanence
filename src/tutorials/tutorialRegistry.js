@@ -674,12 +674,12 @@ export const TUTORIALS = {
   },
 
   'practice:stillness': {
-    title: 'Stillness Practice',
+    title: 'Focus Meditation Practice',
     steps: [
       {
         id: 'stillness-options',
         title: 'Edit To Explore',
-        body: 'Stillness starts simple. Tap Edit to access intensity, timing, and duration controls.',
+        body: 'Focus Meditation starts simple. Tap Edit to access intensity, timing, and duration controls.',
         target: tutorialAnchorTarget(
           ANCHORS.FOUNDATIONS_EDIT,
           ANCHORS.FOUNDATIONS_COLLAPSE,
@@ -691,7 +691,7 @@ export const TUTORIALS = {
       {
         id: 'stillness-intensity',
         title: 'Focus Intensity',
-        body: 'Choose how strong your stillness focus should be. This sets the tone of the session.',
+        body: 'Choose how strong your focus meditation should be. This sets the tone of the session.',
         target: tutorialAnchorTarget(
           ANCHORS.FOUNDATIONS_STILLNESS_INTENSITY,
           ANCHORS.FOUNDATIONS_EDIT,
@@ -704,7 +704,7 @@ export const TUTORIALS = {
       {
         id: 'stillness-timing',
         title: 'Timing',
-        body: 'Set focus, rest, and pre-delay. You are defining the rhythm of your stillness set.',
+        body: 'Set focus, rest, and pre-delay. You are defining the rhythm of your Focus Meditation set.',
         target: tutorialAnchorTarget(
           ANCHORS.FOUNDATIONS_STILLNESS_TIMING,
           ANCHORS.FOUNDATIONS_EDIT,

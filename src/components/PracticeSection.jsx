@@ -81,11 +81,16 @@ const SAFE_LAUNCH_FALLBACK = Object.freeze({
 });
 const DEFAULT_STILLNESS_CONFIG = Object.freeze({
   focusIntensity: "medium",
-  focusSec: 45,
-  restSec: 15,
+  focusSec: 40,
+  restSec: 20,
   preDelaySec: 0,
   postDelaySec: 0,
   decompressionCue: "",
+});
+const STILLNESS_TIMING_BY_INTENSITY = Object.freeze({
+  light: Object.freeze({ focusSec: 45, restSec: 15 }),
+  medium: Object.freeze({ focusSec: 40, restSec: 20 }),
+  heavy: Object.freeze({ focusSec: 25, restSec: 25 }),
 });
 const GUIDANCE_FALLBACK_LINE = "For the remaining time, continue breathing until the timer ends.";
 const GUIDANCE_FALLBACK_MIN_REMAINING_MS = 8000;
@@ -101,7 +106,7 @@ const PRE_DELAY_INSTRUCTION_LINES = Object.freeze({
   ],
   stillness: [
     "Apply focus as prompted.",
-    "Light = normal conversation. Medium = conversation in a crowded room. High = conversation at a concert.",
+    "Light = normal conversation. Medium = conversation in a crowded room. Intense = conversation at a concert.",
     "This trains the purposeful gathering of attention and focus.",
   ],
 });
@@ -118,17 +123,27 @@ function normalizeFocusIntensity(value, fallback = "medium") {
   return fallback;
 }
 
+function resolveStillnessTimingForIntensity(intensity, fallback = "medium") {
+  const normalizedIntensity = normalizeFocusIntensity(intensity, fallback);
+  return STILLNESS_TIMING_BY_INTENSITY[normalizedIntensity] || STILLNESS_TIMING_BY_INTENSITY.medium;
+}
+
 function normalizeStillnessConfig(raw, { fallback = DEFAULT_STILLNESS_CONFIG, sharedPreDelaySec = 0 } = {}) {
   const src = raw && typeof raw === "object" ? raw : {};
   const fallbackCfg = fallback && typeof fallback === "object" ? fallback : DEFAULT_STILLNESS_CONFIG;
   const fallbackPreDelay = Number.isFinite(Number(fallbackCfg.preDelaySec))
     ? Number(fallbackCfg.preDelaySec)
     : Number(sharedPreDelaySec) || 0;
+  const focusIntensity = normalizeFocusIntensity(src.focusIntensity, fallbackCfg.focusIntensity || "medium");
+  const resolvedTiming = resolveStillnessTimingForIntensity(
+    focusIntensity,
+    fallbackCfg.focusIntensity || "medium"
+  );
 
   return {
-    focusIntensity: normalizeFocusIntensity(src.focusIntensity, fallbackCfg.focusIntensity || "medium"),
-    focusSec: normalizeSeconds(src.focusSec, normalizeSeconds(fallbackCfg.focusSec, DEFAULT_STILLNESS_CONFIG.focusSec, 5, 300), 5, 300),
-    restSec: normalizeSeconds(src.restSec, normalizeSeconds(fallbackCfg.restSec, DEFAULT_STILLNESS_CONFIG.restSec, 3, 180), 3, 180),
+    focusIntensity,
+    focusSec: normalizeSeconds(resolvedTiming.focusSec, DEFAULT_STILLNESS_CONFIG.focusSec, 5, 300),
+    restSec: normalizeSeconds(resolvedTiming.restSec, DEFAULT_STILLNESS_CONFIG.restSec, 3, 180),
     preDelaySec: normalizeSeconds(
       src.preDelaySec,
       normalizeSeconds(fallbackPreDelay, DEFAULT_STILLNESS_CONFIG.preDelaySec, 0, 20),
@@ -3882,7 +3897,7 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, onNav
           if (practiceId === 'breath') {
             const modes = [
               { id: 'breath', label: 'Breath' },
-              { id: 'stillness', label: 'Stillness' }
+              { id: 'stillness', label: 'Focus Meditation' }
             ];
 
             return (

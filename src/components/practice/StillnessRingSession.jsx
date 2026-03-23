@@ -3,6 +3,12 @@ import { BreathingRing } from "../BreathingRing.jsx";
 import { useStillnessIntervalSessionState } from "./useStillnessIntervalSessionState.js";
 import { STILLNESS_INTENSITY_META } from "../../data/stillnessIntensityMeta.js";
 
+const STILLNESS_TIMING_BY_INTENSITY = Object.freeze({
+  light: Object.freeze({ focusSec: 45, restSec: 15 }),
+  medium: Object.freeze({ focusSec: 40, restSec: 20 }),
+  heavy: Object.freeze({ focusSec: 25, restSec: 25 }),
+});
+
 function triggerTransitionCue(audioContextRef) {
   if (typeof navigator !== "undefined" && typeof navigator.vibrate === "function") {
     navigator.vibrate(18);
@@ -55,9 +61,14 @@ export function StillnessRingSession({
   const boundarySentRef = useRef(false);
   const lastCueKeyRef = useRef(null);
 
-  const focusSec = 30;
-  const restSec = 15;
   const intensity = String(config?.focusIntensity || "medium").toLowerCase();
+  const intensityTiming = STILLNESS_TIMING_BY_INTENSITY[intensity] || STILLNESS_TIMING_BY_INTENSITY.medium;
+  const focusSec = Number.isFinite(Number(config?.focusSec))
+    ? Number(config.focusSec)
+    : intensityTiming.focusSec;
+  const restSec = Number.isFinite(Number(config?.restSec))
+    ? Number(config.restSec)
+    : intensityTiming.restSec;
   const postDelaySec = Math.max(0, Number(config?.postDelaySec) || 0);
   const decompressionCue = typeof config?.decompressionCue === "string" && config.decompressionCue.trim()
     ? config.decompressionCue.trim()
