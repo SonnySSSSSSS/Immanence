@@ -17,9 +17,6 @@ import { PhoticControlPanel } from '../PhoticControlPanel.jsx';
 import { EmotionConfig } from '../EmotionConfig.jsx';
 import { getPracticeHousingStyles, PracticeHousingChrome } from './practiceHousing.jsx';
 
-const PRACTICE_CARD_GRAIN_SVG = `<svg xmlns="http://www.w3.org/2000/svg" width="240" height="240" viewBox="0 0 240 240"><filter id="n"><feTurbulence type="fractalNoise" baseFrequency="0.9" numOctaves="3" stitchTiles="stitch"/><feColorMatrix type="saturate" values="0"/><feComponentTransfer><feFuncA type="table" tableValues="0 0.08"/></feComponentTransfer></filter><rect width="240" height="240" filter="url(#n)"/></svg>`;
-const PRACTICE_CARD_GRAIN_DATA_URI = `data:image/svg+xml,${encodeURIComponent(PRACTICE_CARD_GRAIN_SVG)}`;
-
 // Map string names to actual components (direct imports, not lazy)
 const CONFIG_COMPONENTS = {
   CircuitConfig,
@@ -181,12 +178,38 @@ export function PracticeOptionsCard({
             inset: 0,
             pointerEvents: 'none',
             zIndex: 2,
-            opacity: tokens?.isLight ? 0.065 : 0.045,
-            backgroundImage: `url("${PRACTICE_CARD_GRAIN_DATA_URI}")`,
-            backgroundRepeat: 'repeat',
-            backgroundSize: '240px 240px',
+            opacity: tokens?.isLight ? 0.085 : 0.05,
+            mixBlendMode: tokens?.isLight ? 'multiply' : 'overlay',
+            clipPath: housing.clipPath,
+            borderRadius: housing.radius,
           }}
-        />
+        >
+          <svg
+            width="100%"
+            height="100%"
+            viewBox="0 0 160 160"
+            preserveAspectRatio="none"
+            style={{ display: 'block' }}
+          >
+            <filter id="practiceCardGrain" x="0" y="0" width="100%" height="100%">
+              <feTurbulence
+                type="fractalNoise"
+                baseFrequency="0.85"
+                numOctaves="2"
+                seed="2"
+                stitchTiles="stitch"
+              />
+              <feColorMatrix type="saturate" values="0" />
+              <feComponentTransfer>
+                <feFuncR type="gamma" amplitude="1" exponent="1.25" offset="0" />
+                <feFuncG type="gamma" amplitude="1" exponent="1.25" offset="0" />
+                <feFuncB type="gamma" amplitude="1" exponent="1.25" offset="0" />
+                <feFuncA type="table" tableValues="0 0.24" />
+              </feComponentTransfer>
+            </filter>
+            <rect width="160" height="160" filter="url(#practiceCardGrain)" opacity="1" />
+          </svg>
+        </div>
        
       {isCollapsed ? (
         <div className="h-[88px] flex items-center justify-center" style={housing.content}>

@@ -1,5 +1,6 @@
 // src/components/SacredTimeSlider.jsx
 import React, { useRef, useState, useEffect, useCallback } from 'react';
+import { useDisplayModeStore } from '../state/displayModeStore.js';
 
 // Geometric glyph paths (normalized to 100x100 viewbox)
 const GLYPHS = {
@@ -24,6 +25,13 @@ export function SacredTimeSlider({ value, onChange, options }) {
     const [isDragging, setIsDragging] = useState(false);
     const [pulseActive, setPulseActive] = useState(false);
     const audioContextRef = useRef(null);
+
+    const colorScheme = useDisplayModeStore((s) => s.colorScheme);
+    const isLight = colorScheme === 'light';
+
+    const sliderInk = isLight ? 'rgba(24, 47, 55, 0.92)' : 'rgba(255,255,255,0.92)';
+    const sliderInkMuted = isLight ? 'rgba(60, 50, 35, 0.55)' : 'rgba(255,255,255,0.55)';
+    const sliderInkFaint = isLight ? 'rgba(60, 50, 35, 0.26)' : 'rgba(255,255,255,0.22)';
 
     const currentIndex = Math.max(0, options.indexOf(value));
     const validIndex = currentIndex >= 0 ? currentIndex : 0;
@@ -130,9 +138,13 @@ export function SacredTimeSlider({ value, onChange, options }) {
                     style={{
                         top: '50%',
                         transform: 'translateY(-50%)',
-                        background: 'linear-gradient(180deg, rgba(255,255,255,0.15) 0%, rgba(255,255,255,0.05) 100%)',
-                        border: '1px solid rgba(255,255,255,0.1)',
-                        boxShadow: 'inset 0 1px 0 rgba(168, 241, 248, 0.06), 0 2px 8px rgba(0,0,0,0.3)'
+                        background: isLight
+                            ? 'linear-gradient(180deg, rgba(60,50,35,0.10) 0%, rgba(60,50,35,0.04) 100%)'
+                            : 'linear-gradient(180deg, rgba(255,255,255,0.15) 0%, rgba(255,255,255,0.05) 100%)',
+                        border: isLight ? '1px solid rgba(60,50,35,0.10)' : '1px solid rgba(255,255,255,0.1)',
+                        boxShadow: isLight
+                            ? 'inset 0 1px 0 rgba(255,255,255,0.65), 0 2px 8px rgba(18,40,52,0.10)'
+                            : 'inset 0 1px 0 rgba(168, 241, 248, 0.06), 0 2px 8px rgba(0,0,0,0.3)'
                     }}
                 />
 
@@ -167,8 +179,12 @@ export function SacredTimeSlider({ value, onChange, options }) {
                                 >
                                     <path
                                         d={GLYPHS[isKey]}
-                                        fill={isActive ? 'rgba(255,255,255,0.3)' : 'rgba(255,255,255,0.1)'}
-                                        stroke={isActive ? '#FFFFFF' : 'rgba(255,255,255,0.2)'}
+                                        fill={isLight
+                                            ? (isActive ? 'rgba(60,50,35,0.16)' : 'rgba(60,50,35,0.08)')
+                                            : (isActive ? 'rgba(255,255,255,0.3)' : 'rgba(255,255,255,0.1)')}
+                                        stroke={isLight
+                                            ? (isActive ? 'rgba(60,50,35,0.46)' : 'rgba(60,50,35,0.20)')
+                                            : (isActive ? '#FFFFFF' : 'rgba(255,255,255,0.2)')}
                                         strokeWidth="2"
                                     />
                                 </svg>
@@ -178,7 +194,9 @@ export function SacredTimeSlider({ value, onChange, options }) {
                                     style={{
                                         width: '6px',
                                         height: '6px',
-                                        background: isActive ? '#D4AF37' : 'rgba(255,255,255,0.15)',
+                                        background: isActive
+                                            ? '#D4AF37'
+                                            : (isLight ? 'rgba(60,50,35,0.14)' : 'rgba(255,255,255,0.15)'),
                                         boxShadow: isActive ? '0 0 6px rgba(212, 175, 55, 0.8)' : 'none'
                                     }}
                                 />
@@ -192,11 +210,7 @@ export function SacredTimeSlider({ value, onChange, options }) {
                                         fontSize: '9px',
                                         fontFamily: 'var(--font-display, monospace)',
                                         letterSpacing: '0.04em',
-                                        color: isSelected
-                                            ? 'rgba(255,255,255,0.9)'
-                                            : isActive
-                                            ? 'rgba(255,255,255,0.55)'
-                                            : 'rgba(255,255,255,0.22)',
+                                        color: isSelected ? sliderInk : (isActive ? sliderInkMuted : sliderInkFaint),
                                         userSelect: 'none',
                                         pointerEvents: 'none',
                                         whiteSpace: 'nowrap',
@@ -287,7 +301,7 @@ export function SacredTimeSlider({ value, onChange, options }) {
                                     fontFamily: 'var(--font-display)',
                                     fontSize: '14px',
                                     fontWeight: isSelected ? 700 : 400,
-                                    color: isSelected ? 'var(--accent-color)' : 'rgba(255,255,255,0.3)',
+                                    color: isSelected ? 'var(--accent-color)' : (isLight ? 'rgba(60,50,35,0.30)' : 'rgba(255,255,255,0.3)'),
                                     textShadow: isSelected ? '0 0 12px var(--accent-color), 0 0 24px var(--accent-color)' : 'none',
                                     letterSpacing: '0.05em',
                                     transition: 'all 300ms ease'
