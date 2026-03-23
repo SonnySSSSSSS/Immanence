@@ -33,11 +33,20 @@ export function PillButton({
 }) {
     const buttonRef = useRef(null);
 
+    const triggerRipple = useCallback(() => {
+        const el = buttonRef.current;
+        if (!el) return;
+        el.classList.remove('is-pressing');
+        void el.offsetWidth; // force reflow → restarts animation for rapid retriggers
+        el.classList.add('is-pressing');
+    }, []);
+
     // Press feedback handlers
     const handleMouseDown = useCallback((e) => {
         if (disabled) return;
+        triggerRipple();
         e.currentTarget.style.transform = 'scale(0.97)';
-    }, [disabled]);
+    }, [disabled, triggerRipple]);
 
     const handleMouseUp = useCallback((e) => {
         if (disabled) return;
@@ -134,11 +143,12 @@ export function PillButton({
             ref={buttonRef}
             onClick={onClick}
             disabled={disabled}
-            className={className}
+            className={`im-ripple-out${className ? ` ${className}` : ''}`}
             style={buttonStyle}
             onMouseDown={handleMouseDown}
             onMouseUp={handleMouseUp}
             onMouseLeave={handleMouseLeave}
+            onAnimationEnd={() => buttonRef.current?.classList.remove('is-pressing')}
             {...props}
         >
             {/* Content */}

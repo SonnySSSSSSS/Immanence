@@ -463,6 +463,7 @@ function App({ playgroundMode = false, playgroundBottomLayer = true }) {
   // }, [curriculumOnboardingComplete, isCurriculumComplete]);
 
 
+  // v3.27.277 - feat(ui): add ripple-out press animation to button pills app-wide
   // v3.27.276 - fix(avatar): apply scheme-aware globe alignment to reduce rune-ring skew
   // v3.27.275 - fix(lint): address all remaining lint errors in DevPanel and PathOverviewPanel
   // v3.27.274 - chore(repo): prune dead surface scripts and unused dependencies

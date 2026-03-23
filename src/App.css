@@ -15,6 +15,30 @@
   animation: sectionEnter 300ms ease-out;
 }
 
+/* Ripple-out press feedback — adapted from Hover.css hvr-ripple-out */
+@keyframes im-ripple-out {
+  0% {
+    outline-color: rgba(120, 120, 120, 0.45);
+    outline-offset: 0px;
+  }
+
+  100% {
+    outline-color: rgba(120, 120, 120, 0);
+    outline-offset: 13px;
+  }
+}
+
+/* Base state: declare outline so animation starts cleanly with no layout jump */
+.im-ripple-out {
+  outline: 2px solid transparent;
+  outline-offset: 0px;
+}
+
+/* Trigger state: added via JS on pointerDown, cleared on animationend only */
+.im-ripple-out.is-pressing {
+  animation: im-ripple-out 0.52s ease-out forwards;
+}
+
 /* Scan-line animation for Quick Insight transmission */
 @keyframes scan-line {
   0% {

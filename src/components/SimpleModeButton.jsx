@@ -1,7 +1,7 @@
 // src/components/SimpleModeButton.jsx
 // Mode button with cosmic dark mode and watercolor light mode imagery
 
-import React from 'react';
+import React, { useRef, useCallback } from 'react';
 import { useDisplayModeStore } from '../state/displayModeStore.js';
 import { useTheme } from '../context/ThemeContext.jsx';
 import { isUiPickingActive } from '../dev/uiControlsCaptureManager.js';
@@ -19,6 +19,7 @@ export function SimpleModeButton({
     const isLight = colorScheme === 'light';
     const [isPressing, setIsPressing] = React.useState(false);
     const pressTimerRef = React.useRef(null);
+    const rippleRef = useRef(null);
 
     const theme = useTheme();
     const primaryHex = theme?.accent?.primary || '#4ade80';
@@ -87,8 +88,17 @@ export function SimpleModeButton({
         if (onClick) onClick();
     };
 
+    const triggerRipple = useCallback(() => {
+        const el = rippleRef.current;
+        if (!el) return;
+        el.classList.remove('is-pressing');
+        void el.offsetWidth; // force reflow → restarts animation for rapid retriggers
+        el.classList.add('is-pressing');
+    }, []);
+
     const handlePressFeedback = () => {
         if (disabled) return;
+        triggerRipple();
         setIsPressing(true);
         if (pressTimerRef.current) {
             clearTimeout(pressTimerRef.current);
@@ -137,7 +147,8 @@ export function SimpleModeButton({
             {...rootButtonProps}
         >
             <div
-                className="relative flex items-center justify-center transition-all duration-300 overflow-hidden"
+                ref={rippleRef}
+                className="relative flex items-center justify-center transition-all duration-300 overflow-hidden im-ripple-out"
                 {...controlTargetProps}
                 style={{
                     width: '76px',
@@ -150,6 +161,7 @@ export function SimpleModeButton({
                     boxShadow: isNavHeroActive ? activeNavShadow : baseShadow,
                     transition: 'all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275)'
                 }}
+                onAnimationEnd={() => rippleRef.current?.classList.remove('is-pressing')}
                 onMouseEnter={(e) => {
                     if (disabled) return;
                     e.currentTarget.style.transform = 'scale(1.08) translateY(-2px)';
