@@ -120,6 +120,7 @@ function getLastPathSegment(publicPath) {
   return index === -1 ? normalized : normalized.slice(index + 1);
 }
 
+
 export function AvatarComposite({ stage, size }) {
   const normalizedStage = normalizeStageKey(stage);
   const colorScheme = useDisplayModeStore((s) => s.colorScheme);
