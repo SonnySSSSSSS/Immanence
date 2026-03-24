@@ -18,6 +18,45 @@ import "./index.css";
 
 const logger = createLogger("main");
 
+// PROBE:avatar-hmr-owner:START
+const MAIN_HMR_OWNER_PROBE_ENABLED = import.meta.env.DEV && Boolean(import.meta.hot);
+
+function getMainHmrOwnerProbeContext() {
+  if (!MAIN_HMR_OWNER_PROBE_ENABLED || typeof window === "undefined") return null;
+  const probe = window.__avatarHmrOwnerProbe__ ?? {
+    eventSeq: 0,
+    renderSeq: 0,
+    mainEvalSeq: 0,
+    mainMountSeq: 0,
+  };
+  window.__avatarHmrOwnerProbe__ = probe;
+  return probe;
+}
+
+function logMainHmrOwnerProbe(event, detail = {}) {
+  const probe = getMainHmrOwnerProbeContext();
+  if (!probe) return;
+  probe.eventSeq += 1;
+  console.info("[PROBE:avatar-hmr-owner]", {
+    seq: probe.eventSeq,
+    source: "main",
+    event,
+    timestamp: new Date().toISOString(),
+    detail,
+  });
+}
+
+const mainProbe = getMainHmrOwnerProbeContext();
+if (mainProbe) {
+  mainProbe.mainEvalSeq += 1;
+  logMainHmrOwnerProbe("module-eval", {
+    evalOrder: mainProbe.mainEvalSeq,
+    hasExistingRoot: typeof window !== "undefined" ? Boolean(window._root) : null,
+    hasHotData: Boolean(import.meta.hot?.data),
+  });
+}
+// PROBE:avatar-hmr-owner:END
+
 installGlobalErrorHandlers();
 
 const startupRuntimeVerification = getStartupRuntimeVerification();
@@ -82,6 +121,17 @@ const getRoute = () => {
 };
 
 const RootComponent = () => {
+  React.useEffect(() => {
+    const probe = getMainHmrOwnerProbeContext();
+    if (!probe) return undefined;
+    probe.mainMountSeq += 1;
+    const mountOrder = probe.mainMountSeq;
+    logMainHmrOwnerProbe("root-mount", { mountOrder });
+    return () => {
+      logMainHmrOwnerProbe("root-unmount", { mountOrder });
+    };
+  }, []);
+
   const route = getRoute();
 
   if (route === 'trace') {
@@ -95,6 +145,10 @@ const RootComponent = () => {
 };
 
 const container = document.getElementById("root");
+const reusingExistingRoot = Boolean(window._root);
+logMainHmrOwnerProbe("root-render-request", {
+  reusingExistingRoot,
+});
 if (!window._root) {
   window._root = ReactDOM.createRoot(container);
 }

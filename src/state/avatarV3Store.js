@@ -22,6 +22,79 @@ const AVATAR_STAGE_DEFAULT_LAYER = Object.freeze({
   linkOpacity: false,
 });
 
+// PROBE:avatar-hmr-owner:START
+const AVATAR_HMR_OWNER_PROBE_ENABLED = import.meta.env.DEV && Boolean(import.meta.hot);
+
+function getAvatarHmrOwnerProbeContext() {
+  if (!AVATAR_HMR_OWNER_PROBE_ENABLED || typeof window === 'undefined') return null;
+  const probe = window.__avatarHmrOwnerProbe__ ?? {
+    eventSeq: 0,
+    renderSeq: 0,
+    mainEvalSeq: 0,
+    mainMountSeq: 0,
+  };
+  window.__avatarHmrOwnerProbe__ = probe;
+  return probe;
+}
+
+function logAvatarHmrOwnerProbe(source, event, detail = {}) {
+  const probe = getAvatarHmrOwnerProbeContext();
+  if (!probe) return;
+  probe.eventSeq += 1;
+  console.info('[PROBE:avatar-hmr-owner]', {
+    seq: probe.eventSeq,
+    source,
+    event,
+    timestamp: new Date().toISOString(),
+    detail,
+  });
+}
+
+logAvatarHmrOwnerProbe('avatarV3Store', 'module-eval', {
+  persistKey: AVATAR_STAGE_DEFAULTS_PERSIST_KEY,
+  hasHotData: Boolean(import.meta.hot?.data),
+  snapshotStoragePresent:
+    typeof window !== 'undefined' ? window.localStorage?.getItem?.(AVATAR_STAGE_DEFAULTS_PERSIST_KEY) != null : null,
+});
+// PROBE:avatar-hmr-owner:END
+
+// PROBE:avatar-hmr-derivation:START
+const AVATAR_HMR_DERIVATION_PROBE_ENABLED = import.meta.env.DEV && Boolean(import.meta.hot);
+
+function getAvatarHmrDerivationProbeContext() {
+  if (!AVATAR_HMR_DERIVATION_PROBE_ENABLED || typeof window === 'undefined') return null;
+  const probe = window.__avatarHmrDerivationProbe__ ?? {
+    eventSeq: 0,
+    events: [],
+  };
+  window.__avatarHmrDerivationProbe__ = probe;
+  return probe;
+}
+
+export function logAvatarHmrDerivationProbe(source, event, detail = {}) {
+  const probe = getAvatarHmrDerivationProbeContext();
+  if (!probe) return;
+  probe.eventSeq += 1;
+  const payload = {
+    seq: probe.eventSeq,
+    source,
+    event,
+    timestamp: new Date().toISOString(),
+    detail,
+  };
+  probe.events.push(payload);
+  if (probe.events.length > 400) {
+    probe.events.shift();
+  }
+  console.info('[PROBE:avatar-hmr-derivation]', payload);
+}
+
+logAvatarHmrDerivationProbe('avatarV3Store', 'module-eval', {
+  persistKey: AVATAR_STAGE_DEFAULTS_PERSIST_KEY,
+  hasHotData: Boolean(import.meta.hot?.data),
+});
+// PROBE:avatar-hmr-derivation:END
+
 function clampAvatarDefault(value, min, max) {
   return Math.max(min, Math.min(max, value));
 }
@@ -73,6 +146,20 @@ export function getCanonicalAvatarStageDefaultTransforms(stageKey, colorScheme =
   const presets = getCanonicalAvatarPresetsByScheme(colorScheme);
   const canonical = presets[normalizedStage] || presets.seedling || {};
   return sanitizeAvatarDefaultStageTransforms(canonical, canonical);
+}
+
+export function getAvatarStageDefaultProbeSnapshot(stageKey, colorScheme = 'dark') {
+  const normalizedStage = normalizeStageKey(stageKey);
+  const scheme = normalizeAvatarDefaultScheme(colorScheme);
+  const state = useAvatarStageDefaultsStore.getState();
+  return {
+    normalizedStage,
+    scheme,
+    hasHydrated: useAvatarStageDefaultsStore.persist?.hasHydrated?.() ?? null,
+    persistedSnapshot: state.snapshotsByScheme?.[scheme]?.[normalizedStage] ?? null,
+    canonicalPreset: getCanonicalAvatarStageDefaultTransforms(normalizedStage, scheme),
+    resolvedDefault: state.getResolvedStageDefault(normalizedStage, scheme),
+  };
 }
 
 function sanitizeAvatarDefaultStageTransforms(stageTransforms = {}, canonicalStageTransforms = {}) {
@@ -225,25 +312,56 @@ export const useAvatarStageDefaultsStore = create(
     merge: (persisted, current) => {
       const raw = persisted && typeof persisted === 'object' ? persisted : {};
       const nextSnapshotsByScheme = sanitizeSnapshotsByScheme(raw.snapshotsByScheme);
+      logAvatarHmrOwnerProbe('avatarV3Store', 'persist-merge', {
+        persistedSnapshotCount:
+          Object.keys(nextSnapshotsByScheme.dark || {}).length +
+          Object.keys(nextSnapshotsByScheme.light || {}).length,
+      });
       return {
         ...current,
         snapshotsByScheme: nextSnapshotsByScheme,
         ...buildDefaultsByStage(nextSnapshotsByScheme),
       };
     },
-    onRehydrateStorage: () => (state) => {
-      // After rehydration, verify the store wrote back to localStorage.
-      // Zustand persist only writes on set() — if hydration produced the same
-      // state as initial, the key might never be written. Force a write-back
-      // so the persist key is always present and future reloads work.
-      if (state) {
-        const snapshots = state.snapshotsByScheme;
-        if (snapshots && (Object.keys(snapshots.dark || {}).length > 0 ||
-                          Object.keys(snapshots.light || {}).length > 0)) {
+    onRehydrateStorage: () => {
+      logAvatarHmrOwnerProbe('avatarV3Store', 'persist-rehydrate-start', {
+        snapshotStoragePresent:
+          typeof window !== 'undefined'
+            ? window.localStorage?.getItem?.(AVATAR_STAGE_DEFAULTS_PERSIST_KEY) != null
+            : null,
+      });
+      return (state) => {
+        const snapshots = state?.snapshotsByScheme;
+        const hasSnapshots = Boolean(
+          snapshots &&
+          (Object.keys(snapshots.dark || {}).length > 0 || Object.keys(snapshots.light || {}).length > 0)
+        );
+        let forcedWriteback = false;
+
+        logAvatarHmrOwnerProbe('avatarV3Store', 'persist-rehydrate-finish', {
+          hasSnapshots,
+          hasHydrated: useAvatarStageDefaultsStore.persist?.hasHydrated?.() ?? null,
+          snapshotStoragePresent:
+            typeof window !== 'undefined'
+              ? window.localStorage?.getItem?.(AVATAR_STAGE_DEFAULTS_PERSIST_KEY) != null
+              : null,
+        });
+
+        // After rehydration, verify the store wrote back to localStorage.
+        // Zustand persist only writes on set() — if hydration produced the same
+        // state as initial, the key might never be written. Force a write-back
+        // so the persist key is always present and future reloads work.
+        if (state && hasSnapshots) {
           // Trigger a no-op set to force persist to write
           useAvatarStageDefaultsStore.setState({});
+          forcedWriteback = true;
         }
-      }
+
+        logAvatarHmrOwnerProbe('avatarV3Store', 'persist-post-rehydrate-writeback', {
+          forcedWriteback,
+          hasHydrated: useAvatarStageDefaultsStore.persist?.hasHydrated?.() ?? null,
+        });
+      };
     },
   })
 );

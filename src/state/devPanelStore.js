@@ -13,6 +13,41 @@ const IS_LOCALHOST_RUNTIME =
   ['localhost', '127.0.0.1'].includes(window.location?.hostname || '');
 const SHOULD_PERSIST_DEV_PANEL = IS_DEV_BUILD || IS_LOCALHOST_RUNTIME;
 
+// PROBE:avatar-hmr-owner:START
+const DEV_PANEL_HMR_OWNER_PROBE_ENABLED = IS_DEV_BUILD && Boolean(import.meta.hot);
+
+function getDevPanelHmrOwnerProbeContext() {
+  if (!DEV_PANEL_HMR_OWNER_PROBE_ENABLED || typeof window === 'undefined') return null;
+  const probe = window.__avatarHmrOwnerProbe__ ?? {
+    eventSeq: 0,
+    renderSeq: 0,
+    mainEvalSeq: 0,
+    mainMountSeq: 0,
+  };
+  window.__avatarHmrOwnerProbe__ = probe;
+  return probe;
+}
+
+function logDevPanelHmrOwnerProbe(event, detail = {}) {
+  const probe = getDevPanelHmrOwnerProbeContext();
+  if (!probe) return;
+  probe.eventSeq += 1;
+  console.info('[PROBE:avatar-hmr-owner]', {
+    seq: probe.eventSeq,
+    source: 'devPanelStore',
+    event,
+    timestamp: new Date().toISOString(),
+    detail,
+  });
+}
+
+logDevPanelHmrOwnerProbe('module-eval', {
+  persistEnabled: SHOULD_PERSIST_DEV_PANEL,
+  persistStoragePresent:
+    typeof window !== 'undefined' ? window.localStorage?.getItem?.(DEV_PANEL_PERSIST_KEY) != null : null,
+});
+// PROBE:avatar-hmr-owner:END
+
 if (!SHOULD_PERSIST_DEV_PANEL && typeof window !== 'undefined') {
   try {
     window.localStorage?.removeItem?.(DEV_PANEL_PERSIST_KEY);
@@ -117,8 +152,9 @@ export function sanitizeAvatarComposite(input = {}) {
 
 function mergeAvatarComposite(baseAvatarComposite, persistedAvatarComposite = {}) {
   const baseAvatar = baseAvatarComposite || createDefaultAvatarComposite();
-
-  return {
+  const baseWorkingCopyPresent = baseAvatar?.workingCopy != null;
+  const persistedWorkingCopyPresent = persistedAvatarComposite?.workingCopy != null;
+  const mergedAvatar = {
     ...baseAvatar,
     enabled:
       typeof persistedAvatarComposite?.enabled === 'boolean'
@@ -131,6 +167,16 @@ function mergeAvatarComposite(baseAvatarComposite, persistedAvatarComposite = {}
         : baseAvatar.showDebugOverlay,
     workingCopy: null,
   };
+
+  if (baseWorkingCopyPresent || persistedWorkingCopyPresent) {
+    logDevPanelHmrOwnerProbe('merge-working-copy-reset', {
+      baseWorkingCopyPresent,
+      persistedWorkingCopyPresent,
+      mergedWorkingCopyPresent: mergedAvatar.workingCopy != null,
+    });
+  }
+
+  return mergedAvatar;
 }
 
 function createWorkingCopy(stageKey, colorScheme = 'dark', stageTransforms = null) {
@@ -400,9 +446,29 @@ const devPanelPersistConfig = {
     const migrated = migrateDevPanelState(persisted, 6);
     const persistedAvatar = migrated?.avatarComposite || {};
     const baseAvatar = current?.avatarComposite || createDefaultAvatarComposite();
+    logDevPanelHmrOwnerProbe('persist-merge', {
+      persistedEnabled: persistedAvatar?.enabled ?? null,
+      persistedShowDebugOverlay: persistedAvatar?.showDebugOverlay ?? null,
+      baseWorkingCopyPresent: baseAvatar?.workingCopy != null,
+      persistedWorkingCopyPresent: persistedAvatar?.workingCopy != null,
+    });
     return {
       ...current,
       avatarComposite: mergeAvatarComposite(baseAvatar, persistedAvatar),
+    };
+  },
+  onRehydrateStorage: () => {
+    logDevPanelHmrOwnerProbe('persist-rehydrate-start', {
+      persistStoragePresent:
+        typeof window !== 'undefined' ? window.localStorage?.getItem?.(DEV_PANEL_PERSIST_KEY) != null : null,
+    });
+    return (state) => {
+      logDevPanelHmrOwnerProbe('persist-rehydrate-finish', {
+        workingCopyPresent: state?.avatarComposite?.workingCopy != null,
+        enabled: state?.avatarComposite?.enabled ?? null,
+        previewDraft: state?.avatarComposite?.previewDraft ?? null,
+        showDebugOverlay: state?.avatarComposite?.showDebugOverlay ?? null,
+      });
     };
   },
 };
