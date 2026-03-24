@@ -13,8 +13,6 @@ const IS_LOCALHOST_RUNTIME =
   ['localhost', '127.0.0.1'].includes(window.location?.hostname || '');
 const SHOULD_PERSIST_DEV_PANEL = IS_DEV_BUILD || IS_LOCALHOST_RUNTIME;
 
-// Production safety: devpanel tuning must not be able to "stick" across deploys via localStorage.
-// Remove any stale persisted state so shipped defaults are always authoritative.
 if (!SHOULD_PERSIST_DEV_PANEL && typeof window !== 'undefined') {
   try {
     window.localStorage?.removeItem?.(DEV_PANEL_PERSIST_KEY);
@@ -34,50 +32,17 @@ const DEFAULT_LAYER = Object.freeze({
   linkOpacity: false,
 });
 
-const DEFAULT_ROLE_RESET = {
-  enabled: true,
-  opacity: 1,
-  scale: 1,
-  rotateDeg: 0,
-  x: 0,
-  y: 0,
-  linkTo: null,
-  linkOpacity: false,
-};
-
 function createDefaultLayer() {
   return { ...DEFAULT_LAYER };
 }
-
-function createDefaultStageTransforms(stageKey = 'seedling', colorScheme = 'dark') {
-  const normalizedStageKey = normalizeStageId(stageKey);
-  return sanitizeStageTransforms(getCanonicalAvatarStageDefaultTransforms(normalizedStageKey, colorScheme));
-}
-
-function createDefaultTransformsByStage(colorScheme = 'dark') {
-  const next = {};
-  AVATAR_COMPOSITE_STAGE_KEYS.forEach((stageKey) => {
-    next[stageKey] = createDefaultStageTransforms(stageKey, colorScheme);
-  });
-  return next;
-}
-
-function createDefaultAvatarComposite() {
-  return {
-    enabled: true,
-    previewDraft: false,
-    showDebugOverlay: false,
-    transformsByStage: createDefaultTransformsByStage('dark'),
-    transformsByStageLight: createDefaultTransformsByStage('light'),
-  };
-}
-
-const DEFAULT_AVATAR_COMPOSITE = Object.freeze(createDefaultAvatarComposite());
 
 function clamp(value, min, max) {
   return Math.max(min, Math.min(max, value));
 }
 
+function resolveScheme(colorScheme = 'dark') {
+  return colorScheme === 'light' ? 'light' : 'dark';
+}
 
 function normalizeLayerId(layerId) {
   if (typeof layerId !== 'string') return null;
@@ -110,44 +75,81 @@ function sanitizeRolePatch(layerId, patch = {}) {
   return next;
 }
 
-function sanitizeStageTransforms(stageTransforms = {}) {
-  const source = stageTransforms && typeof stageTransforms === 'object' ? stageTransforms : {};
-  const sanitized = {};
+function cloneStageDraft(stageKey = 'seedling', colorScheme = 'dark', stageTransforms = null) {
+  const normalizedStageKey = normalizeStageId(stageKey);
+  const sourceStageTransforms =
+    stageTransforms && typeof stageTransforms === 'object'
+      ? stageTransforms
+      : getCanonicalAvatarStageDefaultTransforms(normalizedStageKey, colorScheme);
+  const clonedStageDraft = {};
+
   AVATAR_COMPOSITE_LAYER_IDS.forEach((layerId) => {
-    sanitized[layerId] = {
+    clonedStageDraft[layerId] = {
       ...createDefaultLayer(),
-      ...sanitizeRolePatch(layerId, source[layerId]),
+      ...sanitizeRolePatch(layerId, sourceStageTransforms[layerId]),
     };
   });
-  return sanitized;
+
+  return clonedStageDraft;
 }
 
-function sanitizeTransformsByStage(input = {}) {
+function createDefaultDraftsByStage(colorScheme = 'dark') {
+  const next = {};
+  AVATAR_COMPOSITE_STAGE_KEYS.forEach((stageKey) => {
+    next[stageKey] = cloneStageDraft(stageKey, colorScheme);
+  });
+  return next;
+}
+
+function createDefaultDraftsByTheme() {
+  return {
+    dark: createDefaultDraftsByStage('dark'),
+    light: createDefaultDraftsByStage('light'),
+  };
+}
+
+function sanitizeDraftsByStage(input = {}, colorScheme = 'dark') {
   const source = input && typeof input === 'object' ? input : {};
   const next = {};
 
-  Object.entries(source).forEach(([rawStage, stageTransforms]) => {
-    const stageKey = normalizeStageId(rawStage);
-    next[stageKey] = sanitizeStageTransforms(stageTransforms);
+  AVATAR_COMPOSITE_STAGE_KEYS.forEach((stageKey) => {
+    next[stageKey] = cloneStageDraft(stageKey, colorScheme, source[stageKey]);
   });
-
-  if (!next.seedling) {
-    next.seedling = createDefaultStageTransforms('seedling');
-  }
 
   return next;
 }
 
-function mergeTransformsByStage(baseTransformsByStage = {}, persistedTransformsByStage = {}) {
-  const next = {};
+function sanitizeDraftsByTheme(input = {}) {
+  const source = input && typeof input === 'object' ? input : {};
+  const draftSource =
+    source.draftsByTheme && typeof source.draftsByTheme === 'object' ? source.draftsByTheme : source;
 
-  AVATAR_COMPOSITE_STAGE_KEYS.forEach((stageKey) => {
-    next[stageKey] = sanitizeStageTransforms(
-      persistedTransformsByStage?.[stageKey] ?? baseTransformsByStage?.[stageKey]
-    );
-  });
+  return {
+    dark: sanitizeDraftsByStage(draftSource.dark || source.transformsByStage, 'dark'),
+    light: sanitizeDraftsByStage(draftSource.light || source.transformsByStageLight, 'light'),
+  };
+}
 
-  return next;
+function createDefaultAvatarComposite() {
+  return {
+    enabled: true,
+    previewDraft: false,
+    showDebugOverlay: false,
+    draftsByTheme: createDefaultDraftsByTheme(),
+  };
+}
+
+const DEFAULT_AVATAR_COMPOSITE = Object.freeze(createDefaultAvatarComposite());
+
+export function sanitizeAvatarComposite(input = {}) {
+  const source = input && typeof input === 'object' ? input : {};
+
+  return {
+    enabled: typeof source.enabled === 'boolean' ? source.enabled : true,
+    previewDraft: typeof source.previewDraft === 'boolean' ? source.previewDraft : false,
+    showDebugOverlay: typeof source.showDebugOverlay === 'boolean' ? source.showDebugOverlay : false,
+    draftsByTheme: sanitizeDraftsByTheme(source),
+  };
 }
 
 function mergeAvatarComposite(baseAvatarComposite, persistedAvatarComposite = {}) {
@@ -165,131 +167,73 @@ function mergeAvatarComposite(baseAvatarComposite, persistedAvatarComposite = {}
       typeof persistedAvatarComposite?.showDebugOverlay === 'boolean'
         ? persistedAvatarComposite.showDebugOverlay
         : baseAvatar.showDebugOverlay,
-    transformsByStage: mergeTransformsByStage(
-      baseAvatar.transformsByStage,
-      sanitizedPersistedAvatar.transformsByStage
-    ),
-    transformsByStageLight: mergeTransformsByStage(
-      baseAvatar.transformsByStageLight,
-      sanitizedPersistedAvatar.transformsByStageLight
-    ),
+    draftsByTheme: {
+      dark: sanitizeDraftsByStage(sanitizedPersistedAvatar.draftsByTheme?.dark, 'dark'),
+      light: sanitizeDraftsByStage(sanitizedPersistedAvatar.draftsByTheme?.light, 'light'),
+    },
   };
 }
 
-export function sanitizeAvatarComposite(input = {}) {
-  const source = input && typeof input === 'object' ? input : {};
-  let transformsByStageSource =
-    source.transformsByStage && typeof source.transformsByStage === 'object'
-      ? source.transformsByStage
-      : null;
-  let transformsByStageLightSource =
-    source.transformsByStageLight && typeof source.transformsByStageLight === 'object'
-      ? source.transformsByStageLight
-      : null;
+function getDraftsByScheme(avatarComposite, colorScheme = 'dark') {
+  const scheme = resolveScheme(colorScheme);
+  return avatarComposite?.draftsByTheme?.[scheme] || createDefaultDraftsByStage(scheme);
+}
 
-  if (!transformsByStageSource && source.layers && typeof source.layers === 'object') {
-    transformsByStageSource = { seedling: source.layers };
-  }
+function setDraftsByScheme(avatarComposite, colorScheme, nextDraftsByStage) {
+  const scheme = resolveScheme(colorScheme);
+  const currentDraftsByTheme = avatarComposite?.draftsByTheme || createDefaultDraftsByTheme();
 
   return {
-    enabled: typeof source.enabled === 'boolean' ? source.enabled : true,
-    previewDraft: typeof source.previewDraft === 'boolean' ? source.previewDraft : false,
-    showDebugOverlay: typeof source.showDebugOverlay === 'boolean' ? source.showDebugOverlay : false,
-    transformsByStage: sanitizeTransformsByStage(transformsByStageSource || {}),
-    transformsByStageLight: sanitizeTransformsByStage(transformsByStageLightSource || {}),
+    ...avatarComposite,
+    draftsByTheme: {
+      dark: currentDraftsByTheme.dark,
+      light: currentDraftsByTheme.light,
+      [scheme]: sanitizeDraftsByStage(nextDraftsByStage, scheme),
+    },
   };
 }
 
-// --- Scheme helpers ---
-
-function resolveScheme(colorScheme) {
-  return colorScheme === 'light' ? 'light' : 'dark';
+function getStageDraftSnapshot(avatarComposite, stageKey, colorScheme = 'dark') {
+  const normalizedStageKey = normalizeStageId(stageKey);
+  return cloneStageDraft(
+    normalizedStageKey,
+    colorScheme,
+    getDraftsByScheme(avatarComposite, colorScheme)[normalizedStageKey]
+  );
 }
 
-function getTransformsByScheme(avatarComposite, colorScheme) {
-  return resolveScheme(colorScheme) === 'light'
-    ? avatarComposite?.transformsByStageLight
-    : avatarComposite?.transformsByStage;
+function replaceStageDraft(state, stageKey, stageTransforms, colorScheme = 'dark') {
+  const normalizedStageKey = normalizeStageId(stageKey);
+  const avatarComposite = state.avatarComposite || createDefaultAvatarComposite();
+  const nextDraftsByStage = {
+    ...getDraftsByScheme(avatarComposite, colorScheme),
+    [normalizedStageKey]: cloneStageDraft(normalizedStageKey, colorScheme, stageTransforms),
+  };
+
+  return {
+    ...state,
+    avatarComposite: setDraftsByScheme(avatarComposite, colorScheme, nextDraftsByStage),
+  };
 }
 
-
-function setTransformsByScheme(avatarComposite, colorScheme, nextTransformsByStage) {
-  return resolveScheme(colorScheme) === 'light'
-    ? { ...avatarComposite, transformsByStageLight: nextTransformsByStage }
-    : { ...avatarComposite, transformsByStage: nextTransformsByStage };
-}
-
-function getRawRoleTransform(avatarComposite, stageKey, roleKey, colorScheme = 'dark') {
-  return getTransformsByScheme(avatarComposite, colorScheme)?.[stageKey]?.[roleKey];
-}
-
-export function resolveRoleTransform(avatarComposite, stageKey, roleKey, colorScheme = 'dark') {
-  const normalizedRole = normalizeLayerId(roleKey);
-  if (!normalizedRole) return createDefaultLayer();
-
-  const normalizedStage = normalizeStageId(stageKey);
-
-  const fromStage = getRawRoleTransform(avatarComposite, normalizedStage, normalizedRole, colorScheme);
-  if (fromStage && typeof fromStage === 'object') {
-    return {
-      ...createDefaultLayer(),
-      ...sanitizeRolePatch(normalizedRole, fromStage),
-    };
-  }
-
-  return createDefaultLayer();
-}
-
-function createResolvedStageTransforms(avatarComposite, stageKey, colorScheme = 'dark') {
-  const normalizedStage = normalizeStageId(stageKey);
-  const next = {};
-  AVATAR_COMPOSITE_LAYER_IDS.forEach((layerId) => {
-    next[layerId] = resolveRoleTransform(avatarComposite, normalizedStage, layerId, colorScheme);
-  });
-  return next;
-}
-
-function updateRoleTransform(state, stageKey, layerId, patch, colorScheme = 'dark') {
+function writeStageDraftValue(state, stageKey, layerId, field, value, colorScheme = 'dark') {
   const normalizedLayerId = normalizeLayerId(layerId);
   if (!normalizedLayerId) return state;
-  const normalizedStageKey = normalizeStageId(stageKey);
-  const sanitizedPatch = sanitizeRolePatch(normalizedLayerId, patch);
-  const avatarComposite = state.avatarComposite || createDefaultAvatarComposite();
-  const existingByScheme = getTransformsByScheme(avatarComposite, colorScheme);
-  const existingStage = existingByScheme?.[normalizedStageKey];
-  const baseStage = existingStage
-    ? sanitizeStageTransforms(existingStage)
-    : createResolvedStageTransforms(avatarComposite, normalizedStageKey, colorScheme);
 
-  const nextTransformsByStage = {
-    ...existingByScheme,
-    [normalizedStageKey]: {
-      ...baseStage,
-      [normalizedLayerId]: {
-        ...baseStage[normalizedLayerId],
-        ...sanitizedPatch,
-      },
+  const normalizedStageKey = normalizeStageId(stageKey);
+  const sanitizedPatch = sanitizeRolePatch(normalizedLayerId, { [field]: value });
+  if (!Object.keys(sanitizedPatch).length) return state;
+
+  const currentStageDraft = getStageDraftSnapshot(state.avatarComposite, normalizedStageKey, colorScheme);
+  const nextStageDraft = {
+    ...currentStageDraft,
+    [normalizedLayerId]: {
+      ...currentStageDraft[normalizedLayerId],
+      ...sanitizedPatch,
     },
   };
 
-  return {
-    ...state,
-    avatarComposite: setTransformsByScheme(avatarComposite, colorScheme, nextTransformsByStage),
-  };
-}
-
-function setWholeStageTransforms(state, stageKey, stageTransforms, colorScheme = 'dark') {
-  const normalizedStageKey = normalizeStageId(stageKey);
-  const avatarComposite = state.avatarComposite || createDefaultAvatarComposite();
-  const existingByScheme = getTransformsByScheme(avatarComposite, colorScheme);
-  const nextTransformsByStage = {
-    ...existingByScheme,
-    [normalizedStageKey]: sanitizeStageTransforms(stageTransforms),
-  };
-  return {
-    ...state,
-    avatarComposite: setTransformsByScheme(avatarComposite, colorScheme, nextTransformsByStage),
-  };
+  return replaceStageDraft(state, normalizedStageKey, nextStageDraft, colorScheme);
 }
 
 export function migrateDevPanelState(persistedState, version) {
@@ -299,39 +243,16 @@ export function migrateDevPanelState(persistedState, version) {
   const migratedAvatar = {
     enabled: typeof persistedAvatar.enabled === 'boolean' ? persistedAvatar.enabled : true,
     previewDraft: false,
-    showDebugOverlay: typeof persistedAvatar.showDebugOverlay === 'boolean' ? persistedAvatar.showDebugOverlay : false,
-    transformsByStage:
-      version >= 4 && persistedAvatar.transformsByStage
-        ? sanitizeTransformsByStage(persistedAvatar.transformsByStage)
-        : undefined,
-    transformsByStageLight:
-      version >= 4 && persistedAvatar.transformsByStageLight
-        ? sanitizeTransformsByStage(persistedAvatar.transformsByStageLight)
-        : undefined,
+    showDebugOverlay:
+      typeof persistedAvatar.showDebugOverlay === 'boolean' ? persistedAvatar.showDebugOverlay : false,
+    draftsByTheme: sanitizeDraftsByTheme(version >= 5 ? persistedAvatar : persistedAvatar),
   };
-
-  if (version >= 4) {
-    return { ...persistedState, avatarComposite: migratedAvatar };
-  }
-
-  if (version >= 3) {
-    return { ...persistedState, avatarComposite: migratedAvatar };
-  }
-
-  if (version >= 2) {
-    return { ...persistedState, avatarComposite: migratedAvatar };
-  }
 
   return { ...persistedState, avatarComposite: migratedAvatar };
 }
 
 const createDevPanelStoreState = (set, get) => ({
   avatarComposite: createDefaultAvatarComposite(),
-
-  getAvatarCompositeRoleTransform: (stageKey, roleKey, colorScheme = 'dark') => {
-    const state = get();
-    return resolveRoleTransform(state.avatarComposite, stageKey, roleKey, colorScheme);
-  },
 
   setAvatarCompositeEnabled: (enabled) =>
     set((state) => ({
@@ -360,93 +281,32 @@ const createDevPanelStoreState = (set, get) => ({
       },
     })),
 
-  setAvatarCompositeRoleTransform: (stageKey, roleKey, partialPatch, colorScheme = 'dark') =>
-    set((state) => updateRoleTransform(state, stageKey, roleKey, partialPatch, colorScheme)),
-
-  setAvatarCompositeRoleTransformValue: (stageKey, roleKey, key, value, colorScheme = 'dark') =>
-    set((state) => updateRoleTransform(state, stageKey, roleKey, { [key]: value }, colorScheme)),
-
-  setAvatarCompositeRoleTransformEnabled: (stageKey, roleKey, enabled, colorScheme = 'dark') =>
-    set((state) => updateRoleTransform(state, stageKey, roleKey, { enabled: Boolean(enabled) }, colorScheme)),
-
-  setAvatarCompositeRoleTransformLink: (stageKey, roleKey, linkTo, colorScheme = 'dark') =>
-    set((state) => updateRoleTransform(state, stageKey, roleKey, { linkTo }, colorScheme)),
-
-  setAvatarCompositeRoleTransformLinkOpacity: (stageKey, roleKey, linkOpacity, colorScheme = 'dark') =>
-    set((state) => updateRoleTransform(state, stageKey, roleKey, { linkOpacity: Boolean(linkOpacity) }, colorScheme)),
-
-  hydrateAvatarCompositeDrafts: (transformsByStage, colorScheme = 'dark') =>
-    set((state) => {
-      const nextTransformsByStage = sanitizeTransformsByStage(transformsByStage);
-      const avatarComposite = state.avatarComposite || createDefaultAvatarComposite();
-      return {
-        ...state,
-        avatarComposite: setTransformsByScheme(avatarComposite, colorScheme, nextTransformsByStage),
-      };
-    }),
-
-  replaceAvatarCompositeStageDraft: (stageKey, stageTransforms, colorScheme = 'dark') =>
-    set((state) => {
-      const normalizedStageKey = normalizeStageId(stageKey);
-      return setWholeStageTransforms(state, normalizedStageKey, stageTransforms, colorScheme);
-    }),
-
   getAvatarCompositeStageDraft: (stageKey, colorScheme = 'dark') => {
     const state = get();
-    const normalizedStageKey = normalizeStageId(stageKey);
-    return createResolvedStageTransforms(state.avatarComposite, normalizedStageKey, colorScheme);
+    return getStageDraftSnapshot(state.avatarComposite, stageKey, colorScheme);
   },
 
+  writeAvatarCompositeDraftValue: (stageKey, layerId, field, value, colorScheme = 'dark') =>
+    set((state) => writeStageDraftValue(state, stageKey, layerId, field, value, colorScheme)),
+
+  replaceAvatarCompositeStageDraft: (stageKey, stageTransforms, colorScheme = 'dark') =>
+    set((state) => replaceStageDraft(state, stageKey, stageTransforms, colorScheme)),
+
   resetAvatarCompositeStage: (stageKey, colorScheme = 'dark') =>
-    set((state) => {
-      const normalizedStageKey = normalizeStageId(stageKey);
-      const resolvedDefault = createDefaultStageTransforms(normalizedStageKey, colorScheme);
-      return setWholeStageTransforms(
+    set((state) =>
+      replaceStageDraft(
         state,
-        normalizedStageKey,
-        resolvedDefault,
+        stageKey,
+        getCanonicalAvatarStageDefaultTransforms(stageKey, colorScheme),
         colorScheme
-      );
-    }),
-
-  // Compatibility wrappers (legacy callers -> seedling, dark)
-  setAvatarCompositeLayerEnabled: (layerId, enabled) =>
-    set((state) => updateRoleTransform(state, 'seedling', layerId, { enabled: Boolean(enabled) })),
-
-  setAvatarCompositeLayerValue: (layerId, key, value) =>
-    set((state) => updateRoleTransform(state, 'seedling', layerId, { [key]: value })),
-
-  setAvatarCompositeLayerLink: (layerId, linkTo) =>
-    set((state) => updateRoleTransform(state, 'seedling', layerId, { linkTo })),
-
-  setAvatarCompositeLayerLinkOpacity: (layerId, linkOpacity) =>
-    set((state) => updateRoleTransform(state, 'seedling', layerId, { linkOpacity: Boolean(linkOpacity) })),
-
-  resetAvatarCompositeLayer: (layerId) =>
-    set((state) => updateRoleTransform(state, 'seedling', layerId, DEFAULT_ROLE_RESET)),
-
-  resetAvatarCompositeAll: () =>
-    set((state) => ({
-      ...state,
-      avatarComposite: createDefaultAvatarComposite(),
-    })),
-
-  linkAllAvatarCompositeTo: (masterLayerId) =>
-    set((state) => {
-      const master = normalizeLayerId(masterLayerId);
-      let nextState = state;
-      AVATAR_COMPOSITE_LAYER_IDS.forEach((layerId) => {
-        const linkTo = master && layerId !== master ? master : null;
-        nextState = updateRoleTransform(nextState, 'seedling', layerId, { linkTo });
-      });
-      return nextState;
-    }),
+      )
+    ),
 
   getAvatarCompositeAllStagesJSON: (colorScheme = 'dark') => {
     const state = get();
     const transformsByStage = {};
     AVATAR_COMPOSITE_STAGE_KEYS.forEach((stageKey) => {
-      transformsByStage[stageKey] = createResolvedStageTransforms(state.avatarComposite, stageKey, colorScheme);
+      transformsByStage[stageKey] = getStageDraftSnapshot(state.avatarComposite, stageKey, colorScheme);
     });
     return JSON.stringify(
       {
@@ -457,32 +317,22 @@ const createDevPanelStoreState = (set, get) => ({
     );
   },
 
-  getAvatarCompositeDefaultsSnippet: (colorScheme = 'dark') => {
-    const state = get();
-    const transformsByStage = {};
-    AVATAR_COMPOSITE_STAGE_KEYS.forEach((stageKey) => {
-      transformsByStage[stageKey] = createResolvedStageTransforms(state.avatarComposite, stageKey, colorScheme);
-    });
-    return `transformsByStage: ${JSON.stringify(transformsByStage, null, 2)},`;
-  },
-
   getAvatarCompositeDefaults: () => JSON.parse(JSON.stringify(DEFAULT_AVATAR_COMPOSITE)),
 });
 
 const devPanelPersistConfig = {
   name: DEV_PANEL_PERSIST_KEY,
-  version: 4,
+  version: 5,
   migrate: (persistedState, version) => migrateDevPanelState(persistedState, version),
   partialize: (state) => ({
     avatarComposite: {
       enabled: Boolean(state.avatarComposite?.enabled),
-      transformsByStage: sanitizeTransformsByStage(state.avatarComposite?.transformsByStage),
-      transformsByStageLight: sanitizeTransformsByStage(state.avatarComposite?.transformsByStageLight),
+      draftsByTheme: sanitizeDraftsByTheme(state.avatarComposite?.draftsByTheme),
       showDebugOverlay: Boolean(state.avatarComposite?.showDebugOverlay),
     },
   }),
   merge: (persisted, current) => {
-    const migrated = migrateDevPanelState(persisted, 4);
+    const migrated = migrateDevPanelState(persisted, 5);
     const persistedAvatar = migrated?.avatarComposite || {};
     const baseAvatar = current?.avatarComposite || createDefaultAvatarComposite();
     return {

@@ -29,15 +29,15 @@ function AvatarCompositeSection({
     prodGuarded = false,
     prodArmed = false,
 }) {
+    const colorScheme = isLight ? 'light' : 'dark';
+    const normalizedEditingStageKey = normalizeStageKey(editingStageKey);
     const avatarComposite = useDevPanelStore(s => s.avatarComposite);
+    const currentStageDraft = useDevPanelStore(
+        s => s.avatarComposite?.draftsByTheme?.[colorScheme]?.[normalizedEditingStageKey]
+    );
     const setAvatarCompositeEnabled = useDevPanelStore(s => s.setAvatarCompositeEnabled);
     const setAvatarCompositeDebugOverlay = useDevPanelStore(s => s.setAvatarCompositeDebugOverlay);
-    const getAvatarCompositeRoleTransform = useDevPanelStore(s => s.getAvatarCompositeRoleTransform);
-    const setAvatarCompositeRoleTransform = useDevPanelStore(s => s.setAvatarCompositeRoleTransform);
-    const setAvatarCompositeRoleTransformEnabled = useDevPanelStore(s => s.setAvatarCompositeRoleTransformEnabled);
-    const setAvatarCompositeRoleTransformValue = useDevPanelStore(s => s.setAvatarCompositeRoleTransformValue);
-    const setAvatarCompositeRoleTransformLink = useDevPanelStore(s => s.setAvatarCompositeRoleTransformLink);
-    const setAvatarCompositeRoleTransformLinkOpacity = useDevPanelStore(s => s.setAvatarCompositeRoleTransformLinkOpacity);
+    const writeAvatarCompositeDraftValue = useDevPanelStore(s => s.writeAvatarCompositeDraftValue);
     const resetAvatarCompositeStage = useDevPanelStore(s => s.resetAvatarCompositeStage);
     const getAvatarCompositeAllStagesJSON = useDevPanelStore(s => s.getAvatarCompositeAllStagesJSON);
 
@@ -49,16 +49,17 @@ function AvatarCompositeSection({
     });
     const [jsonStatus, setJsonStatus] = useState('');
 
-    const colorScheme = isLight ? 'light' : 'dark';
-    const normalizedEditingStageKey = normalizeStageKey(editingStageKey);
     const editingStageLabel = normalizedEditingStageKey.charAt(0).toUpperCase() + normalizedEditingStageKey.slice(1);
     const layers = useMemo(() => {
         const nextLayers = {};
         AVATAR_COMPOSITE_LAYER_IDS.forEach((layerId) => {
-            nextLayers[layerId] = getAvatarCompositeRoleTransform(normalizedEditingStageKey, layerId, colorScheme);
+            nextLayers[layerId] = {
+                ...DEFAULT_ROLE_RESET,
+                ...(currentStageDraft?.[layerId] || {}),
+            };
         });
         return nextLayers;
-    }, [avatarComposite, colorScheme, getAvatarCompositeRoleTransform, normalizedEditingStageKey]);
+    }, [currentStageDraft]);
     const tunerEnabled = avatarComposite?.enabled !== false;
     const showDebugOverlay = Boolean(avatarComposite?.showDebugOverlay);
 
@@ -67,17 +68,27 @@ function AvatarCompositeSection({
         setLayerExpanded(prev => ({ ...prev, [layerId]: !prev[layerId] }));
     };
 
+    const writeLayerValue = (layerId, field, value) => {
+        writeAvatarCompositeDraftValue(normalizedEditingStageKey, layerId, field, value, colorScheme);
+    };
+
+    const resetLayerSnapshot = (layerId, layerSnapshot) => {
+        Object.entries(layerSnapshot).forEach(([field, value]) => {
+            writeLayerValue(layerId, field, value);
+        });
+    };
+
     const nudgeRotation = (layerId, delta) => {
         const layer = layers[layerId];
         if (!layer) return;
-        setAvatarCompositeRoleTransformValue(normalizedEditingStageKey, layerId, 'rotateDeg', layer.rotateDeg + delta, colorScheme);
+        writeLayerValue(layerId, 'rotateDeg', layer.rotateDeg + delta);
     };
 
     const resetTransforms = (layerId) => {
-        setAvatarCompositeRoleTransformValue(normalizedEditingStageKey, layerId, 'scale', 1, colorScheme);
-        setAvatarCompositeRoleTransformValue(normalizedEditingStageKey, layerId, 'rotateDeg', 0, colorScheme);
-        setAvatarCompositeRoleTransformValue(normalizedEditingStageKey, layerId, 'x', 0, colorScheme);
-        setAvatarCompositeRoleTransformValue(normalizedEditingStageKey, layerId, 'y', 0, colorScheme);
+        writeLayerValue(layerId, 'scale', 1);
+        writeLayerValue(layerId, 'rotateDeg', 0);
+        writeLayerValue(layerId, 'x', 0);
+        writeLayerValue(layerId, 'y', 0);
     };
 
     const copyAllStagesJson = async () => {
@@ -189,13 +200,13 @@ function AvatarCompositeSection({
                                 <div className="px-3 pb-3 space-y-2 border-t border-white/10">
                                     <div className="grid grid-cols-2 gap-2 pt-2">
                                         <button
-                                            onClick={() => setAvatarCompositeRoleTransformEnabled(normalizedEditingStageKey, layerId, !layer.enabled, colorScheme)}
+                                            onClick={() => writeLayerValue(layerId, 'enabled', !layer.enabled)}
                                             className={`rounded-lg px-2 py-1.5 text-[11px] border transition-all ${layer.enabled ? 'bg-emerald-500/20 border-emerald-400/50 text-emerald-100' : 'bg-white/5 border-white/15 text-white/65'}`}
                                         >
                                             {layer.enabled ? 'Layer On' : 'Layer Off'}
                                         </button>
                                         <button
-                                            onClick={() => setAvatarCompositeRoleTransform(normalizedEditingStageKey, layerId, DEFAULT_ROLE_RESET, colorScheme)}
+                                            onClick={() => resetLayerSnapshot(layerId, DEFAULT_ROLE_RESET)}
                                             className="rounded-lg px-2 py-1.5 text-[11px] bg-white/5 border border-white/15 text-white/70 hover:bg-white/10 transition-all"
                                         >
                                             Reset Layer
@@ -205,7 +216,7 @@ function AvatarCompositeSection({
                                     <div className="grid grid-cols-[1fr_auto_auto] gap-2 items-center">
                                         <select
                                             value={linkToValue}
-                                            onChange={(e) => setAvatarCompositeRoleTransformLink(normalizedEditingStageKey, layerId, e.target.value === 'none' ? null : e.target.value, colorScheme)}
+                                            onChange={(e) => writeLayerValue(layerId, 'linkTo', e.target.value === 'none' ? null : e.target.value)}
                                             className="w-full rounded-lg px-2 py-1.5 text-[11px]"
                                             style={{
                                                 background: isLight ? 'rgba(255, 255, 255, 0.9)' : '#0a0a12',
@@ -225,7 +236,7 @@ function AvatarCompositeSection({
                                             ))}
                                         </select>
                                         <button
-                                            onClick={() => setAvatarCompositeRoleTransformLink(normalizedEditingStageKey, layerId, null, colorScheme)}
+                                            onClick={() => writeLayerValue(layerId, 'linkTo', null)}
                                             disabled={!isLinked}
                                             className="rounded-lg px-2 py-1.5 text-[11px] border transition-all bg-white/5 border-white/15 text-white/70 disabled:opacity-40 disabled:cursor-not-allowed"
                                             title="Clear current layer link"
@@ -233,7 +244,7 @@ function AvatarCompositeSection({
                                             Unlink
                                         </button>
                                         <button
-                                            onClick={() => setAvatarCompositeRoleTransformLinkOpacity(normalizedEditingStageKey, layerId, !layer.linkOpacity, colorScheme)}
+                                            onClick={() => writeLayerValue(layerId, 'linkOpacity', !layer.linkOpacity)}
                                             disabled={!isLinked}
                                             className={`rounded-lg px-2 py-1.5 text-[11px] border transition-all ${layer.linkOpacity ? 'bg-cyan-500/20 border-cyan-400/50 text-cyan-100' : 'bg-white/5 border-white/15 text-white/70'} disabled:opacity-40 disabled:cursor-not-allowed`}
                                         >
@@ -254,7 +265,7 @@ function AvatarCompositeSection({
                                         max={1}
                                         step={0.01}
                                         disabled={!tunerEnabled || !layer.enabled || opacityLocked}
-                                        onChange={(value) => setAvatarCompositeRoleTransformValue(normalizedEditingStageKey, layerId, 'opacity', value, colorScheme)}
+                                        onChange={(value) => writeLayerValue(layerId, 'opacity', value)}
                                     />
                                     <RangeControl
                                         label="Scale"
@@ -263,7 +274,7 @@ function AvatarCompositeSection({
                                         max={2}
                                         step={0.01}
                                         disabled={!tunerEnabled || !layer.enabled || transformsLocked}
-                                        onChange={(value) => setAvatarCompositeRoleTransformValue(normalizedEditingStageKey, layerId, 'scale', value, colorScheme)}
+                                        onChange={(value) => writeLayerValue(layerId, 'scale', value)}
                                     />
                                     <RangeControl
                                         label="Rotate"
@@ -273,7 +284,7 @@ function AvatarCompositeSection({
                                         step={1}
                                         suffix="deg"
                                         disabled={!tunerEnabled || !layer.enabled || transformsLocked}
-                                        onChange={(value) => setAvatarCompositeRoleTransformValue(normalizedEditingStageKey, layerId, 'rotateDeg', value, colorScheme)}
+                                        onChange={(value) => writeLayerValue(layerId, 'rotateDeg', value)}
                                     />
                                     <div className="grid grid-cols-3 gap-2">
                                         <button
@@ -291,7 +302,7 @@ function AvatarCompositeSection({
                                             +5 deg
                                         </button>
                                         <button
-                                            onClick={() => setAvatarCompositeRoleTransformValue(normalizedEditingStageKey, layerId, 'rotateDeg', 0, colorScheme)}
+                                            onClick={() => writeLayerValue(layerId, 'rotateDeg', 0)}
                                             disabled={!tunerEnabled || !layer.enabled || transformsLocked}
                                             className="rounded-lg px-2 py-1.5 text-[11px] bg-white/5 border border-white/15 text-white/70 disabled:opacity-40 disabled:cursor-not-allowed"
                                         >
@@ -306,7 +317,7 @@ function AvatarCompositeSection({
                                         step={1}
                                         suffix="px"
                                         disabled={!tunerEnabled || !layer.enabled || transformsLocked}
-                                        onChange={(value) => setAvatarCompositeRoleTransformValue(normalizedEditingStageKey, layerId, 'x', value, colorScheme)}
+                                        onChange={(value) => writeLayerValue(layerId, 'x', value)}
                                     />
                                     <RangeControl
                                         label="Y"
@@ -316,7 +327,7 @@ function AvatarCompositeSection({
                                         step={1}
                                         suffix="px"
                                         disabled={!tunerEnabled || !layer.enabled || transformsLocked}
-                                        onChange={(value) => setAvatarCompositeRoleTransformValue(normalizedEditingStageKey, layerId, 'y', value, colorScheme)}
+                                        onChange={(value) => writeLayerValue(layerId, 'y', value)}
                                     />
                                     <button
                                         onClick={() => resetTransforms(layerId)}

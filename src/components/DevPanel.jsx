@@ -13,7 +13,7 @@ import { useNavigationStore } from '../state/navigationStore';
 import { useTutorialStore } from '../state/tutorialStore';
 import { normalizeStageKey } from '../config/avatarStageAssets.js';
 import { useAvatarStageDefaultsStore } from '../state/avatarV3Store.js';
-import { AVATAR_COMPOSITE_LAYER_IDS, AVATAR_COMPOSITE_STAGE_KEYS, useDevPanelStore } from '../state/devPanelStore.js';
+import { AVATAR_COMPOSITE_LAYER_IDS, useDevPanelStore } from '../state/devPanelStore.js';
 import { CoordinateHelper } from './dev/CoordinateHelper.jsx';
 import { OnboardingContentEditor, TutorialEditor } from './dev/TutorialEditor.jsx';
 import { getQuickDashboardTiles, getCurriculumPracticeBreakdown, getPracticeDetailMetrics } from '../reporting/dashboardProjection.js';
@@ -221,40 +221,22 @@ export function DevPanel({
     const setAvatarStage = setAvatarStageProp ?? setAvatarStageLocal;
     const normalizedAvatarStageKey = normalizeStageKey(avatarStage);
     const getResolvedAvatarStageDefault = useAvatarStageDefaultsStore(s => s.getResolvedStageDefault);
-    const avatarCompositeDraftsDarkByStage = useDevPanelStore(s => s.avatarComposite?.transformsByStage);
-    const avatarCompositeDraftsLightByStage = useDevPanelStore(s => s.avatarComposite?.transformsByStageLight);
-    const avatarCompositeDraftsByStage = isLight ? avatarCompositeDraftsLightByStage : avatarCompositeDraftsDarkByStage;
+    const currentAvatarDraftBucket = useDevPanelStore(
+        s => s.avatarComposite?.draftsByTheme?.[colorScheme]?.[normalizedAvatarStageKey]
+    );
     const getAvatarCompositeStageDraft = useDevPanelStore(s => s.getAvatarCompositeStageDraft);
     const setAvatarCompositePreviewDraft = useDevPanelStore(s => s.setAvatarCompositePreviewDraft);
-    const hydrateAvatarCompositeDrafts = useDevPanelStore(s => s.hydrateAvatarCompositeDrafts);
     const replaceAvatarCompositeStageDraft = useDevPanelStore(s => s.replaceAvatarCompositeStageDraft);
     const [avatarDefaultStatus, setAvatarDefaultStatus] = useState(null);
     const [avatarPromoteAck, setAvatarPromoteAck] = useState(null);
-    const avatarDraftHydratedRef = useRef(false);
 
     useEffect(() => {
         if (!isOpen) {
-            avatarDraftHydratedRef.current = false;
             setAvatarCompositePreviewDraft(false);
             return;
         }
         setAvatarCompositePreviewDraft(true);
-        if (!avatarDraftHydratedRef.current) {
-            const resolvedDarkDrafts = {};
-            const resolvedLightDrafts = {};
-            AVATAR_COMPOSITE_STAGE_KEYS.forEach((stageKey) => {
-                resolvedDarkDrafts[stageKey] = avatarCompositeDraftsDarkByStage?.[stageKey] || getResolvedAvatarStageDefault(stageKey, 'dark');
-                resolvedLightDrafts[stageKey] = avatarCompositeDraftsLightByStage?.[stageKey] || getResolvedAvatarStageDefault(stageKey, 'light');
-            });
-            hydrateAvatarCompositeDrafts(resolvedDarkDrafts, 'dark');
-            hydrateAvatarCompositeDrafts(resolvedLightDrafts, 'light');
-            avatarDraftHydratedRef.current = true;
-        }
     }, [
-        avatarCompositeDraftsDarkByStage,
-        avatarCompositeDraftsLightByStage,
-        getResolvedAvatarStageDefault,
-        hydrateAvatarCompositeDrafts,
         isOpen,
         setAvatarCompositePreviewDraft,
     ]);
@@ -265,9 +247,9 @@ export function DevPanel({
         };
     }, [setAvatarCompositePreviewDraft]);
 
-    const currentAvatarDraft =
-        avatarCompositeDraftsByStage?.[normalizedAvatarStageKey] ||
-        getAvatarCompositeStageDraft(normalizedAvatarStageKey, colorScheme);
+    const currentAvatarDraft = currentAvatarDraftBucket
+        ? normalizeAvatarStageSnapshot(currentAvatarDraftBucket)
+        : getAvatarCompositeStageDraft(normalizedAvatarStageKey, colorScheme);
     const currentAvatarDefault = getResolvedAvatarStageDefault(normalizedAvatarStageKey, colorScheme);
     const hasUnsavedAvatarDraft = !areAvatarStageSnapshotsEqual(currentAvatarDraft, currentAvatarDefault);
     const avatarDraftStatusLabel = hasUnsavedAvatarDraft

@@ -76,6 +76,18 @@ export function getCanonicalAvatarStageDefaultTransforms(stageKey, colorScheme =
   return sanitizeAvatarDefaultStageTransforms(canonical, canonical);
 }
 
+function cloneResolvedAvatarStageDefault(stageKey, colorScheme = 'dark', stageTransforms = null) {
+  const normalizedStage = normalizeStageKey(stageKey);
+  const sourceStageTransforms =
+    stageTransforms && typeof stageTransforms === 'object'
+      ? stageTransforms
+      : getCanonicalAvatarStageDefaultTransforms(normalizedStage, colorScheme);
+  return sanitizeAvatarDefaultStageTransforms(
+    sourceStageTransforms,
+    getCanonicalAvatarStageDefaultTransforms(normalizedStage, colorScheme)
+  );
+}
+
 function sanitizeAvatarDefaultStageTransforms(stageTransforms = {}, canonicalStageTransforms = {}) {
   const source = stageTransforms && typeof stageTransforms === 'object' ? stageTransforms : {};
   const canonical = canonicalStageTransforms && typeof canonicalStageTransforms === 'object'
@@ -218,14 +230,19 @@ export const useAvatarStageDefaultsStore = create(
       const scheme = normalizeAvatarDefaultScheme(colorScheme);
       const state = get();
       const byScheme = scheme === 'light' ? state.defaultsByStageLight : state.defaultsByStage;
-      return byScheme[normalizedStage] || byScheme.seedling || getCanonicalAvatarStageDefaultTransforms('seedling', scheme);
+      return cloneResolvedAvatarStageDefault(
+        normalizedStage,
+        scheme,
+        byScheme[normalizedStage] || byScheme.seedling
+      );
     },
 
     getResolvedRoleDefault: (stageKey, layerId, colorScheme = 'dark') => {
       const normalizedLayerId = normalizeAvatarDefaultLayerId(layerId) || AVATAR_STAGE_DEFAULT_LAYER_IDS[0];
       const stageDefaults = get().getResolvedStageDefault(stageKey, colorScheme);
-      return stageDefaults[normalizedLayerId] || {
+      return {
         ...AVATAR_STAGE_DEFAULT_LAYER,
+        ...sanitizeAvatarDefaultLayerPatch(normalizedLayerId, stageDefaults[normalizedLayerId]),
       };
     },
 
