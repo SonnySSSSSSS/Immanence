@@ -166,6 +166,19 @@ function logAvatarSchemeIsolationProbe(detail = {}) {
 }
 // PROBE:avatar-scheme-isolation:END
 
+// PROBE:avatar-rotation-space:START
+let _rotationSpaceProbeSeq = 0;
+
+function logAvatarRotationSpaceProbe(detail = {}) {
+  if (!import.meta.env.DEV) return;
+  _rotationSpaceProbeSeq += 1;
+  console.info('[PROBE:avatar-rotation-space] AvatarComposite', {
+    seq: _rotationSpaceProbeSeq,
+    ...detail,
+  });
+}
+// PROBE:avatar-rotation-space:END
+
 function handleLayerImageError(event) {
   console.error('AvatarComposite failed to load:', event?.target?.src);
 }
@@ -356,6 +369,49 @@ export function AvatarComposite({ stage, size, path = null }) {
   const stageStyle = getDevStyleForLayer('stage', effectiveLayers.stage);
   const glassStyle = getDevStyleForLayer('glass', effectiveLayers.glass);
   const ringStyle = getDevStyleForLayer('ring', effectiveLayers.ring);
+
+  // PROBE:avatar-rotation-space:START
+  if (import.meta.env.DEV) {
+    logAvatarRotationSpaceProbe({
+      stage: normalizedStage,
+      colorScheme,
+      // translate(x,y) is the LEFTMOST CSS transform function — operates in the PARENT's
+      // coordinate frame. The parent .avatar-composite has no rotation in its CSS, so
+      // the stored x/y values produce axis-aligned (horizontal/vertical) movement.
+      transformOrder: 'translate(x,y) → rotate(deg) → scale(s) — translate is leftmost = parent-space = rotation-independent',
+      storedXY: {
+        bg:    { x: effectiveLayers.bg.x,    y: effectiveLayers.bg.y,    rotateDeg: effectiveLayers.bg.rotateDeg },
+        stage: { x: effectiveLayers.stage.x, y: effectiveLayers.stage.y, rotateDeg: effectiveLayers.stage.rotateDeg },
+        glass: { x: effectiveLayers.glass.x, y: effectiveLayers.glass.y, rotateDeg: effectiveLayers.glass.rotateDeg },
+        ring:  { x: effectiveLayers.ring.x,  y: effectiveLayers.ring.y,  rotateDeg: effectiveLayers.ring.rotateDeg },
+      },
+      computedTransforms: {
+        bg:    bgStyle.transform,
+        stage: stageStyle.transform,
+        glass: glassStyle.transform,
+        ring:  ringStyle.transform,
+      },
+      baseRotations: {
+        bg:    BASE_TRANSFORM_BY_LAYER.bg.rotateDeg,
+        stage: BASE_TRANSFORM_BY_LAYER.stage.rotateDeg,
+        glass: BASE_TRANSFORM_BY_LAYER.glass.rotateDeg,
+        ring:  BASE_TRANSFORM_BY_LAYER.ring.rotateDeg,
+      },
+      containerRotations: {
+        avatarComposite: 'none — CSS: position:relative, isolation:isolate only',
+        globeClip:       'none — CSS: overflow:hidden, border-radius only',
+        ringWrap:        'none set on element; ringStyle provides the layer transform',
+        ringSpinChild:   'CSS animation rotate(0→360deg) — on CHILD of ring-wrap, does NOT contaminate ring-wrap coordinate frame',
+        avatarV3:        'none — CSS: inline-flex, drop-shadow filter only',
+      },
+      finding:
+        'No rotation contamination found in allowlisted files. ' +
+        'If diagonal drift is observed at runtime, the rotation owner is in an ancestor ' +
+        'element OUTSIDE the allowlisted files. See DOM ancestor check in useLayoutEffect below.',
+    });
+  }
+  // PROBE:avatar-rotation-space:END
+
   const substrateDescriptor = {
     stage,
     normalizedStage,
@@ -510,6 +566,61 @@ export function AvatarComposite({ stage, size, path = null }) {
     glassStyle.transform,
     ringStyle.transform,
   ]);
+
+  // PROBE:avatar-rotation-space:START
+  // Walk DOM ancestors after mount/update to detect any CSS rotation that would
+  // contaminate the coordinate space used by stored x/y → translate(x,y) in
+  // getDevStyleForLayer. 'matrix(a,b,c,d,tx,ty)' has rotation when b≠0 or c≠0.
+  useLayoutEffect(() => {
+    if (!import.meta.env.DEV) return undefined;
+    if (!rootRef.current) return undefined;
+    const rotationOwners = [];
+    let el = rootRef.current.parentElement;
+    let depth = 0;
+    while (el && depth < 20) {
+      const computedTransform = window.getComputedStyle(el).transform || '';
+      if (computedTransform && computedTransform !== 'none') {
+        let hasRotation = false;
+        const m = computedTransform.match(/^matrix\(([^)]+)\)/);
+        if (m) {
+          const parts = m[1].split(',').map(Number);
+          // parts: [a, b, c, d, tx, ty] — rotation ↔ b≠0 or c≠0
+          hasRotation = Math.abs(parts[1]) > 0.001 || Math.abs(parts[2]) > 0.001;
+        } else if (/matrix3d/.test(computedTransform)) {
+          hasRotation = true; // conservative: flag all matrix3d as potentially rotated
+        }
+        rotationOwners.push({
+          depth,
+          tag: el.tagName.toLowerCase(),
+          id: el.id || null,
+          classNames: typeof el.className === 'string' ? el.className.slice(0, 80) : '(non-string)',
+          computedTransform: computedTransform.slice(0, 120),
+          hasRotation,
+        });
+      }
+      el = el.parentElement;
+      depth += 1;
+    }
+    const rotatingAncestors = rotationOwners.filter((r) => r.hasRotation);
+    if (rotatingAncestors.length > 0) {
+      console.error(
+        '[PROBE:avatar-rotation-space] STOP GATE — ROTATION CONTAMINATION: ' +
+        'ancestor elements with active rotation transforms found. ' +
+        'These contaminate the coordinate space for stored x/y values. ' +
+        'Owner is OUTSIDE the allowlisted files.',
+        { stage: normalizedStage, colorScheme, rotatingAncestors },
+      );
+    } else {
+      console.info(
+        '[PROBE:avatar-rotation-space] ancestor DOM check CLEAN — no rotation in ancestor chain ' +
+        '(checked 20 levels). If diagonal drift still occurs, cause is NOT rotation contamination ' +
+        'in the layer coordinate path.',
+        { stage: normalizedStage, colorScheme, ancestorsWithAnyTransform: rotationOwners },
+      );
+    }
+    return undefined;
+  }, [normalizedStage, colorScheme]);
+  // PROBE:avatar-rotation-space:END
 
   return (
     <div

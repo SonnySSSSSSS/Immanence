@@ -563,6 +563,7 @@ function App({ playgroundMode = false, playgroundBottomLayer = true }) {
 
 
   // v3.27.284 - probe(avatar): add PROBE:avatar-scheme-isolation to confirm light/dark store isolation
+  // v3.27.285 - probe(avatar): add PROBE:avatar-rotation-space — static analysis clean; DOM ancestor walk confirms at runtime
   // v3.27.283 - refactor(card): collapse path selector into eyebrow row for visual balance
   // v3.27.282 - restore(hub): path selector button integrated into daily practice card top-left shoulder
   // v3.27.281 - fix(avatar-persist): bump persist v6, force-reset stale corrupted snapshot data and simplify merge

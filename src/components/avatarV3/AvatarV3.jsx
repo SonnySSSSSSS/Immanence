@@ -146,6 +146,14 @@ export function AvatarV3({
   // It does NOT read or write avatar scheme-specific state directly.
   // Scheme isolation lives in AvatarComposite (reads colorScheme from useDisplayModeStore).
   // PROBE:avatar-scheme-isolation:END
+  // PROBE:avatar-rotation-space:START
+  // AvatarV3 applies no coordinate transforms to props before passing them to AvatarComposite.
+  // stage, modeWeights, size, and path pass through unchanged — no x/y mapping, rotation
+  // adjustment, or editor-vs-render space conversion exists at this level.
+  // The outer <div className="avatar-v3..."> has no CSS rotation (inline-flex + drop-shadow only).
+  // If axis-misaligned movement is observed, the origin is in AvatarComposite's render path
+  // or in the parent host wrapping AvatarV3 — NOT in this component.
+  // PROBE:avatar-rotation-space:END
   if (AVATAR_V3_HMR_DERIVATION_PROBE_ENABLED) {
     logAvatarHmrDerivationProbe('AvatarV3', 'render-pass-through', {
       stage,

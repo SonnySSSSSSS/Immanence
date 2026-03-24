@@ -380,6 +380,24 @@ export const useAvatarStageDefaultsStore = create(
         }
         // PROBE:avatar-scheme-isolation:END
 
+        // PROBE:avatar-rotation-space:START
+        // Store values are coordinate-space neutral — x/y are stored and retrieved as plain
+        // canonical numbers with no rotation-aware compensation. The coordinate meaning
+        // (translate-first = parent-space) is enforced at the render boundary in
+        // AvatarComposite.getDevStyleForLayer: transform = translate(x,y) rotate(deg) scale(s).
+        // Writing x=10 here stores exactly 10 — no axis rotation is applied to the value.
+        if (AVATAR_SCHEME_ISOLATION_PROBE_ENABLED) {
+          logSchemeisolationProbe('setStageDefault-rotation-space', {
+            stageKey: normalizedStage,
+            writingScheme: scheme,
+            rawXValues: Object.fromEntries(
+              Object.entries(snapshot).map(([layerId, layer]) => [layerId, { x: layer.x, y: layer.y, rotateDeg: layer.rotateDeg }])
+            ),
+            finding: 'x/y stored as raw canonical numbers — no coordinate-space conversion',
+          });
+        }
+        // PROBE:avatar-rotation-space:END
+
         return nextState;
       }),
 
