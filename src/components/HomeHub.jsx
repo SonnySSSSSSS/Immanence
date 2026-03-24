@@ -58,6 +58,44 @@ const SANCTUARY_RAIL_STYLE = {
   position: 'relative',
 };
 
+// PROBE:avatar-hmr-host:START
+const HOME_HUB_HMR_HOST_PROBE_ENABLED = import.meta.env.DEV && Boolean(import.meta.hot);
+
+function getHomeHubHmrHostProbeContext() {
+  if (!HOME_HUB_HMR_HOST_PROBE_ENABLED || typeof window === 'undefined') return null;
+  const probe = window.__avatarHmrHostProbe__ ?? {
+    eventSeq: 0,
+    appMountSeq: 0,
+    sectionViewMountSeq: 0,
+    homeHubMountSeq: 0,
+    avatarV3MountSeq: 0,
+  };
+  probe.homeHubMountSeq = probe.homeHubMountSeq ?? 0;
+  probe.avatarV3MountSeq = probe.avatarV3MountSeq ?? 0;
+  window.__avatarHmrHostProbe__ = probe;
+  return probe;
+}
+
+function logHomeHubHmrHostProbe(event, detail = {}) {
+  const probe = getHomeHubHmrHostProbeContext();
+  if (!probe) return;
+  probe.eventSeq += 1;
+  console.info('[PROBE:avatar-hmr-host]', {
+    seq: probe.eventSeq,
+    source: 'HomeHub',
+    event,
+    timestamp: new Date().toISOString(),
+    detail,
+  });
+}
+
+if (HOME_HUB_HMR_HOST_PROBE_ENABLED) {
+  logHomeHubHmrHostProbe('module-eval', {
+    hasHotData: Boolean(import.meta.hot?.data),
+  });
+}
+// PROBE:avatar-hmr-host:END
+
 const sanitizeModeTileBackgroundImage = (bgUrl) => {
   const raw = typeof bgUrl === 'string' ? bgUrl.trim() : '';
   if (!raw || raw === 'none' || raw === 'url(none)' || raw === 'url("none")' || raw === "url('none')") {
@@ -214,9 +252,32 @@ function HomeHub({ onSelectSection, activeSection = null, currentStage, previewP
   const [showTrackingHub, setShowTrackingHub] = useState(false);
   const [archiveOptions, setArchiveOptions] = useState({ initialTab: 'all', initialReportDomain: null });
   const trackerLaunchContext = useUiStore(s => s.trackerLaunchContext);
-  const restartPath = useNavigationStore((s) => s.restartPath);
-  const abandonPath = useNavigationStore((s) => s.abandonPath);
-  const [showStudentActiveActions, setShowStudentActiveActions] = useState(false);
+  const homeHubProbeIdRef = useRef(null);
+
+  useEffect(() => {
+    if (homeHubProbeIdRef.current == null) {
+      if (HOME_HUB_HMR_HOST_PROBE_ENABLED) {
+        const probe = getHomeHubHmrHostProbeContext();
+        probe.homeHubMountSeq += 1;
+        homeHubProbeIdRef.current = probe.homeHubMountSeq;
+      } else {
+        homeHubProbeIdRef.current = 'host-probe-disabled';
+      }
+    }
+
+    logHomeHubHmrHostProbe('mount', {
+      probeId: homeHubProbeIdRef.current,
+      activeSection,
+      currentStage,
+      previewPath,
+    });
+    return () => {
+      logHomeHubHmrHostProbe('unmount', {
+        probeId: homeHubProbeIdRef.current,
+        activeSection,
+      });
+    };
+  }, [activeSection, currentStage, previewPath]);
 
   // Dynamic max-width based on display mode: sanctuary=1024px, hearth=580px (narrower for visual balance)
   const streakInfo = getStreakInfo();
@@ -286,30 +347,41 @@ function HomeHub({ onSelectSection, activeSection = null, currentStage, previewP
     handleSelectSection('practice');
   };
 
+  logHomeHubHmrHostProbe('render-avatar-host', {
+    probeId: homeHubProbeIdRef.current,
+    activeSection,
+    currentStage,
+    avatarStage,
+    effectiveStage,
+    normalizedStage,
+    previewPath,
+    storedPath,
+    avatarPath,
+    colorScheme,
+    userMode,
+    accessPosture,
+    activeUserId,
+    modeWeights,
+    isPracticing,
+    lockToHub,
+    leftRolled,
+    rightRolled,
+    decayExpanded,
+    showCurriculumHub,
+    showCurriculumOnboarding,
+    hasPersistedCurriculumData,
+    activePath,
+    hostWrapperIdentity: 'HomeHub:avatar-surface',
+    avatarKey: null,
+    lastStageChange,
+    lastModeChange,
+    lastSessionComplete,
+  });
+
   const handleCloseLauncher = () => {
     setLauncherContext(null);
     handleSelectSection(null);
   };
-
-  const openStudentActiveActions = React.useCallback(() => {
-    if (!activePath) return;
-    setShowStudentActiveActions(true);
-  }, [activePath]);
-
-  const closeStudentActiveActions = React.useCallback(() => {
-    setShowStudentActiveActions(false);
-  }, []);
-
-  const handleRestartPathFromStudentActive = React.useCallback(() => {
-    restartPath?.();
-    setShowStudentActiveActions(false);
-  }, [restartPath]);
-
-  const handleAbandonPathFromStudentActive = React.useCallback(() => {
-    if (!window.confirm('Are you sure you want to abandon this path? All progress will be lost.')) return;
-    abandonPath?.();
-    setShowStudentActiveActions(false);
-  }, [abandonPath]);
 
   const openArchive = (initialTab = ARCHIVE_TABS.ALL, initialReportDomain = null) => {
     setArchiveOptions({ initialTab, initialReportDomain });
@@ -337,20 +409,6 @@ function HomeHub({ onSelectSection, activeSection = null, currentStage, previewP
     window.addEventListener('immanence-open-archive', handler);
     return () => window.removeEventListener('immanence-open-archive', handler);
   }, []);
-
-  useEffect(() => {
-    if (!showStudentActiveActions) return undefined;
-
-    const onKeyDown = (event) => {
-      if (event.key === 'Escape') {
-        event.preventDefault();
-        setShowStudentActiveActions(false);
-      }
-    };
-
-    window.addEventListener('keydown', onKeyDown);
-    return () => window.removeEventListener('keydown', onKeyDown);
-  }, [showStudentActiveActions]);
 
   useEffect(() => {
     if (trackerLaunchContext?.target === 'applicationHeatmap') {
@@ -1057,7 +1115,6 @@ function HomeHub({ onSelectSection, activeSection = null, currentStage, previewP
                 onViewCurriculum={openCurriculumHub}
                 onNavigate={handleSelectSection}
                 hasPersistedCurriculumData={hasPersistedCurriculumData}
-                onOpenPathSelector={activePath ? openStudentActiveActions : undefined}
                 onboardingComplete={curriculumOnboardingComplete}
                 practiceTimeSlots={practiceTimeSlots}
                 onStartSetup={handleOpenCurriculumSetup}
@@ -1265,81 +1322,6 @@ function HomeHub({ onSelectSection, activeSection = null, currentStage, previewP
             onDismiss={() => setShowCurriculumOnboarding(false)}
             onComplete={handleCurriculumSetupComplete}
           />,
-          document.body
-        )}
-
-        {showStudentActiveActions && createPortal(
-          <div className="fixed inset-0 z-[10010] isolate">
-            <button
-              type="button"
-              aria-label="Close student active actions"
-              className="absolute inset-0 bg-black/45 backdrop-blur-md"
-              onClick={closeStudentActiveActions}
-            />
-            <div className="absolute inset-0 flex items-center justify-center px-6">
-              <div
-                data-testid="student-active-actions-dialog"
-                className="w-full max-w-sm rounded-[28px] border p-6 shadow-2xl"
-                style={{
-                  borderColor: isLight ? 'rgba(100, 80, 60, 0.18)' : 'rgba(255,255,255,0.12)',
-                  background: isLight
-                    ? 'linear-gradient(180deg, rgba(250,246,238,0.98) 0%, rgba(245,239,229,0.96) 100%)'
-                    : 'linear-gradient(180deg, rgba(12,16,20,0.96) 0%, rgba(16,20,26,0.94) 100%)',
-                  color: isLight ? '#3c3020' : '#fdfbf5',
-                  boxShadow: isLight
-                    ? '0 24px 50px rgba(70, 52, 30, 0.16)'
-                    : '0 28px 60px rgba(0, 0, 0, 0.5)',
-                }}
-                onClick={(event) => event.stopPropagation()}
-              >
-                <div className="text-[10px] font-black uppercase tracking-[0.24em]" style={{ color: isLight ? 'rgba(60,50,35,0.62)' : 'rgba(253,251,245,0.55)' }}>
-                  Active Path
-                </div>
-                <div className="mt-3 text-2xl font-semibold" style={{ fontFamily: 'var(--font-display)' }}>
-                  Path Selector
-                </div>
-                <div className="mt-2 text-sm" style={{ color: isLight ? 'rgba(60,50,35,0.72)' : 'rgba(253,251,245,0.68)' }}>
-                  Restart this run from Day 1, or abandon the path entirely.
-                </div>
-                <div className="mt-6 flex flex-col gap-3">
-                  <button
-                    type="button"
-                    onClick={handleRestartPathFromStudentActive}
-                    className="rounded-full px-4 py-3 text-[10px] font-black uppercase tracking-[0.22em] transition-all hover:scale-[1.02]"
-                    style={{
-                      background: 'linear-gradient(135deg, var(--accent-color), var(--accent-70))',
-                      color: '#fff',
-                      boxShadow: '0 8px 20px var(--accent-30)',
-                    }}
-                  >
-                    Restart Path
-                  </button>
-                  <button
-                    type="button"
-                    onClick={handleAbandonPathFromStudentActive}
-                    className="rounded-full border px-4 py-3 text-[10px] font-black uppercase tracking-[0.22em] transition-all hover:scale-[1.02]"
-                    style={{
-                      borderColor: isLight ? 'rgba(180,60,40,0.22)' : 'rgba(255,100,80,0.22)',
-                      background: isLight ? 'rgba(255,240,235,0.75)' : 'rgba(255,80,60,0.08)',
-                      color: isLight ? 'rgba(160,40,20,0.88)' : 'rgba(255,130,110,0.9)',
-                    }}
-                  >
-                    Abandon Path
-                  </button>
-                  <button
-                    type="button"
-                    onClick={closeStudentActiveActions}
-                    className="rounded-full px-4 py-2 text-[10px] font-black uppercase tracking-[0.22em]"
-                    style={{
-                      color: isLight ? 'rgba(60,50,35,0.62)' : 'rgba(253,251,245,0.58)',
-                    }}
-                  >
-                    Close
-                  </button>
-                </div>
-              </div>
-            </div>
-          </div>,
           document.body
         )}
 

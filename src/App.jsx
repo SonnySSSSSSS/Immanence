@@ -51,6 +51,40 @@ const DISABLE_SELECTION = false;
 const USER_STATE_SYNC_DEBUG = false;
 const logger = createLogger("App");
 
+// PROBE:avatar-hmr-host:START
+const AVATAR_HMR_HOST_PROBE_ENABLED = import.meta.env.DEV && Boolean(import.meta.hot);
+
+function getAvatarHmrHostProbeContext() {
+  if (!AVATAR_HMR_HOST_PROBE_ENABLED || typeof window === "undefined") return null;
+  const probe = window.__avatarHmrHostProbe__ ?? {
+    eventSeq: 0,
+    appMountSeq: 0,
+    sectionViewMountSeq: 0,
+  };
+  window.__avatarHmrHostProbe__ = probe;
+  return probe;
+}
+
+function logAvatarHmrHostProbe(source, event, detail = {}) {
+  const probe = getAvatarHmrHostProbeContext();
+  if (!probe) return;
+  probe.eventSeq += 1;
+  console.info("[PROBE:avatar-hmr-host]", {
+    seq: probe.eventSeq,
+    source,
+    event,
+    timestamp: new Date().toISOString(),
+    detail,
+  });
+}
+
+if (AVATAR_HMR_HOST_PROBE_ENABLED) {
+  logAvatarHmrHostProbe("App", "module-eval", {
+    hasHotData: Boolean(import.meta.hot?.data),
+  });
+}
+// PROBE:avatar-hmr-host:END
+
 function SectionView({ section, isPracticing, onPracticingChange, onBreathStateChange, onStageChange, currentStage, previewPath, previewShowCore, previewAttention, showFxGallery, onNavigate, onOpenHardwareGuide, onOpenPhotic, hideCards, isActiveBreathSession = false, isBreathLayoutLocked = false }) {
   // NOTE: Previously had a special vipassana branch that rendered PracticeSection without wrapper divs.
   // This caused unmount/remount when transitioning to vipassana practices because the tree structure changed.
@@ -58,6 +92,31 @@ function SectionView({ section, isPracticing, onPracticingChange, onBreathStateC
   // so wrapper divs don't affect its fullscreen rendering. Keeping consistent tree structure prevents
   // the unmount/remount bug that was resetting sessions.
   
+  const sectionViewProbeIdRef = useRef(null);
+
+  useEffect(() => {
+    if (sectionViewProbeIdRef.current == null) {
+      if (AVATAR_HMR_HOST_PROBE_ENABLED) {
+        const probe = getAvatarHmrHostProbeContext();
+        probe.sectionViewMountSeq += 1;
+        sectionViewProbeIdRef.current = probe.sectionViewMountSeq;
+      } else {
+        sectionViewProbeIdRef.current = "host-probe-disabled";
+      }
+    }
+
+    logAvatarHmrHostProbe("SectionView", "mount", {
+      probeId: sectionViewProbeIdRef.current,
+      section,
+    });
+    return () => {
+      logAvatarHmrHostProbe("SectionView", "unmount", {
+        probeId: sectionViewProbeIdRef.current,
+        section,
+      });
+    };
+  }, [section]);
+
   return (
     <div className="w-full flex flex-col items-center section-enter" style={{ overflow: 'visible' }}>
       <div
@@ -185,6 +244,17 @@ function App({ playgroundMode = false, playgroundBottomLayer = true }) {
   const isFirefox = typeof navigator !== 'undefined' && navigator.userAgent.toLowerCase().includes('firefox');
   const selectionEnabled = !DISABLE_SELECTION;
   const devtoolsTapRef = useRef({ count: 0, firstTs: 0 });
+  const appProbeIdRef = useRef(null);
+
+  if (appProbeIdRef.current == null) {
+    if (AVATAR_HMR_HOST_PROBE_ENABLED) {
+      const probe = getAvatarHmrHostProbeContext();
+      probe.appMountSeq += 1;
+      appProbeIdRef.current = probe.appMountSeq;
+    } else {
+      appProbeIdRef.current = "host-probe-disabled";
+    }
+  }
 
   useEffect(() => {
     if (!isDev && !devPanelGateEnabled) return undefined;
@@ -220,6 +290,17 @@ function App({ playgroundMode = false, playgroundBottomLayer = true }) {
       window.__IMMANENCE_USER_MODE_RESOLVE_PROBE__ = snapshot;
     }
   }, [accessPosture, activeSection, authUser?.email, authUser?.id, hasChosenUserMode, playgroundMode, userMode]);
+
+  useEffect(() => {
+    logAvatarHmrHostProbe("App", "mount", {
+      probeId: appProbeIdRef.current,
+    });
+    return () => {
+      logAvatarHmrHostProbe("App", "unmount", {
+        probeId: appProbeIdRef.current,
+      });
+    };
+  }, []);
 
   const handleClosePhotic = useCallback(() => {
     setIsPhoticOpen(false);
@@ -388,6 +469,24 @@ function App({ playgroundMode = false, playgroundBottomLayer = true }) {
   const effectivePreviewStage = playgroundMode ? overrideStage : previewStage;
   const effectivePreviewPath = playgroundMode ? overridePath : previewPath;
   const effectiveAvatarStage = playgroundMode ? overrideStage : avatarStage;
+  const appHostBranch = activeSection === null ? "HomeHub" : `SectionView:${activeSection}`;
+
+  logAvatarHmrHostProbe("App", "render-host", {
+    probeId: appProbeIdRef.current,
+    activeSection,
+    defaultView,
+    playgroundMode,
+    appHostBranch,
+    hostBranchIdentity: activeSection === null ? "hub" : activeSection,
+    hideCards,
+    effectivePreviewStage,
+    effectivePreviewPath,
+    effectiveAvatarStage,
+    isPracticing,
+    showDevPanel,
+    showSettings,
+    showBackgroundBottomLayer: effectiveShowBackgroundBottomLayer,
+  });
 
   const handlePreviewStageChange = useCallback((nextStage) => {
     if (playgroundMode) {
@@ -414,7 +513,7 @@ function App({ playgroundMode = false, playgroundBottomLayer = true }) {
     setPreviewStage(stageName);
   }, [playgroundMode, setOverrideStage]);
 
-  const handleSectionSelect = useCallback((section) => {
+  const handleSectionSelect = useCallback((section, options = undefined) => {
     if (playgroundMode) {
       setActiveSection(null);
       return;
@@ -428,7 +527,7 @@ function App({ playgroundMode = false, playgroundBottomLayer = true }) {
       return;
     }
     if (section === 'navigation') {
-      if (needsSetup) {
+      if (needsSetup || options?.forceStudentNavigation === true) {
         setActiveSection('navigation');
       }
       return;
