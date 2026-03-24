@@ -98,6 +98,7 @@ function normalizeAvatarStageSnapshot(stageTransforms = {}) {
 function areAvatarStageSnapshotsEqual(left, right) {
     return JSON.stringify(normalizeAvatarStageSnapshot(left)) === JSON.stringify(normalizeAvatarStageSnapshot(right));
 }
+
 // ═══════════════════════════════════════════════════════════════════════════
 // HELPER COMPONENTS (moved outside to avoid hook rendering issues)
 // ═══════════════════════════════════════════════════════════════════════════
@@ -220,15 +221,15 @@ export function DevPanel({
     const setAvatarStage = setAvatarStageProp ?? setAvatarStageLocal;
     const normalizedAvatarStageKey = normalizeStageKey(avatarStage);
     const getResolvedAvatarStageDefault = useAvatarStageDefaultsStore(s => s.getResolvedStageDefault);
-    const avatarCompositeDraftsByStage = useDevPanelStore(s =>
-        isLight ? s.avatarComposite?.transformsByStageLight : s.avatarComposite?.transformsByStage
-    );
+    const avatarCompositeDraftsDarkByStage = useDevPanelStore(s => s.avatarComposite?.transformsByStage);
+    const avatarCompositeDraftsLightByStage = useDevPanelStore(s => s.avatarComposite?.transformsByStageLight);
+    const avatarCompositeDraftsByStage = isLight ? avatarCompositeDraftsLightByStage : avatarCompositeDraftsDarkByStage;
     const getAvatarCompositeStageDraft = useDevPanelStore(s => s.getAvatarCompositeStageDraft);
     const setAvatarCompositePreviewDraft = useDevPanelStore(s => s.setAvatarCompositePreviewDraft);
     const hydrateAvatarCompositeDrafts = useDevPanelStore(s => s.hydrateAvatarCompositeDrafts);
     const replaceAvatarCompositeStageDraft = useDevPanelStore(s => s.replaceAvatarCompositeStageDraft);
-    const [avatarDefaultStatus, setAvatarDefaultStatus] = useState('');
-    const [avatarPromoteAck, setAvatarPromoteAck] = useState('');
+    const [avatarDefaultStatus, setAvatarDefaultStatus] = useState(null);
+    const [avatarPromoteAck, setAvatarPromoteAck] = useState(null);
     const avatarDraftHydratedRef = useRef(false);
 
     useEffect(() => {
@@ -242,14 +243,16 @@ export function DevPanel({
             const resolvedDarkDrafts = {};
             const resolvedLightDrafts = {};
             AVATAR_COMPOSITE_STAGE_KEYS.forEach((stageKey) => {
-                resolvedDarkDrafts[stageKey] = getResolvedAvatarStageDefault(stageKey, 'dark');
-                resolvedLightDrafts[stageKey] = getResolvedAvatarStageDefault(stageKey, 'light');
+                resolvedDarkDrafts[stageKey] = avatarCompositeDraftsDarkByStage?.[stageKey] || getResolvedAvatarStageDefault(stageKey, 'dark');
+                resolvedLightDrafts[stageKey] = avatarCompositeDraftsLightByStage?.[stageKey] || getResolvedAvatarStageDefault(stageKey, 'light');
             });
             hydrateAvatarCompositeDrafts(resolvedDarkDrafts, 'dark');
             hydrateAvatarCompositeDrafts(resolvedLightDrafts, 'light');
             avatarDraftHydratedRef.current = true;
         }
     }, [
+        avatarCompositeDraftsDarkByStage,
+        avatarCompositeDraftsLightByStage,
         getResolvedAvatarStageDefault,
         hydrateAvatarCompositeDrafts,
         isOpen,
@@ -270,11 +273,19 @@ export function DevPanel({
     const avatarDraftStatusLabel = hasUnsavedAvatarDraft
         ? 'Unsaved Draft changes'
         : 'Draft matches canonical code Default';
-
-    useEffect(() => {
-        // eslint-disable-next-line react-hooks/set-state-in-effect
-        setAvatarPromoteAck('');
-    }, [normalizedAvatarStageKey]);
+    const buildScopedAvatarStatus = useCallback((message) => ({
+        message,
+        stageKey: normalizedAvatarStageKey,
+        colorScheme,
+    }), [colorScheme, normalizedAvatarStageKey]);
+    const visibleAvatarPromoteAck =
+        avatarPromoteAck?.stageKey === normalizedAvatarStageKey && avatarPromoteAck?.colorScheme === colorScheme
+            ? avatarPromoteAck.message
+            : '';
+    const visibleAvatarDefaultStatus =
+        avatarDefaultStatus?.stageKey === normalizedAvatarStageKey && avatarDefaultStatus?.colorScheme === colorScheme
+            ? avatarDefaultStatus.message
+            : '';
 
     const handleSaveStageDefault = useCallback(async () => {
         const nowLabel = new Date().toLocaleTimeString();
@@ -284,24 +295,24 @@ export function DevPanel({
         if (canUseClipboard) {
             try {
                 await navigator.clipboard.writeText(draftSnippet);
-                setAvatarPromoteAck(`Promote acknowledged at ${nowLabel}; stage snippet copied.`);
+                setAvatarPromoteAck(buildScopedAvatarStatus(`Promote acknowledged at ${nowLabel}; stage snippet copied.`));
             } catch {
-                setAvatarPromoteAck(`Promote acknowledged at ${nowLabel}; copy snippet manually.`);
+                setAvatarPromoteAck(buildScopedAvatarStatus(`Promote acknowledged at ${nowLabel}; copy snippet manually.`));
             }
         } else {
-            setAvatarPromoteAck(`Promote acknowledged at ${nowLabel}; copy snippet manually.`);
+            setAvatarPromoteAck(buildScopedAvatarStatus(`Promote acknowledged at ${nowLabel}; copy snippet manually.`));
         }
 
-        setAvatarDefaultStatus(`Preview-only draft. Promote by updating src/components/avatarV3/avatarDefaultPresets.js (and avatar defaults ownership if needed) for ${normalizedAvatarStageKey} (${colorScheme} scheme).`);
-    }, [colorScheme, currentAvatarDraft, normalizedAvatarStageKey, setAvatarDefaultStatus, setAvatarPromoteAck]);
+        setAvatarDefaultStatus(buildScopedAvatarStatus(`Preview-only draft. Promote by updating src/components/avatarV3/avatarDefaultPresets.js (and avatar defaults ownership if needed) for ${normalizedAvatarStageKey} (${colorScheme} scheme).`));
+    }, [buildScopedAvatarStatus, colorScheme, currentAvatarDraft, normalizedAvatarStageKey, setAvatarDefaultStatus, setAvatarPromoteAck]);
 
     const handleResetDraftToDefault = useCallback(() => {
         const stageDefault = getResolvedAvatarStageDefault(normalizedAvatarStageKey, colorScheme);
         if (!stageDefault) return;
         replaceAvatarCompositeStageDraft(normalizedAvatarStageKey, stageDefault, colorScheme);
-        setAvatarPromoteAck('');
-        setAvatarDefaultStatus(`Restored Draft from canonical code Default for ${normalizedAvatarStageKey} (${colorScheme} scheme).`);
-    }, [colorScheme, getResolvedAvatarStageDefault, normalizedAvatarStageKey, replaceAvatarCompositeStageDraft, setAvatarDefaultStatus, setAvatarPromoteAck]);
+        setAvatarPromoteAck(null);
+        setAvatarDefaultStatus(buildScopedAvatarStatus(`Restored Draft from canonical code Default for ${normalizedAvatarStageKey} (${colorScheme} scheme).`));
+    }, [buildScopedAvatarStatus, colorScheme, getResolvedAvatarStageDefault, normalizedAvatarStageKey, replaceAvatarCompositeStageDraft, setAvatarDefaultStatus, setAvatarPromoteAck]);
 
     // Collapsible sections
     const [expandedSections, setExpandedSections] = useState({
@@ -1094,7 +1105,7 @@ export function DevPanel({
                         </div>
                         <div className="devpanel-avatar-draft-status text-[11px] text-white/75 mb-3">
                             Stage: <span className="devpanel-avatar-draft-stage font-semibold text-white/90">{normalizedAvatarStageKey}</span> | Draft status: {avatarDraftStatusLabel}
-                            {avatarPromoteAck ? ` | ${avatarPromoteAck}` : ''}
+                            {visibleAvatarPromoteAck ? ` | ${visibleAvatarPromoteAck}` : ''}
                         </div>
                         <div className="grid grid-cols-2 gap-2 mb-2">
                             <button
@@ -1110,8 +1121,8 @@ export function DevPanel({
                                 Restore from Code Default
                             </button>
                         </div>
-                        {!!avatarDefaultStatus && (
-                            <div className="devpanel-helper-text text-[10px] text-white/60">{avatarDefaultStatus}</div>
+                        {!!visibleAvatarDefaultStatus && (
+                            <div className="devpanel-helper-text text-[10px] text-white/60">{visibleAvatarDefaultStatus}</div>
                         )}
                     </div>
 
@@ -1438,8 +1449,6 @@ export function DevPanel({
                         </div>
                         <OnboardingContentEditor />
                     </Section>
-
-                    {/* ═══════════════════════════════════════════════════════════════ */}
                     {/* DATA MANAGEMENT */}
                     {/* ═══════════════════════════════════════════════════════════════ */}
                     <Section

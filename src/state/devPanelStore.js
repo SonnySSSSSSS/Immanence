@@ -8,10 +8,14 @@ export const AVATAR_COMPOSITE_LAYER_IDS = ['bg', 'stage', 'glass', 'ring'];
 export const AVATAR_COMPOSITE_STAGE_KEYS = ['seedling', 'ember', 'flame', 'beacon', 'stellar'];
 
 const IS_DEV_BUILD = Boolean(import.meta?.env?.DEV);
+const IS_LOCALHOST_RUNTIME =
+  typeof window !== 'undefined' &&
+  ['localhost', '127.0.0.1'].includes(window.location?.hostname || '');
+const SHOULD_PERSIST_DEV_PANEL = IS_DEV_BUILD || IS_LOCALHOST_RUNTIME;
 
 // Production safety: devpanel tuning must not be able to "stick" across deploys via localStorage.
 // Remove any stale persisted state so shipped defaults are always authoritative.
-if (!IS_DEV_BUILD && typeof window !== 'undefined') {
+if (!SHOULD_PERSIST_DEV_PANEL && typeof window !== 'undefined') {
   try {
     window.localStorage?.removeItem?.(DEV_PANEL_PERSIST_KEY);
   } catch {
@@ -74,6 +78,7 @@ function clamp(value, min, max) {
   return Math.max(min, Math.min(max, value));
 }
 
+
 function normalizeLayerId(layerId) {
   if (typeof layerId !== 'string') return null;
   const normalized = layerId.trim().toLowerCase();
@@ -133,6 +138,44 @@ function sanitizeTransformsByStage(input = {}) {
   return next;
 }
 
+function mergeTransformsByStage(baseTransformsByStage = {}, persistedTransformsByStage = {}) {
+  const next = {};
+
+  AVATAR_COMPOSITE_STAGE_KEYS.forEach((stageKey) => {
+    next[stageKey] = sanitizeStageTransforms(
+      persistedTransformsByStage?.[stageKey] ?? baseTransformsByStage?.[stageKey]
+    );
+  });
+
+  return next;
+}
+
+function mergeAvatarComposite(baseAvatarComposite, persistedAvatarComposite = {}) {
+  const baseAvatar = baseAvatarComposite || createDefaultAvatarComposite();
+  const sanitizedPersistedAvatar = sanitizeAvatarComposite(persistedAvatarComposite);
+
+  return {
+    ...baseAvatar,
+    enabled:
+      typeof persistedAvatarComposite?.enabled === 'boolean'
+        ? persistedAvatarComposite.enabled
+        : baseAvatar.enabled,
+    previewDraft: false,
+    showDebugOverlay:
+      typeof persistedAvatarComposite?.showDebugOverlay === 'boolean'
+        ? persistedAvatarComposite.showDebugOverlay
+        : baseAvatar.showDebugOverlay,
+    transformsByStage: mergeTransformsByStage(
+      baseAvatar.transformsByStage,
+      sanitizedPersistedAvatar.transformsByStage
+    ),
+    transformsByStageLight: mergeTransformsByStage(
+      baseAvatar.transformsByStageLight,
+      sanitizedPersistedAvatar.transformsByStageLight
+    ),
+  };
+}
+
 export function sanitizeAvatarComposite(input = {}) {
   const source = input && typeof input === 'object' ? input : {};
   let transformsByStageSource =
@@ -168,6 +211,7 @@ function getTransformsByScheme(avatarComposite, colorScheme) {
     ? avatarComposite?.transformsByStageLight
     : avatarComposite?.transformsByStage;
 }
+
 
 function setTransformsByScheme(avatarComposite, colorScheme, nextTransformsByStage) {
   return resolveScheme(colorScheme) === 'light'
@@ -256,7 +300,19 @@ export function migrateDevPanelState(persistedState, version) {
     enabled: typeof persistedAvatar.enabled === 'boolean' ? persistedAvatar.enabled : true,
     previewDraft: false,
     showDebugOverlay: typeof persistedAvatar.showDebugOverlay === 'boolean' ? persistedAvatar.showDebugOverlay : false,
+    transformsByStage:
+      version >= 4 && persistedAvatar.transformsByStage
+        ? sanitizeTransformsByStage(persistedAvatar.transformsByStage)
+        : undefined,
+    transformsByStageLight:
+      version >= 4 && persistedAvatar.transformsByStageLight
+        ? sanitizeTransformsByStage(persistedAvatar.transformsByStageLight)
+        : undefined,
   };
+
+  if (version >= 4) {
+    return { ...persistedState, avatarComposite: migratedAvatar };
+  }
 
   if (version >= 3) {
     return { ...persistedState, avatarComposite: migratedAvatar };
@@ -330,7 +386,10 @@ const createDevPanelStoreState = (set, get) => ({
     }),
 
   replaceAvatarCompositeStageDraft: (stageKey, stageTransforms, colorScheme = 'dark') =>
-    set((state) => setWholeStageTransforms(state, stageKey, stageTransforms, colorScheme)),
+    set((state) => {
+      const normalizedStageKey = normalizeStageId(stageKey);
+      return setWholeStageTransforms(state, normalizedStageKey, stageTransforms, colorScheme);
+    }),
 
   getAvatarCompositeStageDraft: (stageKey, colorScheme = 'dark') => {
     const state = get();
@@ -341,10 +400,11 @@ const createDevPanelStoreState = (set, get) => ({
   resetAvatarCompositeStage: (stageKey, colorScheme = 'dark') =>
     set((state) => {
       const normalizedStageKey = normalizeStageId(stageKey);
+      const resolvedDefault = createDefaultStageTransforms(normalizedStageKey, colorScheme);
       return setWholeStageTransforms(
         state,
         normalizedStageKey,
-        createDefaultStageTransforms(normalizedStageKey, colorScheme),
+        resolvedDefault,
         colorScheme
       );
     }),
@@ -411,37 +471,27 @@ const createDevPanelStoreState = (set, get) => ({
 
 const devPanelPersistConfig = {
   name: DEV_PANEL_PERSIST_KEY,
-  version: 3,
+  version: 4,
   migrate: (persistedState, version) => migrateDevPanelState(persistedState, version),
-  // Persist only persistent UI toggles; stage draft transforms and preview mode are ephemeral.
   partialize: (state) => ({
     avatarComposite: {
       enabled: Boolean(state.avatarComposite?.enabled),
+      transformsByStage: sanitizeTransformsByStage(state.avatarComposite?.transformsByStage),
+      transformsByStageLight: sanitizeTransformsByStage(state.avatarComposite?.transformsByStageLight),
       showDebugOverlay: Boolean(state.avatarComposite?.showDebugOverlay),
     },
   }),
   merge: (persisted, current) => {
-    const migrated = migrateDevPanelState(persisted, 3);
+    const migrated = migrateDevPanelState(persisted, 4);
     const persistedAvatar = migrated?.avatarComposite || {};
     const baseAvatar = current?.avatarComposite || createDefaultAvatarComposite();
     return {
       ...current,
-      avatarComposite: {
-        ...baseAvatar,
-        enabled:
-          typeof persistedAvatar.enabled === 'boolean'
-            ? persistedAvatar.enabled
-            : baseAvatar.enabled,
-        previewDraft: false,
-        showDebugOverlay:
-          typeof persistedAvatar.showDebugOverlay === 'boolean'
-            ? persistedAvatar.showDebugOverlay
-            : baseAvatar.showDebugOverlay,
-      },
+      avatarComposite: mergeAvatarComposite(baseAvatar, persistedAvatar),
     };
   },
 };
 
 export const useDevPanelStore = create(
-  IS_DEV_BUILD ? persist(createDevPanelStoreState, devPanelPersistConfig) : createDevPanelStoreState
+  SHOULD_PERSIST_DEV_PANEL ? persist(createDevPanelStoreState, devPanelPersistConfig) : createDevPanelStoreState
 );

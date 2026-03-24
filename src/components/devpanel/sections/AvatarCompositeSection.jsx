@@ -58,7 +58,7 @@ function AvatarCompositeSection({
             nextLayers[layerId] = getAvatarCompositeRoleTransform(normalizedEditingStageKey, layerId, colorScheme);
         });
         return nextLayers;
-    }, [colorScheme, getAvatarCompositeRoleTransform, normalizedEditingStageKey]);
+    }, [avatarComposite, colorScheme, getAvatarCompositeRoleTransform, normalizedEditingStageKey]);
     const tunerEnabled = avatarComposite?.enabled !== false;
     const showDebugOverlay = Boolean(avatarComposite?.showDebugOverlay);
 
