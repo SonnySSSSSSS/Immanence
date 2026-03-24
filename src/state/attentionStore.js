@@ -262,6 +262,7 @@ export const useAttentionStore = create(
         {
             name: 'immanenceOS.attention',
             version: 1,
+            migrate: (persistedState) => persistedState,
         }
     )
 );

@@ -456,6 +456,7 @@ export const useCycleStore = create(
         {
             name: 'immanenceOS.cycles',
             version: 1,
+            migrate: (persistedState) => persistedState,
         }
     )
 );

@@ -263,6 +263,7 @@ export const useUserModeStore = create(
     {
       name: 'immanence-user-mode',
       version: 3,
+      migrate: (persistedState) => persistedState,
       partialize: (state) => ({
         modeByUserId: state.modeByUserId,
         hasCompletedAccessChoiceByUserId: state.hasCompletedAccessChoiceByUserId,

@@ -463,6 +463,12 @@ function App({ playgroundMode = false, playgroundBottomLayer = true }) {
   // }, [curriculumOnboardingComplete, isCurriculumComplete]);
 
 
+  // v3.27.283 - refactor(card): collapse path selector into eyebrow row for visual balance
+  // v3.27.282 - restore(hub): path selector button integrated into daily practice card top-left shoulder
+  // v3.27.281 - fix(avatar-persist): bump persist v6, force-reset stale corrupted snapshot data and simplify merge
+  // v3.27.280 - fix(avatar): break reference sharing in buildDefaultsByStage to prevent cross-scheme drift
+  // v3.27.279 - fix(avatar-persist): robust migrate/merge with legacy override recovery and rehydration writeback
+  // v3.27.278 - refactor(avatar-defaults): replace override rebuild with stage snapshots
   // v3.27.277 - feat(ui): add ripple-out press animation to button pills app-wide
   // v3.27.276 - fix(avatar): apply scheme-aware globe alignment to reduce rune-ring skew
   // v3.27.275 - fix(lint): address all remaining lint errors in DevPanel and PathOverviewPanel

@@ -7,6 +7,7 @@ Use `docs/DOCS_INDEX.md` for the doc map and `ARCHITECTURE.md` for the current s
 ## CRITICAL RULES
 
 - NEVER run destructive git commands (git reset --hard, git clean -fd, force push, branch deletion) without explicit user approval. Always explain what will be lost.
+- NEVER overthink. Read the minimum files needed, form a hypothesis, act on it. If wrong, iterate. Do not do exhaustive theoretical analysis before writing a single line of code. Time spent thinking is credits burned — ship the fix, verify, adjust.
 
 ## UI/Styling
 

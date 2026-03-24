@@ -1,5 +1,6 @@
 ﻿// src/components/DailyPracticeCard.jsx
 import React, { useEffect, useState, useMemo, useTransition, useRef, useCallback } from 'react';
+import { createPortal } from 'react-dom';
 import { useCurriculumStore } from '../state/curriculumStore.js';
 import { useDisplayModeStore } from '../state/displayModeStore.js';
 import { useNavigationStore } from '../state/navigationStore.js';
@@ -445,6 +446,15 @@ export function DailyPracticeCard({ onStartPractice, onViewCurriculum, onNavigat
     const colorScheme = useDisplayModeStore(s => s.colorScheme);
     const isLight = colorScheme === 'light';
     const config = THEME_CONFIG[isLight ? 'light' : 'dark'];
+    const [showPathMenu, setShowPathMenu] = useState(false);
+    const pathMenuPortalRef = useRef(null);
+    useEffect(() => {
+        const el = document.createElement('div');
+        el.id = 'path-menu-portal';
+        document.body.appendChild(el);
+        pathMenuPortalRef.current = el;
+        return () => { document.body.removeChild(el); };
+    }, []);
 
     const dataCardActive = import.meta.env.DEV && typeof devCardActive === 'boolean' ? String(devCardActive) : undefined;
     const dataCardCarousel = import.meta.env.DEV && devCardCarouselId ? String(devCardCarouselId) : undefined;
@@ -1394,12 +1404,33 @@ export function DailyPracticeCard({ onStartPractice, onViewCurriculum, onNavigat
                                     </div>
                                 ) : times.length > 0 ? (
                                     <div>
-                                        {/* TODAY'S PRACTICE label - matches curriculum style */}
-                                        <div className="text-[11px] font-bold uppercase tracking-[0.24em]" style={{
-                                            color: isLight ? 'rgba(60, 50, 35, 0.5)' : 'var(--accent-60)',
-                                            letterSpacing: '0.08em'
-                                        }}>
-                                            Today's Practice
+                                        {/* Header row: eyebrow label left + gear icon action right */}
+                                        <div className="flex items-center justify-between" style={{ position: 'relative', zIndex: 20 }}>
+                                            <div className="text-[11px] font-bold uppercase tracking-[0.24em]" style={{
+                                                color: isLight ? 'rgba(60, 50, 35, 0.5)' : 'var(--accent-60)',
+                                                letterSpacing: '0.08em'
+                                            }}>
+                                                Today's Practice
+                                            </div>
+                                            <button
+                                                type="button"
+                                                onClick={() => setShowPathMenu(true)}
+                                                data-testid="path-selector-trigger"
+                                                aria-label="Path Selector"
+                                                className="flex items-center justify-center rounded-full transition-all hover:scale-110 active:scale-95"
+                                                style={{
+                                                    width: 24,
+                                                    height: 24,
+                                                    opacity: 0.5,
+                                                    color: isLight ? 'rgba(80,60,20,1)' : '#fff',
+                                                }}
+                                                onMouseEnter={e => e.currentTarget.style.opacity = '0.85'}
+                                                onMouseLeave={e => e.currentTarget.style.opacity = '0.5'}
+                                            >
+                                                <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
+                                                    <path d="M12 15.5A3.5 3.5 0 0 1 8.5 12 3.5 3.5 0 0 1 12 8.5a3.5 3.5 0 0 1 3.5 3.5 3.5 3.5 0 0 1-3.5 3.5m7.43-2.92c.04-.3.07-.62.07-.96s-.03-.66-.07-1l2.11-1.64c.19-.15.24-.42.12-.64l-2-3.46c-.12-.22-.39-.3-.61-.22l-2.49 1c-.52-.4-1.08-.73-1.69-.98l-.38-2.65C14.46 2.18 14.25 2 14 2h-4c-.25 0-.46.18-.49.42l-.38 2.65c-.61.25-1.17.59-1.69.98l-2.49-1c-.23-.09-.49 0-.61.22l-2 3.46c-.13.22-.07.49.12.64L4.57 11c-.04.34-.07.67-.07 1s.03.65.07.97l-2.11 1.66c-.19.15-.25.42-.12.64l2 3.46c.12.22.39.3.61.22l2.49-1.01c.52.4 1.08.73 1.69.98l.38 2.65c.03.24.24.42.49.42h4c.25 0 .46-.18.49-.42l.38-2.65c.61-.25 1.17-.58 1.69-.98l2.49 1.01c.22.08.49 0 .61-.22l2-3.46c.12-.22.07-.49-.12-.64l-2.11-1.66z"/>
+                                                </svg>
+                                            </button>
                                         </div>
 
                                         {/* Path title - matches curriculum "Test Program" style */}
@@ -2315,6 +2346,77 @@ export function DailyPracticeCard({ onStartPractice, onViewCurriculum, onNavigat
                     </div>
                     </div>
                 </div>
+
+                {/* Path Selector menu overlay — portalled to dedicated body container */}
+                {showPathMenu && pathMenuPortalRef.current && createPortal(
+                    <div
+                        className="fixed inset-0 z-[10020] isolate"
+                        onClick={() => setShowPathMenu(false)}
+                    >
+                        <div className="absolute inset-0 bg-black/50 backdrop-blur-md" />
+                        <div className="absolute inset-0 flex items-center justify-center px-6" onClick={e => e.stopPropagation()}>
+                            <div
+                                className="w-full max-w-sm rounded-[28px] border p-6 shadow-2xl"
+                                style={{
+                                    borderColor: isLight ? 'rgba(100,80,60,0.18)' : 'rgba(255,255,255,0.12)',
+                                    background: isLight
+                                        ? 'linear-gradient(180deg,rgba(250,246,238,0.98),rgba(245,239,229,0.96))'
+                                        : 'linear-gradient(180deg,rgba(12,16,20,0.96),rgba(16,20,26,0.94))',
+                                    color: isLight ? '#3c3020' : '#fdfbf5',
+                                    boxShadow: isLight ? '0 24px 50px rgba(70,52,30,0.16)' : '0 28px 60px rgba(0,0,0,0.5)',
+                                }}
+                            >
+                                <div className="text-[10px] font-black uppercase tracking-[0.24em]" style={{ color: isLight ? 'rgba(60,50,35,0.62)' : 'rgba(253,251,245,0.55)' }}>
+                                    Active Path
+                                </div>
+                                <div className="mt-3 text-2xl font-semibold" style={{ fontFamily: 'var(--font-display)' }}>
+                                    Path Selector
+                                </div>
+                                <div className="mt-2 text-sm" style={{ color: isLight ? 'rgba(60,50,35,0.72)' : 'rgba(253,251,245,0.68)' }}>
+                                    Restart this run from Day 1, or abandon the path entirely.
+                                </div>
+                                <div className="mt-6 flex flex-col gap-3">
+                                    <button
+                                        type="button"
+                                        onClick={() => { restartPath(); setShowPathMenu(false); }}
+                                        className="rounded-full px-4 py-3 text-[10px] font-black uppercase tracking-[0.22em] transition-all hover:scale-[1.02]"
+                                        style={{
+                                            background: 'linear-gradient(135deg,var(--accent-color),var(--accent-70))',
+                                            color: '#fff',
+                                            boxShadow: '0 8px 20px var(--accent-30)',
+                                        }}
+                                    >
+                                        Restart Path
+                                    </button>
+                                    <button
+                                        type="button"
+                                        onClick={() => {
+                                            if (!window.confirm('Abandon this path? All progress will be lost.')) return;
+                                            abandonPath();
+                                            setShowPathMenu(false);
+                                        }}
+                                        className="rounded-full border px-4 py-3 text-[10px] font-black uppercase tracking-[0.22em] transition-all hover:scale-[1.02]"
+                                        style={{
+                                            borderColor: isLight ? 'rgba(180,60,40,0.22)' : 'rgba(255,100,80,0.22)',
+                                            background: isLight ? 'rgba(255,240,235,0.75)' : 'rgba(255,80,60,0.08)',
+                                            color: isLight ? 'rgba(160,40,20,0.88)' : 'rgba(255,130,110,0.9)',
+                                        }}
+                                    >
+                                        Abandon Path
+                                    </button>
+                                    <button
+                                        type="button"
+                                        onClick={() => setShowPathMenu(false)}
+                                        className="rounded-full px-4 py-2 text-[10px] font-black uppercase tracking-[0.22em]"
+                                        style={{ color: isLight ? 'rgba(60,50,35,0.62)' : 'rgba(253,251,245,0.58)' }}
+                                    >
+                                        Close
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                , pathMenuPortalRef.current)}
             </div>
         );
 }

@@ -215,6 +215,7 @@ function HomeHub({ onSelectSection, activeSection = null, currentStage, previewP
   const [archiveOptions, setArchiveOptions] = useState({ initialTab: 'all', initialReportDomain: null });
   const trackerLaunchContext = useUiStore(s => s.trackerLaunchContext);
   const restartPath = useNavigationStore((s) => s.restartPath);
+  const abandonPath = useNavigationStore((s) => s.abandonPath);
   const [showStudentActiveActions, setShowStudentActiveActions] = useState(false);
 
   // Dynamic max-width based on display mode: sanctuary=1024px, hearth=580px (narrower for visual balance)
@@ -304,10 +305,11 @@ function HomeHub({ onSelectSection, activeSection = null, currentStage, previewP
     setShowStudentActiveActions(false);
   }, [restartPath]);
 
-  const handleGoToNavigationFromStudentActive = React.useCallback(() => {
+  const handleAbandonPathFromStudentActive = React.useCallback(() => {
+    if (!window.confirm('Are you sure you want to abandon this path? All progress will be lost.')) return;
+    abandonPath?.();
     setShowStudentActiveActions(false);
-    handleSelectSection('navigation', { forceStudentNavigation: true });
-  }, [handleSelectSection]);
+  }, [abandonPath]);
 
   const openArchive = (initialTab = ARCHIVE_TABS.ALL, initialReportDomain = null) => {
     setArchiveOptions({ initialTab, initialReportDomain });
@@ -1048,109 +1050,14 @@ function HomeHub({ onSelectSection, activeSection = null, currentStage, previewP
           ...SANCTUARY_RAIL_STYLE,
           borderTop: `1px solid ${isLight ? 'rgba(100, 80, 60, 0.15)' : 'rgba(255, 255, 255, 0.08)'}`,
         }}>
-          {/* Card toolbar: PATH ACTIONS (left) + posture toggle (right) */}
-          <div
-            className="flex items-center justify-between mb-1 px-1"
-            style={{ minHeight: '28px' }}
-          >
-            {/* Left: Path Actions */}
-            {activePath ? (
-              <button
-                type="button"
-                onClick={openStudentActiveActions}
-                data-testid="student-active-actions-trigger"
-                className="inline-flex items-center rounded-full border px-3 py-0.5 text-[10px] font-black uppercase tracking-[0.18em] transition-all hover:scale-[1.02] active:scale-[0.98]"
-                style={{
-                  borderColor: isLight ? 'rgba(100, 80, 60, 0.22)' : 'rgba(255,255,255,0.14)',
-                  background: isLight ? 'rgba(255,255,255,0.52)' : 'rgba(255,255,255,0.06)',
-                  color: isLight ? 'rgba(60,50,35,0.78)' : 'rgba(253,251,245,0.72)',
-                  boxShadow: isLight ? '0 2px 8px rgba(80,60,35,0.08)' : '0 2px 10px rgba(0,0,0,0.22)',
-                }}
-              >
-                Path Actions
-              </button>
-            ) : (
-              <span />
-            )}
-            {/* Right: Guided / Full Access pill toggle */}
-            <button
-              type="button"
-              role="switch"
-              aria-checked={accessPosture === 'full'}
-              data-testid="posture-pill-toggle"
-              onClick={() => setAccessPosture(accessPosture === 'guided' ? 'full' : 'guided')}
-              className="relative inline-flex items-center rounded-full border select-none"
-              style={{
-                height: '22px',
-                padding: '2px',
-                gap: 0,
-                borderColor: isLight ? 'rgba(100, 130, 160, 0.28)' : 'rgba(160, 200, 255, 0.22)',
-                background: isLight ? 'rgba(220,230,240,0.45)' : 'rgba(20,30,50,0.55)',
-                backdropFilter: 'blur(6px)',
-                WebkitBackdropFilter: 'blur(6px)',
-                transition: 'border-color 200ms',
-              }}
-            >
-              {/* Sliding indicator */}
-              <span
-                aria-hidden="true"
-                style={{
-                  position: 'absolute',
-                  top: '2px',
-                  bottom: '2px',
-                  borderRadius: '999px',
-                  width: '50%',
-                  left: accessPosture === 'guided' ? '2px' : 'calc(50% - 2px)',
-                  transition: 'left 200ms cubic-bezier(0.4,0,0.2,1)',
-                  background: accessPosture === 'guided'
-                    ? (isLight ? 'rgba(80,150,100,0.32)' : 'rgba(60,140,90,0.55)')
-                    : (isLight ? 'rgba(60,110,180,0.28)' : 'rgba(50,100,180,0.60)'),
-                  boxShadow: accessPosture === 'guided'
-                    ? '0 1px 4px rgba(40,120,60,0.18)'
-                    : '0 1px 4px rgba(30,80,160,0.22)',
-                }}
-              />
-              {/* GUIDED label */}
-              <span
-                className="relative z-10 font-black uppercase tracking-[0.14em]"
-                style={{
-                  fontSize: '9px',
-                  padding: '0 8px',
-                  color: accessPosture === 'guided'
-                    ? (isLight ? 'rgba(25,80,45,0.95)' : 'rgba(160,240,190,0.95)')
-                    : (isLight ? 'rgba(80,100,90,0.45)' : 'rgba(160,200,170,0.38)'),
-                  transition: 'color 200ms',
-                  userSelect: 'none',
-                  WebkitUserSelect: 'none',
-                }}
-              >
-                GUIDED
-              </span>
-              {/* FULL ACCESS label */}
-              <span
-                className="relative z-10 font-black uppercase tracking-[0.14em]"
-                style={{
-                  fontSize: '9px',
-                  padding: '0 8px',
-                  color: accessPosture === 'full'
-                    ? (isLight ? 'rgba(25,65,130,0.95)' : 'rgba(150,205,255,0.95)')
-                    : (isLight ? 'rgba(70,90,120,0.45)' : 'rgba(150,185,220,0.38)'),
-                  transition: 'color 200ms',
-                  userSelect: 'none',
-                  WebkitUserSelect: 'none',
-                }}
-              >
-                FULL
-              </span>
-            </button>
-          </div>
-          <div className="w-full">
+          <div className="w-full" style={{ position: 'relative' }}>
             <div data-tutorial={ANCHORS.HOME_DAILY_CARD}>
               <DailyPracticeCard
                 onStartPractice={handleStartPractice}
                 onViewCurriculum={openCurriculumHub}
                 onNavigate={handleSelectSection}
                 hasPersistedCurriculumData={hasPersistedCurriculumData}
+                onOpenPathSelector={activePath ? openStudentActiveActions : undefined}
                 onboardingComplete={curriculumOnboardingComplete}
                 practiceTimeSlots={practiceTimeSlots}
                 onStartSetup={handleOpenCurriculumSetup}
@@ -1160,6 +1067,77 @@ function HomeHub({ onSelectSection, activeSection = null, currentStage, previewP
                 showSessionMeter={false}
               />
             </div>
+          {/* Guided / Full Access pill toggle — docked to card bottom-right */}
+          <button
+            type="button"
+            role="switch"
+            aria-checked={accessPosture === 'full'}
+            data-testid="posture-pill-toggle"
+            onClick={() => setAccessPosture(accessPosture === 'guided' ? 'full' : 'guided')}
+            className="inline-flex items-center rounded-full border select-none"
+            style={{
+              position: 'absolute',
+              bottom: '-22px',
+              right: '28px',
+              zIndex: 10,
+              height: '22px',
+              padding: '2px',
+              gap: 0,
+              borderColor: isLight ? 'var(--accent-30)' : 'var(--accent-30)',
+              background: isLight ? 'rgba(236,246,248,0.72)' : 'rgba(7,14,20,0.78)',
+              backdropFilter: 'blur(8px)',
+              WebkitBackdropFilter: 'blur(8px)',
+              transition: 'border-color 200ms',
+            }}
+          >
+            {/* Sliding indicator */}
+            <span
+              aria-hidden="true"
+              style={{
+                position: 'absolute',
+                top: '2px',
+                bottom: '2px',
+                borderRadius: '999px',
+                width: '50%',
+                left: accessPosture === 'guided' ? '2px' : 'calc(50% - 2px)',
+                transition: 'left 200ms cubic-bezier(0.4,0,0.2,1)',
+                background: isLight ? 'var(--accent-40)' : 'var(--accent-50)',
+                boxShadow: '0 1px 4px var(--accent-20)',
+              }}
+            />
+            {/* GUIDED label */}
+            <span
+              className="relative z-10 font-black uppercase tracking-[0.14em]"
+              style={{
+                fontSize: '9px',
+                padding: '0 8px',
+                color: accessPosture === 'guided'
+                  ? (isLight ? 'var(--accent-color)' : 'var(--accent-90)')
+                  : (isLight ? 'rgba(80,80,80,0.45)' : 'rgba(200,200,200,0.38)'),
+                transition: 'color 200ms',
+                userSelect: 'none',
+                WebkitUserSelect: 'none',
+              }}
+            >
+              GUIDED
+            </span>
+            {/* FULL label */}
+            <span
+              className="relative z-10 font-black uppercase tracking-[0.14em]"
+              style={{
+                fontSize: '9px',
+                padding: '0 8px',
+                color: accessPosture === 'full'
+                  ? (isLight ? 'var(--accent-color)' : 'var(--accent-90)')
+                  : (isLight ? 'rgba(80,80,80,0.45)' : 'rgba(200,200,200,0.38)'),
+                transition: 'color 200ms',
+                userSelect: 'none',
+                WebkitUserSelect: 'none',
+              }}
+            >
+              FULL
+            </span>
+          </button>
           </div>
         </div>
 
@@ -1315,13 +1293,13 @@ function HomeHub({ onSelectSection, activeSection = null, currentStage, previewP
                 onClick={(event) => event.stopPropagation()}
               >
                 <div className="text-[10px] font-black uppercase tracking-[0.24em]" style={{ color: isLight ? 'rgba(60,50,35,0.62)' : 'rgba(253,251,245,0.55)' }}>
-                  Student Active
+                  Active Path
                 </div>
                 <div className="mt-3 text-2xl font-semibold" style={{ fontFamily: 'var(--font-display)' }}>
-                  Path Actions
+                  Path Selector
                 </div>
                 <div className="mt-2 text-sm" style={{ color: isLight ? 'rgba(60,50,35,0.72)' : 'rgba(253,251,245,0.68)' }}>
-                  Restart this run now, or open Navigation to manage the path there.
+                  Restart this run from Day 1, or abandon the path entirely.
                 </div>
                 <div className="mt-6 flex flex-col gap-3">
                   <button
@@ -1338,15 +1316,15 @@ function HomeHub({ onSelectSection, activeSection = null, currentStage, previewP
                   </button>
                   <button
                     type="button"
-                    onClick={handleGoToNavigationFromStudentActive}
+                    onClick={handleAbandonPathFromStudentActive}
                     className="rounded-full border px-4 py-3 text-[10px] font-black uppercase tracking-[0.22em] transition-all hover:scale-[1.02]"
                     style={{
-                      borderColor: isLight ? 'rgba(60,50,35,0.14)' : 'rgba(255,255,255,0.16)',
-                      background: isLight ? 'rgba(255,255,255,0.75)' : 'rgba(255,255,255,0.06)',
-                      color: isLight ? '#3c3020' : '#fdfbf5',
+                      borderColor: isLight ? 'rgba(180,60,40,0.22)' : 'rgba(255,100,80,0.22)',
+                      background: isLight ? 'rgba(255,240,235,0.75)' : 'rgba(255,80,60,0.08)',
+                      color: isLight ? 'rgba(160,40,20,0.88)' : 'rgba(255,130,110,0.9)',
                     }}
                   >
-                    Go To Navigation
+                    Abandon Path
                   </button>
                   <button
                     type="button"
