@@ -7,7 +7,7 @@ import { normalizeStageKey } from '../config/avatarStageAssets.js';
 import { DEFAULT_AVATAR_PRESETS, DEFAULT_AVATAR_PRESETS_LIGHT } from '../components/avatarV3/avatarDefaultPresets.js';
 
 export const AVATAR_STAGE_DEFAULTS_PERSIST_KEY = 'immanence-avatar-stage-defaults-v1';
-const AVATAR_STAGE_DEFAULTS_PERSIST_VERSION = 3;
+const AVATAR_STAGE_DEFAULTS_PERSIST_VERSION = 6;
 export const AVATAR_STAGE_DEFAULT_KEYS = ['seedling', 'ember', 'flame', 'beacon', 'stellar'];
 export const AVATAR_STAGE_DEFAULT_SCHEMES = ['dark', 'light'];
 const AVATAR_STAGE_DEFAULT_LAYER_IDS = ['bg', 'stage', 'glass', 'ring'];
@@ -21,7 +21,6 @@ const AVATAR_STAGE_DEFAULT_LAYER = Object.freeze({
   linkTo: null,
   linkOpacity: false,
 });
-const EMPTY_AVATAR_DEFAULTS_BY_SCHEME = Object.freeze({ dark: {}, light: {} });
 
 function clampAvatarDefault(value, min, max) {
   return Math.max(min, Math.min(max, value));
@@ -76,18 +75,6 @@ export function getCanonicalAvatarStageDefaultTransforms(stageKey, colorScheme =
   return sanitizeAvatarDefaultStageTransforms(canonical, canonical);
 }
 
-function cloneResolvedAvatarStageDefault(stageKey, colorScheme = 'dark', stageTransforms = null) {
-  const normalizedStage = normalizeStageKey(stageKey);
-  const sourceStageTransforms =
-    stageTransforms && typeof stageTransforms === 'object'
-      ? stageTransforms
-      : getCanonicalAvatarStageDefaultTransforms(normalizedStage, colorScheme);
-  return sanitizeAvatarDefaultStageTransforms(
-    sourceStageTransforms,
-    getCanonicalAvatarStageDefaultTransforms(normalizedStage, colorScheme)
-  );
-}
-
 function sanitizeAvatarDefaultStageTransforms(stageTransforms = {}, canonicalStageTransforms = {}) {
   const source = stageTransforms && typeof stageTransforms === 'object' ? stageTransforms : {};
   const canonical = canonicalStageTransforms && typeof canonicalStageTransforms === 'object'
@@ -105,135 +92,73 @@ function sanitizeAvatarDefaultStageTransforms(stageTransforms = {}, canonicalSta
   return sanitized;
 }
 
-function getBaseAvatarDefaultStageTransforms(stageKey) {
-  return getCanonicalAvatarStageDefaultTransforms(stageKey, 'dark');
-}
+// ─── SNAPSHOT PERSISTENCE HELPERS ───────────────────────────────────────────
 
-export function sanitizeAvatarStageDefaultsByStage(input = {}) {
-  const source = input && typeof input === 'object' ? input : {};
-  const next = {};
-
-  Object.entries(source).forEach(([rawStageKey, stageTransforms]) => {
-    const stageKey = normalizeStageKey(rawStageKey);
-    next[stageKey] = sanitizeAvatarDefaultStageTransforms(
-      stageTransforms,
-      getCanonicalAvatarStageDefaultTransforms(stageKey, 'dark')
-    );
-  });
-
-  AVATAR_STAGE_DEFAULT_KEYS.forEach((stageKey) => {
-    if (!next[stageKey]) {
-      next[stageKey] = getBaseAvatarDefaultStageTransforms(stageKey);
-    }
-  });
-
-  return next;
-}
-
-function sanitizeAvatarStageOverridesByStage(input = {}, colorScheme = 'dark', options = {}) {
-  const source = input && typeof input === 'object' ? input : {};
-  const sanitized = {};
-  const stripDarkLegacyX =
-    Boolean(options.stripDarkLegacyX) && normalizeAvatarDefaultScheme(colorScheme) === 'dark';
-
-  Object.entries(source).forEach(([rawStageKey, stageLayerOverrides]) => {
-    const stageKey = normalizeStageKey(rawStageKey);
-    const nextStage = {};
-    const layerSource =
-      stageLayerOverrides && typeof stageLayerOverrides === 'object' ? stageLayerOverrides : {};
-
-    AVATAR_STAGE_DEFAULT_LAYER_IDS.forEach((layerId) => {
-      const rawPatch =
-        layerSource[layerId] && typeof layerSource[layerId] === 'object' ? layerSource[layerId] : null;
-      if (!rawPatch) return;
-
-      const sanitizedPatch = sanitizeAvatarDefaultLayerPatch(layerId, rawPatch);
-      if (stripDarkLegacyX && Object.prototype.hasOwnProperty.call(sanitizedPatch, 'x')) {
-        delete sanitizedPatch.x;
-      }
-
-      if (Object.keys(sanitizedPatch).length) {
-        nextStage[layerId] = sanitizedPatch;
-      }
-    });
-
-    if (Object.keys(nextStage).length) {
-      sanitized[stageKey] = nextStage;
-    }
-  });
-
-  return sanitized;
-}
-
-function sanitizeAvatarOverridesByScheme(input = {}, options = {}) {
-  const source = input && typeof input === 'object' ? input : {};
-  const hasSchemeShape = AVATAR_STAGE_DEFAULT_SCHEMES.some(
-    (scheme) => source[scheme] && typeof source[scheme] === 'object'
-  );
-
-  if (hasSchemeShape) {
-    return {
-      dark: sanitizeAvatarStageOverridesByStage(source.dark || {}, 'dark', options),
-      light: sanitizeAvatarStageOverridesByStage(source.light || {}, 'light', options),
-    };
-  }
-
-  // Legacy shape support: treat as dark-scheme stage map.
-  return {
-    dark: sanitizeAvatarStageOverridesByStage(source, 'dark', options),
-    light: {},
-  };
-}
-
-function buildResolvedAvatarStageDefaultsByStage(overridesByScheme, colorScheme = 'dark') {
+function sanitizeStageSnapshot(stageKey, colorScheme, rawLayers) {
+  const normalizedStage = normalizeStageKey(stageKey);
   const scheme = normalizeAvatarDefaultScheme(colorScheme);
-  const resolved = {};
-  const stageOverridesByScheme = overridesByScheme?.[scheme] || {};
+  const canonical = getCanonicalAvatarStageDefaultTransforms(normalizedStage, scheme);
+  return sanitizeAvatarDefaultStageTransforms(rawLayers, canonical);
+}
 
-  AVATAR_STAGE_DEFAULT_KEYS.forEach((stageKey) => {
-    const canonicalStage = getCanonicalAvatarStageDefaultTransforms(stageKey, scheme);
-    const stageOverrides = stageOverridesByScheme[stageKey] || {};
-    resolved[stageKey] = sanitizeAvatarDefaultStageTransforms(stageOverrides, canonicalStage);
+function sanitizeSnapshotsByScheme(raw) {
+  const source = raw && typeof raw === 'object' ? raw : {};
+  const result = { dark: {}, light: {} };
+
+  AVATAR_STAGE_DEFAULT_SCHEMES.forEach((scheme) => {
+    const schemeSource = source[scheme] && typeof source[scheme] === 'object' ? source[scheme] : {};
+    Object.entries(schemeSource).forEach(([rawStageKey, stageLayers]) => {
+      const stageKey = normalizeStageKey(rawStageKey);
+      if (!AVATAR_STAGE_DEFAULT_KEYS.includes(stageKey)) return;
+      if (!stageLayers || typeof stageLayers !== 'object') return;
+      result[scheme][stageKey] = sanitizeStageSnapshot(stageKey, scheme, stageLayers);
+    });
   });
 
-  return resolved;
+  return result;
 }
 
-function buildAvatarDefaultsState(overridesByScheme = EMPTY_AVATAR_DEFAULTS_BY_SCHEME) {
-  const normalizedOverridesByScheme = sanitizeAvatarOverridesByScheme(overridesByScheme);
-  return {
-    overridesByScheme: normalizedOverridesByScheme,
-    defaultsByStage: buildResolvedAvatarStageDefaultsByStage(normalizedOverridesByScheme, 'dark'),
-    defaultsByStageLight: buildResolvedAvatarStageDefaultsByStage(normalizedOverridesByScheme, 'light'),
-  };
+function buildDefaultsByStage(snapshotsByScheme) {
+  const dark = {};
+  const light = {};
+
+  AVATAR_STAGE_DEFAULT_KEYS.forEach((stageKey) => {
+    // Deep-clone every stage so defaultsByStage / defaultsByStageLight NEVER
+    // share object references with snapshotsByScheme. Without this, any
+    // downstream mutation to a layer property (e.g. ring.rotateDeg) would
+    // silently corrupt the persisted snapshot and cause cross-scheme drift.
+    const darkSource = snapshotsByScheme.dark?.[stageKey];
+    dark[stageKey] = darkSource
+      ? sanitizeAvatarDefaultStageTransforms(darkSource, getCanonicalAvatarStageDefaultTransforms(stageKey, 'dark'))
+      : getCanonicalAvatarStageDefaultTransforms(stageKey, 'dark');
+
+    const lightSource = snapshotsByScheme.light?.[stageKey];
+    light[stageKey] = lightSource
+      ? sanitizeAvatarDefaultStageTransforms(lightSource, getCanonicalAvatarStageDefaultTransforms(stageKey, 'light'))
+      : getCanonicalAvatarStageDefaultTransforms(stageKey, 'light');
+  });
+
+  return { defaultsByStage: dark, defaultsByStageLight: light };
 }
 
-function sanitizePersistedAvatarStageDefaultsState(persistedState, version = 0) {
-  const source = persistedState && typeof persistedState === 'object' ? persistedState : {};
-  const persistedOverrides =
-    source.overridesByScheme && typeof source.overridesByScheme === 'object'
-      ? source.overridesByScheme
-      : source.defaultsByStage && typeof source.defaultsByStage === 'object'
-        ? { dark: source.defaultsByStage }
-        : source;
+// ─── STORE ──────────────────────────────────────────────────────────────────
 
-  const stripDarkLegacyX = version < AVATAR_STAGE_DEFAULTS_PERSIST_VERSION;
-  return sanitizeAvatarOverridesByScheme(persistedOverrides, { stripDarkLegacyX });
-}
+const INITIAL_SNAPSHOTS = { dark: {}, light: {} };
 
 export const useAvatarStageDefaultsStore = create(
   persist((set, get) => ({
-    ...buildAvatarDefaultsState(),
+    snapshotsByScheme: INITIAL_SNAPSHOTS,
+    ...buildDefaultsByStage(INITIAL_SNAPSHOTS),
 
     getResolvedStageDefault: (stageKey, colorScheme = 'dark') => {
       const normalizedStage = normalizeStageKey(stageKey);
       const scheme = normalizeAvatarDefaultScheme(colorScheme);
       const state = get();
       const byScheme = scheme === 'light' ? state.defaultsByStageLight : state.defaultsByStage;
-      return cloneResolvedAvatarStageDefault(
-        normalizedStage,
-        scheme,
-        byScheme[normalizedStage] || byScheme.seedling
+      const resolved = byScheme[normalizedStage] || byScheme.seedling;
+      return sanitizeAvatarDefaultStageTransforms(
+        resolved,
+        getCanonicalAvatarStageDefaultTransforms(normalizedStage, scheme)
       );
     },
 
@@ -246,120 +171,159 @@ export const useAvatarStageDefaultsStore = create(
       };
     },
 
-    ensureStageDefault: (stageKey) => {
-      const normalizedStage = normalizeStageKey(stageKey);
-      const state = get();
-      if (state.defaultsByStage?.[normalizedStage]) return;
-
-      set((current) => {
-        const currentOverrides = current.overridesByScheme || EMPTY_AVATAR_DEFAULTS_BY_SCHEME;
-        const nextOverrides = {
-          ...currentOverrides,
-          dark: {
-            ...(currentOverrides.dark || {}),
-            [normalizedStage]: currentOverrides.dark?.[normalizedStage] || {},
-          },
-        };
-        return {
-          ...current,
-          ...buildAvatarDefaultsState(nextOverrides),
-        };
-      });
-    },
-
     setStageDefault: (stageKey, stageTransforms, colorScheme = 'dark') =>
       set((state) => {
         const normalizedStage = normalizeStageKey(stageKey);
         const scheme = normalizeAvatarDefaultScheme(colorScheme);
-        const canonicalStage = getCanonicalAvatarStageDefaultTransforms(normalizedStage, scheme);
-        const nextStage = sanitizeAvatarDefaultStageTransforms(stageTransforms, canonicalStage);
-        const nextStageOverrides = {};
+        const snapshot = sanitizeStageSnapshot(normalizedStage, scheme, stageTransforms);
 
-        AVATAR_STAGE_DEFAULT_LAYER_IDS.forEach((layerId) => {
-          const canonicalLayer = canonicalStage[layerId] || AVATAR_STAGE_DEFAULT_LAYER;
-          const nextLayer = nextStage[layerId] || canonicalLayer;
-          const layerPatch = {};
-
-          Object.keys(nextLayer).forEach((key) => {
-            if (nextLayer[key] !== canonicalLayer[key]) {
-              layerPatch[key] = nextLayer[key];
-            }
-          });
-
-          if (Object.keys(layerPatch).length) {
-            nextStageOverrides[layerId] = layerPatch;
-          }
-        });
-
-        const currentOverrides = state.overridesByScheme || EMPTY_AVATAR_DEFAULTS_BY_SCHEME;
-        const nextSchemeOverrides = {
-          ...(currentOverrides[scheme] || {}),
-          [normalizedStage]: nextStageOverrides,
-        };
-
-        if (!Object.keys(nextStageOverrides).length) {
-          delete nextSchemeOverrides[normalizedStage];
-        }
-
-        const nextOverrides = {
-          ...currentOverrides,
-          [scheme]: nextSchemeOverrides,
+        const nextSnapshotsByScheme = {
+          ...state.snapshotsByScheme,
+          [scheme]: {
+            ...state.snapshotsByScheme[scheme],
+            [normalizedStage]: snapshot,
+          },
         };
 
         return {
           ...state,
-          ...buildAvatarDefaultsState(nextOverrides),
+          snapshotsByScheme: nextSnapshotsByScheme,
+          ...buildDefaultsByStage(nextSnapshotsByScheme),
         };
       }),
 
-    replaceAllStageDefaults: (defaultsByStage, colorScheme = 'dark') =>
-      set((state) => ({
-        ...state,
-        ...buildAvatarDefaultsState({
-          ...(state.overridesByScheme || EMPTY_AVATAR_DEFAULTS_BY_SCHEME),
-          [normalizeAvatarDefaultScheme(colorScheme)]: sanitizeAvatarStageOverridesByStage(
-            defaultsByStage,
-            colorScheme
-          ),
-        }),
-      })),
-
-    replaceAllSchemeOverrides: (overridesByScheme) =>
-      set((state) => ({
-        ...state,
-        ...buildAvatarDefaultsState(overridesByScheme),
-      })),
+    resetAllToCanonical: () =>
+      set((state) => {
+        const empty = { dark: {}, light: {} };
+        return {
+          ...state,
+          snapshotsByScheme: empty,
+          ...buildDefaultsByStage(empty),
+        };
+      }),
   }), {
     name: AVATAR_STAGE_DEFAULTS_PERSIST_KEY,
     version: AVATAR_STAGE_DEFAULTS_PERSIST_VERSION,
     partialize: (state) => ({
-      overridesByScheme: state.overridesByScheme,
+      snapshotsByScheme: state.snapshotsByScheme,
     }),
-    migrate: () => ({
-      overridesByScheme: { dark: {}, light: {} },
-    }),
+    migrate: (persistedState, version) => {
+      // v6: force clean reset — data saved under v5 and earlier was
+      // affected by reference-sharing and broken-persist bugs, so the
+      // stored values are unreliable. A fresh start with canonical
+      // presets is the safest path.
+      if (typeof version === 'number' && version < 6) {
+        return { snapshotsByScheme: { dark: {}, light: {} } };
+      }
+
+      // v6+ data: pass through (merge will sanitize).
+      if (!persistedState || typeof persistedState !== 'object') {
+        return { snapshotsByScheme: { dark: {}, light: {} } };
+      }
+      return persistedState;
+    },
     merge: (persisted, current) => {
-      const persistedOverrides = sanitizePersistedAvatarStageDefaultsState(
-        persisted,
-        AVATAR_STAGE_DEFAULTS_PERSIST_VERSION
-      );
-      const currentOverrides = current?.overridesByScheme || EMPTY_AVATAR_DEFAULTS_BY_SCHEME;
+      const raw = persisted && typeof persisted === 'object' ? persisted : {};
+      const nextSnapshotsByScheme = sanitizeSnapshotsByScheme(raw.snapshotsByScheme);
       return {
         ...current,
-        ...buildAvatarDefaultsState({
-          dark: {
-            ...(currentOverrides.dark || {}),
-            ...(persistedOverrides.dark || {}),
-          },
-          light: {
-            ...(currentOverrides.light || {}),
-            ...(persistedOverrides.light || {}),
-          },
-        }),
+        snapshotsByScheme: nextSnapshotsByScheme,
+        ...buildDefaultsByStage(nextSnapshotsByScheme),
       };
+    },
+    onRehydrateStorage: () => (state) => {
+      // After rehydration, verify the store wrote back to localStorage.
+      // Zustand persist only writes on set() — if hydration produced the same
+      // state as initial, the key might never be written. Force a write-back
+      // so the persist key is always present and future reloads work.
+      if (state) {
+        const snapshots = state.snapshotsByScheme;
+        if (snapshots && (Object.keys(snapshots.dark || {}).length > 0 ||
+                          Object.keys(snapshots.light || {}).length > 0)) {
+          // Trigger a no-op set to force persist to write
+          useAvatarStageDefaultsStore.setState({});
+        }
+      }
     },
   })
 );
+
+// ─── DEV-MODE COMMITTED-STATE WATCHPOINT ────────────────────────────────────
+// Fires whenever snapshotsByScheme (the source of truth for committed avatar
+// defaults) changes. Logs a full per-field diff and a stack trace so we can
+// identify EVERY caller that mutates committed stage data.
+//
+// Usage:
+//   - Filter DevTools console for "[AvatarDefaults]" to see every committed
+//     change with its full before/after diff and source stack trace.
+//   - After promoting a stage, call avatarWatchpointLockStage(stageKey, scheme,
+//     snapshot) to mark it as "locked." Any subsequent change to that stage
+//     will fire a red ⚠️ ERROR log with the stack trace of the culprit.
+// ─────────────────────────────────────────────────────────────────────────────
+let _watchLockedSnapshots = {}; // `${scheme}/${stageKey}` → JSON string
+
+/**
+ * Mark a promoted stage as locked so the watchpoint will loudly flag any
+ * subsequent mutation. No-op in production builds.
+ */
+export function avatarWatchpointLockStage(stageKey, colorScheme, snapshotData) {
+  if (!import.meta.env.DEV) return;
+  const key = `${colorScheme}/${stageKey}`;
+  _watchLockedSnapshots[key] = JSON.stringify(snapshotData ?? null);
+}
+
+if (import.meta.env.DEV) {
+  let _watchPrevSnapshots = useAvatarStageDefaultsStore.getState().snapshotsByScheme;
+
+  useAvatarStageDefaultsStore.subscribe((state) => {
+    const nextSnapshots = state.snapshotsByScheme;
+    if (nextSnapshots === _watchPrevSnapshots) return;
+
+    const prev = _watchPrevSnapshots;
+    _watchPrevSnapshots = nextSnapshots;
+
+    ['dark', 'light'].forEach((scheme) => {
+      const prevScheme = prev?.[scheme] || {};
+      const nextScheme = nextSnapshots?.[scheme] || {};
+      const stageKeys = new Set([
+        ...Object.keys(prevScheme),
+        ...Object.keys(nextScheme),
+        ...AVATAR_STAGE_DEFAULT_KEYS,
+      ]);
+
+      stageKeys.forEach((stageKey) => {
+        const prevVal = JSON.stringify(prevScheme[stageKey] ?? null);
+        const nextVal = JSON.stringify(nextScheme[stageKey] ?? null);
+        if (prevVal === nextVal) return;
+
+        const lockKey = `${scheme}/${stageKey}`;
+        const isLocked = Object.prototype.hasOwnProperty.call(_watchLockedSnapshots, lockKey);
+        const lockedVal = _watchLockedSnapshots[lockKey];
+
+        if (isLocked) {
+          console.group(
+            `%c[AvatarDefaults] ⚠️ LOCKED STAGE MUTATED: ${scheme}/${stageKey}`,
+            'color: red; font-weight: bold; font-size: 13px',
+          );
+          console.error(
+            'This stage was promoted and locked. Its snapshot changed unexpectedly.\n' +
+            `Locked value was: ${lockedVal}\nNew value is:    ${nextVal}`,
+          );
+        } else {
+          console.group(
+            `%c[AvatarDefaults] committed change: ${scheme}/${stageKey}`,
+            'color: orange; font-weight: bold',
+          );
+          console.log('Before:', JSON.parse(prevVal));
+          console.log('After: ', JSON.parse(nextVal));
+        }
+        console.trace('Source (the set() call is a few frames above this line)');
+        console.groupEnd();
+      });
+    });
+  });
+}
+// ─────────────────────────────────────────────────────────────────────────────
 
 const MODE_WINDOW_DAYS = 42;
 const CADENCE_WINDOW_WEEKS = 26;

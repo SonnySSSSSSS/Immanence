@@ -247,11 +247,17 @@ export function DevPanel({
             return;
         }
         setAvatarCompositePreviewDraft(true);
-        beginAvatarCompositeWorkingCopy(normalizedAvatarStageKey, colorScheme);
+        // Only initialize a fresh working copy when there isn't already one for
+        // this (stage, scheme) pair. Skipping preserves any slider edits the
+        // user made before switching away and coming back.
+        if (!currentAvatarWorkingCopy) {
+            beginAvatarCompositeWorkingCopy(normalizedAvatarStageKey, colorScheme);
+        }
     }, [
         beginAvatarCompositeWorkingCopy,
         clearAvatarCompositeWorkingCopy,
         colorScheme,
+        currentAvatarWorkingCopy,
         isOpen,
         normalizedAvatarStageKey,
         setAvatarCompositePreviewDraft,
@@ -289,6 +295,16 @@ export function DevPanel({
             : '';
 
     const handleSaveStageDefault = useCallback(async () => {
+        // Verify the working copy matches the stage we intend to promote.
+        // If not, bail — the guard in commitAvatarCompositeWorkingCopy would
+        // also catch this, but surfacing it here gives clearer user feedback.
+        if (!currentAvatarWorkingCopy) {
+            setAvatarPromoteAck(buildScopedAvatarStatus(
+                `No active working copy for ${normalizedAvatarStageKey} (${colorScheme}). Promote skipped.`
+            ));
+            return;
+        }
+
         const nowLabel = new Date().toLocaleTimeString();
         const draftSnippet = `// ${colorScheme} scheme\n${normalizedAvatarStageKey}: ${JSON.stringify(currentAvatarDraft, null, 2)},`;
         const canUseClipboard = typeof navigator !== 'undefined' && navigator.clipboard?.writeText;
@@ -307,7 +323,7 @@ export function DevPanel({
         }
 
         setAvatarDefaultStatus(buildScopedAvatarStatus(`Committed current working copy for ${normalizedAvatarStageKey} (${colorScheme} scheme). Canonical code defaults are unchanged.`));
-    }, [buildScopedAvatarStatus, colorScheme, commitAvatarCompositeWorkingCopy, currentAvatarDraft, normalizedAvatarStageKey, setAvatarDefaultStatus, setAvatarPromoteAck]);
+    }, [buildScopedAvatarStatus, colorScheme, commitAvatarCompositeWorkingCopy, currentAvatarDraft, currentAvatarWorkingCopy, normalizedAvatarStageKey, setAvatarDefaultStatus, setAvatarPromoteAck]);
 
     const handleResetDraftToDefault = useCallback(() => {
         const stageDefault = getCanonicalAvatarStageDefaultTransforms(normalizedAvatarStageKey, colorScheme);

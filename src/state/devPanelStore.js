@@ -1,7 +1,7 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import { normalizeStageKey } from '../config/avatarStageAssets.js';
-import { getCanonicalAvatarStageDefaultTransforms, useAvatarStageDefaultsStore } from './avatarV3Store.js';
+import { getCanonicalAvatarStageDefaultTransforms, useAvatarStageDefaultsStore, avatarWatchpointLockStage } from './avatarV3Store.js';
 
 export const DEV_PANEL_PERSIST_KEY = 'immanence-dev-panel';
 export const AVATAR_COMPOSITE_LAYER_IDS = ['bg', 'stage', 'glass', 'ring'];
@@ -267,7 +267,7 @@ const createDevPanelStoreState = (set, get) => ({
     set((state) => ({
       ...state,
       avatarComposite: setWorkingCopy(
-        state.avatarComposite,
+        { ...state.avatarComposite, workingCopy: null },
         stageKey,
         colorScheme,
         getCommittedStageDraftSnapshot(stageKey, colorScheme)
@@ -286,12 +286,69 @@ const createDevPanelStoreState = (set, get) => ({
   },
 
   commitAvatarCompositeWorkingCopy: (stageKey, colorScheme = 'dark') => {
+    const normalizedStageKey = normalizeStageId(stageKey);
+    const scheme = resolveScheme(colorScheme);
     const state = get();
-    const currentStageDraft = getWorkingCopySnapshot(state.avatarComposite, stageKey, colorScheme);
-    useAvatarStageDefaultsStore.getState().setStageDefault(stageKey, currentStageDraft, colorScheme);
+    const wc = state.avatarComposite?.workingCopy;
+
+    // Guard: only commit when the working copy matches the target stage.
+    // Without this, a mismatched commit would read back committed data (a no-op
+    // write) and silently replace the active working copy for another stage.
+    if (!wc || wc.stageKey !== normalizedStageKey || wc.colorScheme !== scheme) {
+      return;
+    }
+
+    // Deep-clone the draft so the committed store and working copy share no
+    // references — prevents any downstream mutation from leaking across stages.
+    const draftToCommit = cloneStageDraft(normalizedStageKey, scheme, wc.stageDraft);
+
+    // Snapshot every OTHER stage's committed data BEFORE the write so we can
+    // verify no cross-stage contamination occurs.
+    const defaultsStore = useAvatarStageDefaultsStore.getState();
+    const preCommitSnapshots = {};
+    AVATAR_COMPOSITE_STAGE_KEYS.forEach((sk) => {
+      if (sk !== normalizedStageKey) {
+        preCommitSnapshots[sk] = defaultsStore.getResolvedStageDefault(sk, scheme);
+      }
+    });
+
+    // Write the isolated draft to the committed defaults store.
+    useAvatarStageDefaultsStore.getState().setStageDefault(normalizedStageKey, draftToCommit, scheme);
+
+    // Lock the promoted stage in the watchpoint — any subsequent mutation to
+    // this stage's overrides will fire a red console.error with a stack trace.
+    avatarWatchpointLockStage(
+      normalizedStageKey,
+      scheme,
+      useAvatarStageDefaultsStore.getState().snapshotsByScheme?.[scheme]?.[normalizedStageKey] ?? null,
+    );
+
+    // Verify no other stage's committed data changed.
+    const postDefaultsStore = useAvatarStageDefaultsStore.getState();
+    AVATAR_COMPOSITE_STAGE_KEYS.forEach((sk) => {
+      if (sk === normalizedStageKey) return;
+      const postSnapshot = postDefaultsStore.getResolvedStageDefault(sk, scheme);
+      const pre = preCommitSnapshots[sk];
+      if (!pre || !postSnapshot) return;
+      AVATAR_COMPOSITE_LAYER_IDS.forEach((layerId) => {
+        const preLayer = pre[layerId] || {};
+        const postLayer = postSnapshot[layerId] || {};
+        Object.keys(preLayer).forEach((key) => {
+          if (preLayer[key] !== postLayer[key]) {
+            console.error(
+              `[commitAvatarCompositeWorkingCopy] CROSS-STAGE CONTAMINATION: ` +
+              `committed ${sk}.${layerId}.${key} changed from ${preLayer[key]} to ${postLayer[key]} ` +
+              `while committing ${normalizedStageKey} (${scheme})`
+            );
+          }
+        });
+      });
+    });
+
+    // Update the working copy to reflect the just-committed values.
     set((current) => ({
       ...current,
-      avatarComposite: setWorkingCopy(current.avatarComposite, stageKey, colorScheme, currentStageDraft),
+      avatarComposite: setWorkingCopy(current.avatarComposite, normalizedStageKey, scheme, draftToCommit),
     }));
   },
 
