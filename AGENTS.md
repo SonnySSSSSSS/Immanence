@@ -72,15 +72,44 @@ If any required item is missing, ambiguous, or conflicting:
 - request a corrected spec
 - do not edit files
 
+Exception:
+
+- if the defect qualifies for `Spec Auto-Fix (Unambiguous Only)`, the executing agent may normalize the spec and continue without requesting a full rewrite.
+
 #### Spec Auto-Fix (Unambiguous Only)
 
-If a spec's intent is clear and the only issues are minor and unambiguous (formatting, punctuation, obvious typos, or filename-only allowlist entries that map to exactly one repo-relative path), the executing agent may:
+If a spec's intent is clear and the only issues are minor and unambiguous, the executing agent may normalize the spec internally and proceed.
 
-- normalize/correct the spec text internally,
-- explicitly list the corrections made (old → new),
-- then implement and verify per the corrected spec.
+Auto-fixable cases include:
 
-If any correction is ambiguous (e.g. multiple matching files for a filename-only allowlist entry, unclear constraints, or unclear verification), stop and request clarification; do not implement or commit.
+- formatting, punctuation, and obvious typos
+- filename-only allowlist entries that map to exactly one repo-relative path
+- repo-relative allowlist paths that do not exist but map unambiguously to one current file
+- stale or mistaken allowlist paths that unambiguously identify the current owner file
+- replacing a nonexistent config, module, or asset path with the real owner file or files when the mapping is clear from the codebase
+- adding closely coupled owner files that are obviously required to complete the same single atomic change, when those files are unique and directly implied by the requested work
+- filling harmless omissions with safe defaults when intent is obvious:
+  - missing no-sequencing rule -> `No sequencing; perform only the listed atomic change.`
+  - missing screenshot signal for non-visual work -> `N/A`
+  - missing stop gate -> `Stop if allowlist or denylist intent becomes ambiguous, if required proof cannot be established, or if implementation requires files outside the corrected allowlist.`
+
+When using auto-fix, the executing agent must:
+
+- normalize or correct the spec text internally
+- explicitly list the corrections made (`old -> new`)
+- keep the change single-purpose and atomic
+- implement and verify per the corrected spec
+
+Files omitted from the original allowlist remain out of scope unless they are added through this unambiguous auto-fix process.
+
+If any correction is ambiguous, material, or would require guessing intent, stop and request clarification; do not implement or commit.
+
+Examples of ambiguity that still require a stop:
+
+- multiple plausible file matches
+- unclear constraints
+- unclear verification
+- a requested change that stops being atomic after correction
 
 ### Stateful UI Debug Gate
 
