@@ -205,6 +205,15 @@ function sanitizeSnapshotsByScheme(raw) {
   return result;
 }
 
+// PROBE:avatar-scheme-isolation:START
+const AVATAR_SCHEME_ISOLATION_PROBE_ENABLED = import.meta.env.DEV;
+
+function logSchemeisolationProbe(event, detail = {}) {
+  if (!AVATAR_SCHEME_ISOLATION_PROBE_ENABLED) return;
+  console.info('[PROBE:avatar-scheme-isolation]', { event, timestamp: new Date().toISOString(), ...detail });
+}
+// PROBE:avatar-scheme-isolation:END
+
 function buildDefaultsByStage(snapshotsByScheme) {
   const dark = {};
   const light = {};
@@ -224,6 +233,39 @@ function buildDefaultsByStage(snapshotsByScheme) {
       ? sanitizeAvatarDefaultStageTransforms(lightSource, getCanonicalAvatarStageDefaultTransforms(stageKey, 'light'))
       : getCanonicalAvatarStageDefaultTransforms(stageKey, 'light');
   });
+
+  // PROBE:avatar-scheme-isolation:START
+  if (AVATAR_SCHEME_ISOLATION_PROBE_ENABLED) {
+    const snapshotTopLevelShared = snapshotsByScheme.dark === snapshotsByScheme.light;
+    const stageLevelShared = {};
+    const layerLevelShared = {};
+    AVATAR_STAGE_DEFAULT_KEYS.forEach((stageKey) => {
+      stageLevelShared[stageKey] = dark[stageKey] === light[stageKey];
+      const layerShare = {};
+      AVATAR_STAGE_DEFAULT_LAYER_IDS.forEach((layerId) => {
+        layerShare[layerId] = dark[stageKey]?.[layerId] === light[stageKey]?.[layerId];
+      });
+      layerLevelShared[stageKey] = layerShare;
+    });
+    const anyStageShared = Object.values(stageLevelShared).some(Boolean);
+    const anyLayerShared = Object.values(layerLevelShared).some((l) => Object.values(l).some(Boolean));
+    logSchemeisolationProbe('buildDefaultsByStage', {
+      snapshotTopLevelShared,
+      anyStageShared,
+      anyLayerShared,
+      stageLevelShared,
+      layerLevelShared,
+      snapshotDarkKeys: Object.keys(snapshotsByScheme.dark || {}),
+      snapshotLightKeys: Object.keys(snapshotsByScheme.light || {}),
+    });
+    if (snapshotTopLevelShared || anyStageShared || anyLayerShared) {
+      console.error(
+        '[PROBE:avatar-scheme-isolation] CONTAMINATION DETECTED in buildDefaultsByStage — ' +
+        'dark and light share object references. See detail above.'
+      );
+    }
+  }
+  // PROBE:avatar-scheme-isolation:END
 
   return { defaultsByStage: dark, defaultsByStageLight: light };
 }
@@ -262,7 +304,22 @@ export const useAvatarStageDefaultsStore = create(
       set((state) => {
         const normalizedStage = normalizeStageKey(stageKey);
         const scheme = normalizeAvatarDefaultScheme(colorScheme);
+        const oppositeScheme = scheme === 'dark' ? 'light' : 'dark';
         const snapshot = sanitizeStageSnapshot(normalizedStage, scheme, stageTransforms);
+
+        // PROBE:avatar-scheme-isolation:START
+        const beforeOtherSchemeSnapshot = state.snapshotsByScheme?.[oppositeScheme]?.[normalizedStage]
+          ? JSON.stringify(state.snapshotsByScheme[oppositeScheme][normalizedStage])
+          : null;
+        const beforeThisSchemeSnapshot = state.snapshotsByScheme?.[scheme]?.[normalizedStage]
+          ? JSON.stringify(state.snapshotsByScheme[scheme][normalizedStage])
+          : null;
+        const snapshotBranchesSharedBefore =
+          state.snapshotsByScheme?.dark === state.snapshotsByScheme?.light;
+        const stageBranchSharedBefore =
+          state.snapshotsByScheme?.dark?.[normalizedStage] ===
+          state.snapshotsByScheme?.light?.[normalizedStage];
+        // PROBE:avatar-scheme-isolation:END
 
         const nextSnapshotsByScheme = {
           ...state.snapshotsByScheme,
@@ -272,11 +329,58 @@ export const useAvatarStageDefaultsStore = create(
           },
         };
 
-        return {
+        const nextState = {
           ...state,
           snapshotsByScheme: nextSnapshotsByScheme,
           ...buildDefaultsByStage(nextSnapshotsByScheme),
         };
+
+        // PROBE:avatar-scheme-isolation:START
+        if (AVATAR_SCHEME_ISOLATION_PROBE_ENABLED) {
+          const afterOtherSchemeSnapshot = nextState.snapshotsByScheme?.[oppositeScheme]?.[normalizedStage]
+            ? JSON.stringify(nextState.snapshotsByScheme[oppositeScheme][normalizedStage])
+            : null;
+          const afterThisSchemeSnapshot = nextState.snapshotsByScheme?.[scheme]?.[normalizedStage]
+            ? JSON.stringify(nextState.snapshotsByScheme[scheme][normalizedStage])
+            : null;
+          const otherSchemeChanged = beforeOtherSchemeSnapshot !== afterOtherSchemeSnapshot;
+          const snapshotBranchesSharedAfter =
+            nextState.snapshotsByScheme?.dark === nextState.snapshotsByScheme?.light;
+          const stageBranchSharedAfter =
+            nextState.snapshotsByScheme?.dark?.[normalizedStage] ===
+            nextState.snapshotsByScheme?.light?.[normalizedStage];
+          logSchemeisolationProbe('setStageDefault', {
+            writingScheme: scheme,
+            oppositeScheme,
+            stageKey: normalizedStage,
+            snapshotBranchesSharedBefore,
+            snapshotBranchesSharedAfter,
+            stageBranchSharedBefore,
+            stageBranchSharedAfter,
+            otherSchemeChanged,
+            beforeThisSchemeSnapshot: beforeThisSchemeSnapshot ? JSON.parse(beforeThisSchemeSnapshot) : null,
+            afterThisSchemeSnapshot: afterThisSchemeSnapshot ? JSON.parse(afterThisSchemeSnapshot) : null,
+            beforeOtherSchemeSnapshot: beforeOtherSchemeSnapshot ? JSON.parse(beforeOtherSchemeSnapshot) : null,
+            afterOtherSchemeSnapshot: afterOtherSchemeSnapshot ? JSON.parse(afterOtherSchemeSnapshot) : null,
+          });
+          if (otherSchemeChanged) {
+            console.error(
+              `[PROBE:avatar-scheme-isolation] CONTAMINATION: writing ${scheme}/${normalizedStage} ` +
+              `unexpectedly changed ${oppositeScheme}/${normalizedStage}. ` +
+              `Before: ${beforeOtherSchemeSnapshot} | After: ${afterOtherSchemeSnapshot}`
+            );
+          }
+          if (snapshotBranchesSharedAfter || stageBranchSharedAfter) {
+            console.error(
+              `[PROBE:avatar-scheme-isolation] SHARED REF after write: ` +
+              `snapshotBranchesSharedAfter=${snapshotBranchesSharedAfter}, ` +
+              `stageBranchSharedAfter=${stageBranchSharedAfter}`
+            );
+          }
+        }
+        // PROBE:avatar-scheme-isolation:END
+
+        return nextState;
       }),
 
     resetAllToCanonical: () =>

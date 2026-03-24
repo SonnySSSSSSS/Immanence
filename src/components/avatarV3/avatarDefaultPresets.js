@@ -82,3 +82,47 @@ function freezePresets(presets) {
 
 export const DEFAULT_AVATAR_PRESETS = freezePresets(STAGE_PRESETS);
 export const DEFAULT_AVATAR_PRESETS_LIGHT = freezePresets(LIGHT_STAGE_PRESETS);
+
+// PROBE:avatar-scheme-isolation:START
+if (import.meta.env.DEV) {
+  const topLevelShared = DEFAULT_AVATAR_PRESETS === DEFAULT_AVATAR_PRESETS_LIGHT;
+  const stageShared = {};
+  const layerShared = {};
+  const STAGE_KEYS_CHECK = ['seedling', 'ember', 'flame', 'beacon', 'stellar'];
+  const LAYER_KEYS_CHECK = ['bg', 'stage', 'glass', 'ring'];
+  STAGE_KEYS_CHECK.forEach((sk) => {
+    stageShared[sk] = DEFAULT_AVATAR_PRESETS[sk] === DEFAULT_AVATAR_PRESETS_LIGHT[sk];
+    layerShared[sk] = {};
+    LAYER_KEYS_CHECK.forEach((lk) => {
+      layerShared[sk][lk] = DEFAULT_AVATAR_PRESETS[sk]?.[lk] === DEFAULT_AVATAR_PRESETS_LIGHT[sk]?.[lk];
+    });
+  });
+  const anyStageShared = Object.values(stageShared).some(Boolean);
+  const anyLayerShared = Object.values(layerShared).some((l) => Object.values(l).some(Boolean));
+  // Check if VALUES are identical even when references are separate (baseline mirror situation)
+  const valuesMirror = {};
+  STAGE_KEYS_CHECK.forEach((sk) => {
+    valuesMirror[sk] = JSON.stringify(DEFAULT_AVATAR_PRESETS[sk]) === JSON.stringify(DEFAULT_AVATAR_PRESETS_LIGHT[sk]);
+  });
+  const allValuesMirror = Object.values(valuesMirror).every(Boolean);
+  console.info('[PROBE:avatar-scheme-isolation] avatarDefaultPresets reference check', {
+    topLevelShared,
+    anyStageShared,
+    anyLayerShared,
+    stageShared,
+    layerShared,
+    allValuesMirror,
+    valuesMirror,
+    note: allValuesMirror
+      ? 'Dark and light presets have IDENTICAL VALUES \u2014 both schemes start at the same canonical defaults. ' +
+        'This is intentional (baseline mirror) but means fresh state LOOKS contaminated when it is not.'
+      : 'Dark and light presets have different values \u2014 canonical defaults diverge between schemes.',
+  });
+  if (topLevelShared || anyStageShared || anyLayerShared) {
+    console.error(
+      '[PROBE:avatar-scheme-isolation] CONTAMINATION: dark and light preset objects share references. ' +
+      'This would cause scheme contamination at canonical default level.'
+    );
+  }
+}
+// PROBE:avatar-scheme-isolation:END

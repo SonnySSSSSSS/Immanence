@@ -141,6 +141,11 @@ export function AvatarV3({
   };
 
   const ariaLabel = `${STAGE_LABELS[stage] || 'Seedling'} stage, ${MODE_LABELS[dominantMode] || 'Photic'} dominant mode`;
+  // PROBE:avatar-scheme-isolation:START
+  // AvatarV3 is a pass-through host: it receives stage/modeWeights and renders AvatarComposite.
+  // It does NOT read or write avatar scheme-specific state directly.
+  // Scheme isolation lives in AvatarComposite (reads colorScheme from useDisplayModeStore).
+  // PROBE:avatar-scheme-isolation:END
   if (AVATAR_V3_HMR_DERIVATION_PROBE_ENABLED) {
     logAvatarHmrDerivationProbe('AvatarV3', 'render-pass-through', {
       stage,

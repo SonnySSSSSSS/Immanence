@@ -1,3 +1,11 @@
+// PROBE:avatar-scheme-isolation:START
+// avatarStageAssets.js is ASSET-ONLY. It maps stage+scheme to image asset paths.
+// It does not hold, build, or merge avatar transform/layer state.
+// It is not a contamination owner for the light/dark scheme isolation bug.
+// The light/dark asset tables (DARK_STAGE_ASSETS, LIGHT_STAGE_ASSETS) are
+// plain data objects with no shared references and no state-bearing logic.
+// PROBE:avatar-scheme-isolation:END
+
 const STAGE_KEYS = ['seedling', 'ember', 'flame', 'beacon', 'stellar'];
 
 const DARK_STAGE_ASSETS = {

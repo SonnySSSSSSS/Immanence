@@ -153,6 +153,19 @@ if (AVATAR_COMPOSITE_HMR_SUBSTRATE_PROBE_ENABLED) {
 }
 // PROBE:avatar-hmr-substrate:END
 
+// PROBE:avatar-scheme-isolation:START
+let _schemeIsolationProbeSeq = 0;
+
+function logAvatarSchemeIsolationProbe(detail = {}) {
+  if (!import.meta.env.DEV) return;
+  _schemeIsolationProbeSeq += 1;
+  console.info('[PROBE:avatar-scheme-isolation] AvatarComposite render', {
+    seq: _schemeIsolationProbeSeq,
+    ...detail,
+  });
+}
+// PROBE:avatar-scheme-isolation:END
+
 function handleLayerImageError(event) {
   console.error('AvatarComposite failed to load:', event?.target?.src);
 }
@@ -284,6 +297,28 @@ export function AvatarComposite({ stage, size, path = null }) {
   const baseLayers = useDraftTransforms
     ? getAvatarCompositeStageDraft(normalizedStage, colorScheme)
     : resolvedDefaults;
+
+  // PROBE:avatar-scheme-isolation:START
+  if (import.meta.env.DEV) {
+    // Capture both schemes' resolved defaults at this render to detect whether
+    // they are already diverged (correct isolation) or identical (possible contamination or baseline mirror).
+    const resolvedDark = getResolvedStageDefault(normalizedStage, 'dark');
+    const resolvedLight = getResolvedStageDefault(normalizedStage, 'light');
+    const schemesValueEqual = JSON.stringify(resolvedDark) === JSON.stringify(resolvedLight);
+    logAvatarSchemeIsolationProbe({
+      activeScheme: colorScheme,
+      stage: normalizedStage,
+      useDraftTransforms,
+      schemesValueEqual,
+      activeSchemeSource: useDraftTransforms ? 'draft' : 'resolvedDefault',
+      resolvedDarkBg: resolvedDark?.bg,
+      resolvedLightBg: resolvedLight?.bg,
+      note: schemesValueEqual
+        ? 'Both schemes show identical values \u2014 either baseline mirror state (no snapshots saved) or contamination.'
+        : 'Schemes diverged \u2014 isolation is working correctly.',
+    });
+  }
+  // PROBE:avatar-scheme-isolation:END
 
   const mergedLayers = mergeLayers(baseLayers);
   const effectiveLayers = {};
