@@ -32,9 +32,13 @@ function AvatarCompositeSection({
     const colorScheme = isLight ? 'light' : 'dark';
     const normalizedEditingStageKey = normalizeStageKey(editingStageKey);
     const avatarComposite = useDevPanelStore(s => s.avatarComposite);
-    const currentStageDraft = useDevPanelStore(
-        s => s.avatarComposite?.draftsByTheme?.[colorScheme]?.[normalizedEditingStageKey]
+    const currentWorkingCopy = useDevPanelStore(
+        s => s.avatarComposite?.workingCopy?.colorScheme === colorScheme
+            && s.avatarComposite?.workingCopy?.stageKey === normalizedEditingStageKey
+            ? s.avatarComposite.workingCopy.stageDraft
+            : null
     );
+    const getAvatarCompositeStageDraft = useDevPanelStore(s => s.getAvatarCompositeStageDraft);
     const setAvatarCompositeEnabled = useDevPanelStore(s => s.setAvatarCompositeEnabled);
     const setAvatarCompositeDebugOverlay = useDevPanelStore(s => s.setAvatarCompositeDebugOverlay);
     const writeAvatarCompositeDraftValue = useDevPanelStore(s => s.writeAvatarCompositeDraftValue);
@@ -50,6 +54,7 @@ function AvatarCompositeSection({
     const [jsonStatus, setJsonStatus] = useState('');
 
     const editingStageLabel = normalizedEditingStageKey.charAt(0).toUpperCase() + normalizedEditingStageKey.slice(1);
+    const currentStageDraft = currentWorkingCopy || getAvatarCompositeStageDraft(normalizedEditingStageKey, colorScheme);
     const layers = useMemo(() => {
         const nextLayers = {};
         AVATAR_COMPOSITE_LAYER_IDS.forEach((layerId) => {
@@ -119,7 +124,7 @@ function AvatarCompositeSection({
                 Editing stage: <span className="font-semibold text-white/90">{editingStageLabel}</span>
             </div>
             <div className="text-[11px] text-white/55 mb-3">
-                `Save Stage Default` is the only runtime save path. JSON tools below are draft import/export only.
+                `Promote in Code` is the only save path. Slider edits stay in the active working copy until promoted.
             </div>
 
             <div className="grid grid-cols-2 gap-2 mb-3">

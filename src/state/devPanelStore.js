@@ -1,7 +1,7 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import { normalizeStageKey } from '../config/avatarStageAssets.js';
-import { getCanonicalAvatarStageDefaultTransforms } from './avatarV3Store.js';
+import { getCanonicalAvatarStageDefaultTransforms, useAvatarStageDefaultsStore } from './avatarV3Store.js';
 
 export const DEV_PANEL_PERSIST_KEY = 'immanence-dev-panel';
 export const AVATAR_COMPOSITE_LAYER_IDS = ['bg', 'stage', 'glass', 'ring'];
@@ -93,49 +93,12 @@ function cloneStageDraft(stageKey = 'seedling', colorScheme = 'dark', stageTrans
   return clonedStageDraft;
 }
 
-function createDefaultDraftsByStage(colorScheme = 'dark') {
-  const next = {};
-  AVATAR_COMPOSITE_STAGE_KEYS.forEach((stageKey) => {
-    next[stageKey] = cloneStageDraft(stageKey, colorScheme);
-  });
-  return next;
-}
-
-function createDefaultDraftsByTheme() {
-  return {
-    dark: createDefaultDraftsByStage('dark'),
-    light: createDefaultDraftsByStage('light'),
-  };
-}
-
-function sanitizeDraftsByStage(input = {}, colorScheme = 'dark') {
-  const source = input && typeof input === 'object' ? input : {};
-  const next = {};
-
-  AVATAR_COMPOSITE_STAGE_KEYS.forEach((stageKey) => {
-    next[stageKey] = cloneStageDraft(stageKey, colorScheme, source[stageKey]);
-  });
-
-  return next;
-}
-
-function sanitizeDraftsByTheme(input = {}) {
-  const source = input && typeof input === 'object' ? input : {};
-  const draftSource =
-    source.draftsByTheme && typeof source.draftsByTheme === 'object' ? source.draftsByTheme : source;
-
-  return {
-    dark: sanitizeDraftsByStage(draftSource.dark || source.transformsByStage, 'dark'),
-    light: sanitizeDraftsByStage(draftSource.light || source.transformsByStageLight, 'light'),
-  };
-}
-
 function createDefaultAvatarComposite() {
   return {
     enabled: true,
     previewDraft: false,
     showDebugOverlay: false,
-    draftsByTheme: createDefaultDraftsByTheme(),
+    workingCopy: null,
   };
 }
 
@@ -148,13 +111,12 @@ export function sanitizeAvatarComposite(input = {}) {
     enabled: typeof source.enabled === 'boolean' ? source.enabled : true,
     previewDraft: typeof source.previewDraft === 'boolean' ? source.previewDraft : false,
     showDebugOverlay: typeof source.showDebugOverlay === 'boolean' ? source.showDebugOverlay : false,
-    draftsByTheme: sanitizeDraftsByTheme(source),
+    workingCopy: null,
   };
 }
 
 function mergeAvatarComposite(baseAvatarComposite, persistedAvatarComposite = {}) {
   const baseAvatar = baseAvatarComposite || createDefaultAvatarComposite();
-  const sanitizedPersistedAvatar = sanitizeAvatarComposite(persistedAvatarComposite);
 
   return {
     ...baseAvatar,
@@ -167,56 +129,76 @@ function mergeAvatarComposite(baseAvatarComposite, persistedAvatarComposite = {}
       typeof persistedAvatarComposite?.showDebugOverlay === 'boolean'
         ? persistedAvatarComposite.showDebugOverlay
         : baseAvatar.showDebugOverlay,
-    draftsByTheme: {
-      dark: sanitizeDraftsByStage(sanitizedPersistedAvatar.draftsByTheme?.dark, 'dark'),
-      light: sanitizeDraftsByStage(sanitizedPersistedAvatar.draftsByTheme?.light, 'light'),
-    },
+    workingCopy: null,
   };
 }
 
-function getDraftsByScheme(avatarComposite, colorScheme = 'dark') {
-  const scheme = resolveScheme(colorScheme);
-  return avatarComposite?.draftsByTheme?.[scheme] || createDefaultDraftsByStage(scheme);
-}
-
-function setDraftsByScheme(avatarComposite, colorScheme, nextDraftsByStage) {
-  const scheme = resolveScheme(colorScheme);
-  const currentDraftsByTheme = avatarComposite?.draftsByTheme || createDefaultDraftsByTheme();
-
-  return {
-    ...avatarComposite,
-    draftsByTheme: {
-      dark: currentDraftsByTheme.dark,
-      light: currentDraftsByTheme.light,
-      [scheme]: sanitizeDraftsByStage(nextDraftsByStage, scheme),
-    },
-  };
-}
-
-function getStageDraftSnapshot(avatarComposite, stageKey, colorScheme = 'dark') {
+function createWorkingCopy(stageKey, colorScheme = 'dark', stageTransforms = null) {
   const normalizedStageKey = normalizeStageId(stageKey);
+  const scheme = resolveScheme(colorScheme);
+  return {
+    colorScheme: scheme,
+    stageKey: normalizedStageKey,
+    stageDraft: cloneStageDraft(normalizedStageKey, scheme, stageTransforms),
+  };
+}
+
+function getCommittedStageDraftSnapshot(stageKey, colorScheme = 'dark') {
   return cloneStageDraft(
-    normalizedStageKey,
+    stageKey,
     colorScheme,
-    getDraftsByScheme(avatarComposite, colorScheme)[normalizedStageKey]
+    useAvatarStageDefaultsStore.getState().getResolvedStageDefault(stageKey, colorScheme)
   );
 }
 
-function replaceStageDraft(state, stageKey, stageTransforms, colorScheme = 'dark') {
+function isWorkingCopyMatch(workingCopy, stageKey, colorScheme = 'dark') {
+  if (!workingCopy || typeof workingCopy !== 'object') return false;
   const normalizedStageKey = normalizeStageId(stageKey);
-  const avatarComposite = state.avatarComposite || createDefaultAvatarComposite();
-  const nextDraftsByStage = {
-    ...getDraftsByScheme(avatarComposite, colorScheme),
-    [normalizedStageKey]: cloneStageDraft(normalizedStageKey, colorScheme, stageTransforms),
-  };
+  const scheme = resolveScheme(colorScheme);
+  return workingCopy.stageKey === normalizedStageKey && workingCopy.colorScheme === scheme;
+}
 
+function getWorkingCopySnapshot(avatarComposite, stageKey, colorScheme = 'dark') {
+  if (isWorkingCopyMatch(avatarComposite?.workingCopy, stageKey, colorScheme)) {
+    return cloneStageDraft(stageKey, colorScheme, avatarComposite.workingCopy.stageDraft);
+  }
+  return getCommittedStageDraftSnapshot(stageKey, colorScheme);
+}
+
+function setWorkingCopy(avatarComposite, stageKey, colorScheme = 'dark', stageTransforms = null) {
   return {
-    ...state,
-    avatarComposite: setDraftsByScheme(avatarComposite, colorScheme, nextDraftsByStage),
+    ...(avatarComposite || createDefaultAvatarComposite()),
+    workingCopy: createWorkingCopy(stageKey, colorScheme, stageTransforms),
   };
 }
 
-function writeStageDraftValue(state, stageKey, layerId, field, value, colorScheme = 'dark') {
+function discardWorkingCopy(avatarComposite, stageKey = null, colorScheme = 'dark') {
+  if (!avatarComposite?.workingCopy) return avatarComposite || createDefaultAvatarComposite();
+  if (stageKey == null) {
+    return {
+      ...(avatarComposite || createDefaultAvatarComposite()),
+      workingCopy: null,
+    };
+  }
+  if (!isWorkingCopyMatch(avatarComposite.workingCopy, stageKey, colorScheme)) {
+    return avatarComposite;
+  }
+  return {
+    ...(avatarComposite || createDefaultAvatarComposite()),
+    workingCopy: null,
+  };
+}
+
+function replaceWorkingStageDraft(state, stageKey, stageTransforms, colorScheme = 'dark') {
+  const avatarComposite = state.avatarComposite || createDefaultAvatarComposite();
+
+  return {
+    ...state,
+    avatarComposite: setWorkingCopy(avatarComposite, stageKey, colorScheme, stageTransforms),
+  };
+}
+
+function writeWorkingStageValue(state, stageKey, layerId, field, value, colorScheme = 'dark') {
   const normalizedLayerId = normalizeLayerId(layerId);
   if (!normalizedLayerId) return state;
 
@@ -224,7 +206,7 @@ function writeStageDraftValue(state, stageKey, layerId, field, value, colorSchem
   const sanitizedPatch = sanitizeRolePatch(normalizedLayerId, { [field]: value });
   if (!Object.keys(sanitizedPatch).length) return state;
 
-  const currentStageDraft = getStageDraftSnapshot(state.avatarComposite, normalizedStageKey, colorScheme);
+  const currentStageDraft = getWorkingCopySnapshot(state.avatarComposite, normalizedStageKey, colorScheme);
   const nextStageDraft = {
     ...currentStageDraft,
     [normalizedLayerId]: {
@@ -233,10 +215,10 @@ function writeStageDraftValue(state, stageKey, layerId, field, value, colorSchem
     },
   };
 
-  return replaceStageDraft(state, normalizedStageKey, nextStageDraft, colorScheme);
+  return replaceWorkingStageDraft(state, normalizedStageKey, nextStageDraft, colorScheme);
 }
 
-export function migrateDevPanelState(persistedState, version) {
+export function migrateDevPanelState(persistedState) {
   if (!persistedState) return persistedState;
 
   const persistedAvatar = persistedState.avatarComposite || {};
@@ -245,7 +227,7 @@ export function migrateDevPanelState(persistedState, version) {
     previewDraft: false,
     showDebugOverlay:
       typeof persistedAvatar.showDebugOverlay === 'boolean' ? persistedAvatar.showDebugOverlay : false,
-    draftsByTheme: sanitizeDraftsByTheme(version >= 5 ? persistedAvatar : persistedAvatar),
+    workingCopy: null,
   };
 
   return { ...persistedState, avatarComposite: migratedAvatar };
@@ -281,20 +263,47 @@ const createDevPanelStoreState = (set, get) => ({
       },
     })),
 
+  beginAvatarCompositeWorkingCopy: (stageKey, colorScheme = 'dark') =>
+    set((state) => ({
+      ...state,
+      avatarComposite: setWorkingCopy(
+        state.avatarComposite,
+        stageKey,
+        colorScheme,
+        getCommittedStageDraftSnapshot(stageKey, colorScheme)
+      ),
+    })),
+
+  clearAvatarCompositeWorkingCopy: (stageKey = null, colorScheme = 'dark') =>
+    set((state) => ({
+      ...state,
+      avatarComposite: discardWorkingCopy(state.avatarComposite, stageKey, colorScheme),
+    })),
+
   getAvatarCompositeStageDraft: (stageKey, colorScheme = 'dark') => {
     const state = get();
-    return getStageDraftSnapshot(state.avatarComposite, stageKey, colorScheme);
+    return getWorkingCopySnapshot(state.avatarComposite, stageKey, colorScheme);
+  },
+
+  commitAvatarCompositeWorkingCopy: (stageKey, colorScheme = 'dark') => {
+    const state = get();
+    const currentStageDraft = getWorkingCopySnapshot(state.avatarComposite, stageKey, colorScheme);
+    useAvatarStageDefaultsStore.getState().setStageDefault(stageKey, currentStageDraft, colorScheme);
+    set((current) => ({
+      ...current,
+      avatarComposite: setWorkingCopy(current.avatarComposite, stageKey, colorScheme, currentStageDraft),
+    }));
   },
 
   writeAvatarCompositeDraftValue: (stageKey, layerId, field, value, colorScheme = 'dark') =>
-    set((state) => writeStageDraftValue(state, stageKey, layerId, field, value, colorScheme)),
+    set((state) => writeWorkingStageValue(state, stageKey, layerId, field, value, colorScheme)),
 
   replaceAvatarCompositeStageDraft: (stageKey, stageTransforms, colorScheme = 'dark') =>
-    set((state) => replaceStageDraft(state, stageKey, stageTransforms, colorScheme)),
+    set((state) => replaceWorkingStageDraft(state, stageKey, stageTransforms, colorScheme)),
 
   resetAvatarCompositeStage: (stageKey, colorScheme = 'dark') =>
     set((state) =>
-      replaceStageDraft(
+      replaceWorkingStageDraft(
         state,
         stageKey,
         getCanonicalAvatarStageDefaultTransforms(stageKey, colorScheme),
@@ -306,7 +315,7 @@ const createDevPanelStoreState = (set, get) => ({
     const state = get();
     const transformsByStage = {};
     AVATAR_COMPOSITE_STAGE_KEYS.forEach((stageKey) => {
-      transformsByStage[stageKey] = getStageDraftSnapshot(state.avatarComposite, stageKey, colorScheme);
+      transformsByStage[stageKey] = getWorkingCopySnapshot(state.avatarComposite, stageKey, colorScheme);
     });
     return JSON.stringify(
       {
@@ -322,17 +331,16 @@ const createDevPanelStoreState = (set, get) => ({
 
 const devPanelPersistConfig = {
   name: DEV_PANEL_PERSIST_KEY,
-  version: 5,
+  version: 6,
   migrate: (persistedState, version) => migrateDevPanelState(persistedState, version),
   partialize: (state) => ({
     avatarComposite: {
       enabled: Boolean(state.avatarComposite?.enabled),
-      draftsByTheme: sanitizeDraftsByTheme(state.avatarComposite?.draftsByTheme),
       showDebugOverlay: Boolean(state.avatarComposite?.showDebugOverlay),
     },
   }),
   merge: (persisted, current) => {
-    const migrated = migrateDevPanelState(persisted, 5);
+    const migrated = migrateDevPanelState(persisted, 6);
     const persistedAvatar = migrated?.avatarComposite || {};
     const baseAvatar = current?.avatarComposite || createDefaultAvatarComposite();
     return {

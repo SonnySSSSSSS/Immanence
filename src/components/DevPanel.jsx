@@ -12,7 +12,7 @@ import { useCurriculumStore } from '../state/curriculumStore';
 import { useNavigationStore } from '../state/navigationStore';
 import { useTutorialStore } from '../state/tutorialStore';
 import { normalizeStageKey } from '../config/avatarStageAssets.js';
-import { useAvatarStageDefaultsStore } from '../state/avatarV3Store.js';
+import { getCanonicalAvatarStageDefaultTransforms, useAvatarStageDefaultsStore } from '../state/avatarV3Store.js';
 import { AVATAR_COMPOSITE_LAYER_IDS, useDevPanelStore } from '../state/devPanelStore.js';
 import { CoordinateHelper } from './dev/CoordinateHelper.jsx';
 import { OnboardingContentEditor, TutorialEditor } from './dev/TutorialEditor.jsx';
@@ -221,11 +221,21 @@ export function DevPanel({
     const setAvatarStage = setAvatarStageProp ?? setAvatarStageLocal;
     const normalizedAvatarStageKey = normalizeStageKey(avatarStage);
     const getResolvedAvatarStageDefault = useAvatarStageDefaultsStore(s => s.getResolvedStageDefault);
-    const currentAvatarDraftBucket = useDevPanelStore(
-        s => s.avatarComposite?.draftsByTheme?.[colorScheme]?.[normalizedAvatarStageKey]
-    );
+    const currentAvatarCommittedStage = useAvatarStageDefaultsStore((s) => {
+        const defaultsByScheme = colorScheme === 'light' ? s.defaultsByStageLight : s.defaultsByStage;
+        return defaultsByScheme?.[normalizedAvatarStageKey] || null;
+    });
     const getAvatarCompositeStageDraft = useDevPanelStore(s => s.getAvatarCompositeStageDraft);
+    const currentAvatarWorkingCopy = useDevPanelStore((s) =>
+        s.avatarComposite?.workingCopy?.colorScheme === colorScheme
+            && s.avatarComposite?.workingCopy?.stageKey === normalizedAvatarStageKey
+            ? s.avatarComposite.workingCopy.stageDraft
+            : null
+    );
     const setAvatarCompositePreviewDraft = useDevPanelStore(s => s.setAvatarCompositePreviewDraft);
+    const beginAvatarCompositeWorkingCopy = useDevPanelStore(s => s.beginAvatarCompositeWorkingCopy);
+    const clearAvatarCompositeWorkingCopy = useDevPanelStore(s => s.clearAvatarCompositeWorkingCopy);
+    const commitAvatarCompositeWorkingCopy = useDevPanelStore(s => s.commitAvatarCompositeWorkingCopy);
     const replaceAvatarCompositeStageDraft = useDevPanelStore(s => s.replaceAvatarCompositeStageDraft);
     const [avatarDefaultStatus, setAvatarDefaultStatus] = useState(null);
     const [avatarPromoteAck, setAvatarPromoteAck] = useState(null);
@@ -233,28 +243,37 @@ export function DevPanel({
     useEffect(() => {
         if (!isOpen) {
             setAvatarCompositePreviewDraft(false);
+            clearAvatarCompositeWorkingCopy();
             return;
         }
         setAvatarCompositePreviewDraft(true);
+        beginAvatarCompositeWorkingCopy(normalizedAvatarStageKey, colorScheme);
     }, [
+        beginAvatarCompositeWorkingCopy,
+        clearAvatarCompositeWorkingCopy,
+        colorScheme,
         isOpen,
+        normalizedAvatarStageKey,
         setAvatarCompositePreviewDraft,
     ]);
 
     useEffect(() => {
         return () => {
             setAvatarCompositePreviewDraft(false);
+            clearAvatarCompositeWorkingCopy();
         };
-    }, [setAvatarCompositePreviewDraft]);
+    }, [clearAvatarCompositeWorkingCopy, setAvatarCompositePreviewDraft]);
 
-    const currentAvatarDraft = currentAvatarDraftBucket
-        ? normalizeAvatarStageSnapshot(currentAvatarDraftBucket)
-        : getAvatarCompositeStageDraft(normalizedAvatarStageKey, colorScheme);
-    const currentAvatarDefault = getResolvedAvatarStageDefault(normalizedAvatarStageKey, colorScheme);
-    const hasUnsavedAvatarDraft = !areAvatarStageSnapshotsEqual(currentAvatarDraft, currentAvatarDefault);
+    const currentAvatarCommitted = normalizeAvatarStageSnapshot(
+        currentAvatarCommittedStage || getResolvedAvatarStageDefault(normalizedAvatarStageKey, colorScheme)
+    );
+    const currentAvatarDraft = normalizeAvatarStageSnapshot(
+        currentAvatarWorkingCopy || getAvatarCompositeStageDraft(normalizedAvatarStageKey, colorScheme)
+    );
+    const hasUnsavedAvatarDraft = !areAvatarStageSnapshotsEqual(currentAvatarDraft, currentAvatarCommitted);
     const avatarDraftStatusLabel = hasUnsavedAvatarDraft
-        ? 'Unsaved Draft changes'
-        : 'Draft matches canonical code Default';
+        ? 'Working copy has unpromoted changes'
+        : 'Working copy matches last promoted value';
     const buildScopedAvatarStatus = useCallback((message) => ({
         message,
         stageKey: normalizedAvatarStageKey,
@@ -274,27 +293,29 @@ export function DevPanel({
         const draftSnippet = `// ${colorScheme} scheme\n${normalizedAvatarStageKey}: ${JSON.stringify(currentAvatarDraft, null, 2)},`;
         const canUseClipboard = typeof navigator !== 'undefined' && navigator.clipboard?.writeText;
 
+        commitAvatarCompositeWorkingCopy(normalizedAvatarStageKey, colorScheme);
+
         if (canUseClipboard) {
             try {
                 await navigator.clipboard.writeText(draftSnippet);
-                setAvatarPromoteAck(buildScopedAvatarStatus(`Promote acknowledged at ${nowLabel}; stage snippet copied.`));
+                setAvatarPromoteAck(buildScopedAvatarStatus(`Promoted at ${nowLabel}; stage snippet copied.`));
             } catch {
-                setAvatarPromoteAck(buildScopedAvatarStatus(`Promote acknowledged at ${nowLabel}; copy snippet manually.`));
+                setAvatarPromoteAck(buildScopedAvatarStatus(`Promoted at ${nowLabel}; copy snippet manually.`));
             }
         } else {
-            setAvatarPromoteAck(buildScopedAvatarStatus(`Promote acknowledged at ${nowLabel}; copy snippet manually.`));
+            setAvatarPromoteAck(buildScopedAvatarStatus(`Promoted at ${nowLabel}; copy snippet manually.`));
         }
 
-        setAvatarDefaultStatus(buildScopedAvatarStatus(`Preview-only draft. Promote by updating src/components/avatarV3/avatarDefaultPresets.js (and avatar defaults ownership if needed) for ${normalizedAvatarStageKey} (${colorScheme} scheme).`));
-    }, [buildScopedAvatarStatus, colorScheme, currentAvatarDraft, normalizedAvatarStageKey, setAvatarDefaultStatus, setAvatarPromoteAck]);
+        setAvatarDefaultStatus(buildScopedAvatarStatus(`Committed current working copy for ${normalizedAvatarStageKey} (${colorScheme} scheme). Canonical code defaults are unchanged.`));
+    }, [buildScopedAvatarStatus, colorScheme, commitAvatarCompositeWorkingCopy, currentAvatarDraft, normalizedAvatarStageKey, setAvatarDefaultStatus, setAvatarPromoteAck]);
 
     const handleResetDraftToDefault = useCallback(() => {
-        const stageDefault = getResolvedAvatarStageDefault(normalizedAvatarStageKey, colorScheme);
+        const stageDefault = getCanonicalAvatarStageDefaultTransforms(normalizedAvatarStageKey, colorScheme);
         if (!stageDefault) return;
         replaceAvatarCompositeStageDraft(normalizedAvatarStageKey, stageDefault, colorScheme);
         setAvatarPromoteAck(null);
-        setAvatarDefaultStatus(buildScopedAvatarStatus(`Restored Draft from canonical code Default for ${normalizedAvatarStageKey} (${colorScheme} scheme).`));
-    }, [buildScopedAvatarStatus, colorScheme, getResolvedAvatarStageDefault, normalizedAvatarStageKey, replaceAvatarCompositeStageDraft, setAvatarDefaultStatus, setAvatarPromoteAck]);
+        setAvatarDefaultStatus(buildScopedAvatarStatus(`Loaded canonical code Default into working copy for ${normalizedAvatarStageKey} (${colorScheme} scheme). Promote to save it.`));
+    }, [buildScopedAvatarStatus, colorScheme, normalizedAvatarStageKey, replaceAvatarCompositeStageDraft, setAvatarDefaultStatus, setAvatarPromoteAck]);
 
     // Collapsible sections
     const [expandedSections, setExpandedSections] = useState({
@@ -1083,7 +1104,7 @@ export function DevPanel({
                             Avatar Draft Preview
                         </div>
                         <div className="devpanel-helper-text text-[11px] text-white/65 mb-2">
-                            Draft edits are preview-only. Canonical defaults are code-defined in avatarDefaultPresets.js.
+                            Slider edits stay in a temporary working copy. Promote is the explicit save boundary; code defaults remain separate.
                         </div>
                         <div className="devpanel-avatar-draft-status text-[11px] text-white/75 mb-3">
                             Stage: <span className="devpanel-avatar-draft-stage font-semibold text-white/90">{normalizedAvatarStageKey}</span> | Draft status: {avatarDraftStatusLabel}
