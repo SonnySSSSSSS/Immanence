@@ -2,7 +2,7 @@
 // Developer-only lab for testing Immanence OS systems
 // Access: Ctrl+Shift+D or tap version 5 times
 
-import React, { useState, useCallback, useEffect, useRef, Suspense } from 'react';
+import React, { useState, useCallback, useEffect, Suspense } from 'react';
 import { generateMockSessions, MOCK_PATTERNS } from '../utils/devDataGenerator';
 import { readRuntimeChecksSnapshot, RUNTIME_CHECKS_EVENT } from '../utils/runtimeChecks.js';
 import { useProgressStore } from '../state/progressStore';
@@ -68,6 +68,7 @@ import DevButton from './devpanel/ui/DevButton.jsx';
 import { resetLocalData } from '../lib/resetLocalData.js';
 import DestructiveButton from './devpanel/ui/DestructiveButton.jsx';
 import useDevPanelGate from './devpanel/hooks/useDevPanelGate.js';
+import useDevPanelPickers from './devpanel/hooks/useDevPanelPickers.js';
 import AvatarCompositeSection from './devpanel/sections/AvatarCompositeSection.jsx';
 import UnifiedInspectorSection from './devpanel/sections/UnifiedInspectorSection.jsx';
 import { getDevPanelProdGate } from '../lib/devPanelGate.js';
@@ -353,26 +354,9 @@ export function DevPanel({
     const [inspectorOpen, setInspectorOpen] = useState(false);
     const [storeSnapshot, setStoreSnapshot] = useState(null);
     const [cardApplyToAll, setCardApplyToAll] = useState(false);
-    const [practiceButtonPickMode, setPracticeButtonPickMode] = useState(false);
-    const [practiceButtonApplyToAll, setPracticeButtonApplyToAll] = useState(true);
-    const [practiceButtonSelectedKey, setPracticeButtonSelectedKey] = useState(null);
-    const LEGACY_PICKERS_FLAG_KEY = "immanence.dev.pickers.legacy.enabled";
-    const [legacyPickersEnabled, setLegacyPickersEnabled] = useState(true);
-    const PICK_DEBUG_FLAG_KEY = "immanence.dev.pickers.pickDebug.enabled";
-    const [pickDebugEnabled, setPickDebugEnabledLocal] = useState(false);
     const [cardIdProbeEnabled, setCardIdProbeEnabled] = useState(false);
-    const [universalPickerKind, setUniversalPickerKind] = useState('controls'); // 'controls' | 'card' (legacy modes remain elsewhere)
-    const [universalPickMode, setUniversalPickMode] = useState(false);
     const [uiTargetProbeEnabled, setUiTargetProbeEnabled] = useState(false);
     const [utcViolations, setUtcViolations] = useState([]);
-    const [controlsSelectedId, setControlsSelectedId] = useState(null);
-    const [controlsSelectedRoleGroup, setControlsSelectedRoleGroup] = useState(null);
-    const [controlsSurfaceIsRoot, setControlsSurfaceIsRoot] = useState(false);
-    const [controlsSurfaceDebug, setControlsSurfaceDebug] = useState(null);
-    const [pickDebugResolvedMode, setPickDebugResolvedMode] = useState(null);
-    const [pickDebugResolvedId, setPickDebugResolvedId] = useState(null);
-    const practiceButtonPickHandlerRef = useRef(null);
-    const universalPickHandlerRef = useRef(null);
 
     const controlsElectricBorderEnabled = useSettingsStore((s) => Boolean(s.controlsElectricBorderEnabled));
     const setControlsElectricBorderEnabled = useSettingsStore((s) => s.setControlsElectricBorderEnabled);
@@ -381,23 +365,56 @@ export function DevPanel({
     const [controlsPresetStatus, setControlsPresetStatus] = useState('');
 
     // Plates state
-    const [platesSelectedId, setPlatesSelectedId] = useState(null);
     const [platesFxDraft, setPlatesFxDraft] = useState({ ...PLATES_FX_DEFAULTS });
     const [platesAdvancedOpen, setPlatesAdvancedOpen] = useState(false);
     const platesFxEnabled = useSettingsStore((s) => Boolean(s.platesFxEnabled));
     const setPlatesFxEnabled = useSettingsStore((s) => s.setPlatesFxEnabled);
-
-    const CONTROLS_PICK_STORAGE_KEY = "immanence.dev.controlsFxPicker";
-    const CONTROLS_PICK_EVENT = "immanence-controls-fx-picker";
-
-    const broadcastControlsPicker = useCallback((next) => {
-        if (typeof window === 'undefined') return;
-        try {
-            emitPickerSelection(CONTROLS_PICK_STORAGE_KEY, CONTROLS_PICK_EVENT, next);
-        } catch {
-            // ignore
-        }
-    }, []);
+    const {
+        practiceButtonPickMode,
+        setPracticeButtonPickMode,
+        practiceButtonApplyToAll,
+        setPracticeButtonApplyToAll,
+        practiceButtonSelectedKey,
+        legacyPickersEnabled,
+        setLegacyPickersEnabled,
+        pickDebugEnabled,
+        setPickDebugEnabledLocal,
+        universalPickerKind,
+        setUniversalPickerKind,
+        universalPickMode,
+        setUniversalPickMode,
+        controlsSelectedId,
+        controlsSelectedRoleGroup,
+        controlsSurfaceIsRoot,
+        controlsSurfaceDebug,
+        pickDebugResolvedMode,
+        pickDebugResolvedId,
+        platesSelectedId,
+        stopPracticeButtonPickCaptureImmediate,
+        stopUniversalPickCaptureImmediate,
+        handleStartUniversalPickFlow,
+        handleStopUniversalPickFlow,
+        stopAllPickerFlows,
+    } = useDevPanelPickers({
+        canRunDevEffects,
+        isOpen,
+        devtoolsEnabled,
+        isDevBuild,
+        setPickMode,
+        setPickDebugEnabled,
+        findCardFromEvent,
+        selectCard,
+        emitPickerSelection,
+        attachControlsCapture,
+        detachControlsCapture,
+        startControlsPicking,
+        stopControlsPicking,
+        getControlsFxPreset,
+        setControlsFxDraft,
+        getPlatesFxPreset,
+        setPlatesFxDraft,
+        setPlatesAdvancedOpen,
+    });
 
     const makeGuardedAction = useCallback((fn) => {
         return (...args) => {
@@ -405,45 +422,6 @@ export function DevPanel({
             return fn(...args);
         };
     }, [destructiveLocked]);
-
-    const logNearestAncestors = useCallback((label, eventTarget) => {
-        if (!import.meta.env.DEV) return;
-        try {
-            const start = eventTarget instanceof Element ? eventTarget : null;
-            const chain = [];
-            let cur = start;
-            while (cur && chain.length < 5) {
-                const dataset = cur.dataset ? { ...cur.dataset } : {};
-                chain.push({
-                    tag: String(cur.tagName || '').toLowerCase(),
-                    dataset,
-                });
-                cur = cur.parentElement;
-            }
-            console.info(`[picker][${label}] resolver miss — nearest ancestors`, chain);
-        } catch (err) {
-            console.info(`[picker][${label}] resolver miss — failed to log ancestors`, err);
-        }
-    }, []);
-
-    const toNodeDebug = useCallback((el) => {
-        if (!(el instanceof Element)) return null;
-        return {
-            tag: String(el.tagName || '').toLowerCase(),
-            class: typeof el.className === 'string' ? el.className : null,
-            dataset: el.dataset ? { ...el.dataset } : {},
-        };
-    }, []);
-
-    const toAncestorDebug = useCallback((eventTarget, limit = 12) => {
-        const chain = [];
-        let cur = eventTarget instanceof Element ? eventTarget : null;
-        while (cur && chain.length < limit) {
-            chain.push(toNodeDebug(cur));
-            cur = cur.parentElement;
-        }
-        return chain;
-    }, [toNodeDebug]);
 
     useEffect(() => {
         if (!canRunDevEffects) return undefined;
@@ -475,41 +453,6 @@ export function DevPanel({
             if (raf) window.cancelAnimationFrame(raf);
         };
     }, [canRunDevEffects, isOpen, devtoolsEnabled, uiTargetProbeEnabled, universalPickMode]);
-
-    const debugLogPick = useCallback((mode, picker, event, resolvedEl) => {
-        if (!pickDebugEnabled) return;
-        if (!isDevBuild) return;
-        try {
-            const target = event?.target instanceof Element ? event.target : null;
-            const payload = {
-                mode,
-                picker,
-                target: toNodeDebug(target),
-                ancestors: toAncestorDebug(target, 12),
-                resolved: toNodeDebug(resolvedEl),
-                resolvedId: resolvedEl?.getAttribute?.('data-ui-id') ||
-                    resolvedEl?.getAttribute?.('data-card-id') ||
-                    null,
-            };
-            console.info(`[pick-debug] ${JSON.stringify(payload)}`);
-        } catch (err) {
-            console.info('[pick-debug] failed to log', err);
-        }
-    }, [pickDebugEnabled, toAncestorDebug, toNodeDebug, isDevBuild]);
-
-    const stopPracticeButtonPickCaptureImmediate = useCallback(() => {
-        const handler = practiceButtonPickHandlerRef.current;
-        if (!handler) return;
-        document.removeEventListener('click', handler, true);
-        practiceButtonPickHandlerRef.current = null;
-    }, []);
-
-    const stopUniversalPickCaptureImmediate = useCallback(() => {
-        const handler = universalPickHandlerRef.current;
-        if (!handler) return;
-        document.removeEventListener('click', handler, true);
-        universalPickHandlerRef.current = null;
-    }, []);
     const [cardState, setCardState] = useState({
         pickMode: false,
         hasSelected: false,
@@ -581,33 +524,6 @@ export function DevPanel({
 
     useEffect(() => {
         if (!canRunDevEffects) return undefined;
-        try {
-            const raw = window.localStorage.getItem(PICK_DEBUG_FLAG_KEY);
-            if (raw === "1") queueMicrotask(() => setPickDebugEnabledLocal(true));
-            if (raw === "0") queueMicrotask(() => setPickDebugEnabledLocal(false));
-        } catch {
-            // ignore
-        }
-        return undefined;
-    }, [canRunDevEffects, isOpen, devtoolsEnabled]);
-
-    useEffect(() => {
-        if (!canRunDevEffects) return undefined;
-        try {
-            window.localStorage.setItem(PICK_DEBUG_FLAG_KEY, pickDebugEnabled ? "1" : "0");
-        } catch {
-            // ignore
-        }
-        try {
-            setPickDebugEnabled(Boolean(pickDebugEnabled));
-        } catch {
-            // ignore
-        }
-        return undefined;
-    }, [canRunDevEffects, isOpen, devtoolsEnabled, pickDebugEnabled]);
-
-    useEffect(() => {
-        if (!canRunDevEffects) return undefined;
         document.body.classList.toggle('dev-card-id-probe', cardIdProbeEnabled);
         return () => document.body.classList.remove('dev-card-id-probe');
     }, [canRunDevEffects, isOpen, devtoolsEnabled, cardIdProbeEnabled]);
@@ -653,311 +569,6 @@ export function DevPanel({
         setNavBtnDraft(next);
         applyNavButtonSettings(next);
     };
-
-    const handleStartUniversalPickFlow = () => {
-        // Conflict prevention: remove any other capture listeners synchronously first.
-        setPickMode(false);
-        stopPracticeButtonPickCaptureImmediate();
-        setPracticeButtonPickMode(false);
-        setControlsSelectedId(null);
-        setControlsSelectedRoleGroup(null);
-        setControlsSurfaceIsRoot(false);
-        setControlsSurfaceDebug(null);
-        setPickDebugResolvedMode(null);
-        setPickDebugResolvedId(null);
-        setPlatesSelectedId(null);
-
-        // Effect will handle attach/start based on universalPickMode and universalPickerKind
-        setUniversalPickMode(true);
-    };
-
-    const handleStopUniversalPickFlow = () => {
-        // Effect will handle cleanup when universalPickMode becomes false
-        setPickMode(false);
-        setUniversalPickMode(false);
-    };
-
-    const PRACTICE_BUTTON_PICK_STORAGE_KEY = "immanence.dev.practiceButtonFxPicker";
-    const PRACTICE_BUTTON_PICK_EVENT = "immanence-practice-button-fx-picker";
-
-    const broadcastPracticeButtonPicker = useCallback((next) => {
-        if (typeof window === 'undefined') return;
-        try {
-            emitPickerSelection(PRACTICE_BUTTON_PICK_STORAGE_KEY, PRACTICE_BUTTON_PICK_EVENT, next);
-        } catch {
-            // ignore
-        }
-    }, []);
-
-    useEffect(() => {
-        if (!canRunDevEffects) return undefined;
-        try {
-            const raw = window.localStorage.getItem(PRACTICE_BUTTON_PICK_STORAGE_KEY);
-            if (!raw) return undefined;
-            const parsed = JSON.parse(raw);
-            queueMicrotask(() => {
-                setPracticeButtonApplyToAll(parsed?.applyToAll !== false);
-                setPracticeButtonSelectedKey(typeof parsed?.selectedKey === 'string' ? parsed.selectedKey : null);
-            });
-        } catch {
-            // ignore
-        }
-        return undefined;
-    }, [canRunDevEffects, isOpen, devtoolsEnabled]);
-
-    useEffect(() => {
-        if (!canRunDevEffects) return undefined;
-        try {
-            const raw = window.localStorage.getItem(LEGACY_PICKERS_FLAG_KEY);
-            if (raw === "0") queueMicrotask(() => setLegacyPickersEnabled(false));
-            if (raw === "1") queueMicrotask(() => setLegacyPickersEnabled(true));
-        } catch {
-            // ignore
-        }
-        return undefined;
-    }, [canRunDevEffects, isOpen, devtoolsEnabled]);
-
-    useEffect(() => {
-        if (!canRunDevEffects) return undefined;
-        try {
-            window.localStorage.setItem(LEGACY_PICKERS_FLAG_KEY, legacyPickersEnabled ? "1" : "0");
-        } catch {
-            // ignore
-        }
-        return undefined;
-    }, [canRunDevEffects, isOpen, devtoolsEnabled, legacyPickersEnabled]);
-
-    useEffect(() => {
-        if (!canRunDevEffects) return undefined;
-        if (legacyPickersEnabled) return undefined;
-        // If legacy pickers are hidden, ensure their capture listeners are off.
-        setPickMode(false);
-        stopPracticeButtonPickCaptureImmediate();
-        queueMicrotask(() => setPracticeButtonPickMode(false));
-        return undefined;
-    }, [canRunDevEffects, isOpen, devtoolsEnabled, legacyPickersEnabled, stopPracticeButtonPickCaptureImmediate]);
-
-    useEffect(() => {
-        if (!canRunDevEffects) return undefined;
-        broadcastPracticeButtonPicker({
-            applyToAll: practiceButtonApplyToAll,
-            selectedKey: practiceButtonSelectedKey,
-        });
-        return undefined;
-    }, [canRunDevEffects, isOpen, devtoolsEnabled, practiceButtonApplyToAll, practiceButtonSelectedKey, broadcastPracticeButtonPicker]);
-
-    useEffect(() => {
-        if (!canRunDevEffects) return undefined;
-        broadcastControlsPicker({ selectedId: controlsSelectedId || null });
-        return undefined;
-    }, [canRunDevEffects, isOpen, devtoolsEnabled, controlsSelectedId, broadcastControlsPicker]);
-
-    useEffect(() => {
-        if (!canRunDevEffects) return undefined;
-        queueMicrotask(() => setControlsFxDraft(getControlsFxPreset(controlsSelectedId)));
-        return undefined;
-    }, [canRunDevEffects, isOpen, devtoolsEnabled, controlsSelectedId]);
-
-    useEffect(() => {
-        if (!canRunDevEffects) return undefined;
-        if (!practiceButtonPickMode) return undefined;
-
-        // Conflict prevention: never allow two global capture listeners at once.
-        queueMicrotask(() => setPickMode(false));
-        queueMicrotask(() => setUniversalPickMode(false));
-
-        const normalizePracticeType = (raw) => {
-            const t = String(raw || '').trim().toLowerCase();
-            if (!t) return null;
-            if (t === 'perception') return 'visual';
-            if (t === 'resonance') return 'sound';
-            return t;
-        };
-
-        const onClickCapture = (event) => {
-            const target = event?.target instanceof Element ? event.target : null;
-            if (!target) return;
-            const el = target.closest('[data-ui="practice-button"]');
-            debugLogPick('legacy:practice-button', 'legacy', event, el);
-            setPickDebugResolvedMode('legacy:practice-button');
-            setPickDebugResolvedId(null);
-            if (!el) {
-                logNearestAncestors('practice-button', target);
-                return;
-            }
-
-            // Picker should not trigger the UI action underneath.
-            event.preventDefault();
-            event.stopPropagation();
-            if (typeof event.stopImmediatePropagation === 'function') event.stopImmediatePropagation();
-
-            const practiceType = normalizePracticeType(el.getAttribute('data-practice-type'));
-            const id = el.getAttribute('data-practice-id') || el.id || practiceType || 'practice';
-            const key = `${practiceType || 'practice'}:${id}`;
-            setPickDebugResolvedId(key);
-            setPracticeButtonSelectedKey(key);
-            setPracticeButtonApplyToAll(false);
-        };
-
-        // Ensure we never accidentally keep two listeners around.
-        stopPracticeButtonPickCaptureImmediate();
-        practiceButtonPickHandlerRef.current = onClickCapture;
-        document.addEventListener('click', onClickCapture, true);
-        return () => {
-            document.removeEventListener('click', onClickCapture, true);
-            if (practiceButtonPickHandlerRef.current === onClickCapture) {
-                practiceButtonPickHandlerRef.current = null;
-            }
-        };
-    }, [canRunDevEffects, isOpen, devtoolsEnabled, practiceButtonPickMode, debugLogPick, logNearestAncestors, stopPracticeButtonPickCaptureImmediate]);
-
-    useEffect(() => {
-        const removePlatesPickerClass = () => {
-            try {
-                document.body.classList.remove('dev-plates-picker-active');
-            } catch {
-                // ignore
-            }
-        };
-
-        if (!isOpen || !devtoolsEnabled) {
-            stopControlsPicking();
-            detachControlsCapture();
-            stopUniversalPickCaptureImmediate();
-            removePlatesPickerClass();
-            return undefined;
-        }
-
-        // Always keep picking OFF when not actively picking.
-        if (!universalPickMode) {
-            stopControlsPicking();
-            detachControlsCapture();
-            stopUniversalPickCaptureImmediate();
-            removePlatesPickerClass();
-            return undefined;
-        }
-
-        // Conflict prevention: never allow two global capture listeners at once.
-        queueMicrotask(() => setPickMode(false));
-        stopPracticeButtonPickCaptureImmediate();
-        queueMicrotask(() => setPracticeButtonPickMode(false));
-
-        if (universalPickerKind === 'controls' || universalPickerKind === 'plates') {
-            stopUniversalPickCaptureImmediate();
-            attachControlsCapture();
-
-            if (universalPickerKind === 'plates') {
-                try {
-                    document.body.classList.add('dev-plates-picker-active');
-                } catch {
-                    // ignore
-                }
-            } else {
-                removePlatesPickerClass();
-            }
-
-            startControlsPicking({
-                kind: universalPickerKind,
-                onPick: ({ validation }) => {
-                    const resolvedId = validation?.rootId || null;
-                    if (!resolvedId) return;
-
-                    if (universalPickerKind === 'controls') {
-                        setPickDebugResolvedMode('universal:controls');
-                        setPickDebugResolvedId(resolvedId);
-                        setControlsSelectedId(resolvedId);
-                        setControlsSelectedRoleGroup(validation?.roleGroup || null);
-                        setControlsSurfaceIsRoot(Boolean(validation?.surfaceIsRoot));
-                        const surface = validation?.surfaceEl && typeof validation.surfaceEl.tagName === 'string' ? validation.surfaceEl : null;
-                        setControlsSurfaceDebug(surface ? {
-                            tag: String(surface.tagName || '').toLowerCase(),
-                            className: typeof surface.className === 'string' ? surface.className : null,
-                        } : null);
-                        return;
-                    }
-
-                    setPickDebugResolvedMode('universal:plates');
-                    setPickDebugResolvedId(resolvedId);
-                    setPlatesSelectedId(resolvedId);
-                    try {
-                        emitPickerSelection('immanence.dev.platesFxPicker', 'immanence-plates-fx-picker', { selectedId: resolvedId });
-                    } catch {
-                        // ignore
-                    }
-                },
-            });
-
-            return () => {
-                stopControlsPicking();
-                detachControlsCapture();
-                removePlatesPickerClass();
-            };
-        }
-
-        if (universalPickerKind === 'card') {
-            stopControlsPicking();
-            detachControlsCapture();
-            removePlatesPickerClass();
-            stopUniversalPickCaptureImmediate();
-            try {
-                document.documentElement.classList.add('dev-card-picker-active');
-            } catch {
-                // ignore
-            }
-
-            const onClickCapture = (event) => {
-                const target = event?.target instanceof Element ? event.target : null;
-                if (!target) return;
-                if (target.closest?.('[data-devpanel-root="true"]')) return;
-                const el = findCardFromEvent(event);
-                debugLogPick('universal:card', 'universal', event, el);
-                setPickDebugResolvedMode('universal:card');
-                setPickDebugResolvedId(el?.getAttribute?.('data-card-id') || null);
-                if (!el) return;
-                event.preventDefault();
-                event.stopPropagation();
-                if (typeof event.stopImmediatePropagation === 'function') event.stopImmediatePropagation();
-                selectCard(el);
-            };
-
-            universalPickHandlerRef.current = onClickCapture;
-            window.addEventListener('click', onClickCapture, true);
-            return () => {
-                window.removeEventListener('click', onClickCapture, true);
-                if (universalPickHandlerRef.current === onClickCapture) {
-                    universalPickHandlerRef.current = null;
-                }
-                try {
-                    document.documentElement.classList.remove('dev-card-picker-active');
-                } catch {
-                    // ignore
-                }
-            };
-        }
-
-        stopControlsPicking();
-        detachControlsCapture();
-        stopUniversalPickCaptureImmediate();
-        removePlatesPickerClass();
-        return undefined;
-    }, [
-        isOpen,
-        devtoolsEnabled,
-        universalPickMode,
-        universalPickerKind,
-        debugLogPick,
-        stopPracticeButtonPickCaptureImmediate,
-        stopUniversalPickCaptureImmediate,
-    ]);
-
-    useEffect(() => {
-        if (!canRunDevEffects) return undefined;
-        queueMicrotask(() => {
-            setPlatesFxDraft(getPlatesFxPreset(platesSelectedId));
-            setPlatesAdvancedOpen(false);
-        });
-        return undefined;
-    }, [canRunDevEffects, isOpen, devtoolsEnabled, platesSelectedId]);
 
     useEffect(() => {
         if (!isOpen || !devtoolsEnabled || !platesSelectedId) return undefined;
@@ -1055,11 +666,7 @@ export function DevPanel({
                     </div>
                     <button
                           onClick={() => {
-                              setPickMode(false);
-                              stopPracticeButtonPickCaptureImmediate();
-                              setPracticeButtonPickMode(false);
-                              stopUniversalPickCaptureImmediate();
-                              setUniversalPickMode(false);
+                              stopAllPickerFlows();
                               onClose();
                           }}
                          data-testid="devpanel-close"

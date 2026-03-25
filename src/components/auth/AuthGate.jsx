@@ -5,12 +5,12 @@ import { createDiagnostic, emitDiagnostic } from "../../utils/diagnostics.js";
 import { createLogger } from "../../utils/logger.js";
 import { RuntimeFailureCode, normalizeRuntimeFailure } from "../../utils/runtimeFailure.js";
 import { createAuthVerification, publishRuntimeCheck } from "../../utils/runtimeChecks.js";
+import { setAuthUser } from "../../state/useAuthUser.js";
 
 const logger = createLogger("AuthGate");
 
 // Lazy import to avoid Supabase initialization when auth is disabled
 const getSupabase = () => import("../../lib/supabaseClient").then(m => m.supabase);
-const getSetAuthUser = () => import("../../state/useAuthUser").then(m => m.setAuthUser);
 
 export default function AuthGate({ children, onAuthChange }) {
   const authRuntimeMode = getAuthRuntimeMode();
@@ -98,7 +98,7 @@ export default function AuthGate({ children, onAuthChange }) {
 
     const init = async () => {
       try {
-        const [supabase, setAuthUser] = await Promise.all([getSupabase(), getSetAuthUser()]);
+        const supabase = await getSupabase();
         const { data, error } = await supabase.auth.getSession();
         if (!mounted) return;
 
@@ -253,7 +253,6 @@ export default function AuthGate({ children, onAuthChange }) {
 
       const nextUser = data?.user ?? null;
       if (nextUser) {
-        const setAuthUser = await getSetAuthUser();
         setAuthUser(nextUser);
         onAuthChange?.("USER_UPDATED", { ...session, user: nextUser });
       }

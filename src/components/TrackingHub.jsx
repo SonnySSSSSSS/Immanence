@@ -14,20 +14,16 @@ import { SessionHistoryView } from './SessionHistoryView.jsx';
 import { AnimatePresence } from 'framer-motion';
 import { useTheme } from '../context/ThemeContext';
 import { ARCHIVE_TABS } from './tracking/archiveLinkConstants.js';
-import { addDaysToDateKey, getLocalDateKey } from '../utils/dateUtils.js';
 import { useUiStore } from '../state/uiStore.js';
-
-// Domain configuration - using icon names for Icon component
-const DOMAINS = [
-    { id: 'breathwork', label: 'Breathwork', iconName: 'breathwork' },
-    { id: 'visualization', label: 'Visualization', iconName: 'visualization' },
-    { id: 'wisdom', label: 'Wisdom', iconName: 'wisdom' }
-];
+import {
+    getInitialHeatmapOpen,
+    getTrackingArchiveTab,
+    getTrackingHubCoordinatorState,
+    TRACKING_T_REF,
+} from './trackingHubLogic.js';
 
 const REACTED_COLOR = '#b45309';
 const CHOSE_COLOR = '#0d9488';
-const T_REF = 12;
-const HEATMAP_DAYS = 84;
 
 const clamp = (value, min = 0, max = 1) => Math.min(max, Math.max(min, value));
 
@@ -660,25 +656,22 @@ export function TrackingHub({ streakInfo: propStreakInfo }) {
     const isLight = colorScheme === 'light';
     const [showHistory, setShowHistory] = useState(false);
     const [historyTab, setHistoryTab] = useState(ARCHIVE_TABS.ALL);
-    const [isHeatmapOpen, setIsHeatmapOpen] = useState(() => trackerItemsRaw.length > 0);
+    const [isHeatmapOpen, setIsHeatmapOpen] = useState(() => getInitialHeatmapOpen(trackerItemsRaw));
     const [newItemLabel, setNewItemLabel] = useState('');
     const [itemLabelDrafts, setItemLabelDrafts] = useState({});
     const autoOpenedFromItemsRef = useRef(false);
     const heatmapAnchorRef = useRef(null);
-
-    const trackerItems = useMemo(
-        () => [...trackerItemsRaw].sort((a, b) => (a.order ?? 0) - (b.order ?? 0)),
-        [trackerItemsRaw]
-    );
-    const todayDateKey = getLocalDateKey(new Date());
-    const endDateKey = todayDateKey;
-    const startDateKey = addDaysToDateKey(endDateKey, -(HEATMAP_DAYS - 1));
+    const {
+        trackerItems,
+        todayDateKey,
+        trackerRange,
+        primaryDomainObj,
+    } = useMemo(() => getTrackingHubCoordinatorState({
+        trackerItemsRaw,
+        getTrackerRange,
+        getPrimaryDomain,
+    }), [getPrimaryDomain, getTrackerRange, trackerItemsRaw]);
     void trackerByDate;
-    const trackerRange = getTrackerRange({ startDateKey, endDateKey });
-
-    // Get primary domain stats
-    const primaryDomain = getPrimaryDomain();
-    const primaryDomainObj = DOMAINS.find(d => d.id === primaryDomain) || DOMAINS[0];
     const stats = getDomainStats(primaryDomainObj.id);
 
     // Derived data - use prop if provided, otherwise get from store
@@ -785,7 +778,7 @@ export function TrackingHub({ streakInfo: propStreakInfo }) {
                             className="text-[8px] uppercase tracking-[0.15em]"
                             style={{ color: isLight ? 'rgba(60, 45, 35, 0.55)' : 'rgba(253, 251, 245, 0.55)' }}
                         >
-                            Last 84 local days · Awareness Wins · Reacted vs Chose · T_REF={T_REF}
+                            Last 84 local days · Awareness Wins · Reacted vs Chose · T_REF={TRACKING_T_REF}
                         </div>
 
                         <div className="flex items-center gap-2">
@@ -979,8 +972,7 @@ export function TrackingHub({ streakInfo: propStreakInfo }) {
             {/* History Button */}
             <button
                 onClick={() => {
-                    const tab = primaryDomainObj.id === 'wisdom' ? ARCHIVE_TABS.WISDOM : ARCHIVE_TABS.PRACTICE;
-                    setHistoryTab(tab);
+                    setHistoryTab(getTrackingArchiveTab(primaryDomainObj.id));
                     setShowHistory(true);
                 }}
                 className="mt-6 w-full py-3 rounded-2xl flex items-center justify-center gap-2 transition-all active:scale-95"

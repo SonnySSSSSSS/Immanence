@@ -32,8 +32,6 @@ import { ThoughtDetachmentOnboarding } from "./ThoughtDetachmentOnboarding.jsx";
 import { useCurriculumStore } from "../state/curriculumStore.js";
 import { useNavigationStore } from "../state/navigationStore.js";
 import { useUiStore } from "../state/uiStore.js";
-import { getQuickDashboardTiles } from "../reporting/dashboardProjection.js";
-import { getHomeDashboardPolicy } from "../reporting/tilePolicy.js";
 import { useTutorialStore } from "../state/tutorialStore.js";
 import { getProgramDefinition, getProgramLauncher } from "../data/programRegistry.js";
 import { ARCHIVE_TABS, REPORT_DOMAINS } from "./tracking/archiveLinkConstants.js";
@@ -42,6 +40,12 @@ import { ANCHORS } from "../tutorials/anchorIds.js";
 import { AvatarV3 } from "./avatarV3/AvatarV3.jsx";
 import { useAvatarV3State } from "../state/avatarV3Store.js";
 import { usePathStore } from "../state/pathStore.js";
+import {
+  DEFAULT_CURRICULUM_ID,
+  getHomeHubDashboardState,
+  getOwnedNavigationScheduleSlots,
+  resolveHomeHubCoordinatorState,
+} from "./homeHubLogic.js";
 
 // Available paths that match image filenames
 const PATHS = ['Yantra', 'Kaya', 'Chitra', 'Nada'];
@@ -145,22 +149,32 @@ function HomeHub({ onSelectSection, activeSection = null, currentStage, previewP
   const rawDayCompletions = useCurriculumStore(s => s.dayCompletions);
   const rawLegCompletions = useCurriculumStore(s => s.legCompletions);
   const rawActivePath = useNavigationStore(s => s.activePath);
-  const isCurriculumStateOwnedByCurrentUser = Boolean(activeUserId && curriculumOwnerUserId === activeUserId);
-  const isNavigationStateOwnedByCurrentUser = Boolean(activeUserId && navigationOwnerUserId === activeUserId);
-  const curriculumOnboardingComplete = isCurriculumStateOwnedByCurrentUser ? rawCurriculumOnboardingComplete : false;
-  const curriculumPracticeTimeSlots = isCurriculumStateOwnedByCurrentUser ? rawCurriculumPracticeTimeSlots : [];
   // Use canonical getter to avoid stale scheduleSlots (called outside subscription to prevent infinite loops)
-  const navigationScheduleSlots = (() => {
-    if (!isNavigationStateOwnedByCurrentUser) return [];
-    const getScheduleSlots = useNavigationStore.getState().getScheduleSlots;
-    return typeof getScheduleSlots === 'function' ? getScheduleSlots() : [];
-  })();
-  const activePath = isNavigationStateOwnedByCurrentUser ? rawActivePath : null;
-  const practiceTimeSlots = (navigationScheduleSlots && navigationScheduleSlots.length > 0)
-    ? navigationScheduleSlots.map(slot => slot.time)
-    : curriculumPracticeTimeSlots;
+  const navigationScheduleSlots = getOwnedNavigationScheduleSlots({
+    activeUserId,
+    navigationOwnerUserId,
+    getScheduleSlots: useNavigationStore.getState().getScheduleSlots,
+  });
+  const {
+    curriculumOnboardingComplete,
+    activePath,
+    practiceTimeSlots,
+    activeCurriculumId,
+    hasPersistedCurriculumData,
+  } = resolveHomeHubCoordinatorState({
+    activeUserId,
+    curriculumOwnerUserId,
+    navigationOwnerUserId,
+    rawCurriculumOnboardingComplete,
+    rawCurriculumPracticeTimeSlots,
+    rawActiveCurriculumId,
+    rawCurriculumStartDate,
+    rawDayCompletions,
+    rawLegCompletions,
+    rawActivePath,
+    navigationScheduleSlots,
+  });
   const isCurriculumComplete = useCurriculumStore(s => s.isCurriculumComplete);
-  const activeCurriculumId = isCurriculumStateOwnedByCurrentUser ? rawActiveCurriculumId : 'ritual-initiation-14-v2';
   const setActiveCurriculumId = useCurriculumStore(s => s.setActiveCurriculumId);
   const [showCurriculumHub, setShowCurriculumHubState] = useState(false);
   const [showCurriculumOnboarding, setShowCurriculumOnboarding] = useState(false);
@@ -169,7 +183,7 @@ function HomeHub({ onSelectSection, activeSection = null, currentStage, previewP
     () => getProgramDefinition(activeCurriculumId) || null,
     [activeCurriculumId]
   );
-  const openCurriculumHub = React.useCallback(({ beginSetup = false, programId = 'ritual-initiation-14-v2' } = {}) => {
+  const openCurriculumHub = React.useCallback(({ beginSetup = false, programId = DEFAULT_CURRICULUM_ID } = {}) => {
     setActiveCurriculumId?.(programId);
     setCurriculumSetupError(null);
     setShowCurriculumOnboarding(beginSetup);
@@ -187,7 +201,7 @@ function HomeHub({ onSelectSection, activeSection = null, currentStage, previewP
     handleSelectSection('navigation', { forceStudentNavigation: true });
   }, [handleSelectSection]);
   const handleCurriculumSetupComplete = React.useCallback(() => {
-    const result = useNavigationStore.getState().beginPathForCurriculum(activeCurriculumId || 'ritual-initiation-14-v2');
+    const result = useNavigationStore.getState().beginPathForCurriculum(activeCurriculumId || DEFAULT_CURRICULUM_ID);
     if (result?.ok === false) {
       setCurriculumSetupError(result.error || 'Unable to begin the selected curriculum.');
       return;
@@ -201,16 +215,6 @@ function HomeHub({ onSelectSection, activeSection = null, currentStage, previewP
   const [leftRolled, setLeftRolled] = useState(false);
   const [rightRolled, setRightRolled] = useState(false);
   const [decayExpanded, setDecayExpanded] = useState(false);
-  const hasPersistedCurriculumData = Boolean(
-    isCurriculumStateOwnedByCurrentUser
-    && (
-      curriculumOnboardingComplete
-      || practiceTimeSlots.length > 0
-      || Boolean(rawCurriculumStartDate)
-      || Object.keys(rawDayCompletions || {}).length > 0
-      || Object.keys(rawLegCompletions || {}).length > 0
-    )
-  );
   useEffect(() => {
     setShowCurriculumHubState(false);
     setShowCurriculumOnboarding(false);
@@ -422,17 +426,9 @@ function HomeHub({ onSelectSection, activeSection = null, currentStage, previewP
     : null;
 
   // Compute dashboard policy for tiles
-  const hubPolicy = getHomeDashboardPolicy({
+  const { hubTiles } = getHomeHubDashboardState({
     activeRunId: activePath?.runId,
     accessPosture,
-  });
-
-  // Compute hub tiles for side panels (moved from swipe rail page 2)
-  const hubTiles = getQuickDashboardTiles({
-    scope: hubPolicy.scope,
-    range: hubPolicy.range,
-    includeHonor: hubPolicy.includeHonor,
-    activeRunId: hubPolicy.activeRunId,
   });
 
   // PROBE:HOMEHUB_SIDE_PANEL_GEOM

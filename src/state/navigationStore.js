@@ -14,6 +14,15 @@ import { getScheduleConstraintForPath, validateSelectedTimes } from '../utils/sc
 import { getPathContract, normalizePathSelections, validatePathActivationSelections } from '../utils/pathContract.js';
 import { validateBenchmarkPrerequisite, isContractComplete } from '../utils/pathActivationGuards.js';
 import {
+    computeEndsAt,
+    getCanonicalScheduledStartDate,
+    getFrozenScheduleDaysOfWeek,
+    getTimezone,
+    normalizeDayOfWeekList,
+    normalizePersistedNavigationSchedule,
+    normalizeRehydratedNavigationSchedule,
+} from './navigationScheduleCompat.js';
+import {
     computeContractDayCompletionStats,
     computeContractMissState,
     computeContractObligationSummary,
@@ -54,89 +63,6 @@ const getPathDurationDays = (pathId) => {
     if (typeof path?.tracking?.durationDays === 'number') return path.tracking.durationDays;
     if (typeof path?.duration === 'number') return path.duration * 7;
     return null;
-};
-
-const computeEndsAt = (startedAt, durationDays) => {
-    if (!startedAt || !durationDays) return null;
-    const start = new Date(startedAt);
-    if (Number.isNaN(start.getTime())) return null;
-    const end = new Date(start.getTime() + (durationDays * 24 * 60 * 60 * 1000));
-    return end.toISOString();
-};
-
-const getTimezone = () => {
-    try {
-        return Intl.DateTimeFormat().resolvedOptions().timeZone || null;
-    } catch {
-        return null;
-    }
-};
-
-const normalizeDayOfWeekList = (days = []) => {
-    const normalized = Array.isArray(days)
-        ? days.map((d) => {
-            if (Number.isInteger(d) && d >= 0 && d <= 6) return d;
-            if (Number.isInteger(d) && d >= 1 && d <= 7) return d % 7;
-            if (typeof d === 'string') {
-                const lower = d.trim().toLowerCase();
-                const byName = {
-                    sun: 0, sunday: 0,
-                    mon: 1, monday: 1,
-                    tue: 2, tues: 2, tuesday: 2,
-                    wed: 3, wednesday: 3,
-                    thu: 4, thur: 4, thurs: 4, thursday: 4,
-                    fri: 5, friday: 5,
-                    sat: 6, saturday: 6,
-                };
-                if (Object.prototype.hasOwnProperty.call(byName, lower)) return byName[lower];
-                const parsed = Number(lower);
-                if (Number.isInteger(parsed) && parsed >= 1 && parsed <= 7) return parsed % 7;
-                if (Number.isInteger(parsed) && parsed >= 0 && parsed <= 6) return parsed;
-            }
-            return null;
-        }).filter((d) => Number.isInteger(d) && d >= 0 && d <= 6)
-        : [];
-    return [...new Set(normalized)].sort((a, b) => a - b);
-};
-
-const getFrozenScheduleDaysOfWeek = (schedule = null) => {
-    const selectedDaysOfWeek = normalizeDayOfWeekList(schedule?.selectedDaysOfWeek || []);
-    if (selectedDaysOfWeek.length > 0) return selectedDaysOfWeek;
-
-    const activeDays = normalizeDayOfWeekList(schedule?.activeDays || []);
-    if (activeDays.length > 0) {
-        // NEVER CHANGE THIS: legacy runs missing selectedDaysOfWeek must still honor their frozen activeDays.
-        // If this falls through to "every day", pre-start runs jump to Day 1 before the first scheduled practice date.
-        return activeDays;
-    }
-
-    return [0, 1, 2, 3, 4, 5, 6];
-};
-
-const getCanonicalScheduledStartDate = ({
-    startedAt = null,
-    selectedTimes = [],
-    selectedDaysOfWeek = [],
-} = {}) => {
-    if (!startedAt) return null;
-    const rawStartDate = new Date(startedAt);
-    if (Number.isNaN(rawStartDate.getTime())) return null;
-
-    const normalizedTimes = normalizeAndSortTimeSlots(selectedTimes, { maxCount: 3 });
-    const firstSlotTime = normalizedTimes[0] || null;
-    if (!firstSlotTime) return rawStartDate;
-
-    return computeScheduleAnchorStartAt({
-        now: rawStartDate,
-        firstSlotTime,
-        selectedDaysOfWeek,
-    });
-};
-
-const selectedDaysFromOffDays = (offDays = []) => {
-    // LEGACY migration helper only. Do not use this for new run contract authoring.
-    const offSet = new Set(normalizeDayOfWeekList(offDays));
-    return [0, 1, 2, 3, 4, 5, 6].filter((day) => !offSet.has(day));
 };
 
 const isDevRuntime = () => isDevBuild();
@@ -1156,32 +1082,15 @@ export const useNavigationStore = create(
                     const normalizedActivePathId = normalizeNavigationPathId(cleanPath?.activePathId);
                     const scheduleConstraint = getScheduleConstraintForPath(normalizedActivePathId);
                     const contract = getPathContract(normalizedActivePathId);
-                    const selectedTimes = normalizeAndSortTimeSlots(cleanPath?.schedule?.selectedTimes || [], {
-                        maxCount: scheduleConstraint?.maxCount ?? contract.maxLegsPerDay ?? 3,
-                    });
-                    const selectedDaysOfWeek = normalizeDayOfWeekList(cleanPath?.schedule?.selectedDaysOfWeek || []);
-                    const activeDays = normalizeDayOfWeekList(cleanPath?.schedule?.activeDays || []);
-                    const frozenSelectedDaysOfWeek = selectedDaysOfWeek.length > 0
-                        ? selectedDaysOfWeek
-                        : (
-                            activeDays.length > 0
-                                ? activeDays
-                                // One-time legacy fallback only for persisted runs created before selectedDaysOfWeek existed.
-                                : selectedDaysFromOffDays(useCurriculumStore.getState().offDaysOfWeek || [0])
-                        );
                     rest.activePath = {
                         ...cleanPath,
                         activePathId: normalizedActivePathId,
-                        schedule: {
-                            ...(cleanPath.schedule || {}),
-                            selectedTimes,
-                            selectedDaysOfWeek: frozenSelectedDaysOfWeek,
-                            activeDays: frozenSelectedDaysOfWeek,
-                            practiceDaysPerWeek: cleanPath?.schedule?.practiceDaysPerWeek ?? contract.practiceDaysPerWeek ?? null,
-                            requiredTimeSlots: cleanPath?.schedule?.requiredTimeSlots ?? contract.requiredTimeSlots ?? null,
-                            requiredLegsPerDay: cleanPath?.schedule?.requiredLegsPerDay ?? contract.requiredLegsPerDay ?? null,
-                            maxLegsPerDay: cleanPath?.schedule?.maxLegsPerDay ?? contract.maxLegsPerDay ?? null,
-                        },
+                        schedule: normalizePersistedNavigationSchedule({
+                            schedule: cleanPath?.schedule,
+                            contract,
+                            maxLegsPerDay: scheduleConstraint?.maxCount ?? contract.maxLegsPerDay ?? 3,
+                            fallbackOffDays: useCurriculumStore.getState().offDaysOfWeek || [0],
+                        }),
                     };
                 }
                 
@@ -1215,25 +1124,16 @@ export const useNavigationStore = create(
                         }
                     });
                     const contract = getPathContract(state.activePath.activePathId);
-
                     const selectedDays = normalizeDayOfWeekList(state.activePath?.schedule?.selectedDaysOfWeek || []);
-                    const activeDays = normalizeDayOfWeekList(state.activePath?.schedule?.activeDays || []);
+                    const normalizedSchedule = normalizeRehydratedNavigationSchedule({
+                        schedule: state.activePath?.schedule,
+                        contract,
+                        fallbackOffDays: useCurriculumStore.getState().offDaysOfWeek || [0],
+                    });
                     if (selectedDays.length === 0) {
-                        // One-time legacy freeze migration for old runs missing selectedDaysOfWeek.
-                        const frozenSelectedDaysOfWeek = activeDays.length > 0
-                            ? activeDays
-                            : selectedDaysFromOffDays(useCurriculumStore.getState().offDaysOfWeek || [0]);
                         const nextActivePath = {
                             ...state.activePath,
-                            schedule: {
-                                ...(state.activePath.schedule || {}),
-                                selectedDaysOfWeek: frozenSelectedDaysOfWeek,
-                                activeDays: frozenSelectedDaysOfWeek,
-                                practiceDaysPerWeek: state.activePath?.schedule?.practiceDaysPerWeek ?? contract.practiceDaysPerWeek ?? null,
-                                requiredTimeSlots: state.activePath?.schedule?.requiredTimeSlots ?? contract.requiredTimeSlots ?? null,
-                                requiredLegsPerDay: state.activePath?.schedule?.requiredLegsPerDay ?? contract.requiredLegsPerDay ?? null,
-                                maxLegsPerDay: state.activePath?.schedule?.maxLegsPerDay ?? contract.maxLegsPerDay ?? null,
-                            },
+                            schedule: normalizedSchedule,
                         };
                         state.activePath = nextActivePath;
                         // Persist the one-time freeze migration so future reloads stay stable.
@@ -1241,14 +1141,7 @@ export const useNavigationStore = create(
                     } else {
                         state.activePath = {
                             ...state.activePath,
-                            schedule: {
-                                ...(state.activePath.schedule || {}),
-                                activeDays: selectedDays,
-                                practiceDaysPerWeek: state.activePath?.schedule?.practiceDaysPerWeek ?? contract.practiceDaysPerWeek ?? null,
-                                requiredTimeSlots: state.activePath?.schedule?.requiredTimeSlots ?? contract.requiredTimeSlots ?? null,
-                                requiredLegsPerDay: state.activePath?.schedule?.requiredLegsPerDay ?? contract.requiredLegsPerDay ?? null,
-                                maxLegsPerDay: state.activePath?.schedule?.maxLegsPerDay ?? contract.maxLegsPerDay ?? null,
-                            },
+                            schedule: normalizedSchedule,
                         };
                     }
                 }

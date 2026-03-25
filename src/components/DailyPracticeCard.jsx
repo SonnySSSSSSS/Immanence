@@ -9,15 +9,15 @@ import { useUiStore } from '../state/uiStore.js';
 import { useTheme } from '../context/ThemeContext.jsx';
 import { getPathById } from '../data/navigationData.js';
 import { addDaysToDateKey, getLocalDateKey, parseDateKeyToUtcMs } from '../utils/dateUtils.js';
-import { computeScheduleAnchorStartAt, getStartWindowState, localDateTimeFromDateKeyAndTime, normalizeAndSortTimeSlots } from '../utils/scheduleUtils.js';
+import { computeScheduleAnchorStartAt, getStartWindowState, localDateTimeFromDateKeyAndTime } from '../utils/scheduleUtils.js';
 import { CurriculumPrecisionRail } from './infographics/CurriculumPrecisionRail.jsx';
 import { getProgramDefinition, getProgramDay } from '../data/programRegistry.js';
 import { isUiPickingActive } from '../dev/uiControlsCaptureManager.js';
 import {
     computeCurriculumCompletionState,
     isScheduleActiveDay,
-    normalizeScheduleActiveDays,
-    shouldShowNoCurriculumSetupState,
+    resolveDailyPracticeScheduleState,
+    resolveDailyPracticeSlotContent,
 } from './dailyPracticeCardLogic.js';
 
 /**
@@ -43,34 +43,6 @@ const THEME_CONFIG = {
         shadow: '0 12px 32px rgba(0, 0, 0, 0.16), 0 4px 12px rgba(0, 0, 0, 0.10)'
     }
 };
-
-/**
- * Map practice type to canonical practiceId
- * Handles common variations in navigationData type names
- */
-function resolvePracticeIdFromType(type) {
-    if (!type) return null;
-    const lower = type.toLowerCase();
-    
-    if (lower.includes('breath')) return 'breath';
-    if (lower.includes('circuit')) return 'circuit';
-    if (lower.includes('scan') || lower.includes('somatic')) return 'awareness';
-    if (lower.includes('resonance') || lower.includes('sound')) return 'resonance';
-    if (lower.includes('visualization') || lower.includes('photic')) return 'perception';
-    if (lower.includes('feeling') || lower.includes('meditation')) return 'feeling';
-    if (lower.includes('integration') || lower.includes('ritual')) return 'integration';
-    
-    return null;
-}
-
-/**
- * Get the week object for a given dayIndex (1-based)
- */
-function getWeekForDay(path, dayIndex) {
-    if (!path?.weeks || !dayIndex) return null;
-    const weekIndex = Math.ceil(dayIndex / 7); // 1-based
-    return path.weeks.find(w => w.number === weekIndex) ?? null;
-}
 
 /**
  * Vertical meter for left-pane progression
@@ -165,19 +137,6 @@ function VerticalMeter({ label, valueText, progressRatio, isLight, progressBarCo
     );
 }
 
-/**
- * Normalize a list to match slot count
- * Pads by repeating the last element if necessary
- */
-function normalizeListForSlots(list, slotCount) {
-    if (!Array.isArray(list) || slotCount === 0) return [];
-    const out = [];
-    for (let i = 0; i < slotCount; i++) {
-        out.push(list[Math.min(i, list.length - 1)]);
-    }
-    return out;
-}
-
 function getDateKeyDayOfWeek(dateKey) {
     if (typeof dateKey !== 'string' || !dateKey) return null;
     const date = new Date(`${dateKey}T12:00:00`);
@@ -196,249 +155,12 @@ function formatPracticeDateLabel(dateKey) {
     });
 }
 
-/**
- * Resolve practice ID from various entry formats
- * Supports: string (direct ID), object with .type or .practiceId
- */
-function resolvePracticeIdFromEntry(entry) {
-    if (!entry) return null;
-    
-    // Direct string ID
-    if (typeof entry === 'string' && !entry.includes('(') && !entry.includes(' ')) {
-        return entry; // Assume it's a practiceId
-    }
-    
-    // Object with practiceId field
-    if (entry?.practiceId) {
-        return entry.practiceId;
-    }
-    
-    // Object with type field (use type resolver)
-    if (entry?.type) {
-        return resolvePracticeIdFromType(entry.type);
-    }
-    
-    // String description - try to infer from keywords
-    if (typeof entry === 'string') {
-        return resolvePracticeIdFromType(entry);
-    }
-    
-    return null;
-}
-
-function extractDurationMinFromString(s) {
-    if (typeof s !== 'string') return null;
-    const m = s.match(/(\d+)\s*min/i);
-    if (!m) return null;
-    const n = Number(m[1]);
-    return Number.isFinite(n) && n > 0 ? n : null;
-}
-
-function extractBreathPresetKeyFromString(s) {
-    if (typeof s !== 'string') return null;
-    const lower = s.toLowerCase();
-    if (lower.includes('box')) return 'box';
-    if (lower.includes('resonance')) return 'resonance';
-    return null;
-}
-
-function normalizeGuidanceSpec(guidance) {
-    if (!guidance || typeof guidance !== 'object') return null;
-
-    const audioUrl = typeof guidance.audioUrl === 'string' ? guidance.audioUrl.trim() : '';
-    if (!audioUrl) return null;
-
-    const startMode = guidance.startMode === 'manual' ? 'manual' : 'onPracticeStart';
-    const resumeMode = guidance.resumeMode === 'restart' ? 'restart' : 'resume';
-    const volumeRaw = Number(guidance.volume);
-    const volume = Number.isFinite(volumeRaw) ? Math.min(1, Math.max(0, volumeRaw)) : undefined;
-
-    return {
-        audioUrl,
-        startMode,
-        resumeMode,
-        ...(volume !== undefined ? { volume } : {}),
-    };
-}
-
-function normalizeInstructionVideoSpec(video) {
-    if (typeof video === 'string') {
-        const url = video.trim();
-        return url ? { url } : null;
-    }
-
-    if (!video || typeof video !== 'object') return null;
-
-    const url = typeof video.url === 'string'
-        ? video.url.trim()
-        : (typeof video.videoUrl === 'string' ? video.videoUrl.trim() : '');
-    if (!url) return null;
-
-    const title = typeof video.title === 'string' ? video.title.trim() : '';
-    const poster = typeof video.poster === 'string' ? video.poster.trim() : '';
-
-    return {
-        url,
-        ...(title ? { title } : {}),
-        ...(poster ? { poster } : {}),
-    };
-}
-
-function normalizeBenchmarkPatternForLaunch(pattern) {
-    if (!pattern || typeof pattern !== 'object') return null;
-
-    const inhale = Number(pattern.inhale);
-    const holdTop = Number(pattern.holdTop ?? pattern.hold1);
-    const exhale = Number(pattern.exhale);
-    const holdBottom = Number(pattern.holdBottom ?? pattern.hold2);
-
-    if (
-        !Number.isFinite(inhale)
-        || !Number.isFinite(holdTop)
-        || !Number.isFinite(exhale)
-        || !Number.isFinite(holdBottom)
-    ) {
-        return null;
-    }
-
-    return {
-        inhale,
-        holdTop,
-        exhale,
-        holdBottom,
-    };
-}
-
 function normalizeInitiationPathIdentity(pathId) {
     return pathId === 'initiation-2' ? 'initiation' : pathId;
 }
 
 function isSameInitiationPathIdentity(a, b) {
     return normalizeInitiationPathIdentity(a) === normalizeInitiationPathIdentity(b);
-}
-
-function resolvePracticeLaunchFromEntry(entry) {
-    if (!entry) return null;
-
-    if (typeof entry === 'object') {
-        const practiceId = entry.practiceId || (entry.type ? resolvePracticeIdFromType(entry.type) : null);
-        if (!practiceId) return null;
-
-        const durationMin = Number.isFinite(Number(entry.duration)) ? Number(entry.duration) : null;
-
-        const practiceConfig = {};
-        if (entry.pattern) practiceConfig.breathPattern = String(entry.pattern).toLowerCase();
-        if (entry.breathPattern) practiceConfig.breathPattern = String(entry.breathPattern).toLowerCase();
-        if (entry.variant) practiceConfig.variant = entry.variant;
-        if (entry.circuitId) practiceConfig.circuitId = entry.circuitId;
-        if (entry.stillness && typeof entry.stillness === 'object') practiceConfig.stillness = { ...entry.stillness };
-
-        const practiceParamsPatch =
-            entry.practiceParamsPatch && typeof entry.practiceParamsPatch === 'object'
-                ? { ...entry.practiceParamsPatch }
-                : {};
-        const guidance = Object.prototype.hasOwnProperty.call(entry, 'guidance')
-            ? normalizeGuidanceSpec(entry.guidance)
-            : undefined;
-        const guidanceVideoCandidate =
-            entry.guidance && typeof entry.guidance === 'object'
-                ? (
-                    entry.guidance.instructionVideo
-                    ?? entry.guidance.video
-                    ?? (
-                        typeof entry.guidance.videoUrl === 'string'
-                            ? {
-                                videoUrl: entry.guidance.videoUrl,
-                                title: entry.guidance.videoTitle,
-                                poster: entry.guidance.videoPoster,
-                            }
-                            : undefined
-                    )
-                )
-                : undefined;
-        const instructionVideo = Object.prototype.hasOwnProperty.call(entry, 'instructionVideo')
-            ? normalizeInstructionVideoSpec(entry.instructionVideo)
-            : (guidanceVideoCandidate !== undefined ? normalizeInstructionVideoSpec(guidanceVideoCandidate) : undefined);
-
-        // Backward-compat convenience: allow shorthand breathPattern/pattern to map into breath preset.
-        if (practiceId === 'breath' && practiceConfig.breathPattern) {
-            practiceParamsPatch.breath = {
-                ...(practiceParamsPatch.breath || {}),
-                preset: practiceConfig.breathPattern,
-            };
-        }
-
-        return {
-            practiceId,
-            durationMin: durationMin ?? undefined,
-            practiceConfig: Object.keys(practiceConfig).length ? practiceConfig : undefined,
-            practiceParamsPatch: Object.keys(practiceParamsPatch).length ? practiceParamsPatch : undefined,
-            guidance,
-            instructionVideo,
-            overrides: entry.overrides || undefined,
-            locks: entry.locks || undefined,
-        };
-    }
-
-    if (typeof entry === 'string') {
-        const practiceId = resolvePracticeIdFromEntry(entry);
-        if (!practiceId) return null;
-
-        const durationMin = extractDurationMinFromString(entry);
-        const presetKey = practiceId === 'breath' ? extractBreathPresetKeyFromString(entry) : null;
-
-        const practiceParamsPatch = {};
-        if (presetKey) practiceParamsPatch.breath = { preset: presetKey };
-
-        return {
-            practiceId,
-            durationMin: durationMin ?? undefined,
-            practiceParamsPatch: Object.keys(practiceParamsPatch).length ? practiceParamsPatch : undefined,
-        };
-    }
-
-    return null;
-}
-
-function resolvePracticeLaunchFromProgramLeg(leg) {
-    if (!leg || typeof leg !== 'object') return null;
-
-    const practiceId = resolvePracticeIdFromType(leg.practiceType) || leg.practiceId || null;
-    if (!practiceId) return null;
-
-    const practiceConfigRaw = leg.practiceConfig && typeof leg.practiceConfig === 'object'
-        ? leg.practiceConfig
-        : {};
-    const durationMin = Number.isFinite(Number(practiceConfigRaw.duration))
-        ? Number(practiceConfigRaw.duration)
-        : null;
-    const normalizedEntry = {
-        practiceId,
-        duration: durationMin ?? undefined,
-        guidance: leg.guidance,
-        instructionVideo: leg.instructionVideo
-            ?? leg.guidance?.instructionVideo
-            ?? leg.guidance?.video
-            ?? (
-                typeof leg.guidance?.videoUrl === 'string'
-                    ? {
-                        videoUrl: leg.guidance.videoUrl,
-                        title: leg.guidance.videoTitle,
-                        poster: leg.guidance.videoPoster,
-                    }
-                    : undefined
-            ),
-        practiceParamsPatch: leg.practiceParamsPatch,
-        overrides: leg.overrides,
-        locks: leg.locks,
-    };
-
-    if (practiceConfigRaw.breathPattern) normalizedEntry.breathPattern = practiceConfigRaw.breathPattern;
-    if (practiceConfigRaw.variant) normalizedEntry.variant = practiceConfigRaw.variant;
-    if (practiceConfigRaw.circuitId) normalizedEntry.circuitId = practiceConfigRaw.circuitId;
-    if (practiceConfigRaw.stillness && typeof practiceConfigRaw.stillness === 'object') normalizedEntry.stillness = practiceConfigRaw.stillness;
-
-    return resolvePracticeLaunchFromEntry(normalizedEntry);
 }
 
 export function DailyPracticeCard({ onStartPractice, onViewCurriculum, onNavigate, hasPersistedCurriculumData, onStartSetup, onboardingComplete: onboardingCompleteProp, practiceTimeSlots: practiceTimeSlotsProp, isTutorialTarget = false, showPerLegCompletion = true, showDailyCompletionNotice = false, showSessionMeter = true, debugShadowOff = false, debugBlurOff = false, debugBorderOff = false, debugMaskOff = false, devCardActive = null, devCardCarouselId = null }) {
@@ -476,18 +198,43 @@ export function DailyPracticeCard({ onStartPractice, onViewCurriculum, onNavigat
     const activePathId = useNavigationStore(s => normalizeInitiationPathIdentity(s.activePath?.activePathId ?? null));
     const activePathObj = activePathId ? getPathById(activePathId) : null;
     const activePath = useNavigationStore(s => s.activePath);
+    const {
+        onboardingComplete: storeOnboardingComplete,
+        activeCurriculumId,
+        getCurrentDayNumber,
+        getTodaysPractice,
+        getProgress,
+        getStreak,
+        getDayLegsWithStatus,
+        curriculumStartDate,
+        setActivePracticeSession,
+        _devReset,
+        practiceTimeSlots: storePracticeTimeSlots,
+        lastSessionFailed,
+        clearLastSessionFailed,
+    } = useCurriculumStore();
+    const onboardingComplete = onboardingCompleteProp ?? storeOnboardingComplete;
+    const practiceTimeSlots = practiceTimeSlotsProp ?? storePracticeTimeSlots;
+    const progressSnapshot = getProgress();
+    const practiceLaunchContext = useUiStore(s => s.practiceLaunchContext);
+    const {
+        activeDays: frozenActiveDays,
+        navigationTimeSlots: times,
+        hasActivePath,
+        shouldRenderPathOrSetupState,
+        isSetupEmptyState,
+    } = resolveDailyPracticeScheduleState({
+        activePath,
+        activePathObj,
+        practiceTimeSlots,
+        onboardingComplete,
+        activeCurriculumId,
+        progress: progressSnapshot,
+        hasPersistedCurriculumData,
+    });
     const todayDow = new Date().getDay();
-    const frozenActiveDays = normalizeScheduleActiveDays(
-        activePath?.schedule?.selectedDaysOfWeek
-            || activePath?.schedule?.activeDays
-            || []
-    );
     const isActiveDay = isScheduleActiveDay({ activeDays: frozenActiveDays, todayDow });
     const isRestDayToday = Boolean(activePathObj) && !isActiveDay;
-    const times = normalizeAndSortTimeSlots(
-        activePath?.schedule?.selectedTimes || [],
-        { maxCount: activePath?.schedule?.maxLegsPerDay ?? 3 }
-    ); // ["06:00","20:00"]
 
     // Today's session tracking (using local date key for timezone correctness, scoped to current run)
     const todayKey = getLocalDateKey();
@@ -699,93 +446,17 @@ export function DailyPracticeCard({ onStartPractice, onViewCurriculum, onNavigat
     const getStartingPattern = useBreathBenchmarkStore(s => s.getStartingPattern);
 
     // Canonical practice launches for each slot (practiceId + duration + params)
-    const slotLaunches = useMemo(() => {
-        if (!activePathObj || !scheduledDayIndex || times.length === 0) return [];
-
-        const scheduledProgramLegs = Array.isArray(scheduledProgramDay?.legs)
-            ? scheduledProgramDay.legs
-            : null;
-        const week = getWeekForDay(activePathObj, scheduledDayIndex);
-
-        // Prefer structured practices, but many week.practices entries are descriptive strings.
-        const weekPracticesRaw = Array.isArray(week?.practices) ? week.practices : null;
-        const weekPracticesStructured = weekPracticesRaw && weekPracticesRaw.some(p => typeof p === 'object')
-            ? weekPracticesRaw
-            : null;
-        const fallbackPractices = Array.isArray(activePathObj?.practices) ? activePathObj.practices : null;
-
-        const raw = normalizeListForSlots(
-            scheduledProgramLegs ?? weekPracticesStructured ?? fallbackPractices ?? weekPracticesRaw ?? [],
-            times.length
-        );
-        const resolved = raw.map((entry) => (
-            scheduledProgramLegs
-                ? resolvePracticeLaunchFromProgramLeg(entry)
-                : resolvePracticeLaunchFromEntry(entry)
-        ));
-
-        // If path requires benchmark and user has completed it, add breath cycle patterns
-        if (activePathObj.showBreathBenchmark && benchmark) {
-            return resolved.map(slot => {
-                if (!slot || slot.practiceId !== 'breath') return slot;
-
-                // Calculate starting pattern (75% of benchmark)
-                const startingPattern = getStartingPattern();
-                const normalizedStartingPattern = normalizeBenchmarkPatternForLaunch(startingPattern);
-                if (!normalizedStartingPattern) return slot;
-
-                // Add the pattern to practiceParamsPatch
-                return {
-                    ...slot,
-                    practiceParamsPatch: {
-                        ...(slot.practiceParamsPatch || {}),
-                        breath: {
-                            ...(slot.practiceParamsPatch?.breath || {}),
-                            pattern: normalizedStartingPattern,
-                        },
-                    },
-                };
-            });
-        }
-
-        return resolved;
-    }, [activePathObj, scheduledDayIndex, scheduledProgramDay, times.length, benchmark, getStartingPattern]);
-
-    // Practice names for each slot (based on current week)
-    const practiceLabels = useMemo(() => {
-        if (!activePathObj || !scheduledDayIndex) return [];
-
-        // Extract practice labels from week.focus or week.practices
-        let labels = [];
-        const scheduledProgramLegs = Array.isArray(scheduledProgramDay?.legs)
-            ? scheduledProgramDay.legs
-            : null;
-        const weekIndex = scheduledWeekIndex;
-        const week = activePathObj.weeks?.find(w => w.number === weekIndex) || activePathObj.weeks?.[0];
-        if (!scheduledProgramLegs && !week) return [];
-
-        if (scheduledProgramLegs) {
-            labels = scheduledProgramLegs.map((leg) => (
-                leg?.label
-                || leg?.description
-                || leg?.practiceType
-                || ''
-            ));
-        } else if (week?.focus) {
-            // If focus is a string like "Morning breath (7min) + Evening circuit (15min)", split by " + "
-            const parts = week.focus.split(' + ').map(s => s.trim());
-            labels = parts.length > 1 ? parts : [week.focus];
-        } else if (week?.practices && Array.isArray(week.practices)) {
-            labels = week.practices.map(p => typeof p === 'string' ? p : (p.name || p.type || ''));
-        }
-
-        // Pad or repeat to match number of times
-        while (labels.length < times.length) {
-            labels.push(labels[labels.length - 1] || labels[0] || '');
-        }
-
-        return labels.slice(0, times.length);
-    }, [activePathObj, scheduledDayIndex, scheduledWeekIndex, scheduledProgramDay, times.length]);
+    const { slotLaunches, practiceLabels } = useMemo(() => (
+        resolveDailyPracticeSlotContent({
+            activePathObj,
+            scheduledDayIndex,
+            scheduledWeekIndex,
+            scheduledProgramDay,
+            slotCount: times.length,
+            benchmark,
+            getStartingPattern,
+        })
+    ), [activePathObj, scheduledDayIndex, scheduledWeekIndex, scheduledProgramDay, times.length, benchmark, getStartingPattern]);
 
     // Calculate slot dates based on path start time and current time
     const slotDates = useMemo(() => {
@@ -993,26 +664,6 @@ export function DailyPracticeCard({ onStartPractice, onViewCurriculum, onNavigat
     );
 
     const {
-        onboardingComplete: storeOnboardingComplete,
-        activeCurriculumId,
-        getCurrentDayNumber,
-        getTodaysPractice,
-        getProgress,
-        getStreak,
-        getDayLegsWithStatus,
-        curriculumStartDate,
-        setActivePracticeSession,
-        _devReset,
-        practiceTimeSlots: storePracticeTimeSlots,
-        lastSessionFailed,
-        clearLastSessionFailed,
-    } = useCurriculumStore();
-
-    const onboardingComplete = onboardingCompleteProp ?? storeOnboardingComplete;
-    const practiceTimeSlots = practiceTimeSlotsProp ?? storePracticeTimeSlots;
-    const progressSnapshot = getProgress();
-    const practiceLaunchContext = useUiStore(s => s.practiceLaunchContext);
-    const {
         completed: curriculumCompletedCount,
         total: curriculumTotalCount,
         isCurriculumActive,
@@ -1021,17 +672,6 @@ export function DailyPracticeCard({ onStartPractice, onViewCurriculum, onNavigat
         activeCurriculumId,
         progress: progressSnapshot,
     });
-    const showNoCurriculumSetupState = shouldShowNoCurriculumSetupState({
-        activePathObj,
-        activeCurriculumId,
-        progress: progressSnapshot,
-    });
-
-    const needsSetup = !onboardingComplete && (!practiceTimeSlots || practiceTimeSlots.length === 0);
-
-    // Show path-based daily card when an active path with scheduled times exists,
-    // regardless of onboarding status â€” prevents falling through to stale curriculum modal
-    const hasActivePath = activePathObj && times.length > 0;
     const launchPathPractice = useCallback((slot, slotIndex, slotTime, launchMeta = null) => {
         const practiceId = slot?.practiceId;
         if (!practiceId) return;
@@ -1184,9 +824,7 @@ export function DailyPracticeCard({ onStartPractice, onViewCurriculum, onNavigat
         return () => window.removeEventListener('keydown', onKeyDown);
     }, [hasActivePath]);
 
-    if (hasActivePath || needsSetup || showNoCurriculumSetupState || (!onboardingComplete && hasPersistedCurriculumData === false)) {
-        const isSetupEmptyState = !activePathObj;
-
+    if (shouldRenderPathOrSetupState) {
         return (
             <div
                 className="w-full relative transition-all duration-700 ease-in-out"

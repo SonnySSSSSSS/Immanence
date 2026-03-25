@@ -224,6 +224,19 @@ Important current schedule semantics:
 - [src/components/WisdomSection.jsx](src/components/WisdomSection.jsx) now composes four direct surfaces: Treatise, Bookmarks, Videos, and Self-Knowledge. It uses [src/components/wisdom/WisdomCardHousing.jsx](src/components/wisdom/WisdomCardHousing.jsx) and no longer depends on a separate recommendations data layer.
 - [src/components/ApplicationSection.jsx](src/components/ApplicationSection.jsx) is still path-dependent, but now uses the same Arwes-style empty-state housing when no active path exists, then switches to `SigilSealingArea` plus `ApplicationTrackingCard` when a path is active.
 
+### Refactor Boundaries (Current Ownership)
+
+The current runtime boundaries after the refactor batch are:
+
+- app shell overlays are centralized in [src/components/AppShellOverlays.jsx](src/components/AppShellOverlays.jsx); [src/App.jsx](src/App.jsx) remains the coordinator but delegates overlay mounting (settings, tutorials, install prompt, dev overlays, hardware/photic overlays) to that component
+- practice runtime owner remains [src/components/PracticeSection.jsx](src/components/PracticeSection.jsx)
+- [src/components/PracticeSection/PracticeSection.jsx](src/components/PracticeSection/PracticeSection.jsx) is a compatibility re-export to the top-level practice owner
+- practice support surfaces are owned in [src/components/practice/PracticeOptionsCard.jsx](src/components/practice/PracticeOptionsCard.jsx) and [src/components/practice/SessionSummaryModal.jsx](src/components/practice/SessionSummaryModal.jsx); [src/components/PracticeSection/SessionSummaryModal.jsx](src/components/PracticeSection/SessionSummaryModal.jsx) is a wrapper to the canonical practice modal
+- hub daily execution surface is owned by [src/components/DailyPracticeCard.jsx](src/components/DailyPracticeCard.jsx) and consumed by [src/components/HomeHub.jsx](src/components/HomeHub.jsx)
+- progression and scheduling ownership remains in [src/state/progressStore.js](src/state/progressStore.js) and [src/state/navigationStore.js](src/state/navigationStore.js)
+- tutorial registry ownership remains in [src/tutorials/tutorialRegistry.js](src/tutorials/tutorialRegistry.js)
+- auth user runtime ownership is shared through [src/state/useAuthUser.js](src/state/useAuthUser.js), consumed statically by [src/components/auth/AuthGate.jsx](src/components/auth/AuthGate.jsx) and [src/components/SettingsPanel.jsx](src/components/SettingsPanel.jsx)
+
 ### Stage And Identity Signals
 
 There is no single global stage system.

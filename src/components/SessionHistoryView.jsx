@@ -20,22 +20,30 @@ import { CircuitInsightsView } from './CircuitInsightsView.jsx';
 import { SessionEntryEditModal } from './SessionEntryEditModal.jsx';
 import { DeleteConfirmationModal } from './DeleteConfirmationModal.jsx';
 import { ExportArchiveButton } from './ExportArchiveButton.jsx';
-import { getDateKey, getLocalDateKey } from '../utils/dateUtils';
-import { computeContractObligationSummary, createPathRunSessionFilter } from '../services/infographics/contractObligations.js';
 import { ReportsPanel } from './tracking/reports/index.js';
+import {
+    SESSION_HISTORY_EMPTY_STATE_COPY,
+    SESSION_HISTORY_TABS,
+    buildApplicationSummary,
+    buildCircuitSummary,
+    buildCombinedEntries,
+    buildFooterText,
+    buildNavigationSummary,
+    buildPracticeSummary,
+    buildTabCounts,
+    buildWisdomSummary,
+    filterEntries,
+    formatHistoryDate,
+    formatHistoryMinutes,
+    formatHistoryTimestamp,
+    getOutsideScheduleSessionIds,
+    resolveScheduleSlots
+} from './sessionHistoryViewLogic.js';
 import {
     PracticeDashboardHeader,
     NavigationDashboardHeader,
     ApplicationDashboardHeader
 } from './tracking/infographics/index.js';
-
-const TAB_TYPE_MAP = {
-    all: ['practice', 'circuit', 'wisdom-reading', 'wisdom-quiz', 'application-log'],
-    practice: ['practice'],
-    circuits: ['circuit'],
-    wisdom: ['wisdom-reading', 'wisdom-quiz'],
-    application: ['application-log']
-};
 
 export function SessionHistoryView({ onClose, initialTab = ARCHIVE_TABS.ALL, initialReportDomain = REPORT_DOMAINS.PRACTICE }) {
     const colorScheme = useDisplayModeStore(s => s.colorScheme);
@@ -121,56 +129,12 @@ export function SessionHistoryView({ onClose, initialTab = ARCHIVE_TABS.ALL, ini
     const patternStats = useMemo(() => getPatternStats?.() || null, [getPatternStats]);
     const trajectory8 = useMemo(() => getTrajectory?.(8) || { weeks: [], trends: {}, insights: {} }, [getTrajectory]);
 
-    const outsideScheduleSessionIds = (() => {
-        if (!navigationActivePath?.startedAt) return new Set();
-        const selectedDays = navigationActivePath?.schedule?.selectedDaysOfWeek || [];
-        const selectedTimes = navigationActivePath?.schedule?.selectedTimes || [];
-        if (!Array.isArray(selectedDays) || selectedDays.length === 0) return new Set();
-        if (!Array.isArray(selectedTimes) || selectedTimes.length === 0) return new Set();
-
-        const runSessions = Array.isArray(sessionsV2) ? sessionsV2 : [];
-        if (runSessions.length === 0) return new Set();
-
-        const windowStartLocalDateKey = getLocalDateKey(new Date(navigationActivePath.startedAt));
-        const windowEndLocalDateKey = getLocalDateKey();
-        if (windowStartLocalDateKey > windowEndLocalDateKey) return new Set();
-
-        const curriculumState = useCurriculumStore.getState();
-        const isSessionInActiveRun = createPathRunSessionFilter({
-            runId: navigationActivePath.runId || null,
-            activePathId: navigationActivePath.activePathId || null,
-            startedAt: navigationActivePath.startedAt || null,
-        });
-
-        const summary = computeContractObligationSummary({
-            windowStartLocalDateKey,
-            windowEndLocalDateKey,
-            selectedDaysOfWeek: selectedDays,
-            selectedTimes,
-            curriculumStoreState: curriculumState,
-            progressStoreState: { vacation, sessionsV2: runSessions },
-            sessions: runSessions,
-            isSessionEligible: isSessionInActiveRun,
-        });
-
-        const matchedSessionIds = new Set(
-            summary.railDays
-                .flatMap((day) => day?.satisfiedSlots || [])
-                .map((slot) => slot?.matchedSessionId)
-                .filter(Boolean)
-        );
-
-        const outside = new Set();
-        runSessions.forEach((session) => {
-            if (!isSessionInActiveRun(session)) return;
-            if (session?.completion !== 'completed') return;
-            if (!session?.id) return;
-            if (!matchedSessionIds.has(session.id)) {
-                outside.add(session.id);
-            }
-        });
-        return outside;
-    })();
+    const outsideScheduleSessionIds = getOutsideScheduleSessionIds({
+        navigationActivePath,
+        sessionsV2,
+        vacation,
+        curriculumStoreState: useCurriculumStore.getState()
+    });
 
     const [activeTab, setActiveTab] = useState(initialTab || ARCHIVE_TABS.ALL);
     const [filterDate, setFilterDate] = useState(null);
@@ -186,188 +150,63 @@ export function SessionHistoryView({ onClose, initialTab = ARCHIVE_TABS.ALL, ini
     }, [initialTab]);
 
 
-    const combinedEntries = useMemo(() => {
-        const entries = [];
+    const combinedEntries = useMemo(() => buildCombinedEntries({
+        allSessions,
+        circuitEntries,
+        readingSessions,
+        quizAttempts,
+        applicationLogs
+    }), [allSessions, circuitEntries, readingSessions, quizAttempts, applicationLogs]);
 
-        allSessions.forEach((session, index) => {
-            const timestamp = session?.date
-                || session?.timestamp
-                || session?.startedAt
-                || session?.endedAt
-                || (session?.dateKey ? `${session.dateKey}T00:00:00` : null);
-            if (!timestamp) return;
-            const dateKey = session?.dateKey || getDateKey(new Date(timestamp));
-            entries.push({
-                id: `practice-${session?.id ?? index}`,
-                type: 'practice',
-                dateKey,
-                timestamp,
-                data: session
-            });
-        });
-
-        circuitEntries.forEach((entry, index) => {
-            const timestamp = entry?.timestamp || (entry?.dateKey ? `${entry.dateKey}T00:00:00` : null);
-            if (!timestamp) return;
-            const dateKey = entry?.dateKey || getDateKey(new Date(timestamp));
-            entries.push({
-                id: `circuit-${entry?.id ?? index}`,
-                type: 'circuit',
-                dateKey,
-                timestamp,
-                data: entry
-            });
-        });
-
-        readingSessions.forEach((entry, index) => {
-            if (!entry?.date) return;
-            entries.push({
-                id: `reading-${entry?.id ?? index}`,
-                type: 'wisdom-reading',
-                dateKey: getDateKey(new Date(entry.date)),
-                timestamp: entry.date,
-                data: entry
-            });
-        });
-
-        quizAttempts.forEach((entry, index) => {
-            if (!entry?.date) return;
-            entries.push({
-                id: `quiz-${entry?.id ?? index}`,
-                type: 'wisdom-quiz',
-                dateKey: getDateKey(new Date(entry.date)),
-                timestamp: entry.date,
-                data: entry
-            });
-        });
-
-        applicationLogs.forEach(entry => {
-            if (!entry?.timestamp) return;
-            entries.push({
-                id: `application-${entry.id}`,
-                type: 'application-log',
-                dateKey: getDateKey(new Date(entry.timestamp)),
-                timestamp: entry.timestamp,
-                data: entry
-            });
-        });
-
-        return entries.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
-    }, [allSessions, circuitEntries, readingSessions, quizAttempts, applicationLogs]);
-
-    const filteredEntries = useMemo(() => {
-        const allowedTypes = TAB_TYPE_MAP[activeTab];
-        if (activeTab !== 'all' && !allowedTypes) return [];
-
-        let entries = combinedEntries;
-        if (allowedTypes) {
-            entries = entries.filter(entry => allowedTypes.includes(entry.type));
-        }
-
-        if (filterDate) {
-            entries = entries.filter(entry => entry.dateKey === filterDate);
-        }
-
-        return entries;
-    }, [combinedEntries, activeTab, filterDate]);
+    const filteredEntries = useMemo(() => filterEntries({
+        entries: combinedEntries,
+        activeTab,
+        filterDate
+    }), [combinedEntries, activeTab, filterDate]);
 
     const bgColor = isLight ? 'rgba(245, 240, 230, 0.98)' : 'rgba(10, 15, 25, 0.98)';
     const textColor = isLight ? 'rgba(35, 20, 10, 0.95)' : 'rgba(253, 251, 245, 0.95)';
     const accentColor = isLight ? 'rgba(180, 120, 40, 0.9)' : 'var(--accent-color)';
     const borderColor = isLight ? 'rgba(180, 120, 40, 0.15)' : 'rgba(255, 255, 255, 0.1)';
 
-    const formatDate = (dateKey) => {
-        if (!dateKey) return 'Unknown';
-        const d = new Date(dateKey + 'T00:00:00');
-        return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
-    };
+    const practiceSummary = useMemo(() => buildPracticeSummary({
+        allSessions,
+        allStats
+    }), [allSessions, allStats]);
 
-    const formatTimestamp = (timestamp) => {
-        if (!timestamp) return 'Unknown';
-        const d = new Date(timestamp);
-        return `${d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })} - ${d.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })}`;
-    };
+    const circuitSummary = useMemo(() => buildCircuitSummary(circuitEntries), [circuitEntries]);
 
-    const formatMinutes = (minutes) => `${Math.round(minutes || 0)}m`;
+    const wisdomSummary = useMemo(() => buildWisdomSummary({
+        readingStats,
+        quizStats,
+        watchStats,
+        lastWatchedId,
+        videoById
+    }), [readingStats, quizStats, watchStats, lastWatchedId, videoById]);
 
-    const practiceSummary = useMemo(() => {
-        const totalSessions = allSessions.length;
-        const totalMinutes = allSessions.reduce((sum, s) => sum + (s.duration || 0), 0);
-        const accuracyValues = allSessions
-            .filter(s => s.domain === 'breathwork')
-            .map(s => s.metadata?.accuracy)
-            .filter(a => typeof a === 'number');
-        const avgAccuracy = accuracyValues.length > 0
-            ? accuracyValues.reduce((sum, value) => sum + value, 0) / accuracyValues.length
-            : null;
-        const domainRows = Object.entries(allStats)
-            .map(([domain, stats]) => ({
-                domain,
-                count: stats.count || 0,
-                totalMinutes: stats.totalMinutes || 0
-            }))
-            .sort((a, b) => b.totalMinutes - a.totalMinutes);
+    const applicationSummary = useMemo(() => buildApplicationSummary({
+        applicationLogs,
+        appStats7,
+        appStats30,
+        appStats90,
+        modeStats,
+        modeSessions,
+        completedChains,
+        patternStats
+    }), [applicationLogs, appStats7, appStats30, appStats90, modeStats, modeSessions, completedChains, patternStats]);
 
-        return {
-            totalSessions,
-            totalMinutes,
-            avgAccuracy,
-            domainRows
-        };
-    }, [allSessions, allStats]);
-
-    const circuitSummary = useMemo(() => {
-        const totalCircuits = circuitEntries.length;
-        const totalMinutes = circuitEntries.reduce((sum, entry) => sum + (entry.totalDuration || 0), 0);
-        const avgMinutes = totalCircuits > 0 ? totalMinutes / totalCircuits : 0;
-
-        return {
-            totalCircuits,
-            totalMinutes,
-            avgMinutes
-        };
-    }, [circuitEntries]);
-
-    const wisdomSummary = useMemo(() => {
-        const completionRate = watchStats.totalWatched > 0
-            ? Math.round((watchStats.completed / watchStats.totalWatched) * 100)
-            : 0;
-        const lastWatchedAt = lastWatchedId ? videoById?.[lastWatchedId]?.lastWatchedAt : null;
-
-        return {
-            readingStats,
-            quizStats,
-            watchStats,
-            completionRate,
-            lastWatchedAt
-        };
-    }, [readingStats, quizStats, watchStats, lastWatchedId, videoById]);
-
-    const applicationSummary = useMemo(() => {
-        return {
-            totalLogs: applicationLogs.length,
-            recent7: appStats7,
-            recent30: appStats30,
-            recent90: appStats90,
-            modeStats,
-            modeSessionsCount: modeSessions.length,
-            chainCount: completedChains.length,
-            patternStats
-        };
-    }, [applicationLogs, appStats7, appStats30, appStats90, modeStats, modeSessions, completedChains, patternStats]);
-
-    const navigationSummary = useMemo(() => ({
-        activePath: navigationActivePath,
-        lastActivity: navigationLastActivity,
-        unlockedCount: navigationUnlocked?.length || 0,
-        hasFoundation: navigationFoundation,
-        pathAssessment: navigationAssessment
+    const navigationSummary = useMemo(() => buildNavigationSummary({
+        navigationActivePath,
+        navigationLastActivity,
+        navigationUnlocked,
+        navigationFoundation,
+        navigationAssessment
     }), [navigationActivePath, navigationLastActivity, navigationUnlocked, navigationFoundation, navigationAssessment]);
 
-    const scheduleSlots = useMemo(() => {
-        if (scheduleSlotsState && scheduleSlotsState.length > 0) return scheduleSlotsState;
-        return getScheduleSlots?.() || [];
-    }, [scheduleSlotsState, getScheduleSlots]);
+    const scheduleSlots = useMemo(() => resolveScheduleSlots({
+        scheduleSlotsState,
+        getScheduleSlots
+    }), [scheduleSlotsState, getScheduleSlots]);
 
     const adherenceSummary7 = useMemo(
         () => getScheduleAdherenceSummary?.(7, navigationActivePath?.activePathId) || null,
@@ -378,54 +217,15 @@ export function SessionHistoryView({ onClose, initialTab = ARCHIVE_TABS.ALL, ini
         [getScheduleAdherenceSummary, navigationActivePath]
     );
 
-    const tabCounts = {
-        all: combinedEntries.length,
-        practice: allSessions.length,
-        circuits: circuitEntries.length,
-        wisdom: readingSessions.length + quizAttempts.length,
-        navigation: Object.keys(navigationActivePath?.weekCompletionDates || {}).length || 0,
-        application: applicationLogs.length,
-        reports: '',
-        insights: ''
-    };
-
-    const tabs = [
-        { key: ARCHIVE_TABS.ALL, label: 'All' },
-        { key: ARCHIVE_TABS.PRACTICE, label: 'Practice' },
-        { key: ARCHIVE_TABS.CIRCUITS, label: 'Circuits' },
-        { key: ARCHIVE_TABS.WISDOM, label: 'Wisdom' },
-        { key: ARCHIVE_TABS.NAVIGATION, label: 'Navigation' },
-        { key: ARCHIVE_TABS.APPLICATION, label: 'Application' },
-        { key: ARCHIVE_TABS.REPORTS, label: 'Reports' },
-        { key: ARCHIVE_TABS.INSIGHTS, label: 'Insights' }
-    ];
-
-    const emptyStateCopy = {
-        all: {
-            title: 'No tracking records found',
-            hint: 'Complete a session, circuit, or awareness log to see it here.'
-        },
-        practice: {
-            title: 'No practice records found',
-            hint: 'Complete a session to see it in your archive.'
-        },
-        circuits: {
-            title: 'No circuit records found',
-            hint: 'Complete a circuit to see it in your archive.'
-        },
-        wisdom: {
-            title: 'No wisdom records found',
-            hint: 'Read a section or take a quiz to see it in your archive.'
-        },
-        navigation: {
-            title: 'No navigation records found',
-            hint: 'Begin a path to start tracking navigation history.'
-        },
-        application: {
-            title: 'No application records found',
-            hint: 'Log an awareness moment to see it in your archive.'
-        }
-    };
+    const tabCounts = useMemo(() => buildTabCounts({
+        combinedEntries,
+        allSessions,
+        circuitEntries,
+        readingSessions,
+        quizAttempts,
+        navigationActivePath,
+        applicationLogs
+    }), [combinedEntries, allSessions, circuitEntries, readingSessions, quizAttempts, navigationActivePath, applicationLogs]);
 
     const isFeedTab = [
         ARCHIVE_TABS.ALL,
@@ -514,7 +314,7 @@ export function SessionHistoryView({ onClose, initialTab = ARCHIVE_TABS.ALL, ini
                             )}
                         </div>
                         <div style={{ fontSize: '12px', opacity: 0.6 }}>
-                            {formatDate(entry.dateKey)}
+                            {formatHistoryDate(entry.dateKey)}
                             {session.journal?.editedAt && <span> (edited)</span>}
                         </div>
                         {isOutsideSchedule && (
@@ -696,7 +496,7 @@ export function SessionHistoryView({ onClose, initialTab = ARCHIVE_TABS.ALL, ini
             return renderActivityCard({
                 id: entry.id,
                 title: 'Wisdom Reading',
-                subtitle: formatTimestamp(entry.timestamp),
+                subtitle: formatHistoryTimestamp(entry.timestamp),
                 meta: `${minutes}m`,
                 detail
             });
@@ -710,7 +510,7 @@ export function SessionHistoryView({ onClose, initialTab = ARCHIVE_TABS.ALL, ini
             return renderActivityCard({
                 id: entry.id,
                 title: 'Wisdom Quiz',
-                subtitle: formatTimestamp(entry.timestamp),
+                subtitle: formatHistoryTimestamp(entry.timestamp),
                 meta: score,
                 detail
             });
@@ -727,7 +527,7 @@ export function SessionHistoryView({ onClose, initialTab = ARCHIVE_TABS.ALL, ini
             return renderActivityCard({
                 id: entry.id,
                 title: 'Awareness Log',
-                subtitle: formatTimestamp(entry.timestamp),
+                subtitle: formatHistoryTimestamp(entry.timestamp),
                 meta: entry.data.category || 'Uncategorized',
                 detail
             });
@@ -737,26 +537,19 @@ export function SessionHistoryView({ onClose, initialTab = ARCHIVE_TABS.ALL, ini
     };
 
 
-    const footerText = useMemo(() => {
-        switch (activeTab) {
-            case 'all':
-                return `${practiceSummary.totalSessions} sessions | ${circuitSummary.totalCircuits} circuits | ${tabCounts.wisdom} wisdom | ${applicationSummary.totalLogs} logs`;
-            case 'practice':
-                return `${practiceSummary.totalSessions} sessions | ${formatMinutes(practiceSummary.totalMinutes)} total`;
-            case 'circuits':
-                return `${circuitSummary.totalCircuits} circuits | ${formatMinutes(circuitSummary.totalMinutes)} total`;
-            case 'wisdom':
-                return `${readingStats.totalSessions} readings | ${quizStats.totalAttempts} quizzes | ${watchStats.completed} videos`;
-            case 'navigation':
-                return `${Object.keys(navigationSummary.activePath?.weekCompletionDates || {}).length} weeks completed | ${navigationSummary.unlockedCount} unlocked`;
-            case 'application':
-                return `${applicationSummary.totalLogs} logs | ${applicationSummary.modeSessionsCount} mode sessions | ${applicationSummary.chainCount} chains`;
-            case 'insights':
-                return `${circuitEntries.length} circuits | ${allSessions.length} sessions`;
-            default:
-                return `${circuitEntries.length} circuits | ${allSessions.length} sessions`;
-        }
-    }, [
+    const footerText = useMemo(() => buildFooterText({
+        activeTab,
+        practiceSummary,
+        circuitSummary,
+        readingStats,
+        quizStats,
+        watchStats,
+        applicationSummary,
+        navigationSummary,
+        circuitEntriesCount: circuitEntries.length,
+        allSessionsCount: allSessions.length,
+        tabCounts
+    }), [
         activeTab,
         practiceSummary,
         circuitSummary,
@@ -767,7 +560,7 @@ export function SessionHistoryView({ onClose, initialTab = ARCHIVE_TABS.ALL, ini
         navigationSummary,
         circuitEntries.length,
         allSessions.length,
-        tabCounts.wisdom
+        tabCounts
     ]);
 
     return ReactDOM.createPortal(
@@ -845,7 +638,7 @@ export function SessionHistoryView({ onClose, initialTab = ARCHIVE_TABS.ALL, ini
                         backgroundColor: isLight ? 'rgba(0,0,0,0.02)' : 'rgba(255,255,255,0.02)'
                     }}
                 >
-                    {tabs.map(tab => {
+                    {SESSION_HISTORY_TABS.map(tab => {
                         const count = tabCounts[tab.key];
                         return (
                             <button
@@ -937,8 +730,8 @@ export function SessionHistoryView({ onClose, initialTab = ARCHIVE_TABS.ALL, ini
                                 <div style={summaryCardStyle}>
                                     <div style={summaryRowStyle}>
                                         <div><strong>{circuitSummary.totalCircuits}</strong> circuits</div>
-                                        <div><strong>{formatMinutes(circuitSummary.totalMinutes)}</strong> total time</div>
-                                        <div>Avg: {formatMinutes(circuitSummary.avgMinutes)}</div>
+                                        <div><strong>{formatHistoryMinutes(circuitSummary.totalMinutes)}</strong> total time</div>
+                                        <div>Avg: {formatHistoryMinutes(circuitSummary.avgMinutes)}</div>
                                     </div>
                                 </div>
                             )}
@@ -959,7 +752,7 @@ export function SessionHistoryView({ onClose, initialTab = ARCHIVE_TABS.ALL, ini
                                     </div>
                                     {wisdomSummary.lastWatchedAt && (
                                         <div style={{ marginTop: '6px', fontSize: '11px', opacity: 0.6 }}>
-                                            Last watched: {formatTimestamp(wisdomSummary.lastWatchedAt)}
+                                            Last watched: {formatHistoryTimestamp(wisdomSummary.lastWatchedAt)}
                                         </div>
                                     )}
                                 </div>
@@ -987,8 +780,8 @@ export function SessionHistoryView({ onClose, initialTab = ARCHIVE_TABS.ALL, ini
                             ) : isFeedTab ? (
                                 filteredEntries.length === 0 ? (
                                     renderEmptyState(
-                                        emptyStateCopy[activeTab]?.title || 'No records found',
-                                        emptyStateCopy[activeTab]?.hint || 'Complete a session to see it in your archive.'
+                                        SESSION_HISTORY_EMPTY_STATE_COPY[activeTab]?.title || 'No records found',
+                                        SESSION_HISTORY_EMPTY_STATE_COPY[activeTab]?.hint || 'Complete a session to see it in your archive.'
                                     )
                                 ) : (
                                     <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
@@ -998,8 +791,8 @@ export function SessionHistoryView({ onClose, initialTab = ARCHIVE_TABS.ALL, ini
                             ) : activeTab === 'navigation' ? (
                                 !navigationSummary.activePath && !navigationSummary.unlockedCount && !navigationSummary.lastActivity && !navigationSummary.pathAssessment && !navigationSummary.hasFoundation
                                     ? renderEmptyState(
-                                        emptyStateCopy[activeTab]?.title || 'No records found',
-                                        emptyStateCopy[activeTab]?.hint || 'Complete a session to see it in your archive.'
+                                        SESSION_HISTORY_EMPTY_STATE_COPY[activeTab]?.title || 'No records found',
+                                        SESSION_HISTORY_EMPTY_STATE_COPY[activeTab]?.hint || 'Complete a session to see it in your archive.'
                                     )
                                     : null
                             ) : null}

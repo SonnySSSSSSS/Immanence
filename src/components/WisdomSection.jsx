@@ -9,30 +9,20 @@ import { VideoLibrary } from "./VideoLibrary.jsx";
 import { SelfKnowledgeView } from "./wisdom/SelfKnowledgeView.jsx";
 import { WisdomCardHousing } from "./wisdom/WisdomCardHousing.jsx";
 import { GlassIconButton } from "./GlassIconButton.jsx";
+import {
+  filterTreatiseChapters,
+  getBookmarkedChapters,
+  getBookmarkedIds,
+  getWisdomTabDisplayLabel,
+  getWisdomTabTutorialAnchor,
+  resolveActiveWisdomView,
+  resolveWisdomContentLaunch,
+  WISDOM_TAB_ICONS,
+  WISDOM_TABS,
+} from "./wisdom/wisdomSectionLogic.js";
 import { useDisplayModeStore } from "../state/displayModeStore.js";
 import { useUiStore } from "../state/uiStore.js";
 import { useWisdomStore } from "../state/wisdomStore.js";
-
-const TABS = [
-  "Treatise",
-  "Bookmarks",
-  "Videos",
-  "Self-Knowledge",
-];
-
-const TAB_ICONS = {
-  "Treatise": "treatise",
-  "Bookmarks": "bookmarks",
-  "Videos": "videos",
-  "Self-Knowledge": "selfknowledge",
-};
-
-const TAB_LABELS = {
-  "Treatise": "Treatise",
-  "Bookmarks": "Bookmarks",
-  "Videos": "Videos",
-  "Self-Knowledge": "Self",
-};
 
 // â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 // MAIN COMPONENT
@@ -52,7 +42,7 @@ export function WisdomSection() {
   const [initialVideoId, setInitialVideoId] = useState(null);
   const [initialVideoBudgetMin, setInitialVideoBudgetMin] = useState(null);
   const { bookmarks, addBookmark, removeBookmark } = useWisdomStore();
-  const bookmarkedIds = bookmarks.map((b) => b.sectionId);
+  const bookmarkedIds = getBookmarkedIds(bookmarks);
   const contentLaunchContext = useUiStore(s => s.contentLaunchContext);
   const clearContentLaunchContext = useUiStore(s => s.clearContentLaunchContext);
 
@@ -112,23 +102,20 @@ export function WisdomSection() {
     setModalOpen(true);
   };
 
-  const getChapterById = (id) => treatiseChapters.find((ch) => ch.id === id);
-
   // Consume content launch context (from paths/curriculum/navigation recommendations).
   useEffect(() => {
     if (!contentLaunchContext) return;
 
+    const launch = resolveWisdomContentLaunch(contentLaunchContext, treatiseChapters);
+
     try {
-      if (contentLaunchContext.target === 'chapter' && contentLaunchContext.chapterId) {
-        const ch = getChapterById(contentLaunchContext.chapterId);
-        if (ch) {
-          setActiveTab('Treatise');
-          openChapterModal(ch, { durationMin: contentLaunchContext.durationMin });
-        }
-      } else if (contentLaunchContext.target === 'video' && contentLaunchContext.videoId) {
-        setActiveTab('Videos');
-        setInitialVideoId(contentLaunchContext.videoId);
-        setInitialVideoBudgetMin(typeof contentLaunchContext.durationMin === 'number' ? contentLaunchContext.durationMin : null);
+      if (launch?.type === 'chapter') {
+        setActiveTab(launch.activeTab);
+        openChapterModal(launch.chapter, { durationMin: launch.durationMin });
+      } else if (launch?.type === 'video') {
+        setActiveTab(launch.activeTab);
+        setInitialVideoId(launch.videoId);
+        setInitialVideoBudgetMin(launch.durationMin);
       }
     } finally {
       clearContentLaunchContext?.();
@@ -139,21 +126,7 @@ export function WisdomSection() {
   // TREATISE VIEW - Parts Accordion
   // â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   const renderTreatiseView = () => {
-    const normalizedQuery = searchQuery.trim().toLowerCase();
-
-    // Filter chapters if searching
-    const filteredChapters = normalizedQuery
-      ? treatiseChapters.filter((ch) => {
-          const searchText = (
-            ch.title +
-            " " +
-            (ch.subtitle || "") +
-            " " +
-            (ch.excerpt || "")
-          ).toLowerCase();
-          return searchText.includes(normalizedQuery);
-        })
-      : null;
+    const { filteredChapters } = filterTreatiseChapters(treatiseChapters, searchQuery);
 
     // If searching, show flat results
     if (filteredChapters) {
@@ -314,9 +287,7 @@ export function WisdomSection() {
   // BOOKMARKS VIEW - "The Stars" Constellation Builder
   // â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   const renderBookmarksView = () => {
-    const bookmarkedChapters = treatiseChapters.filter((ch) =>
-      bookmarkedIds.includes(ch.id),
-    );
+    const bookmarkedChapters = getBookmarkedChapters(treatiseChapters, bookmarkedIds);
 
     // Empty state: Dark sky awaiting stars
     if (bookmarkedChapters.length === 0) {
@@ -549,6 +520,8 @@ export function WisdomSection() {
   // â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   // MAIN RENDER
   // â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  const activeView = resolveActiveWisdomView(activeTab);
+
   return (
     <>
       <ChapterModal
@@ -575,25 +548,14 @@ export function WisdomSection() {
           className="flex flex-row items-center justify-between w-full mb-6"
           style={{ gap: '0', paddingLeft: '12px', paddingRight: '12px', paddingTop: '8px' }}
         >
-          {TABS.map(tab => {
-            const displayLabel = tab === 'Bookmarks' && bookmarkedIds.length > 0
-              ? `${TAB_LABELS[tab]} (${bookmarkedIds.length})`
-              : TAB_LABELS[tab];
-            const tutorialAnchor =
-              tab === 'Treatise'
-                ? 'wisdom-tab-treatise'
-                : tab === 'Bookmarks'
-                  ? 'wisdom-tab-bookmarks'
-                  : tab === 'Videos'
-                    ? 'wisdom-tab-videos'
-                    : tab === 'Self-Knowledge'
-                      ? 'wisdom-tab-self-knowledge'
-                      : null;
+          {WISDOM_TABS.map(tab => {
+            const displayLabel = getWisdomTabDisplayLabel(tab, bookmarkedIds.length);
+            const tutorialAnchor = getWisdomTabTutorialAnchor(tab);
             return (
               <GlassIconButton
                 key={tab}
                 label={displayLabel}
-                iconName={TAB_ICONS[tab]}
+                iconName={WISDOM_TAB_ICONS[tab]}
                 onClick={() => setActiveTab(tab)}
                 selected={activeTab === tab}
                 data-tutorial={tutorialAnchor || undefined}
@@ -626,10 +588,10 @@ export function WisdomSection() {
 
           {/* Content */}
           <section className="min-h-[400px] relative z-10">
-            {activeTab === "Treatise" && renderTreatiseView()}
-            {activeTab === "Bookmarks" && renderBookmarksView()}
-            {activeTab === "Videos" && renderVideosView()}
-            {activeTab === "Self-Knowledge" && <SelfKnowledgeView />}
+            {activeView === "Treatise" && renderTreatiseView()}
+            {activeView === "Bookmarks" && renderBookmarksView()}
+            {activeView === "Videos" && renderVideosView()}
+            {activeView === "Self-Knowledge" && <SelfKnowledgeView />}
           </section>
         </div>
       </div>

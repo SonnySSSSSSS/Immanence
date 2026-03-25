@@ -40,6 +40,12 @@ Canonical doc map for `immanence-os`, refreshed on 2026-03-22.
 - [WORKLOG.md](WORKLOG.md) - implementation log and task trail
 - [archive/](archive/) - archived tasks and older documentation snapshots
 
+## Refactor Stabilization And Audit Docs
+
+- [REFRACTOR_STABILIZATION_BASELINE.md](REFRACTOR_STABILIZATION_BASELINE.md) - post-refactor verification baseline for build, lint, and smoke checks
+- [PRACTICE_SURFACE_AUDIT.md](PRACTICE_SURFACE_AUDIT.md) - practice-surface ownership and legacy/quarantine classification audit
+- [BUNDLE_SPLIT_PLAN.md](BUNDLE_SPLIT_PLAN.md) - production bundle-size audit and ranked chunk-splitting plan
+
 ## Notes
 
 - Root `AGENTS.md` is the only canonical `AGENTS.md` in the repo.
