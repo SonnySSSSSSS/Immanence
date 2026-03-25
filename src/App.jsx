@@ -12,12 +12,7 @@ const ApplicationSection = lazy(() => import("./components/ApplicationSection.js
 import { NavigationSection } from "./components/NavigationSection.jsx";
 import { NavigationRitualLibrary } from "./components/NavigationRitualLibrary.jsx";
 import { Background } from "./components/Background.jsx";
-import { CurriculumCompletionReport } from "./components/CurriculumCompletionReport.jsx";
-const DevPanel = lazy(() => import("./components/DevPanel.jsx").then(m => ({ default: m.DevPanel })));
-const PracticeButtonElectricBorderOverlay = lazy(() => import("./components/dev/PracticeButtonElectricBorderOverlay.jsx").then(m => ({ default: m.PracticeButtonElectricBorderOverlay })));
-const SelectedCardElectricBorderOverlay = lazy(() => import("./components/dev/SelectedCardElectricBorderOverlay.jsx").then(m => ({ default: m.SelectedCardElectricBorderOverlay })));
-const SelectedControlElectricBorderOverlay = lazy(() => import("./components/dev/SelectedControlElectricBorderOverlay.jsx").then(m => ({ default: m.SelectedControlElectricBorderOverlay })));
-const SelectedPlateOverlay = lazy(() => import("./components/dev/SelectedPlateOverlay.jsx").then(m => ({ default: m.SelectedPlateOverlay })));
+import { AppShellOverlays } from "./components/AppShellOverlays.jsx";
 import { DisplayModeToggle } from "./components/DisplayModeToggle.jsx";
 import { useDisplayModeStore } from "./state/displayModeStore.js";
 import { useUserModeStore } from "./state/userModeStore.js";
@@ -27,14 +22,8 @@ import { useTempoAudioStore } from "./state/tempoAudioStore.js";
 import { useDevOverrideStore } from "./dev/devOverrideStore.js";
 import { ThemeProvider } from "./context/ThemeContext.jsx";
 import { startImagePreloading } from "./utils/imagePreloader.js";
-import { InstallPrompt } from "./components/InstallPrompt.jsx";
-import { HardwareGuide } from "./components/HardwareGuide.jsx";
 import { useWakeLock } from "./hooks/useWakeLock.js";
 import ErrorBoundary from "./components/ErrorBoundary.jsx";
-import { PhoticCirclesOverlay } from "./components/PhoticCirclesOverlay.jsx";
-import { SettingsPanel } from "./components/SettingsPanel.jsx";
-import { TutorialOverlay } from "./components/tutorial/TutorialOverlay.jsx";
-import { ShadowScanOverlay } from "./components/debug/ShadowScanOverlay.jsx";
 import { getDebugFlagValue, parseDebugBool, toggleDebugFlag as toggleDebugFlagLs } from "./components/debug/debugFlags.js";
 import { useTutorialStore } from "./state/tutorialStore.js";
 import { TUTORIALS } from "./tutorials/tutorialRegistry.js";
@@ -564,6 +553,7 @@ function App({ playgroundMode = false, playgroundBottomLayer = true }) {
 
   // v3.27.284 - probe(avatar): add PROBE:avatar-scheme-isolation to confirm light/dark store isolation
   // v3.27.285 - probe(avatar): add PROBE:avatar-rotation-space — static analysis clean; DOM ancestor walk confirms at runtime
+    // v3.27.286 - refactor(practice): extract launch-context normalization and stillness config into usePracticeLaunchState hook
   // v3.27.283 - refactor(card): collapse path selector into eyebrow row for visual balance
   // v3.27.282 - restore(hub): path selector button integrated into daily practice card top-left shoulder
   // v3.27.281 - fix(avatar-persist): bump persist v6, force-reset stale corrupted snapshot data and simplify merge
@@ -799,124 +789,103 @@ function App({ playgroundMode = false, playgroundBottomLayer = true }) {
   return (
     <AuthGate onAuthChange={handleAuthChange}>
     <ThemeProvider currentStage={effectiveAvatarStage}>
-      {/* Curriculum Completion Report */}
-      {showCurriculumReport && (
-        <CurriculumCompletionReport
-          onDismiss={() => setShowCurriculumReport(false)}
-        />
-      )}
-
-      {/* Settings Panel */}
-      <SettingsPanel
-        isOpen={showSettings}
-        onClose={() => setShowSettings(false)}
-        onSignedOut={() => {
+      <AppShellOverlays
+        showCurriculumReport={showCurriculumReport}
+        onDismissCurriculumReport={() => setShowCurriculumReport(false)}
+        showSettings={showSettings}
+        onCloseSettings={() => setShowSettings(false)}
+        onSettingsSignedOut={() => {
           setShowSettings(false);
           setActiveSection(null);
         }}
-      />
-
-      {/* Dev Panel (🎨 button or Ctrl+Shift+D) */}
-      {devPanelGateEnabled && (
-        <Suspense fallback={null}>
-          <DevPanel
-            isOpen={showDevPanel}
-            onClose={() => setShowDevPanel(false)}
-            avatarStage={effectivePreviewStage}
-            setAvatarStage={handlePreviewStageChange}
-            avatarPath={effectivePreviewPath}
-            setAvatarPath={handlePreviewPathChange}
-            showCore={previewShowCore}
-            setShowCore={setPreviewShowCore}
-            avatarAttention={previewAttention}
-            setAvatarAttention={setPreviewAttention}
-          />
-        </Suspense>
-      )}
-
-      {selectionEnabled && (
-        <Suspense fallback={null}>
-          <PracticeButtonElectricBorderOverlay />
-          <SelectedControlElectricBorderOverlay />
-          <SelectedPlateOverlay />
-          {isDev && <SelectedCardElectricBorderOverlay />}
-        </Suspense>
-      )}
-
-      {/* Outer Layout Container - Adapts to display mode */}
-      <div
-        className="w-full h-[100dvh] flex justify-center overflow-hidden transition-colors duration-500 relative"
-        style={{
-          background: outerBackground,
-          '--app-frame-width': APP_FRAME_WIDTH,
-        }}
+        devPanelGateEnabled={devPanelGateEnabled}
+        showDevPanel={showDevPanel}
+        onCloseDevPanel={() => setShowDevPanel(false)}
+        effectivePreviewStage={effectivePreviewStage}
+        handlePreviewStageChange={handlePreviewStageChange}
+        effectivePreviewPath={effectivePreviewPath}
+        handlePreviewPathChange={handlePreviewPathChange}
+        previewShowCore={previewShowCore}
+        setPreviewShowCore={setPreviewShowCore}
+        previewAttention={previewAttention}
+        setPreviewAttention={setPreviewAttention}
+        selectionEnabled={selectionEnabled}
+        isDev={isDev}
+        isPhoticOpen={isPhoticOpen}
+        handleClosePhotic={handleClosePhotic}
+        isHardwareGuideOpen={isHardwareGuideOpen}
+        onCloseHardwareGuide={() => setIsHardwareGuideOpen(false)}
+        debugShadowScan={debugShadowScan}
       >
-        {/* Side mask - left side (dynamic based on display mode) */}
+        {/* Outer Layout Container - Adapts to display mode */}
         <div
-          className="fixed inset-y-0 left-0 pointer-events-none z-50 transition-all duration-500"
+          className="w-full h-[100dvh] flex justify-center overflow-hidden transition-colors duration-500 relative"
           style={{
-            width: 'calc((100vw - var(--app-frame-width)) / 2)',
             background: outerBackground,
+            '--app-frame-width': APP_FRAME_WIDTH,
           }}
-        />
-
-        {/* Side mask - right side (dynamic based on display mode) */}
-        <div
-          className="fixed inset-y-0 right-0 pointer-events-none z-50 transition-all duration-500"
-          style={{
-            width: 'calc((100vw - var(--app-frame-width)) / 2)',
-            background: outerBackground,
-          }}
-        />
-
-        {/* Full-viewport background: force pure black during active breath to prevent wallpaper bleed */}
-        {isActiveBreathSession ? (
+        >
+          {/* Side mask - left side (dynamic based on display mode) */}
           <div
-            aria-hidden="true"
-            className="pointer-events-none fixed inset-0 z-0"
-            style={{ background: "#020207" }}
+            className="fixed inset-y-0 left-0 pointer-events-none z-50 transition-all duration-500"
+            style={{
+              width: 'calc((100vw - var(--app-frame-width)) / 2)',
+              background: outerBackground,
+            }}
           />
-        ) : (
-          <Background stage={effectivePreviewStage} showBottomLayer={effectiveShowBackgroundBottomLayer} />
-        )}
 
-        <PhoticCirclesOverlay
-          isOpen={isPhoticOpen}
-          onClose={handleClosePhotic}
-          autoStart={true}
-        />
-        {/* PROBE:DEPLOY_BUILD_ID_V1:START */}
-        <div
-          style={{
-            position: 'fixed',
-            right: 8,
-            bottom: 8,
-            fontSize: 10,
-            opacity: 0.6,
-            pointerEvents: 'none',
-            zIndex: 9999,
-          }}
-        >
-          build: {__DEPLOY_GIT_SHA__} @ {__DEPLOY_BUILD_TIME__}
-        </div>
-        {/* PROBE:DEPLOY_BUILD_ID_V1:END */}
+          {/* Side mask - right side (dynamic based on display mode) */}
+          <div
+            className="fixed inset-y-0 right-0 pointer-events-none z-50 transition-all duration-500"
+            style={{
+              width: 'calc((100vw - var(--app-frame-width)) / 2)',
+              background: outerBackground,
+            }}
+          />
 
-        {/* Inner App Container */}
-        <div
-          data-app-frame
-          className={`relative w-full h-[100dvh] flex flex-col items-center overflow-hidden transition-all duration-500 ${isLight ? 'text-[#3D3425]' : 'text-white'}`}
-          style={{
-            width: 'var(--app-frame-width)',
-            maxWidth: 'var(--app-frame-width)',
-            height: '100dvh',
-            maxHeight: '100dvh',
-            boxShadow: 'none',
-            overflowX: 'hidden',
-            overflowY: 'hidden',
-            zIndex: 1,
-            '--ui-rail-max': UI_RAIL_MAX_WIDTH,
-          }}
-        >
+          {/* Full-viewport background: force pure black during active breath to prevent wallpaper bleed */}
+          {isActiveBreathSession ? (
+            <div
+              aria-hidden="true"
+              className="pointer-events-none fixed inset-0 z-0"
+              style={{ background: "#020207" }}
+            />
+          ) : (
+            <Background stage={effectivePreviewStage} showBottomLayer={effectiveShowBackgroundBottomLayer} />
+          )}
+
+          {/* PROBE:DEPLOY_BUILD_ID_V1:START */}
+          <div
+            style={{
+              position: 'fixed',
+              right: 8,
+              bottom: 8,
+              fontSize: 10,
+              opacity: 0.6,
+              pointerEvents: 'none',
+              zIndex: 9999,
+            }}
+          >
+            build: {__DEPLOY_GIT_SHA__} @ {__DEPLOY_BUILD_TIME__}
+          </div>
+          {/* PROBE:DEPLOY_BUILD_ID_V1:END */}
+
+          {/* Inner App Container */}
+          <div
+            data-app-frame
+            className={`relative w-full h-[100dvh] flex flex-col items-center overflow-hidden transition-all duration-500 ${isLight ? 'text-[#3D3425]' : 'text-white'}`}
+            style={{
+              width: 'var(--app-frame-width)',
+              maxWidth: 'var(--app-frame-width)',
+              height: '100dvh',
+              maxHeight: '100dvh',
+              boxShadow: 'none',
+              overflowX: 'hidden',
+              overflowY: 'hidden',
+              zIndex: 1,
+              '--ui-rail-max': UI_RAIL_MAX_WIDTH,
+            }}
+          >
 
           <div
             className="relative z-10 w-full flex flex-col overflow-hidden"
@@ -1222,20 +1191,9 @@ function App({ playgroundMode = false, playgroundBottomLayer = true }) {
             </main>
           </div>
 
-          <HardwareGuide
-            isOpen={isHardwareGuideOpen}
-            onClose={() => setIsHardwareGuideOpen(false)}
-          />
-
-          <InstallPrompt />
-
-          {/* Tutorial overlay system */}
-          <TutorialOverlay />
-
-          {/* Debug overlay: identifies the actual element owning shadows/filters/backdrop when enabled */}
-          <ShadowScanOverlay enabled={isDev && debugShadowScan} />
+          </div >
         </div >
-      </div >
+      </AppShellOverlays>
     </ThemeProvider >
     </AuthGate>
   );
