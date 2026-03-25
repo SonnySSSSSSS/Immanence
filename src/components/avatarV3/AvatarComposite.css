@@ -24,7 +24,7 @@
   -webkit-user-select: none;
   user-select: none;
   backface-visibility: hidden;
-  transform-box: fill-box;
+  transform-box: content-box;
   transform-origin: 50% 50%;
   image-rendering: auto;
 }
@@ -40,7 +40,7 @@
   -webkit-user-select: none;
   user-select: none;
   backface-visibility: hidden;
-  transform-box: fill-box;
+  transform-box: content-box;
   transform-origin: 50% 50%;
   image-rendering: auto;
 }
@@ -66,6 +66,8 @@
   inset: 0;
   z-index: 6;
   pointer-events: none;
+  transform-box: content-box;
+  transform-origin: 50% 50%;
 }
 
 .avatar-composite__ring-spin {

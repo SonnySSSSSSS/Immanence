@@ -412,6 +412,114 @@ export function AvatarComposite({ stage, size, path = null }) {
   }
   // PROBE:avatar-rotation-space:END
 
+  // PROBE:avatar-origin-anchor:START
+  // Debounced (300ms idle) measurement of each layer's DOM box, transform-origin,
+  // and transform-box. Logs ONE compact line per stabilized change.
+  // Full data always on window.__avatarOriginProbe__.
+  useLayoutEffect(() => {
+    if (!import.meta.env.DEV) return undefined;
+
+    const containerEl = rootRef.current;
+    if (!containerEl) return undefined;
+
+    // Debounce: schedule measurement 300ms after last render
+    const timerId = setTimeout(() => {
+      const layerRefs = {
+        bg: bgImageRef.current,
+        stage: stageImageRef.current,
+        glass: glassImageRef.current,
+        ring: ringImageRef.current,
+      };
+      const clipEl = globeClipRef.current;
+      const ringWrapEl = ringWrapRef.current;
+
+      const containerRect = containerEl.getBoundingClientRect();
+      const clipRect = clipEl ? clipEl.getBoundingClientRect() : null;
+
+      const layerMeasurements = {};
+      const refBoxMismatch = [];
+
+      LAYER_IDS.forEach((layerId) => {
+        const el = layerId === 'ring' ? ringWrapEl : layerRefs[layerId];
+        if (!el) {
+          layerMeasurements[layerId] = { error: 'ref not mounted' };
+          return;
+        }
+        const cs = window.getComputedStyle(el);
+        const rect = el.getBoundingClientRect();
+        const effective = effectiveLayers[layerId];
+
+        layerMeasurements[layerId] = {
+          storedCanonical: { x: effective.x, y: effective.y, scale: effective.scale, rotateDeg: effective.rotateDeg },
+          domRect: { left: rect.left, top: rect.top, width: rect.width, height: rect.height },
+          relativeToContainer: {
+            left: rect.left - containerRect.left,
+            top: rect.top - containerRect.top,
+          },
+          computedTransformOrigin: cs.transformOrigin,
+          computedTransformBox: cs.transformBox || '(not set)',
+          computedTransform: (cs.transform || 'none').slice(0, 120),
+          objectFit: cs.objectFit || '(n/a)',
+          objectPosition: cs.objectPosition || '(n/a)',
+          naturalSize: el.tagName === 'IMG'
+            ? { naturalWidth: el.naturalWidth, naturalHeight: el.naturalHeight }
+            : null,
+        };
+
+        // All layers should now resolve to content-box
+        const resolvedBox = cs.transformBox || 'border-box';
+        if (resolvedBox !== 'content-box') {
+          refBoxMismatch.push({ layerId, resolvedBox, expected: 'content-box' });
+        }
+      });
+
+      const originPositions = {};
+      LAYER_IDS.forEach((layerId) => {
+        const m = layerMeasurements[layerId];
+        if (!m || m.error) return;
+        const parts = m.computedTransformOrigin.split(/\s+/).map(parseFloat);
+        if (parts.length >= 2 && Number.isFinite(parts[0]) && Number.isFinite(parts[1])) {
+          originPositions[layerId] = {
+            localX: parts[0],
+            localY: parts[1],
+            absX: m.domRect.left + parts[0],
+            absY: m.domRect.top + parts[1],
+          };
+        }
+      });
+
+      const probeResult = {
+        timestamp: new Date().toISOString(),
+        stage: normalizedStage,
+        colorScheme,
+        containerRect: { left: containerRect.left, top: containerRect.top, width: containerRect.width, height: containerRect.height },
+        clipRect: clipRect ? { left: clipRect.left, top: clipRect.top, width: clipRect.width, height: clipRect.height } : null,
+        layers: layerMeasurements,
+        originPositions,
+        refBoxMismatch,
+        transformBoxDivergence: refBoxMismatch.length > 0,
+      };
+
+      // Always expose full data for console inspection: copy(window.__avatarOriginProbe__)
+      self.__avatarOriginProbe__ = probeResult;
+
+      // Compact one-line summary
+      const boxValues = LAYER_IDS.map((id) => `${id}:${layerMeasurements[id]?.computedTransformBox ?? '?'}`).join(' ');
+      const originValues = LAYER_IDS.map((id) => {
+        const o = originPositions[id];
+        return o ? `${id}:${o.localX.toFixed(0)},${o.localY.toFixed(0)}` : `${id}:?`;
+      }).join(' ');
+      console.info(
+        `[PROBE:avatar-origin-anchor] divergence=${refBoxMismatch.length > 0} | box=[${boxValues}] | origin=[${originValues}]` +
+        (refBoxMismatch.length > 0 ? ` | MISMATCH: ${JSON.stringify(refBoxMismatch)}` : ' | OK'),
+      );
+    }, 300);
+
+    return () => clearTimeout(timerId);
+  // eslint-disable-next-line react-hooks/exhaustive-deps -- effectiveLayers is a fresh object each render; bgStyle/stageStyle/glassStyle/ringStyle.transform capture the actual deltas
+  }, [normalizedStage, colorScheme, bgStyle.transform, stageStyle.transform, glassStyle.transform, ringStyle.transform]);
+  // PROBE:avatar-origin-anchor:END
+
   const substrateDescriptor = {
     stage,
     normalizedStage,
