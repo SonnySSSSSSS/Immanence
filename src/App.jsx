@@ -18,6 +18,7 @@ import { useDisplayModeStore } from "./state/displayModeStore.js";
 import { useUserModeStore } from "./state/userModeStore.js";
 import { useUiStore } from "./state/uiStore.js";
 import { useCurriculumStore } from "./state/curriculumStore.js";
+import { useNavigationStore } from "./state/navigationStore.js";
 import { useTempoAudioStore } from "./state/tempoAudioStore.js";
 import { useDevOverrideStore } from "./dev/devOverrideStore.js";
 import { ThemeProvider } from "./context/ThemeContext.jsx";
@@ -167,6 +168,7 @@ function App({ playgroundMode = false, playgroundBottomLayer = true }) {
   const modeByUserId = useUserModeStore((s) => s.modeByUserId);
   const setActiveUserModeUserId = useUserModeStore((s) => s.setActiveUserId);
   const practiceLaunchContext = useUiStore((s) => s.practiceLaunchContext);
+  const activePath = useNavigationStore((s) => s.activePath);
   const onboardingComplete = useCurriculumStore((s) => s.onboardingComplete);
   const practiceTimeSlots = useCurriculumStore((s) => s.practiceTimeSlots);
   const needsSetup = !onboardingComplete && (!practiceTimeSlots || practiceTimeSlots.length === 0);
@@ -526,10 +528,14 @@ function App({ playgroundMode = false, playgroundBottomLayer = true }) {
     if (section === 'practice') {
       if (practiceLaunchContext) {
         setActiveSection('practice');
+        return;
+      }
+      if (options?.forceStudentNavigation === true && activePath?.activePathId) {
+        setActiveSection('practice');
       }
       return;
     }
-  }, [accessPosture, needsSetup, playgroundMode, practiceLaunchContext]);
+  }, [accessPosture, activePath, needsSetup, playgroundMode, practiceLaunchContext]);
 
   // Sync avatarStage with previewStage so theme colors update
   useEffect(() => {

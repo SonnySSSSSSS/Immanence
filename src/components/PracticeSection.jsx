@@ -24,6 +24,7 @@ import { loadPreferences, savePreferences } from "../state/practiceStore.js";
 import { usePracticeSessionInstrumentation } from "./practice/usePracticeSessionInstrumentation.js";
 import { useCurriculumStore } from '../state/curriculumStore.js';
 import { useNavigationStore } from '../state/navigationStore.js';
+import { useUserModeStore } from '../state/userModeStore.js';
 import { useUiStore } from "../state/uiStore.js";
 import { useSessionOverrideStore } from "../state/sessionOverrideStore.js";
 import { SacredTimeSlider } from "./SacredTimeSlider.jsx";
@@ -215,17 +216,21 @@ const PracticeIcons = {
   ),
 };
 
-function PracticeSelector({ selectedId, onSelect }) {
+function PracticeSelector({ selectedId, onSelect, allowedPracticeIds }) {
   const items = useMemo(() => {
-    return ['breath', 'integration', 'circuit', 'awareness', 'resonance', 'perception'].map((id) => {
+    // 'locked' sentinel → render nothing
+    if (allowedPracticeIds === 'locked') return [];
+    const allIds = ['breath', 'integration', 'circuit', 'awareness', 'resonance', 'perception'];
+    const visibleIds = Array.isArray(allowedPracticeIds)
+      ? allIds.filter(id => allowedPracticeIds.includes(id))
+      : allIds; // null → unrestricted
+    return visibleIds.map((id) => {
       const p = PRACTICE_REGISTRY[id];
-      return {
-        id: id,
-        label: p.label,
-        rail: getRailColor(id),
-      };
+      return { id, label: p.label, rail: getRailColor(id) };
     });
-  }, []);
+  }, [allowedPracticeIds]);
+
+  if (items.length === 0) return null;
 
   return (
     <div data-tutorial="practice-selector">
@@ -353,7 +358,17 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, onNav
     status: guidanceStatus,
   });
   const activePath = useNavigationStore(s => s.activePath);
-  
+  const accessPosture = useUserModeStore(s => s.accessPosture);
+
+  const allowedPracticeIds = useMemo(() => {
+    if (accessPosture !== 'guided') return null;
+    if (!activePath?.activePathId) return 'locked';
+    const pathDef = getPathById(activePath.activePathId);
+    const allowed = pathDef?.tracking?.allowedPractices;
+    // Fail-open: missing or empty allowedPractices → unrestricted (null)
+    return Array.isArray(allowed) && allowed.length > 0 ? allowed : null;
+  }, [accessPosture, activePath]);
+
   // Tempo sync state for music-synced breathing
   const tempoSyncEnabled = useTempoSyncStore(s => s.enabled);
   const tempoSyncBpm = useTempoSyncStore(s => s.bpm);
@@ -676,6 +691,15 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, onNav
     consumedPathAutoStartRequestIdRef,
     suppressPrefSaveRef,
   });
+
+  // Auto-correct practiceId when it falls outside the curriculum's allowedPractices
+  useEffect(() => {
+    if (!Array.isArray(allowedPracticeIds)) return; // null (unrestricted) or 'locked'
+    if (isRunning || activePracticeSession) return;
+    if (!allowedPracticeIds.includes(practiceId)) {
+      queueMicrotask(() => setPracticeId(allowedPracticeIds[0]));
+    }
+  }, [allowedPracticeIds, practiceId, isRunning, activePracticeSession]);
 
   // Handle curriculum auto-start and initialization (with guards to prevent override during practice)
   useEffect(() => {
@@ -3409,6 +3433,7 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, onNav
                 selectedId={practiceId}
                 onSelect={handleSelectPractice}
                 tokens={uiTokens}
+                allowedPracticeIds={allowedPracticeIds}
               />
             )}
           />
