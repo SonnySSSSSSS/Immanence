@@ -9,8 +9,7 @@ const HomeHub = lazy(() => import("./components/HomeHub.jsx").then(m => ({ defau
 // Named exports need to be wrapped for React.lazy
 const WisdomSection = lazy(() => import("./components/WisdomSection.jsx").then(m => ({ default: m.WisdomSection })));
 const ApplicationSection = lazy(() => import("./components/ApplicationSection.jsx").then(m => ({ default: m.ApplicationSection })));
-import { NavigationSection } from "./components/NavigationSection.jsx";
-import { NavigationRitualLibrary } from "./components/NavigationRitualLibrary.jsx";
+const NavigationSection = lazy(() => import("./components/NavigationSection.jsx").then(m => ({ default: m.NavigationSection })));
 import { Background } from "./components/Background.jsx";
 import { AppShellOverlays } from "./components/AppShellOverlays.jsx";
 import { DisplayModeToggle } from "./components/DisplayModeToggle.jsx";
@@ -148,7 +147,11 @@ function SectionView({ section, isPracticing, onPracticingChange, onBreathStateC
           </Suspense>
         )}
 
-        {section === "navigation" && !hideCards && <NavigationSection onStageChange={onStageChange} currentStage={currentStage} previewPath={previewPath} previewShowCore={previewShowCore} previewAttention={previewAttention} onNavigate={onNavigate} onOpenHardwareGuide={onOpenHardwareGuide} isPracticing={isPracticing} />}
+        {section === "navigation" && !hideCards && (
+          <Suspense fallback={<div />}>
+            <NavigationSection onStageChange={onStageChange} currentStage={currentStage} previewPath={previewPath} previewShowCore={previewShowCore} previewAttention={previewAttention} onNavigate={onNavigate} onOpenHardwareGuide={onOpenHardwareGuide} isPracticing={isPracticing} />
+          </Suspense>
+        )}
       </div>
     </div>
   );
