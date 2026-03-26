@@ -1,9 +1,22 @@
 {
   "permissions": {
     "allow": [
-      "Skill(update-config)",
-      "Skill(update-config:*)",
-      "WebFetch(domain:codesandbox.io)"
+      "Bash(*)"
+    ],
+    "deny": [
+      "Bash(git push --force*)",
+      "Bash(git push -f*)",
+      "Bash(git reset --hard*)",
+      "Bash(git clean -f*)",
+      "Bash(git clean -fd*)",
+      "Bash(git branch -D*)",
+      "Bash(rm -rf*)",
+      "Bash(rm -fr*)",
+      "Bash(del /f*)",
+      "Bash(rmdir /s*)",
+      "Bash(format *)",
+      "Bash(DROP TABLE*)",
+      "Bash(DROP DATABASE*)"
     ]
   },
   "mcpServers": {
