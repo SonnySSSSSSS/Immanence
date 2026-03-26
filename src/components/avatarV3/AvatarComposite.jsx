@@ -1,4 +1,4 @@
-import React, { useLayoutEffect, useRef } from 'react';
+import React, { useLayoutEffect, useMemo, useRef } from 'react';
 import './AvatarComposite.css';
 import { useDevPanelStore } from '../../state/devPanelStore.js';
 import {
@@ -520,7 +520,7 @@ export function AvatarComposite({ stage, size, path = null }) {
   }, [normalizedStage, colorScheme, bgStyle.transform, stageStyle.transform, glassStyle.transform, ringStyle.transform]);
   // PROBE:avatar-origin-anchor:END
 
-  const substrateDescriptor = {
+  const substrateDescriptor = useMemo(() => ({
     stage,
     normalizedStage,
     size,
@@ -543,7 +543,14 @@ export function AvatarComposite({ stage, size, path = null }) {
       glassOpacity: glassStyle.opacity,
       ringOpacity: ringStyle.opacity,
     },
-  };
+  }), [
+    stage, normalizedStage, size, path, colorScheme,
+    backgroundSrc, stageSrc, glassSrc, ringSrc,
+    bgStyle.transform, bgStyle.opacity,
+    stageStyle.transform, stageStyle.opacity,
+    glassStyle.transform, glassStyle.opacity,
+    ringStyle.transform, ringStyle.opacity,
+  ]);
 
   if (AVATAR_COMPOSITE_HMR_DERIVATION_PROBE_ENABLED) {
     logAvatarHmrDerivationProbe('AvatarComposite', 'render-derivation', {
@@ -651,15 +658,22 @@ export function AvatarComposite({ stage, size, path = null }) {
     probe.lastDescriptorSignature = descriptorSignature;
     probe.lastInstanceSignature = instanceSignature;
 
+    const capturedMountId = substrateMountIdRef.current;
+    const capturedRoot = rootRef.current;
+    const capturedBg = bgImageRef.current;
+    const capturedStage = stageImageRef.current;
+    const capturedGlass = glassImageRef.current;
+    const capturedRing = ringImageRef.current;
+
     return () => {
       logAvatarCompositeHmrSubstrateProbe('unmount-instance', {
-        mountId: substrateMountIdRef.current,
-        rootElementId: getAvatarCompositeProbeElementId(rootRef.current, 'root'),
+        mountId: capturedMountId,
+        rootElementId: getAvatarCompositeProbeElementId(capturedRoot, 'root'),
         layerElementIds: {
-          bg: getAvatarCompositeProbeElementId(bgImageRef.current, 'bg'),
-          stage: getAvatarCompositeProbeElementId(stageImageRef.current, 'stage'),
-          glass: getAvatarCompositeProbeElementId(glassImageRef.current, 'glass'),
-          ring: getAvatarCompositeProbeElementId(ringImageRef.current, 'ring'),
+          bg: getAvatarCompositeProbeElementId(capturedBg, 'bg'),
+          stage: getAvatarCompositeProbeElementId(capturedStage, 'stage'),
+          glass: getAvatarCompositeProbeElementId(capturedGlass, 'glass'),
+          ring: getAvatarCompositeProbeElementId(capturedRing, 'ring'),
         },
       });
     };
