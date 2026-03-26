@@ -78,6 +78,11 @@
   backface-visibility: hidden;
   will-change: transform;
   animation: avatar-composite-ring-spin 480s linear infinite;
+  animation-play-state: running;
+}
+
+.avatar-composite[data-page-visible='false'] .avatar-composite__ring-spin {
+  animation-play-state: paused;
 }
 
 .avatar-composite--debug .avatar-composite__layer--bg {

@@ -1,4 +1,4 @@
-import React, { useLayoutEffect, useMemo, useRef } from 'react';
+import React, { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import './AvatarComposite.css';
 import { useDevPanelStore } from '../../state/devPanelStore.js';
 import {
@@ -9,6 +9,7 @@ import {
 import { useDisplayModeStore } from '../../state/displayModeStore.js';
 import { getDevPanelProdGate } from '../../lib/devPanelGate.js';
 import { getStageAssets, normalizeStageKey } from '../../config/avatarStageAssets.js';
+import { markFirstLoginAudit } from '../../utils/firstLoginAudit.js';
 
 const LAYER_IDS = ['bg', 'stage', 'glass', 'ring'];
 const DEFAULT_LAYER = {
@@ -275,6 +276,10 @@ function getLastPathSegment(publicPath) {
   return index === -1 ? normalized : normalized.slice(index + 1);
 }
 
+function isDocumentVisible() {
+  if (typeof document === 'undefined') return true;
+  return document.visibilityState !== 'hidden';
+}
 
 export function AvatarComposite({ stage, size, path = null }) {
   const rootRef = useRef(null);
@@ -285,6 +290,8 @@ export function AvatarComposite({ stage, size, path = null }) {
   const ringWrapRef = useRef(null);
   const ringImageRef = useRef(null);
   const substrateMountIdRef = useRef(null);
+  const firstLoginAuditLayoutRef = useRef(false);
+  const [isPageVisible, setIsPageVisible] = useState(isDocumentVisible);
   const normalizedStage = normalizeStageKey(stage);
   const colorScheme = useDisplayModeStore((s) => s.colorScheme);
   const devPanelGateEnabled = getDevPanelProdGate();
@@ -293,6 +300,17 @@ export function AvatarComposite({ stage, size, path = null }) {
   const getResolvedStageDefault = useAvatarStageDefaultsStore((s) => s.getResolvedStageDefault);
   const stageAssets = getStageAssets(normalizedStage, colorScheme);
   const storeProbeSnapshot = getAvatarStageDefaultProbeSnapshot(normalizedStage, colorScheme);
+
+  useEffect(() => {
+    if (typeof document === 'undefined') return undefined;
+    const handleVisibilityChange = () => {
+      setIsPageVisible(document.visibilityState !== 'hidden');
+    };
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    return () => {
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+    };
+  }, []);
 
   const backgroundSrc = resolvePublicAssetUrl(stageAssets.background);
   const stageSrc = resolvePublicAssetUrl(stageAssets.plantForeground);
@@ -310,6 +328,19 @@ export function AvatarComposite({ stage, size, path = null }) {
   const baseLayers = useDraftTransforms
     ? getAvatarCompositeStageDraft(normalizedStage, colorScheme)
     : resolvedDefaults;
+
+  // PROBE:FIRST_LOGIN_HOMEHUB_AUDIT:START
+  useLayoutEffect(() => {
+    if (firstLoginAuditLayoutRef.current) return;
+    firstLoginAuditLayoutRef.current = true;
+    markFirstLoginAudit('avatar-composite:first-layout-effect', {
+      stage: normalizedStage,
+      colorScheme,
+      path,
+      size,
+    });
+  }, [colorScheme, normalizedStage, path, size]);
+  // PROBE:FIRST_LOGIN_HOMEHUB_AUDIT:END
 
   // PROBE:avatar-scheme-isolation:START
   if (import.meta.env.DEV) {
@@ -749,6 +780,7 @@ export function AvatarComposite({ stage, size, path = null }) {
       ref={rootRef}
       className={`avatar-composite ${showDebugOverlay ? 'avatar-composite--debug' : ''}`}
       data-testid="avatar-composite-root"
+      data-page-visible={isPageVisible ? 'true' : 'false'}
       style={compositeSizeStyle}
     >
       <div ref={globeClipRef} className="avatar-composite__globe-clip">
