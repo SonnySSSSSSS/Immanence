@@ -55,7 +55,13 @@ export function BenchmarkInput({ isOpen, onClose, initialPath = 'breath' }) {
                 exit={{ opacity: 0 }}
             >
                 {/* Backdrop */}
-                <div className="absolute inset-0 bg-black/80" onClick={onClose} />
+                <button
+                    type="button"
+                    className="absolute inset-0 bg-black/80"
+                    onClick={onClose}
+                    aria-label="Dismiss dialog"
+                    style={{ border: 'none', padding: 0 }}
+                />
 
                 {/* Modal */}
                 <motion.div

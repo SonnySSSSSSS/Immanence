@@ -1146,7 +1146,13 @@ export function DevPanel({
             {/* Inspector Modal */}
             {inspectorOpen && (
                 <div className="fixed inset-0 z-[10000] flex items-center justify-center">
-                    <div className="absolute inset-0 bg-black/80" onClick={() => setInspectorOpen(false)} />
+                    <button
+                        type="button"
+                        className="absolute inset-0 bg-black/80"
+                        onClick={() => setInspectorOpen(false)}
+                        aria-label="Dismiss dialog"
+                        style={{ border: 'none', padding: 0 }}
+                    />
                     <div className="relative bg-[#0a0a12] border border-white/20 rounded-xl max-w-2xl w-full max-h-[80vh] overflow-hidden">
                         <div className="flex items-center justify-between px-4 py-3 border-b border-white/10">
                             <span className="text-sm font-semibold text-white/90">Store Inspector</span>

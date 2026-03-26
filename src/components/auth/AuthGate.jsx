@@ -324,7 +324,9 @@ export default function AuthGate({ children, onAuthChange }) {
           <form onSubmit={handleSubmit} style={{ display: "grid", gap: 10 }}>
             {mode === "signup" ? (
               <>
+                <label className="sr-only" htmlFor="auth-signup-name">Name</label>
                 <input
+                  id="auth-signup-name"
                   value={name}
                   onChange={(e) => {
                     const next = e.target.value;
@@ -342,14 +344,18 @@ export default function AuthGate({ children, onAuthChange }) {
                 {nameErr ? <div style={{ fontSize: 12, opacity: 0.9 }}>{nameErr}</div> : null}
               </>
             ) : null}
+            <label className="sr-only" htmlFor="auth-email">Email</label>
             <input
+              id="auth-email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               placeholder="Email"
               autoComplete="email"
               style={{ padding: 10, borderRadius: 10, border: "1px solid rgba(255,255,255,0.12)", background: "rgba(0,0,0,0.2)", color: "inherit" }}
             />
+            <label className="sr-only" htmlFor="auth-password">Password</label>
             <input
+              id="auth-password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               placeholder="Password"
@@ -378,10 +384,12 @@ export default function AuthGate({ children, onAuthChange }) {
           className="fixed inset-0 z-[10000] flex items-center justify-center"
           style={{ padding: 24 }}
         >
-          <div
+          <button
+            type="button"
             className="absolute inset-0"
-            style={{ background: "rgba(0,0,0,0.75)", backdropFilter: "blur(8px)", WebkitBackdropFilter: "blur(8px)" }}
             onClick={handleNamePromptNotNow}
+            aria-label="Dismiss dialog"
+            style={{ background: "rgba(0,0,0,0.75)", backdropFilter: "blur(8px)", WebkitBackdropFilter: "blur(8px)", border: 'none', padding: 0 }}
           />
           <div
             className="relative z-10"
@@ -394,7 +402,9 @@ export default function AuthGate({ children, onAuthChange }) {
             <div style={{ fontSize: 12, opacity: 0.8, marginBottom: 12 }}>
               This becomes your account label across devices.
             </div>
+            <label className="sr-only" htmlFor="auth-name-prompt">Name</label>
             <input
+              id="auth-name-prompt"
               value={namePromptValue}
               onChange={(e) => setNamePromptValue(e.target.value)}
               placeholder="Name"

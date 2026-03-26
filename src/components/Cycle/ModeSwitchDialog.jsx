@@ -40,7 +40,13 @@ export function ModeSwitchDialog({ isOpen, onClose, onConfirm }) {
                 exit={{ opacity: 0 }}
             >
                 {/* Backdrop */}
-                <div className="absolute inset-0 bg-black/90" onClick={onClose} />
+                <button
+                    type="button"
+                    className="absolute inset-0 bg-black/90"
+                    onClick={onClose}
+                    aria-label="Dismiss dialog"
+                    style={{ border: 'none', padding: 0 }}
+                />
 
                 {/* Dialog */}
                 <motion.div
