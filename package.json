@@ -12,6 +12,7 @@
     "build": "vite build",
     "test:smoke": "npx playwright test -c tests/playwright.config.ts tests/smoke/critical-flows.spec.ts --project=chromium",
     "preview": "vite preview",
+    "test": "node --test test/storeSyncInvariants.test.js",
     "lint": "eslint .",
     "deploy": "node scripts/deploy-gh-pages.mjs",
     "deploy:dry": "node scripts/deploy-gh-pages.mjs --no-build --dry-run",
