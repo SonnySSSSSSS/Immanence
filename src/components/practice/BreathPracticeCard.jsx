@@ -3,10 +3,8 @@ import { useDisplayModeStore } from "../../state/displayModeStore.js";
 import { SacredTimeSlider } from "../SacredTimeSlider.jsx";
 import { TrajectoryCard } from "../TrajectoryCard.jsx";
 import BreathWaveform from "../BreathWaveform.jsx";
-import {
-  TraditionalBreathRatios,
-  getTraditionalPatternSummary,
-} from "../PracticeSection/TraditionalBreathRatios.jsx";
+import { TraditionalBreathRatios } from "../PracticeSection/TraditionalBreathRatios.jsx";
+import { getTraditionalPatternSummary } from "../PracticeSection/breathPatternUtils.js";
 import { PracticeMenuHeader } from "./PracticeMenuHeader.jsx";
 import { STILLNESS_INTENSITY_META } from "../../data/stillnessIntensityMeta.js";
 import { ANCHORS } from "../../tutorials/anchorIds.js";

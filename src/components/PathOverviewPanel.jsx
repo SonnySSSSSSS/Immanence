@@ -26,9 +26,8 @@ export function PathOverviewPanel({ path, onBegin, onClose, onNavigate }) {
     const setContentLaunchContext = useUiStore(s => s.setContentLaunchContext);
     const goldLabelColor = isLight ? 'rgba(180, 120, 40, 0.75)' : 'var(--gold-80)';
 
-    const { beginPath, activePath, restoreCurriculumPath } = useNavigationStore();
+    const { beginPath, activePath } = useNavigationStore();
     const {
-        activeCurriculumId,
         practiceTimeSlots,
         setPracticeTimeSlots,
         selectedDaysOfWeekDraft,
@@ -58,12 +57,21 @@ export function PathOverviewPanel({ path, onBegin, onClose, onNavigate }) {
     const attemptUsesPrevious = attemptBenchmark?.source === 'reuse';
     const canReuseForAttempt = Boolean(attemptRunId && canReuseLastBenchmark(14));
 
-    if (!path || path.placeholder) return null;
+    const viewModel = (path && !path.placeholder)
+        ? buildPathOverviewViewModel({
+            path,
+            activePath,
+            resumablePathId,
+            practiceTimeSlots,
+            selectedDaysOfWeekDraft,
+            getSelectedDaysOfWeekDraft,
+            attemptBenchmarkDone,
+            currentStep
+        })
+        : null;
     const {
         isInitiationPath,
         isAcceptancePath,
-        isViewedPathActive,
-        isViewedPathResumable,
         contract,
         orderedDayOptions,
         selectedDays,
@@ -77,16 +85,7 @@ export function PathOverviewPanel({ path, onBegin, onClose, onNavigate }) {
         totalSteps,
         canAdvanceCurrentStep,
         scheduleInstruction
-    } = buildPathOverviewViewModel({
-        path,
-        activePath,
-        resumablePathId,
-        practiceTimeSlots,
-        selectedDaysOfWeekDraft,
-        getSelectedDaysOfWeekDraft,
-        attemptBenchmarkDone,
-        currentStep
-    });
+    } = viewModel ?? {};
     const toggleSelectedDay = (dayValue) => {
         const nextSelectedDays = getNextSelectedDays({
             selectedDays,
@@ -206,8 +205,9 @@ export function PathOverviewPanel({ path, onBegin, onClose, onNavigate }) {
     };
 
     useEffect(() => {
+        if (!path || path.placeholder) return;
         const targetVideo = getAutoInstructionVideo({ isAcceptancePath, currentStep });
-        const targetKey = targetVideo ? `${path.id}:${currentStep}` : null;
+        const targetKey = targetVideo ? `${path?.id}:${currentStep}` : null;
 
         if (!targetKey) {
             lastAutoOpenedVideoKeyRef.current = null;
@@ -219,19 +219,11 @@ export function PathOverviewPanel({ path, onBegin, onClose, onNavigate }) {
         }
 
         lastAutoOpenedVideoKeyRef.current = targetKey;
+        // eslint-disable-next-line react-hooks/set-state-in-effect
         setActiveInstructionVideo(targetVideo);
-    }, [currentStep, isAcceptancePath, path.id]);
+    }, [currentStep, isAcceptancePath, path?.id, path]);
 
-    const ensureViewedPathLoaded = () => {
-        if (isViewedPathActive) return true;
-        if (!isViewedPathResumable) return false;
-        const result = restoreCurriculumPath(activeCurriculumId || null);
-        if (result?.ok === false) {
-            setScheduleError(result.error || 'Unable to restore this path.');
-            return false;
-        }
-        return true;
-    };
+    if (!path || path.placeholder) return null;
 
     return (
         <div
@@ -710,7 +702,7 @@ export function PathOverviewPanel({ path, onBegin, onClose, onNavigate }) {
                                     transition: 'background 250ms ease, border-color 250ms ease, color 250ms ease',
                                 }}
                             >
-                                {`Use previous benchmark (${new Date(lastBenchmark?.measuredAt || Date.now()).toLocaleDateString()})`}
+                                {`Use previous benchmark${lastBenchmark?.measuredAt ? ` (${new Date(lastBenchmark.measuredAt).toLocaleDateString()})` : ''}`}
                             </button>
                         </div>
                     )}

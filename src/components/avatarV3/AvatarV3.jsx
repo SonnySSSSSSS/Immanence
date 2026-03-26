@@ -103,17 +103,16 @@ export function AvatarV3({
   const [detailOpen, setDetailOpen] = useState(false);
   const avatarV3ProbeIdRef = useRef(null);
 
-  if (avatarV3ProbeIdRef.current == null) {
-    if (AVATAR_V3_HMR_HOST_PROBE_ENABLED) {
-      const probe = getAvatarV3HmrHostProbeContext();
-      probe.avatarV3MountSeq += 1;
-      avatarV3ProbeIdRef.current = probe.avatarV3MountSeq;
-    } else {
-      avatarV3ProbeIdRef.current = 'host-probe-disabled';
-    }
-  }
-
   useEffect(() => {
+    if (avatarV3ProbeIdRef.current == null) {
+      if (AVATAR_V3_HMR_HOST_PROBE_ENABLED) {
+        const probe = getAvatarV3HmrHostProbeContext();
+        probe.avatarV3MountSeq += 1;
+        avatarV3ProbeIdRef.current = probe.avatarV3MountSeq;
+      } else {
+        avatarV3ProbeIdRef.current = 'host-probe-disabled';
+      }
+    }
     logAvatarV3HmrHostProbe('mount', {
       probeId: avatarV3ProbeIdRef.current,
       stage,
@@ -128,6 +127,7 @@ export function AvatarV3({
         size,
       });
     };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const handleTap = (event) => {
@@ -165,7 +165,6 @@ export function AvatarV3({
     });
   }
   logAvatarV3HmrHostProbe('render-parent-props', {
-    probeId: avatarV3ProbeIdRef.current,
     stage,
     path,
     size,
@@ -175,7 +174,6 @@ export function AvatarV3({
     hasOnTap: typeof onTap === 'function',
   });
   logAvatarV3HmrSubstrateProbe('render-descriptor', {
-    probeId: avatarV3ProbeIdRef.current,
     stage,
     path,
     size,

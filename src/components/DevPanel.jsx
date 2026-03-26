@@ -390,7 +390,6 @@ export function DevPanel({
         pickDebugResolvedMode,
         pickDebugResolvedId,
         platesSelectedId,
-        stopPracticeButtonPickCaptureImmediate,
         stopUniversalPickCaptureImmediate,
         handleStartUniversalPickFlow,
         handleStopUniversalPickFlow,
