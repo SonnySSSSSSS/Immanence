@@ -3,7 +3,7 @@ import { useState, useEffect, useCallback, useRef, lazy, Suspense } from "react"
 // Test CI lane enforcement - trivial comment
 import { StageTitle } from "./components/StageTitle.jsx";
 const PracticeSection = lazy(() => import("./components/PracticeSection.jsx").then(m => ({ default: m.PracticeSection })));
-import { HomeHub } from "./components/HomeHub.jsx";
+const HomeHub = lazy(() => import("./components/HomeHub.jsx").then(m => ({ default: m.HomeHub })));
 
 // Lazy load heavy sections for better initial performance
 // Named exports need to be wrapped for React.lazy
@@ -1145,25 +1145,27 @@ function App({ playgroundMode = false, playgroundBottomLayer = true }) {
                     </div>
                   )}
                   {!hideCards && (
-                    <HomeHub
-                      onSelectSection={handleSectionSelect}
-                      activeSection={activeSection}
-                      onStageChange={(hsl, stageName) => handleAvatarStageSelection(stageName)}
-                      isPracticing={isPracticing}
-                      currentStage={effectivePreviewStage}
-                      previewPath={effectivePreviewPath}
-                      previewShowCore={previewShowCore}
-                      previewAttention={previewAttention}
-                      onOpenHardwareGuide={() => setIsHardwareGuideOpen(true)}
-                      lockToHub={playgroundMode}
-                      debugDisableDailyCard={debugDisableDailyCard}
-                      debugBuildProbe={debugBuildProbe && debugShadowScan}
-                      debugShadowScan={debugShadowScan}
-                      debugDailyCardShadowOff={debugDailyCardShadowOff}
-                      debugDailyCardBlurOff={debugDailyCardBlurOff}
-                      debugDailyCardBorderOff={debugDailyCardBorderOff}
-                      debugDailyCardMaskOff={debugDailyCardMaskOff}
-                    />
+                    <Suspense fallback={<div />}>
+                      <HomeHub
+                        onSelectSection={handleSectionSelect}
+                        activeSection={activeSection}
+                        onStageChange={(hsl, stageName) => handleAvatarStageSelection(stageName)}
+                        isPracticing={isPracticing}
+                        currentStage={effectivePreviewStage}
+                        previewPath={effectivePreviewPath}
+                        previewShowCore={previewShowCore}
+                        previewAttention={previewAttention}
+                        onOpenHardwareGuide={() => setIsHardwareGuideOpen(true)}
+                        lockToHub={playgroundMode}
+                        debugDisableDailyCard={debugDisableDailyCard}
+                        debugBuildProbe={debugBuildProbe && debugShadowScan}
+                        debugShadowScan={debugShadowScan}
+                        debugDailyCardShadowOff={debugDailyCardShadowOff}
+                        debugDailyCardBlurOff={debugDailyCardBlurOff}
+                        debugDailyCardBorderOff={debugDailyCardBorderOff}
+                        debugDailyCardMaskOff={debugDailyCardMaskOff}
+                      />
+                    </Suspense>
                   )}
                 </div>
               ) : (
