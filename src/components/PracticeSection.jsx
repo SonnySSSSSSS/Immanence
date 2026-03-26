@@ -77,6 +77,7 @@ import {
   normalizeStillnessConfig,
   usePracticeLaunchState,
 } from "./practice/usePracticeLaunchState.js";
+import { useBreathKeyboardShortcuts } from "../hooks/useBreathKeyboardShortcuts.js";
 
 // CONFIG_COMPONENTS moved to PracticeOptionsCard.jsx
 
@@ -100,13 +101,6 @@ const PRE_DELAY_INSTRUCTION_LINES = Object.freeze({
   ],
 });
 
-function isTypingIntoEditableElement(activeEl) {
-  if (!activeEl) return false;
-  const tagName = activeEl.tagName;
-  if (tagName === 'INPUT' || tagName === 'TEXTAREA') return true;
-  if (activeEl.isContentEditable) return true;
-  return activeEl.getAttribute?.('contenteditable') === 'true';
-}
 
 const DevCompleteNowOverlay =
   import.meta.env.DEV === true
@@ -273,132 +267,58 @@ function getPathPracticeOccurrences(pathDef, dayIndex) {
 
   return weekPracticesStructured || topLevelPractices || weekPracticesRaw || [];
 }
-function ScrollingWheel({ value, onChange, options, colorScheme = 'dark' }) {
-  const isLight = colorScheme === 'light';
-  const wheelRef = useRef(null);
-  const [isDragging, setIsDragging] = useState(false);
-  const [startY, setStartY] = useState(0);
-  const [scrollOffset, setScrollOffset] = useState(0);
 
-  const itemHeight = 48;
-  const visibleItems = 3;
-
-  useEffect(() => {
-    const index = options.indexOf(value);
-    if (index !== -1) {
-      queueMicrotask(() => setScrollOffset(index * itemHeight));
-    }
-  }, [value, options, itemHeight]);
-
-  const handleMouseDown = (e) => {
-    setIsDragging(true);
-    setStartY(e.clientY);
+// Compute tap-accuracy feedback display values from the last signed error.
+// Returns CSS-ready values for feedbackColor, feedbackText, feedbackShadow,
+// buttonBg, and radialGlow passed to SessionControls.
+function computeBreathTapFeedback(lastSignedErrorMs, actualRunningPracticeId, isLight) {
+  const defaults = {
+    feedbackColor: 'var(--accent-primary)',
+    feedbackText: "",
+    feedbackShadow: "none",
+    buttonBg: 'linear-gradient(180deg, var(--accent-primary) 0%, var(--accent-secondary) 100%)',
+    radialGlow: '',
   };
+  if (lastSignedErrorMs === null || actualRunningPracticeId !== "breath") return defaults;
 
-  const handleMouseMove = (e) => {
-    if (!isDragging) return;
-    const deltaY = startY - e.clientY;
-    const newOffset = Math.max(0, Math.min(scrollOffset + deltaY, (options.length - 1) * itemHeight));
-    setScrollOffset(newOffset);
-    setStartY(e.clientY);
+  const absError = Math.round(Math.abs(lastSignedErrorMs));
+  const direction = lastSignedErrorMs > 0 ? "Late" : "Early";
+
+  if (absError > 1000) return {
+    feedbackColor: '#ef4444',
+    feedbackText: "OUT OF BOUNDS",
+    feedbackShadow: "0 0 8px rgba(239, 68, 68, 0.5)",
+    buttonBg: isLight ? 'linear-gradient(180deg, #9ca3af 0%, #6b7280 100%)' : 'linear-gradient(180deg, rgba(100,100,100,0.3) 0%, rgba(60,60,60,0.4) 100%)',
+    radialGlow: '',
   };
-
-  const handleMouseUp = () => {
-    if (!isDragging) return;
-    setIsDragging(false);
-
-    const nearestIndex = Math.round(scrollOffset / itemHeight);
-    const snappedOffset = nearestIndex * itemHeight;
-    setScrollOffset(snappedOffset);
-    onChange(options[nearestIndex]);
+  if (absError <= 30) return {
+    feedbackColor: isLight ? 'var(--text-primary)' : "#f8fafc",
+    feedbackText: `${absError}ms ${direction} `,
+    feedbackShadow: isLight ? "none" : "0 0 12px rgba(255,255,255,0.6)",
+    buttonBg: isLight ? "linear-gradient(180deg, var(--accent-color) 0%, var(--accent-secondary) 100%)" : "linear-gradient(180deg, #f8fafc 0%, #e2e8f0 100%)",
+    radialGlow: isLight ? '0 0 40px var(--accent-30)' : '0 0 60px 15px rgba(255,255,255,0.5), 0 0 30px rgba(255,255,255,0.7)',
   };
-
-  const handleWheel = (e) => {
-    e.preventDefault();
-    const delta = e.deltaY > 0 ? itemHeight : -itemHeight;
-    const newOffset = Math.max(0, Math.min(scrollOffset + delta, (options.length - 1) * itemHeight));
-    setScrollOffset(newOffset);
-
-    const nearestIndex = Math.round(newOffset / itemHeight);
-    setScrollOffset(nearestIndex * itemHeight);
-    onChange(options[nearestIndex]);
+  if (absError <= 100) return {
+    feedbackColor: 'var(--accent-color)',
+    feedbackText: `${absError}ms ${direction} `,
+    feedbackShadow: '0 0 10px var(--accent-50)',
+    buttonBg: 'linear-gradient(180deg, var(--accent-color) 0%, var(--accent-secondary) 100%)',
+    radialGlow: '0 0 50px 12px var(--accent-40), 0 0 25px var(--accent-60)',
   };
-
-  return (
-    <div
-      ref={wheelRef}
-      className="relative overflow-hidden select-none"
-      style={{
-        height: `${itemHeight * visibleItems}px`,
-        width: "120px",
-      }}
-      onMouseDown={handleMouseDown}
-      onMouseMove={handleMouseMove}
-      onMouseUp={handleMouseUp}
-      onMouseLeave={handleMouseUp}
-      onWheel={handleWheel}
-    >
-      <div
-        className="absolute top-0 left-0 right-0 pointer-events-none z-10"
-        style={{
-          height: `${itemHeight}px`,
-          background: isLight
-            ? "linear-gradient(180deg, var(--light-bg-surface) 0%, transparent 100%)"
-            : "linear-gradient(180deg, rgba(15,15,26,1) 0%, transparent 100%)"
-        }}
-      />
-
-      <div
-        className="absolute bottom-0 left-0 right-0 pointer-events-none z-10"
-        style={{
-          height: `${itemHeight}px`,
-          background: isLight
-            ? "linear-gradient(0deg, var(--light-bg-surface) 0%, transparent 100%)"
-            : "linear-gradient(0deg, rgba(15,15,26,1) 0%, transparent 100%)"
-        }}
-      />
-
-      <div
-        className="absolute left-0 right-0 pointer-events-none z-10"
-        style={{
-          top: `${itemHeight}px`,
-          height: `${itemHeight}px`,
-          border: "1px solid var(--accent-20)",
-          borderRadius: "8px",
-          background: "rgba(255,255,255,0.02)"
-        }}
-      />
-
-      <div
-        className="absolute w-full transition-transform duration-200"
-        style={{
-          transform: `translateY(${itemHeight - scrollOffset}px)`,
-          cursor: isDragging ? 'grabbing' : 'grab'
-        }}
-      >
-        {options.map((option, index) => {
-          const offset = Math.abs(index * itemHeight - scrollOffset);
-          const opacity = Math.max(0.2, 1 - offset / (itemHeight * 2));
-          const scale = Math.max(0.7, 1 - offset / (itemHeight * 3));
-
-          return (
-            <div
-              key={option}
-              className="type-h2 flex items-center justify-center"
-              style={{
-                color: "var(--text-primary)",
-                opacity,
-                transform: `scale(${scale})`,
-                transition: "opacity 0.2s, transform 0.2s"
-              }}
-            >
-              {option}
-            </div>
-          );
-        })}
-      </div>
-    </div>
-  );
+  if (absError <= 300) return {
+    feedbackColor: '#d97706',
+    feedbackText: `${absError}ms ${direction} `,
+    feedbackShadow: "0 0 8px rgba(217, 119, 6, 0.4)",
+    buttonBg: 'linear-gradient(180deg, #d97706 0%, #92400e 100%)',
+    radialGlow: '0 0 40px 10px rgba(217, 119, 6, 0.3), 0 0 20px rgba(217, 119, 6, 0.5)',
+  };
+  return {
+    feedbackColor: isLight ? 'var(--text-muted)' : '#9ca3af',
+    feedbackText: `${absError}ms ${direction} `,
+    feedbackShadow: "0 0 6px rgba(156, 163, 175, 0.3)",
+    buttonBg: 'linear-gradient(180deg, #9ca3af 0%, #6b7280 100%)',
+    radialGlow: '0 0 35px 8px rgba(156, 163, 175, 0.25), 0 0 18px rgba(156, 163, 175, 0.4)',
+  };
 }
 
 export function PracticeSection({ onPracticingChange, onBreathStateChange, onNavigate, onOpenPhotic, isActiveBreathSession = false }) {
@@ -2588,21 +2508,7 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, onNav
     timeLeft,
   ]);
 
-  const isBreathPracticeRef = useRef(isBreathPractice);
-  const isPresetSwitcherOpenRef = useRef(isPresetSwitcherOpen);
-
-  useEffect(() => {
-    isBreathPracticeRef.current = isBreathPractice;
-  }, [isBreathPractice]);
-
-  useEffect(() => {
-    isPresetSwitcherOpenRef.current = isPresetSwitcherOpen;
-  }, [isPresetSwitcherOpen]);
-
-  useEffect(() => {
-    if (isBreathPractice) return;
-    setIsPresetSwitcherOpen(false);
-  }, [isBreathPractice, setIsPresetSwitcherOpen]);
+  useBreathKeyboardShortcuts({ isBreathPractice, isPresetSwitcherOpen, setIsPresetSwitcherOpen, setRingPresetIndex });
 
   useEffect(() => {
     if (isRunning) return;
@@ -2614,53 +2520,6 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, onNav
     queueMicrotask(() => setPendingCycleFinish(false));
     queueMicrotask(() => setPendingNaturalFinishMode(null));
   }, [isRunning]);
-
-  useEffect(() => {
-    const onWindowKeyDown = (event) => {
-      const code = event.code;
-      const key = event.key;
-      const isF2 = code === 'F2' || key === 'F2';
-      const isArrowLeft = code === 'ArrowLeft' || key === 'ArrowLeft';
-      const isArrowRight = code === 'ArrowRight' || key === 'ArrowRight';
-      const isEscape = code === 'Escape' || key === 'Escape';
-
-      if (!(isF2 || isArrowLeft || isArrowRight || isEscape)) return;
-      if (isTypingIntoEditableElement(document.activeElement)) return;
-      if (!isBreathPracticeRef.current) return;
-
-      if (isF2) {
-        event.preventDefault();
-        event.stopPropagation();
-        setIsPresetSwitcherOpen((prev) => !prev);
-        return;
-      }
-
-      if (!isPresetSwitcherOpenRef.current) return;
-
-      if (isEscape) {
-        event.preventDefault();
-        event.stopPropagation();
-        setIsPresetSwitcherOpen(false);
-        return;
-      }
-
-      if (isArrowLeft) {
-        event.preventDefault();
-        event.stopPropagation();
-        setRingPresetIndex((prev) => (prev - 1 + BREATH_RING_PRESETS.length) % BREATH_RING_PRESETS.length);
-        return;
-      }
-
-      if (isArrowRight) {
-        event.preventDefault();
-        event.stopPropagation();
-        setRingPresetIndex((prev) => (prev + 1) % BREATH_RING_PRESETS.length);
-      }
-    };
-
-    window.addEventListener('keydown', onWindowKeyDown);
-    return () => window.removeEventListener('keydown', onWindowKeyDown);
-  }, [setIsPresetSwitcherOpen, setRingPresetIndex]);
 
   // RENDER PRIORITY 1: Active Practice Session
   const sessionView = isRunning ? (() => {
@@ -2783,49 +2642,9 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, onNav
       );
     }
 
-    let buttonBg = 'linear-gradient(180deg, var(--accent-primary) 0%, var(--accent-secondary) 100%)';
-    let radialGlow = '';
-    let buttonShadow = 'inset 0 1px 0 rgba(255,255,255,0.35)';
-
-    let feedbackColor = 'var(--accent-primary)';
-    let feedbackText = "";
-    let feedbackShadow = "none";
-
-    if (lastSignedErrorMs !== null && actualRunningPracticeId === "breath") {
-      const absError = Math.round(Math.abs(lastSignedErrorMs));
-
-      if (absError > 1000) {
-        feedbackColor = '#ef4444';
-        feedbackText = "OUT OF BOUNDS";
-        feedbackShadow = "0 0 8px rgba(239, 68, 68, 0.5)";
-        buttonBg = isLight ? 'linear-gradient(180deg, #9ca3af 0%, #6b7280 100%)' : 'linear-gradient(180deg, rgba(100,100,100,0.3) 0%, rgba(60,60,60,0.4) 100%)';
-        radialGlow = '';
-      } else if (absError <= 30) {
-        feedbackColor = isLight ? 'var(--text-primary)' : "#f8fafc";
-        feedbackText = `${absError}ms ${lastSignedErrorMs > 0 ? "Late" : "Early"} `;
-        feedbackShadow = isLight ? "none" : "0 0 12px rgba(255,255,255,0.6)";
-        buttonBg = isLight ? "linear-gradient(180deg, var(--accent-color) 0%, var(--accent-secondary) 100%)" : "linear-gradient(180deg, #f8fafc 0%, #e2e8f0 100%)";
-        radialGlow = isLight ? '0 0 40px var(--accent-30)' : '0 0 60px 15px rgba(255,255,255,0.5), 0 0 30px rgba(255,255,255,0.7)';
-      } else if (absError <= 100) {
-        feedbackColor = 'var(--accent-color)';
-        feedbackText = `${absError}ms ${lastSignedErrorMs > 0 ? "Late" : "Early"} `;
-        feedbackShadow = '0 0 10px var(--accent-50)';
-        buttonBg = 'linear-gradient(180deg, var(--accent-color) 0%, var(--accent-secondary) 100%)';
-        radialGlow = '0 0 50px 12px var(--accent-40), 0 0 25px var(--accent-60)';
-      } else if (absError <= 300) {
-        feedbackColor = '#d97706';
-        feedbackText = `${absError}ms ${lastSignedErrorMs > 0 ? "Late" : "Early"} `;
-        feedbackShadow = "0 0 8px rgba(217, 119, 6, 0.4)";
-        buttonBg = 'linear-gradient(180deg, #d97706 0%, #92400e 100%)';
-        radialGlow = '0 0 40px 10px rgba(217, 119, 6, 0.3), 0 0 20px rgba(217, 119, 6, 0.5)';
-      } else {
-        feedbackColor = isLight ? 'var(--text-muted)' : '#9ca3af';
-        feedbackText = `${absError}ms ${lastSignedErrorMs > 0 ? "Late" : "Early"} `;
-        feedbackShadow = "0 0 6px rgba(156, 163, 175, 0.3)";
-        buttonBg = 'linear-gradient(180deg, #9ca3af 0%, #6b7280 100%)';
-        radialGlow = '0 0 35px 8px rgba(156, 163, 175, 0.25), 0 0 18px rgba(156, 163, 175, 0.4)';
-      }
-    }
+    const buttonShadow = 'inset 0 1px 0 rgba(255,255,255,0.35)';
+    const { feedbackColor, feedbackText, feedbackShadow, buttonBg, radialGlow } =
+      computeBreathTapFeedback(lastSignedErrorMs, actualRunningPracticeId, isLight);
 
     return (
       <section
