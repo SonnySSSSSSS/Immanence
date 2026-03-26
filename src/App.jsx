@@ -2,7 +2,7 @@
 import { useState, useEffect, useCallback, useRef, lazy, Suspense } from "react";
 // Test CI lane enforcement - trivial comment
 import { StageTitle } from "./components/StageTitle.jsx";
-import { PracticeSection } from "./components/PracticeSection.jsx";
+const PracticeSection = lazy(() => import("./components/PracticeSection.jsx").then(m => ({ default: m.PracticeSection })));
 import { HomeHub } from "./components/HomeHub.jsx";
 
 // Lazy load heavy sections for better initial performance
@@ -113,16 +113,18 @@ function SectionView({ section, isPracticing, onPracticingChange, onBreathStateC
         style={{ overflow: section === "practice" && isBreathLayoutLocked ? 'hidden' : 'visible' }}
       >
         {section === "practice" && !hideCards && (
-          <PracticeSection 
-            onPracticingChange={onPracticingChange} 
-            onBreathStateChange={onBreathStateChange}
-            avatarPath={previewPath} 
-            showCore={previewShowCore}
-            showFxGallery={showFxGallery} 
-            isActiveBreathSession={isActiveBreathSession}
-            onNavigate={onNavigate} 
-            onOpenPhotic={onOpenPhotic}
-          />
+          <Suspense fallback={<div />}>
+            <PracticeSection
+              onPracticingChange={onPracticingChange}
+              onBreathStateChange={onBreathStateChange}
+              avatarPath={previewPath}
+              showCore={previewShowCore}
+              showFxGallery={showFxGallery}
+              isActiveBreathSession={isActiveBreathSession}
+              onNavigate={onNavigate}
+              onOpenPhotic={onOpenPhotic}
+            />
+          </Suspense>
         )}
 
         {section === "wisdom" && !hideCards && (
