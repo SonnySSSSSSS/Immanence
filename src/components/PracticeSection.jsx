@@ -27,7 +27,7 @@ import { useNavigationStore } from '../state/navigationStore.js';
 import { useUiStore } from "../state/uiStore.js";
 import { useSessionOverrideStore } from "../state/sessionOverrideStore.js";
 import { SacredTimeSlider } from "./SacredTimeSlider.jsx";
-import { SessionSummaryModal } from "./practice/SessionSummaryModal.jsx";
+import { PracticeSessionSummary } from "./practice/PracticeSessionSummary.jsx";
 import { plateauMaterial, innerGlowStyle, getCardMaterial, getInnerGlowStyle } from "../styles/cardMaterial.js";
 import { useDisplayModeStore } from "../state/displayModeStore.js";
 import { PostSessionJournal } from "./PostSessionJournal.jsx";
@@ -2002,22 +2002,6 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, onNav
     });
   }, [queueNaturalSessionCompletion]);
 
-  const handleFocusRating = (rating) => {
-    // Update the leg completion with focus rating
-    if (sessionSummary?.curriculumDayNumber) {
-      const { logLegCompletion, getDayLegsWithStatus } = useCurriculumStore.getState();
-      const completedLegs = getDayLegsWithStatus(sessionSummary.curriculumDayNumber).filter(leg => leg.completed);
-      const currentLegNumber = completedLegs.length; // The one that was just marked complete
-
-      // Re-log with focus rating
-      logLegCompletion(sessionSummary.curriculumDayNumber, currentLegNumber, {
-        duration: sessionSummary.duration,
-        focusRating: rating,
-        challenges: [],
-        notes: '',
-      });
-    }
-  };
 
 
   // Declare executeStart before useEffect that calls it
@@ -3160,33 +3144,20 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, onNav
   })() : null;
 
   // RENDER PRIORITY 2: Session Summary Modal
-  const summaryView = showSummaryModal ? (() => {
-    const { practiceTimeSlots } = useCurriculumStore.getState();
-    return (
-      <SessionSummaryModal
-        summary={sessionSummary}
-        practiceTimeSlots={practiceTimeSlots}
-        legNumber={sessionSummary.legNumber}
-        totalLegs={sessionSummary.totalLegs}
-        onContinue={() => {
-          setShowSummary(false);
-          if (pendingMicroNote) {
-            // Journal is already open
-          } else {
-            // Return to home or practice selection
-            setPracticeId('breath');
-          }
-        }}
-        onStartNext={(practiceType) => {
-          setShowSummary(false);
-          setPracticeId(labelToPracticeId(practiceType));
-          // Auto-start the next practice
-          setTimeout(() => handleStart(), 500);
-        }}
-        onFocusRating={handleFocusRating}
-      />
-    );
-  })() : null;
+  const summaryView = showSummaryModal ? (
+    <PracticeSessionSummary
+      summary={sessionSummary}
+      pendingMicroNote={pendingMicroNote}
+      onDismiss={() => setShowSummary(false)}
+      onNavigateToPractice={setPracticeId}
+      onStartNext={(practiceType) => {
+        setShowSummary(false);
+        setPracticeId(labelToPracticeId(practiceType));
+        // Auto-start the next practice
+        setTimeout(() => handleStart(), 500);
+      }}
+    />
+  ) : null;
 
   // RENDER PRIORITY 3: Practice Configuration/Selection View
   // Assemble the unified setters/params object for the dynamic config panels
