@@ -55,7 +55,7 @@ export function NavigationSection({ currentStage, onNavigate, isPracticing = fal
   return (
     <div
       data-tutorial="navigation-root"
-      className="w-full max-w-6xl mx-auto"
+      className="w-full max-w-6xl mx-auto nav-stagger-scope"
       style={{
         display: 'flex',
         flexDirection: 'column',
@@ -63,7 +63,7 @@ export function NavigationSection({ currentStage, onNavigate, isPracticing = fal
         paddingBottom: '32px',
       }}
     >
-      <div className="flex items-center justify-center" style={{ paddingTop: '4px' }}>
+      <div className="flex items-center justify-center nav-stagger-item" style={{ paddingTop: '4px' }}>
         <AvatarV3
           stage={normalizedStage}
           modeWeights={modeWeights}
@@ -79,7 +79,7 @@ export function NavigationSection({ currentStage, onNavigate, isPracticing = fal
       {activePath && (
         <div
           data-tutorial="navigation-active-path-actions"
-          className="flex flex-col items-center px-4 py-3 rounded-2xl"
+          className="flex flex-col items-center px-4 py-3 rounded-2xl nav-stagger-item"
           style={{
             gap: '6px',
             background: isLight
@@ -109,7 +109,7 @@ export function NavigationSection({ currentStage, onNavigate, isPracticing = fal
       )}
 
       {/* Paths Content */}
-      <div className="space-y-6" ref={pathGridRef}>
+      <div className="space-y-6 nav-stagger-item" ref={pathGridRef}>
         {/* Path Selection Grid - always visible */}
         <PathSelectionGrid onPathSelected={handlePathSelected} selectedPathId={overlayPathId} />
 

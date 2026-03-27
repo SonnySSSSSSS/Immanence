@@ -76,6 +76,24 @@ function logAvatarHostProbe(source, event, detail = {}) {
   });
 }
 
+const SECTION_MOTION_ORDER = {
+  hub: 0,
+  navigation: 1,
+  practice: 2,
+  wisdom: 3,
+  application: 4,
+};
+
+function getSectionMotionClass(previousSection, nextSection) {
+  const fromKey = previousSection ?? "hub";
+  const toKey = nextSection ?? "hub";
+  const fromOrder = SECTION_MOTION_ORDER[fromKey] ?? 0;
+  const toOrder = SECTION_MOTION_ORDER[toKey] ?? 0;
+  if (toOrder > fromOrder) return "app-content-enter-forward";
+  if (toOrder < fromOrder) return "app-content-enter-back";
+  return "app-content-enter-neutral";
+}
+
 withAvatarProbe((module) => {
   module.logAvatarHmrProbe("host", "App", "module-eval", {
     hasHotData: Boolean(import.meta.hot?.data),
@@ -120,7 +138,7 @@ function SectionView({ section, isPracticing, onPracticingChange, onBreathStateC
       >
         {section === "practice" && !hideCards && (
           <Suspense fallback={ENABLE_PRACTICE_SKELETON_FALLBACK ? <PracticeSectionLoadingSkeleton /> : <div />}>
-            <div className={ENABLE_PRACTICE_SKELETON_FALLBACK ? "practice-section-fade-in" : undefined}>
+            <div className={`${ENABLE_PRACTICE_SKELETON_FALLBACK ? "practice-section-fade-in " : ""}app-surface-reveal app-surface-reveal--practice`}>
               <PracticeSection
                 onPracticingChange={onPracticingChange}
                 onBreathStateChange={onBreathStateChange}
@@ -141,7 +159,7 @@ function SectionView({ section, isPracticing, onPracticingChange, onBreathStateC
               <div className="type-label normal-case text-white/50">Loading Wisdom...</div>
             </div>
           )}>
-            <div className={ENABLE_WISDOM_SKELETON_FALLBACK ? "wisdom-section-fade-in" : undefined}>
+            <div className={`${ENABLE_WISDOM_SKELETON_FALLBACK ? "wisdom-section-fade-in " : ""}app-surface-reveal app-surface-reveal--wisdom`}>
               <WisdomSection />
             </div>
           </Suspense>
@@ -153,7 +171,7 @@ function SectionView({ section, isPracticing, onPracticingChange, onBreathStateC
               <div className="type-label normal-case text-white/50">Loading Application...</div>
             </div>
           )}>
-            <div className={ENABLE_APPLICATION_SKELETON_FALLBACK ? "application-section-fade-in" : undefined}>
+            <div className={`${ENABLE_APPLICATION_SKELETON_FALLBACK ? "application-section-fade-in " : ""}app-surface-reveal app-surface-reveal--application`}>
               <ApplicationSection onStageChange={onStageChange} currentStage={currentStage} previewPath={previewPath} previewShowCore={previewShowCore} previewAttention={previewAttention} onNavigate={onNavigate} />
             </div>
           </Suspense>
@@ -161,7 +179,7 @@ function SectionView({ section, isPracticing, onPracticingChange, onBreathStateC
 
         {section === "navigation" && !hideCards && (
           <Suspense fallback={ENABLE_NAVIGATION_SKELETON_FALLBACK ? <NavigationSectionLoadingSkeleton /> : <div />}>
-            <div className={ENABLE_NAVIGATION_SKELETON_FALLBACK ? "navigation-section-fade-in" : undefined}>
+            <div className={`${ENABLE_NAVIGATION_SKELETON_FALLBACK ? "navigation-section-fade-in " : ""}app-surface-reveal app-surface-reveal--navigation`}>
               <NavigationSection onStageChange={onStageChange} currentStage={currentStage} previewPath={previewPath} previewShowCore={previewShowCore} previewAttention={previewAttention} onNavigate={onNavigate} onOpenHardwareGuide={onOpenHardwareGuide} isPracticing={isPracticing} />
             </div>
           </Suspense>
@@ -524,7 +542,9 @@ function App({ playgroundMode = false, playgroundBottomLayer = true }) {
   const isFirefox = typeof navigator !== 'undefined' && navigator.userAgent.toLowerCase().includes('firefox');
   const selectionEnabled = !DISABLE_SELECTION;
   const devtoolsTapRef = useRef({ count: 0, firstTs: 0 });
+  const previousSectionRef = useRef(activeSection);
   const appProbeIdRef = useRef(null);
+  const [contentTransitionClass, setContentTransitionClass] = useState("app-content-enter-neutral");
 
   if (appProbeIdRef.current == null) {
     appProbeIdRef.current = "host-probe-pending";
@@ -675,6 +695,12 @@ function App({ playgroundMode = false, playgroundBottomLayer = true }) {
 
   // Scroll to top when Home is shown (initial load or navigation back to Home)
   const isHub = activeSection === null;
+  useEffect(() => {
+    const nextClass = getSectionMotionClass(previousSectionRef.current, activeSection);
+    setContentTransitionClass(nextClass);
+    previousSectionRef.current = activeSection;
+  }, [activeSection]);
+
   useEffect(() => {
     if (isHub) {
       window.scrollTo({ top: 0, left: 0, behavior: 'auto' });
@@ -844,6 +870,9 @@ function App({ playgroundMode = false, playgroundBottomLayer = true }) {
   // }, [curriculumOnboardingComplete, isCurriculumComplete]);
 
 
+  // v3.27.289 - tune(ui-motion): smooth transition timing and add first-paint wisdom card stagger
+  // v3.27.288 - feat(ui-motion): add header/home choreography and first-paint navigation card stagger
+  // v3.27.287 - feat(ui-motion): add directional hub/section transitions and section surface reveal animations
   // v3.27.284 - probe(avatar): add PROBE:avatar-scheme-isolation to confirm light/dark store isolation
   // v3.27.285 - probe(avatar): add PROBE:avatar-rotation-space — static analysis clean; DOM ancestor walk confirms at runtime
     // v3.27.286 - refactor(practice): extract launch-context normalization and stillness config into usePracticeLaunchState hook
@@ -1375,7 +1404,7 @@ function App({ playgroundMode = false, playgroundBottomLayer = true }) {
           >
             {/* Fixed Dark Header Bar */}
             <header
-              className={`sticky top-0 z-50 w-full px-6 py-3 transition-colors duration-500${isActiveBreathSession ? ' header--breath-active' : ''}`}
+              className={`sticky top-0 z-50 w-full px-6 py-3 transition-colors duration-500 app-header-choreo ${isHub ? 'app-header-choreo--hub' : 'app-header-choreo--section'}${isActiveBreathSession ? ' header--breath-active' : ''}`}
               style={{
                 background: isFirefox
                   ? (isLight ? 'rgba(200,185,165,0.95)' : 'rgba(10,10,15,0.95)')
@@ -1401,7 +1430,7 @@ function App({ playgroundMode = false, playgroundBottomLayer = true }) {
 
                 {/* Right: Controls & Home Button */}
                 <div className="flex-1 flex items-center justify-end gap-3">
-                  <div className="flex items-center gap-3 app-header-control-cluster">
+                  <div className={`flex items-center gap-3 app-header-control-cluster ${isHub ? 'app-header-control-cluster--hub' : 'app-header-control-cluster--section'}`}>
                     <DisplayModeToggle />
                     <button
                       type="button"
@@ -1476,11 +1505,14 @@ function App({ playgroundMode = false, playgroundBottomLayer = true }) {
                     </div>
                   </div>
 
-                  {!isHub && !playgroundMode && (
+                  {!playgroundMode && (
                     <button
                       type="button"
                       onClick={() => setActiveSection(null)}
-                      className={`type-label font-medium px-2 py-1 rounded-lg transition-colors app-header-home ${isLight ? 'text-[#5A4D3C]/70 hover:text-[#3D3425] hover:bg-black/5' : 'text-white/70 hover:text-white hover:bg-white/5'}`}
+                      aria-hidden={isHub}
+                      tabIndex={isHub ? -1 : 0}
+                      className={`type-label font-medium px-2 py-1 rounded-lg transition-colors app-header-home app-header-home-choreo ${isHub ? 'app-header-home-choreo--hidden' : 'app-header-home-choreo--visible'} ${isLight ? 'text-[#5A4D3C]/70 hover:text-[#3D3425] hover:bg-black/5' : 'text-white/70 hover:text-white hover:bg-white/5'}`}
+                      style={{ pointerEvents: isHub ? 'none' : 'auto' }}
                     >
                       Home
                     </button>
@@ -1500,8 +1532,12 @@ function App({ playgroundMode = false, playgroundBottomLayer = true }) {
               }}
               inert={isMinimized ? "" : undefined}
             >
-              {(isHub || playgroundMode) ? (
-                <div key="hub" className="section-enter">
+              <div
+                key={`content-${playgroundMode || isHub ? 'hub' : activeSection}`}
+                className={`app-content-transition ${contentTransitionClass}`}
+              >
+                {(isHub || playgroundMode) ? (
+                <div>
 
 
                   {(debugBuildProbe && debugShadowScan) && (
@@ -1622,7 +1658,7 @@ function App({ playgroundMode = false, playgroundBottomLayer = true }) {
                   )}
                   {!hideCards && (
                     <Suspense fallback={ENABLE_HOMEHUB_SKELETON_FALLBACK ? <HomeHubLoadingFallback /> : <div />}>
-                      <div className={ENABLE_HOMEHUB_SKELETON_FALLBACK ? "homehub-section-fade-in" : undefined}>
+                      <div className={`${ENABLE_HOMEHUB_SKELETON_FALLBACK ? "homehub-section-fade-in " : ""}app-surface-reveal app-surface-reveal--hub`}>
                         <HomeHub
                           onSelectSection={handleSectionSelect}
                           activeSection={activeSection}
@@ -1670,6 +1706,7 @@ function App({ playgroundMode = false, playgroundBottomLayer = true }) {
                   hideCards={hideCards}
                 />
               )}
+              </div>
             </main>
           </div>
 

@@ -541,11 +541,11 @@ export function WisdomSection() {
         timeBudgetMin={modalTimeBudgetMin}
       />
 
-      <div data-tutorial="wisdom-root" className="w-full max-w-5xl mx-auto">
+      <div data-tutorial="wisdom-root" className="w-full max-w-5xl mx-auto wisdom-stagger-scope">
         {/* Tab nav — outside the dark card, on the background */}
         <div
           data-tutorial="wisdom-tab-bar"
-          className="flex flex-row items-center justify-between w-full mb-6"
+          className="flex flex-row items-center justify-between w-full mb-6 wisdom-stagger-item"
           style={{ gap: '0', paddingLeft: '12px', paddingRight: '12px', paddingTop: '8px' }}
         >
           {WISDOM_TABS.map(tab => {
@@ -565,7 +565,7 @@ export function WisdomSection() {
         </div>
 
         <div
-          className="border border-[var(--accent-15)] backdrop-blur-xl px-7 pt-5 pb-9 space-y-5 relative"
+          className="border border-[var(--accent-15)] backdrop-blur-xl px-7 pt-5 pb-9 space-y-5 relative wisdom-stagger-item"
           style={{
             background: "rgba(20, 10, 15, 0.78)",
             borderRadius: "var(--radius-panel)",

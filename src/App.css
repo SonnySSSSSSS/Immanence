@@ -15,6 +15,190 @@
   animation: sectionEnter 300ms ease-out;
 }
 
+@keyframes appContentEnterForward {
+  0% {
+    opacity: 0;
+    transform: translateX(24px) scale(0.996);
+    filter: saturate(0.92) blur(0.5px);
+  }
+
+  100% {
+    opacity: 1;
+    transform: translateX(0) scale(1);
+    filter: saturate(1) blur(0);
+  }
+}
+
+@keyframes appContentEnterBack {
+  0% {
+    opacity: 0;
+    transform: translateX(-24px) scale(0.996);
+    filter: saturate(0.92) blur(0.5px);
+  }
+
+  100% {
+    opacity: 1;
+    transform: translateX(0) scale(1);
+    filter: saturate(1) blur(0);
+  }
+}
+
+@keyframes appContentEnterNeutral {
+  0% {
+    opacity: 0;
+    transform: translateY(12px) scale(0.998);
+    filter: blur(0.4px);
+  }
+
+  100% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+    filter: blur(0);
+  }
+}
+
+.app-content-transition {
+  min-height: 100%;
+  will-change: transform, opacity, filter;
+}
+
+.app-content-enter-forward {
+  animation: appContentEnterForward 420ms cubic-bezier(0.2, 0.9, 0.2, 1);
+}
+
+.app-content-enter-back {
+  animation: appContentEnterBack 420ms cubic-bezier(0.2, 0.9, 0.2, 1);
+}
+
+.app-content-enter-neutral {
+  animation: appContentEnterNeutral 340ms cubic-bezier(0.2, 0.9, 0.2, 1);
+}
+
+@keyframes appSurfaceReveal {
+  0% {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.app-surface-reveal {
+  animation: appSurfaceReveal 520ms cubic-bezier(0.2, 0.9, 0.2, 1);
+}
+
+.app-surface-reveal--hub {
+  animation-delay: 70ms;
+  animation-fill-mode: both;
+}
+
+.app-surface-reveal--navigation,
+.app-surface-reveal--practice,
+.app-surface-reveal--wisdom,
+.app-surface-reveal--application {
+  animation-delay: 90ms;
+  animation-fill-mode: both;
+}
+
+.app-header-choreo {
+  will-change: transform, opacity;
+}
+
+.app-header-choreo--hub {
+  transform: translateY(0);
+}
+
+.app-header-choreo--section {
+  transform: translateY(0);
+}
+
+.app-header-control-cluster {
+  transition: transform 360ms cubic-bezier(0.2, 0.9, 0.2, 1), opacity 280ms ease;
+}
+
+.app-header-control-cluster--hub {
+  transform: translateX(0) scale(1);
+  opacity: 0.97;
+}
+
+.app-header-control-cluster--section {
+  transform: translateX(-2px) scale(0.996);
+  opacity: 1;
+}
+
+@keyframes appHeaderHomeIn {
+  0% {
+    opacity: 0;
+    transform: translateY(-7px) scale(0.94);
+  }
+
+  100% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.app-header-home-choreo {
+  transform-origin: top right;
+}
+
+.app-header-home-choreo--visible {
+  opacity: 1;
+  transform: translateY(0) scale(1);
+  animation: appHeaderHomeIn 320ms cubic-bezier(0.2, 0.9, 0.2, 1);
+}
+
+.app-header-home-choreo--hidden {
+  opacity: 0;
+  transform: translateY(-6px) scale(0.94);
+  transition: transform 260ms ease, opacity 200ms ease;
+}
+
+@keyframes navCardStaggerIn {
+  0% {
+    opacity: 0;
+    transform: translateY(14px) scale(0.992);
+  }
+
+  100% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.nav-stagger-scope > .nav-stagger-item {
+  opacity: 0;
+  animation: navCardStaggerIn 520ms cubic-bezier(0.2, 0.9, 0.2, 1) forwards;
+}
+
+.nav-stagger-scope > .nav-stagger-item:nth-child(1) {
+  animation-delay: 40ms;
+}
+
+.nav-stagger-scope > .nav-stagger-item:nth-child(2) {
+  animation-delay: 130ms;
+}
+
+.nav-stagger-scope > .nav-stagger-item:nth-child(3) {
+  animation-delay: 220ms;
+}
+
+.wisdom-stagger-scope > .wisdom-stagger-item {
+  opacity: 0;
+  animation: navCardStaggerIn 500ms cubic-bezier(0.2, 0.9, 0.2, 1) forwards;
+}
+
+.wisdom-stagger-scope > .wisdom-stagger-item:nth-child(1) {
+  animation-delay: 40ms;
+}
+
+.wisdom-stagger-scope > .wisdom-stagger-item:nth-child(2) {
+  animation-delay: 130ms;
+}
+
 @keyframes sectionFadeIn {
   0% {
     opacity: 0;
@@ -32,6 +216,39 @@
 .wisdom-section-fade-in,
 .application-section-fade-in {
   animation: sectionFadeIn 220ms ease-out;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .section-enter,
+  .navigation-section-fade-in,
+  .homehub-section-fade-in,
+  .practice-section-fade-in,
+  .wisdom-section-fade-in,
+  .application-section-fade-in,
+  .app-content-enter-forward,
+  .app-content-enter-back,
+  .app-content-enter-neutral,
+  .app-surface-reveal,
+  .app-header-home-choreo--visible,
+  .nav-stagger-scope > .nav-stagger-item,
+  .wisdom-stagger-scope > .wisdom-stagger-item {
+    animation: none !important;
+    transform: none !important;
+    filter: none !important;
+  }
+
+  .app-header-control-cluster,
+  .app-header-home-choreo--hidden {
+    transition: none !important;
+  }
+
+  .nav-stagger-scope > .nav-stagger-item {
+    opacity: 1 !important;
+  }
+
+  .wisdom-stagger-scope > .wisdom-stagger-item {
+    opacity: 1 !important;
+  }
 }
 
 /* Ripple-out press feedback — adapted from Hover.css hvr-ripple-out */
