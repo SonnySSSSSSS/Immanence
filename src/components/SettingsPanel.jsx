@@ -39,6 +39,8 @@ export function SettingsPanel({ isOpen, onClose, onSignedOut }) {
   const [passwordErr, setPasswordErr] = useState('');
   const [passwordOk, setPasswordOk] = useState('');
   const [passwordSaving, setPasswordSaving] = useState(false);
+  const [signOutErr, setSignOutErr] = useState('');
+  const [signingOut, setSigningOut] = useState(false);
 
   useEffect(() => {
     if (!isOpen) return;
@@ -56,24 +58,42 @@ export function SettingsPanel({ isOpen, onClose, onSignedOut }) {
     setPasswordErr('');
     setPasswordOk('');
     setPasswordSaving(false);
+    setSignOutErr('');
+    setSigningOut(false);
   }, [isOpen, authUser?.id, currentDisplayName]);
   // PROBE:SETTINGS_HOOK_ORDER_FIX:END
 
   if (!isOpen) return null;
 
   const handleSignOut = async () => {
+    setSignOutErr('');
     if (runtimeEnv.enableAuth) {
-      const supabase = await getSupabase();
-      await supabase.auth.signOut();
+      try {
+        setSigningOut(true);
+        const supabase = await getSupabase();
+        const { error } = await supabase.auth.signOut({ scope: 'local' });
+        if (error) throw error;
+      } catch (e) {
+        setSignOutErr(e?.message || 'Failed to sign out.');
+        return;
+      } finally {
+        setSigningOut(false);
+      }
+    } else {
+      setAuthUser(null);
     }
+
     resetSettings();
     clearSettingsPersistedState();
-    onClose?.();
-    onSignedOut?.();
     try {
       window.history.replaceState(null, "", runtimeEnv.baseUrl);
     } catch {
-      // Ignore history errors in non-browser contexts
+      // ignore
+    }
+
+    if (!runtimeEnv.enableAuth) {
+      onClose?.();
+      onSignedOut?.();
     }
   };
 
@@ -405,6 +425,7 @@ export function SettingsPanel({ isOpen, onClose, onSignedOut }) {
         {/* Logout Button */}
         <button
           onClick={handleSignOut}
+          disabled={signingOut}
           className="w-full px-4 py-3 rounded-lg font-bold text-sm transition-all mb-4"
           style={{
             background: isLight 
@@ -413,10 +434,17 @@ export function SettingsPanel({ isOpen, onClose, onSignedOut }) {
             color: '#fff',
             fontFamily: 'var(--font-display)',
             boxShadow: '0 4px 12px rgba(139, 92, 246, 0.3)',
+            cursor: signingOut ? 'wait' : 'pointer',
+            opacity: signingOut ? 0.7 : 1,
           }}
         >
-          Sign Out
+          {signingOut ? 'Signing Out...' : 'Sign Out'}
         </button>
+        {signOutErr ? (
+          <div className="text-xs mb-4" style={{ color: isLight ? '#8a1f11' : '#ffb4aa' }}>
+            {signOutErr}
+          </div>
+        ) : null}
 
         {/* Warning Text */}
         <p 
