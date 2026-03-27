@@ -250,7 +250,7 @@ export function CircuitJournalForm({ completedCircuitLog, onClose }) {
                                     fontSize: '12px',
                                     fontWeight: '500',
                                     textTransform: 'capitalize',
-                                    transition: 'all 200ms'
+                                    transition: 'background-color 200ms, border-color 200ms'
                                 }}
                             >
                                 {quality}

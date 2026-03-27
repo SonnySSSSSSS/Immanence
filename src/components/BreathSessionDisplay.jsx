@@ -197,7 +197,7 @@ export function BreathSessionDisplay({ pattern, duration }) {
           box-shadow: 
             0 0 35px rgba(255, 69, 0, 0.65),
             inset 0 0 20px rgba(255, 140, 0, 0.3);
-          transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+          transition: transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.4s cubic-bezier(0.34, 1.56, 0.64, 1), background-color 0.4s cubic-bezier(0.34, 1.56, 0.64, 1), border-color 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
           cursor: default;
           position: relative;
           overflow: hidden;

@@ -110,7 +110,7 @@ export function BinauralTrainerPanel({ isLight = false }) {
             : 'transparent',
         color: isActive ? 'var(--accent-color)' : textColors.secondary,
         cursor: 'pointer',
-        transition: 'all 0.2s ease',
+        transition: 'background-color 0.2s ease, border-color 0.2s ease, color 0.2s ease',
     });
 
     const presetButtonStyle = (isActive) => ({
@@ -128,7 +128,7 @@ export function BinauralTrainerPanel({ isLight = false }) {
             : 'transparent',
         color: isActive ? 'var(--accent-color)' : textColors.muted,
         cursor: 'pointer',
-        transition: 'all 0.2s ease',
+        transition: 'background-color 0.2s ease, border-color 0.2s ease, color 0.2s ease',
     });
 
     return (

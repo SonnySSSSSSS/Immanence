@@ -113,7 +113,7 @@ function RegimentProgress({ progress, isLight, r, g, b }) {
                             strokeLinecap="round"
                             style={{ opacity: 0.7, filter: 'blur(1px)' }}
                             clipPath="url(#regimentClip)"
-                            className="transition-all duration-1000"
+                            className="transition-[width] duration-1000"
                         />
                     </svg>
                     {/* Texture overlay from brush dab */}
@@ -137,7 +137,7 @@ function RegimentProgress({ progress, isLight, r, g, b }) {
                 >
                     {/* Multi-layered Glow */}
                     <div
-                        className="absolute inset-y-0 left-0 rounded-full transition-all duration-1000 blur-lg opacity-40"
+                        className="absolute inset-y-0 left-0 rounded-full transition-[width,opacity] duration-1000 blur-lg opacity-40"
                         style={{
                             width: `${percentage}%`,
                             background: `radial-gradient(ellipse at center, ${accentRGB}, transparent 70%)`

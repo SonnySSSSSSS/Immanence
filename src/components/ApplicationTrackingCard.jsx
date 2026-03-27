@@ -68,7 +68,7 @@ export function ApplicationTrackingCard({ onOpenArchive }) {
             ref={cardRef}
             data-card="true"
             data-card-id="applicationTracking"
-            className="w-full rounded-[32px] px-6 py-5 relative overflow-hidden transition-all duration-700 ease-in-out"
+            className="w-full rounded-[32px] px-6 py-5 relative overflow-hidden transition-[background-image,box-shadow] duration-700 ease-in-out"
             style={{
                 maxWidth: 'var(--ui-rail-max, min(430px, 94vw))',
                 margin: '0 auto',
@@ -138,7 +138,7 @@ export function ApplicationTrackingCard({ onOpenArchive }) {
                 {Object.entries(directionStats).map(([dir, data]) => (
                     <div
                         key={dir}
-                        className="rounded-xl px-3 py-2 transition-all duration-300"
+                        className="rounded-xl px-3 py-2 transition-[background,border-color] duration-300"
                         style={{
                             background: isLight
                                 ? 'linear-gradient(135deg, rgba(255, 250, 240, 0.6), rgba(248, 244, 235, 0.5))'

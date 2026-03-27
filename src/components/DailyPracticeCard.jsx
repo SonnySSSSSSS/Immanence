@@ -654,7 +654,7 @@ export function DailyPracticeCard({ onStartPractice, onViewCurriculum, onNavigat
         background: isLight
             ? 'radial-gradient(circle at 18% 18%, rgba(108, 207, 218, 0.08), transparent 26%), radial-gradient(circle at 82% 84%, rgba(108, 207, 218, 0.06), transparent 24%), linear-gradient(180deg, rgba(248, 252, 252, 0.82) 0%, rgba(229, 241, 244, 0.6) 100%)'
             : 'radial-gradient(circle at 20% 20%, rgba(78, 214, 226, 0.05), transparent 24%), radial-gradient(circle at 80% 82%, rgba(78, 214, 226, 0.05), transparent 22%), linear-gradient(180deg, rgba(8, 15, 22, 0.72) 0%, rgba(5, 10, 16, 0.8) 100%)',
-        transition: 'all 0.7s ease-in-out',
+        transition: 'background 0.7s ease-in-out',
     };
     const cardHousingDividerStyle = {
         borderLeft: isLight ? '1px solid rgba(91, 165, 177, 0.18)' : '1px solid rgba(101, 211, 224, 0.12)',
@@ -1805,7 +1805,7 @@ export function DailyPracticeCard({ onStartPractice, onViewCurriculum, onNavigat
                             background: isLight
                                 ? 'radial-gradient(ellipse at 60% 40%, rgba(250, 246, 238, 0.95) 0%, rgba(245, 235, 220, 0.90) 40%, rgba(240, 228, 208, 0.85) 100%)'
                                 : 'radial-gradient(ellipse at 60% 40%, rgba(18, 28, 32, 1) 0%, rgba(12, 20, 24, 1) 50%, rgba(8, 14, 18, 1) 100%)',
-                            transition: 'all 0.7s ease-in-out',
+                            transition: 'background 0.7s ease-in-out',
                         }}
                     />
 
