@@ -3,7 +3,8 @@ import { useState, useEffect, useCallback, useRef, lazy, Suspense } from "react"
 // Test CI lane enforcement - trivial comment
 import { StageTitle } from "./components/StageTitle.jsx";
 const PracticeSection = lazy(() => import("./components/PracticeSection.jsx").then(m => ({ default: m.PracticeSection })));
-const HomeHub = lazy(() => import("./components/HomeHub.jsx").then(m => ({ default: m.HomeHub })));
+const loadHomeHubModule = () => import("./components/HomeHub.jsx");
+const HomeHub = lazy(() => loadHomeHubModule().then(m => ({ default: m.HomeHub })));
 
 // Lazy load heavy sections for better initial performance
 // Named exports need to be wrapped for React.lazy
@@ -32,12 +33,24 @@ import { getDevPanelProdGate } from "./lib/devPanelGate.js";
 import { APP_VERSION_LABEL } from "./config/appMeta.js";
 import { runtimeEnv } from "./config/runtimeEnv.js";
 import { createLogger } from "./utils/logger.js";
+import { markFirstLoginAudit, sanitizeFirstLoginAuditUserId } from "./utils/firstLoginAudit.js";
 // import { VerificationGallery } from "./components/avatar/VerificationGallery.jsx"; // Dev tool - not used
 import "./App.css";
 import AuthGate from "./components/auth/AuthGate";
 
 const DISABLE_SELECTION = false;
 const USER_STATE_SYNC_DEBUG = false;
+const USER_STATE_SYNC_INITIAL_TICK_DELAY_MS = 220;
+// One-line rollback: set to false to restore the previous compact HomeHub loading card.
+const ENABLE_HOMEHUB_SKELETON_FALLBACK = true;
+// One-line rollback: set to false to restore the old blank navigation fallback.
+const ENABLE_NAVIGATION_SKELETON_FALLBACK = true;
+// One-line rollback: set to false to restore the old blank practice fallback.
+const ENABLE_PRACTICE_SKELETON_FALLBACK = true;
+// One-line rollback: set to false to restore the old simple wisdom fallback.
+const ENABLE_WISDOM_SKELETON_FALLBACK = true;
+// One-line rollback: set to false to restore the old simple application fallback.
+const ENABLE_APPLICATION_SKELETON_FALLBACK = true;
 const logger = createLogger("App");
 
 // PROBE:avatar-hmr-host:START
@@ -113,45 +126,372 @@ function SectionView({ section, isPracticing, onPracticingChange, onBreathStateC
         style={{ overflow: section === "practice" && isBreathLayoutLocked ? 'hidden' : 'visible' }}
       >
         {section === "practice" && !hideCards && (
-          <Suspense fallback={<div />}>
-            <PracticeSection
-              onPracticingChange={onPracticingChange}
-              onBreathStateChange={onBreathStateChange}
-              avatarPath={previewPath}
-              showCore={previewShowCore}
-              showFxGallery={showFxGallery}
-              isActiveBreathSession={isActiveBreathSession}
-              onNavigate={onNavigate}
-              onOpenPhotic={onOpenPhotic}
-            />
+          <Suspense fallback={ENABLE_PRACTICE_SKELETON_FALLBACK ? <PracticeSectionLoadingSkeleton /> : <div />}>
+            <div className={ENABLE_PRACTICE_SKELETON_FALLBACK ? "practice-section-fade-in" : undefined}>
+              <PracticeSection
+                onPracticingChange={onPracticingChange}
+                onBreathStateChange={onBreathStateChange}
+                avatarPath={previewPath}
+                showCore={previewShowCore}
+                showFxGallery={showFxGallery}
+                isActiveBreathSession={isActiveBreathSession}
+                onNavigate={onNavigate}
+                onOpenPhotic={onOpenPhotic}
+              />
+            </div>
           </Suspense>
         )}
 
         {section === "wisdom" && !hideCards && (
-          <Suspense fallback={
+          <Suspense fallback={ENABLE_WISDOM_SKELETON_FALLBACK ? <WisdomSectionLoadingSkeleton /> : (
             <div className="flex items-center justify-center p-12">
               <div className="type-label normal-case text-white/50">Loading Wisdom...</div>
             </div>
-          }>
-            <WisdomSection />
+          )}>
+            <div className={ENABLE_WISDOM_SKELETON_FALLBACK ? "wisdom-section-fade-in" : undefined}>
+              <WisdomSection />
+            </div>
           </Suspense>
         )}
 
         {section === "application" && !hideCards && (
-          <Suspense fallback={
+          <Suspense fallback={ENABLE_APPLICATION_SKELETON_FALLBACK ? <ApplicationSectionLoadingSkeleton /> : (
             <div className="flex items-center justify-center p-12">
               <div className="type-label normal-case text-white/50">Loading Application...</div>
             </div>
-          }>
-            <ApplicationSection onStageChange={onStageChange} currentStage={currentStage} previewPath={previewPath} previewShowCore={previewShowCore} previewAttention={previewAttention} onNavigate={onNavigate} />
+          )}>
+            <div className={ENABLE_APPLICATION_SKELETON_FALLBACK ? "application-section-fade-in" : undefined}>
+              <ApplicationSection onStageChange={onStageChange} currentStage={currentStage} previewPath={previewPath} previewShowCore={previewShowCore} previewAttention={previewAttention} onNavigate={onNavigate} />
+            </div>
           </Suspense>
         )}
 
         {section === "navigation" && !hideCards && (
-          <Suspense fallback={<div />}>
-            <NavigationSection onStageChange={onStageChange} currentStage={currentStage} previewPath={previewPath} previewShowCore={previewShowCore} previewAttention={previewAttention} onNavigate={onNavigate} onOpenHardwareGuide={onOpenHardwareGuide} isPracticing={isPracticing} />
+          <Suspense fallback={ENABLE_NAVIGATION_SKELETON_FALLBACK ? <NavigationSectionLoadingSkeleton /> : <div />}>
+            <div className={ENABLE_NAVIGATION_SKELETON_FALLBACK ? "navigation-section-fade-in" : undefined}>
+              <NavigationSection onStageChange={onStageChange} currentStage={currentStage} previewPath={previewPath} previewShowCore={previewShowCore} previewAttention={previewAttention} onNavigate={onNavigate} onOpenHardwareGuide={onOpenHardwareGuide} isPracticing={isPracticing} />
+            </div>
           </Suspense>
         )}
+      </div>
+    </div>
+  );
+}
+
+function HomeHubLoadingFallback() {
+  const colorScheme = useDisplayModeStore(s => s.colorScheme);
+  const hasLoggedRef = useRef(false);
+  const isLight = colorScheme === 'light';
+  const panelStyle = {
+    border: isLight ? '1px solid rgba(138, 111, 74, 0.18)' : '1px solid rgba(255,255,255,0.12)',
+    background: isLight
+      ? 'linear-gradient(180deg, rgba(247, 241, 230, 0.94), rgba(235, 225, 205, 0.88))'
+      : 'linear-gradient(180deg, rgba(19, 28, 42, 0.88), rgba(11, 18, 30, 0.96))',
+    boxShadow: isLight
+      ? '0 18px 42px rgba(107, 79, 42, 0.12)'
+      : '0 22px 48px rgba(0, 0, 0, 0.34)',
+    backdropFilter: 'blur(14px)',
+  };
+  const shimmerStyle = {
+    background: isLight
+      ? 'linear-gradient(90deg, rgba(153, 122, 84, 0.12), rgba(153, 122, 84, 0.24), rgba(153, 122, 84, 0.12))'
+      : 'linear-gradient(90deg, rgba(155, 180, 218, 0.10), rgba(155, 180, 218, 0.22), rgba(155, 180, 218, 0.10))',
+  };
+
+  useEffect(() => {
+    if (hasLoggedRef.current) return;
+    hasLoggedRef.current = true;
+    markFirstLoginAudit('app:homehub-fallback-rendered', {
+      colorScheme,
+    });
+  }, [colorScheme]);
+
+  return (
+    <div
+      className="w-full max-w-6xl mx-auto"
+      aria-live="polite"
+      style={{
+        display: 'flex',
+        flexDirection: 'column',
+        gap: '20px',
+        paddingBottom: '32px',
+      }}
+    >
+      <div className="flex items-center justify-center gap-4" style={{ paddingTop: '4px' }}>
+        <div className="h-28 w-20 rounded-2xl animate-pulse" style={shimmerStyle} />
+        <div className="h-[220px] w-[220px] rounded-full animate-pulse" style={shimmerStyle} />
+        <div className="h-28 w-20 rounded-2xl animate-pulse" style={shimmerStyle} />
+      </div>
+
+      <div className="flex items-center justify-center gap-3">
+        <div className="h-12 w-[128px] rounded-full animate-pulse" style={shimmerStyle} />
+        <div className="h-12 w-[128px] rounded-full animate-pulse" style={shimmerStyle} />
+      </div>
+
+      <div className="rounded-[28px] px-5 py-6" style={panelStyle}>
+        <div
+          className="text-[11px] uppercase tracking-[0.28em]"
+          style={{ color: isLight ? 'rgba(109, 82, 48, 0.64)' : 'rgba(205, 218, 238, 0.64)' }}
+        >
+          HomeHub
+        </div>
+        <div
+          className="mt-2 text-[1rem] font-medium"
+          style={{ color: isLight ? 'rgba(58, 42, 25, 0.92)' : 'rgba(244, 247, 252, 0.94)' }}
+        >
+          Restoring your sanctuary...
+        </div>
+
+        <div className="mt-5 space-y-3">
+          <div className="h-4 w-[42%] animate-pulse rounded-full" style={shimmerStyle} />
+          <div className="h-3 w-[75%] animate-pulse rounded-full" style={shimmerStyle} />
+          <div className="h-3 w-[62%] animate-pulse rounded-full" style={shimmerStyle} />
+        </div>
+
+        <div className="mt-5 rounded-2xl p-3" style={{ border: '1px solid rgba(255,255,255,0.08)' }}>
+          <div className="h-36 w-full animate-pulse rounded-xl" style={shimmerStyle} />
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function NavigationSectionLoadingSkeleton() {
+  const colorScheme = useDisplayModeStore(s => s.colorScheme);
+  const isLight = colorScheme === 'light';
+  const panelStyle = {
+    border: isLight ? '1px solid rgba(138, 111, 74, 0.18)' : '1px solid rgba(255,255,255,0.12)',
+    background: isLight
+      ? 'linear-gradient(180deg, rgba(247, 241, 230, 0.94), rgba(235, 225, 205, 0.88))'
+      : 'linear-gradient(180deg, rgba(19, 28, 42, 0.88), rgba(11, 18, 30, 0.96))',
+    boxShadow: isLight
+      ? '0 18px 42px rgba(107, 79, 42, 0.12)'
+      : '0 22px 48px rgba(0, 0, 0, 0.34)',
+    backdropFilter: 'blur(14px)',
+  };
+  const shimmerStyle = {
+    background: isLight
+      ? 'linear-gradient(90deg, rgba(153, 122, 84, 0.12), rgba(153, 122, 84, 0.24), rgba(153, 122, 84, 0.12))'
+      : 'linear-gradient(90deg, rgba(155, 180, 218, 0.10), rgba(155, 180, 218, 0.22), rgba(155, 180, 218, 0.10))',
+  };
+
+  return (
+    <div
+      className="w-full max-w-6xl mx-auto"
+      style={{
+        display: 'flex',
+        flexDirection: 'column',
+        gap: '20px',
+        paddingBottom: '32px',
+      }}
+    >
+      <div className="flex items-center justify-center" style={{ paddingTop: '4px' }}>
+        <div
+          className="h-[220px] w-[220px] rounded-full animate-pulse"
+          style={shimmerStyle}
+        />
+      </div>
+
+      <div className="flex flex-col items-center px-4 py-3 rounded-2xl" style={{ ...panelStyle, gap: '6px' }}>
+        <div className="h-3 w-[190px] animate-pulse rounded-full" style={shimmerStyle} />
+        <div className="h-4 w-[240px] animate-pulse rounded-full" style={shimmerStyle} />
+      </div>
+
+      <div className="space-y-6">
+        <div className="rounded-[28px] px-5 py-6" style={panelStyle}>
+          <div
+            className="text-[11px] uppercase tracking-[0.28em]"
+            style={{ color: isLight ? 'rgba(109, 82, 48, 0.64)' : 'rgba(205, 218, 238, 0.64)' }}
+          >
+            Navigation
+          </div>
+          <div
+            className="mt-2 text-[1rem] font-medium"
+            style={{ color: isLight ? 'rgba(58, 42, 25, 0.92)' : 'rgba(244, 247, 252, 0.94)' }}
+          >
+            Building your path map...
+          </div>
+          <div className="mt-5 grid grid-cols-2 gap-3">
+            <div className="h-24 animate-pulse rounded-2xl" style={shimmerStyle} />
+            <div className="h-24 animate-pulse rounded-2xl" style={shimmerStyle} />
+            <div className="h-24 animate-pulse rounded-2xl" style={shimmerStyle} />
+            <div className="h-24 animate-pulse rounded-2xl" style={shimmerStyle} />
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function PracticeSectionLoadingSkeleton() {
+  const colorScheme = useDisplayModeStore(s => s.colorScheme);
+  const isLight = colorScheme === 'light';
+  const panelStyle = {
+    border: isLight ? '1px solid rgba(138, 111, 74, 0.18)' : '1px solid rgba(255,255,255,0.12)',
+    background: isLight
+      ? 'linear-gradient(180deg, rgba(247, 241, 230, 0.94), rgba(235, 225, 205, 0.88))'
+      : 'linear-gradient(180deg, rgba(19, 28, 42, 0.88), rgba(11, 18, 30, 0.96))',
+    boxShadow: isLight
+      ? '0 18px 42px rgba(107, 79, 42, 0.12)'
+      : '0 22px 48px rgba(0, 0, 0, 0.34)',
+    backdropFilter: 'blur(14px)',
+  };
+  const shimmerStyle = {
+    background: isLight
+      ? 'linear-gradient(90deg, rgba(153, 122, 84, 0.12), rgba(153, 122, 84, 0.24), rgba(153, 122, 84, 0.12))'
+      : 'linear-gradient(90deg, rgba(155, 180, 218, 0.10), rgba(155, 180, 218, 0.22), rgba(155, 180, 218, 0.10))',
+  };
+
+  return (
+    <div
+      className="w-full max-w-6xl mx-auto"
+      style={{
+        display: 'flex',
+        flexDirection: 'column',
+        gap: '20px',
+        paddingBottom: '32px',
+      }}
+    >
+      <div className="flex items-center justify-center" style={{ paddingTop: '4px' }}>
+        <div className="h-[220px] w-[220px] rounded-full animate-pulse" style={shimmerStyle} />
+      </div>
+
+      <div className="rounded-[28px] px-5 py-6" style={panelStyle}>
+        <div
+          className="text-[11px] uppercase tracking-[0.28em]"
+          style={{ color: isLight ? 'rgba(109, 82, 48, 0.64)' : 'rgba(205, 218, 238, 0.64)' }}
+        >
+          Practice
+        </div>
+        <div
+          className="mt-2 text-[1rem] font-medium"
+          style={{ color: isLight ? 'rgba(58, 42, 25, 0.92)' : 'rgba(244, 247, 252, 0.94)' }}
+        >
+          Loading your practice menu...
+        </div>
+
+        <div className="mt-5 grid grid-cols-2 gap-3">
+          <div className="h-24 animate-pulse rounded-2xl" style={shimmerStyle} />
+          <div className="h-24 animate-pulse rounded-2xl" style={shimmerStyle} />
+          <div className="h-24 animate-pulse rounded-2xl" style={shimmerStyle} />
+          <div className="h-24 animate-pulse rounded-2xl" style={shimmerStyle} />
+        </div>
+
+        <div className="mt-5 rounded-2xl p-3" style={{ border: '1px solid rgba(255,255,255,0.08)' }}>
+          <div className="h-16 w-full animate-pulse rounded-xl" style={shimmerStyle} />
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function WisdomSectionLoadingSkeleton() {
+  const colorScheme = useDisplayModeStore(s => s.colorScheme);
+  const isLight = colorScheme === 'light';
+  const panelStyle = {
+    border: isLight ? '1px solid rgba(138, 111, 74, 0.18)' : '1px solid rgba(255,255,255,0.12)',
+    background: isLight
+      ? 'linear-gradient(180deg, rgba(247, 241, 230, 0.94), rgba(235, 225, 205, 0.88))'
+      : 'linear-gradient(180deg, rgba(19, 28, 42, 0.88), rgba(11, 18, 30, 0.96))',
+    boxShadow: isLight
+      ? '0 18px 42px rgba(107, 79, 42, 0.12)'
+      : '0 22px 48px rgba(0, 0, 0, 0.34)',
+    backdropFilter: 'blur(14px)',
+  };
+  const shimmerStyle = {
+    background: isLight
+      ? 'linear-gradient(90deg, rgba(153, 122, 84, 0.12), rgba(153, 122, 84, 0.24), rgba(153, 122, 84, 0.12))'
+      : 'linear-gradient(90deg, rgba(155, 180, 218, 0.10), rgba(155, 180, 218, 0.22), rgba(155, 180, 218, 0.10))',
+  };
+
+  return (
+    <div
+      className="w-full max-w-6xl mx-auto"
+      style={{
+        display: 'flex',
+        flexDirection: 'column',
+        gap: '20px',
+        paddingBottom: '32px',
+      }}
+    >
+      <div className="rounded-[28px] px-5 py-6" style={panelStyle}>
+        <div
+          className="text-[11px] uppercase tracking-[0.28em]"
+          style={{ color: isLight ? 'rgba(109, 82, 48, 0.64)' : 'rgba(205, 218, 238, 0.64)' }}
+        >
+          Wisdom
+        </div>
+        <div
+          className="mt-2 text-[1rem] font-medium"
+          style={{ color: isLight ? 'rgba(58, 42, 25, 0.92)' : 'rgba(244, 247, 252, 0.94)' }}
+        >
+          Opening the library...
+        </div>
+
+        <div className="mt-5 space-y-3">
+          <div className="h-4 w-[52%] animate-pulse rounded-full" style={shimmerStyle} />
+          <div className="h-3 w-[78%] animate-pulse rounded-full" style={shimmerStyle} />
+          <div className="h-3 w-[66%] animate-pulse rounded-full" style={shimmerStyle} />
+        </div>
+
+        <div className="mt-5 grid grid-cols-1 gap-3">
+          <div className="h-24 animate-pulse rounded-2xl" style={shimmerStyle} />
+          <div className="h-24 animate-pulse rounded-2xl" style={shimmerStyle} />
+          <div className="h-24 animate-pulse rounded-2xl" style={shimmerStyle} />
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function ApplicationSectionLoadingSkeleton() {
+  const colorScheme = useDisplayModeStore(s => s.colorScheme);
+  const isLight = colorScheme === 'light';
+  const panelStyle = {
+    border: isLight ? '1px solid rgba(138, 111, 74, 0.18)' : '1px solid rgba(255,255,255,0.12)',
+    background: isLight
+      ? 'linear-gradient(180deg, rgba(247, 241, 230, 0.94), rgba(235, 225, 205, 0.88))'
+      : 'linear-gradient(180deg, rgba(19, 28, 42, 0.88), rgba(11, 18, 30, 0.96))',
+    boxShadow: isLight
+      ? '0 18px 42px rgba(107, 79, 42, 0.12)'
+      : '0 22px 48px rgba(0, 0, 0, 0.34)',
+    backdropFilter: 'blur(14px)',
+  };
+  const shimmerStyle = {
+    background: isLight
+      ? 'linear-gradient(90deg, rgba(153, 122, 84, 0.12), rgba(153, 122, 84, 0.24), rgba(153, 122, 84, 0.12))'
+      : 'linear-gradient(90deg, rgba(155, 180, 218, 0.10), rgba(155, 180, 218, 0.22), rgba(155, 180, 218, 0.10))',
+  };
+
+  return (
+    <div
+      className="w-full max-w-6xl mx-auto"
+      style={{
+        display: 'flex',
+        flexDirection: 'column',
+        gap: '20px',
+        paddingBottom: '32px',
+      }}
+    >
+      <div className="rounded-[28px] px-5 py-6" style={panelStyle}>
+        <div
+          className="text-[11px] uppercase tracking-[0.28em]"
+          style={{ color: isLight ? 'rgba(109, 82, 48, 0.64)' : 'rgba(205, 218, 238, 0.64)' }}
+        >
+          Application
+        </div>
+        <div
+          className="mt-2 text-[1rem] font-medium"
+          style={{ color: isLight ? 'rgba(58, 42, 25, 0.92)' : 'rgba(244, 247, 252, 0.94)' }}
+        >
+          Loading your workspace...
+        </div>
+
+        <div className="mt-5 grid grid-cols-2 gap-3">
+          <div className="h-28 animate-pulse rounded-2xl" style={shimmerStyle} />
+          <div className="h-28 animate-pulse rounded-2xl" style={shimmerStyle} />
+          <div className="col-span-2 h-20 animate-pulse rounded-2xl" style={shimmerStyle} />
+        </div>
       </div>
     </div>
   );
@@ -168,7 +508,6 @@ function App({ playgroundMode = false, playgroundBottomLayer = true }) {
   const userMode = useUserModeStore((s) => s.userMode);
   const accessPosture = useUserModeStore((s) => s.accessPosture);
   const hasChosenUserMode = useUserModeStore((s) => s.hasChosenUserMode);
-  const modeByUserId = useUserModeStore((s) => s.modeByUserId);
   const setActiveUserModeUserId = useUserModeStore((s) => s.setActiveUserId);
   const practiceLaunchContext = useUiStore((s) => s.practiceLaunchContext);
   const activePath = useNavigationStore((s) => s.activePath);
@@ -230,6 +569,7 @@ function App({ playgroundMode = false, playgroundBottomLayer = true }) {
   const [, setDevtoolsGateTick] = useState(0);
   const [showSettings, setShowSettings] = useState(false); // Settings panel
   const [authUser, setAuthUser] = useState(null);
+  const [isHomeHubModuleReady, setIsHomeHubModuleReady] = useState(false);
   const [hideCards, setHideCards] = useState(false); // Dev mode: hide cards to view wallpaper
   // GRAVEYARD: Top layer removed
   // const [showBackgroundTopLayer, setShowBackgroundTopLayer] = useState(true);
@@ -730,8 +1070,33 @@ function App({ playgroundMode = false, playgroundBottomLayer = true }) {
 
   // PROBE:OFFLINE_FIRST_USER_STATE_SYNC:START
   const userStateSyncCleanupRef = useRef(null);
+  const pendingUserStateSyncStartRef = useRef(null);
+  const pendingUserStateSyncSessionRef = useRef(null);
+  const homeHubBranchAuditRef = useRef(null);
+  const homeHubReadySyncKeyRef = useRef(null);
+  const homeHubPreloadPromiseRef = useRef(null);
 
   const stopUserStateSync = useCallback(() => {
+    const pendingStart = pendingUserStateSyncStartRef.current;
+    if (pendingStart) {
+      try {
+        if (pendingStart.raf1 != null && typeof window !== 'undefined' && typeof window.cancelAnimationFrame === 'function') {
+          window.cancelAnimationFrame(pendingStart.raf1);
+        }
+        if (pendingStart.raf2 != null && typeof window !== 'undefined' && typeof window.cancelAnimationFrame === 'function') {
+          window.cancelAnimationFrame(pendingStart.raf2);
+        }
+        if (pendingStart.timeoutId != null && typeof window !== 'undefined') {
+          window.clearTimeout(pendingStart.timeoutId);
+        }
+      } catch {
+        // ignore cleanup errors
+      }
+    }
+    pendingUserStateSyncStartRef.current = null;
+    pendingUserStateSyncSessionRef.current = null;
+    homeHubReadySyncKeyRef.current = null;
+
     try {
       userStateSyncCleanupRef.current?.();
     } catch {
@@ -740,10 +1105,50 @@ function App({ playgroundMode = false, playgroundBottomLayer = true }) {
     userStateSyncCleanupRef.current = null;
   }, []);
 
+  const preloadHomeHub = useCallback((reason, detail = {}) => {
+    if (homeHubPreloadPromiseRef.current) {
+      return homeHubPreloadPromiseRef.current;
+    }
+
+    markFirstLoginAudit('app:homehub-preload-requested', {
+      reason,
+      ...detail,
+    });
+
+    const preloadPromise = loadHomeHubModule();
+    homeHubPreloadPromiseRef.current = preloadPromise;
+
+    preloadPromise
+      .then(() => {
+        setIsHomeHubModuleReady(true);
+        markFirstLoginAudit('app:homehub-preload-resolved', {
+          reason,
+          ...detail,
+        });
+      })
+      .catch((error) => {
+        homeHubPreloadPromiseRef.current = null;
+        markFirstLoginAudit('app:homehub-preload-error', {
+          reason,
+          ...detail,
+          message: error?.message || 'unknown error',
+        });
+      });
+
+    return preloadPromise;
+  }, []);
+
   const startUserStateSync = useCallback(async (session) => {
     if (userStateSyncCleanupRef.current) return;
     const userId = session?.user?.id ?? null;
     if (!userId) return;
+
+    // PROBE:FIRST_LOGIN_HOMEHUB_AUDIT:START
+    const syncImportStartedAt = typeof performance !== 'undefined' ? performance.now() : Date.now();
+    markFirstLoginAudit('app:user-state-sync:start', {
+      userId: sanitizeFirstLoginAuditUserId(userId),
+    });
+    // PROBE:FIRST_LOGIN_HOMEHUB_AUDIT:END
 
     try {
       const [{ supabase }, { initOfflineFirstUserStateSync }, { OFFLINE_FIRST_USER_STATE_KEYS }] = await Promise.all([
@@ -752,12 +1157,33 @@ function App({ playgroundMode = false, playgroundBottomLayer = true }) {
         import("./state/offlineFirstUserStateKeys.js"),
       ]);
 
+      // PROBE:FIRST_LOGIN_HOMEHUB_AUDIT:START
+      markFirstLoginAudit('app:user-state-sync:imports-resolved', {
+        userId: sanitizeFirstLoginAuditUserId(userId),
+        durationMs: Number(((typeof performance !== 'undefined' ? performance.now() : Date.now()) - syncImportStartedAt).toFixed(2)),
+      });
+      // PROBE:FIRST_LOGIN_HOMEHUB_AUDIT:END
+
       userStateSyncCleanupRef.current = initOfflineFirstUserStateSync({
         supabase,
         keys: OFFLINE_FIRST_USER_STATE_KEYS,
+        userId,
         debug: USER_STATE_SYNC_DEBUG,
+        initialTickDelayMs: USER_STATE_SYNC_INITIAL_TICK_DELAY_MS,
       });
+
+      // PROBE:FIRST_LOGIN_HOMEHUB_AUDIT:START
+      markFirstLoginAudit('app:user-state-sync:init-called', {
+        userId: sanitizeFirstLoginAuditUserId(userId),
+      });
+      // PROBE:FIRST_LOGIN_HOMEHUB_AUDIT:END
     } catch (e) {
+      // PROBE:FIRST_LOGIN_HOMEHUB_AUDIT:START
+      markFirstLoginAudit('app:user-state-sync:error', {
+        userId: sanitizeFirstLoginAuditUserId(userId),
+        message: e?.message || 'unknown error',
+      });
+      // PROBE:FIRST_LOGIN_HOMEHUB_AUDIT:END
       if (USER_STATE_SYNC_DEBUG) {
         logger.info('[userStateSync] init failed (local-only mode continues)', e);
       }
@@ -766,7 +1192,57 @@ function App({ playgroundMode = false, playgroundBottomLayer = true }) {
 
   useEffect(() => () => stopUserStateSync(), [stopUserStateSync]);
 
+  const scheduleUserStateSyncStart = useCallback((session) => {
+    const userId = session?.user?.id ?? null;
+    if (!userId) return;
+
+    stopUserStateSync();
+    markFirstLoginAudit('app:user-state-sync:scheduled', {
+      userId: sanitizeFirstLoginAuditUserId(userId),
+    });
+
+    const runStart = () => {
+      pendingUserStateSyncStartRef.current = null;
+      markFirstLoginAudit('app:user-state-sync:deferred-start', {
+        userId: sanitizeFirstLoginAuditUserId(userId),
+      });
+      void startUserStateSync(session);
+    };
+
+    if (typeof window !== 'undefined' && typeof window.requestAnimationFrame === 'function') {
+      const pendingStart = {
+        raf1: null,
+        raf2: null,
+        timeoutId: null,
+      };
+      pendingStart.raf1 = window.requestAnimationFrame(() => {
+        pendingStart.raf2 = window.requestAnimationFrame(runStart);
+      });
+      pendingUserStateSyncStartRef.current = pendingStart;
+      return;
+    }
+
+    if (typeof window !== 'undefined') {
+      pendingUserStateSyncStartRef.current = {
+        raf1: null,
+        raf2: null,
+        timeoutId: window.setTimeout(runStart, 0),
+      };
+      return;
+    }
+
+    void startUserStateSync(session);
+  }, [startUserStateSync, stopUserStateSync]);
+
   const handleAuthChange = useCallback((event, session) => {
+    // PROBE:FIRST_LOGIN_HOMEHUB_AUDIT:START
+    markFirstLoginAudit('app:handle-auth-change', {
+      event,
+      hasSession: Boolean(session),
+      userId: sanitizeFirstLoginAuditUserId(session?.user?.id ?? null),
+    });
+    // PROBE:FIRST_LOGIN_HOMEHUB_AUDIT:END
+
     if (event === "SIGNED_OUT") {
       setAuthUser(null);
       setActiveUserModeUserId(null);
@@ -783,18 +1259,67 @@ function App({ playgroundMode = false, playgroundBottomLayer = true }) {
     }
 
     if ((event === "SIGNED_IN" || event === "INITIAL_SESSION") && session) {
+      stopUserStateSync();
+      const userId = session?.user?.id ?? null;
+      const accessTokenSuffix =
+        typeof session?.access_token === 'string' && session.access_token.length > 8
+          ? session.access_token.slice(-8)
+          : null;
+      pendingUserStateSyncSessionRef.current = session;
+      homeHubReadySyncKeyRef.current = `${event}:${userId || 'none'}:${accessTokenSuffix || 'none'}`;
+      markFirstLoginAudit('app:user-state-sync:queued-for-homehub', {
+        event,
+        userId: sanitizeFirstLoginAuditUserId(userId),
+        homeHubModuleReady: isHomeHubModuleReady,
+      });
+      void preloadHomeHub(event.toLowerCase(), {
+        userId: sanitizeFirstLoginAuditUserId(userId),
+      });
       setAuthUser(session?.user ?? null);
       setActiveUserModeUserId(session?.user?.id ?? null);
-      stopUserStateSync();
-      startUserStateSync(session);
       setShowSettings(false);
       setActiveSection(null);
     }
-  }, [setActiveUserModeUserId, startUserStateSync, stopUserStateSync]);
+  }, [isHomeHubModuleReady, preloadHomeHub, setActiveUserModeUserId, stopUserStateSync]);
+
+  useEffect(() => {
+    if (!authUser?.id || activeSection !== null || !isHomeHubModuleReady) return;
+
+    const queuedSession = pendingUserStateSyncSessionRef.current;
+    if (!queuedSession?.user?.id || queuedSession.user.id !== authUser.id) return;
+
+    const readyKey = homeHubReadySyncKeyRef.current;
+    if (!readyKey) return;
+
+    pendingUserStateSyncSessionRef.current = null;
+    homeHubReadySyncKeyRef.current = null;
+    markFirstLoginAudit('app:user-state-sync:homehub-ready', {
+      userId: sanitizeFirstLoginAuditUserId(authUser.id),
+    });
+    scheduleUserStateSyncStart(queuedSession);
+  }, [activeSection, authUser?.id, isHomeHubModuleReady, scheduleUserStateSyncStart]);
 
   useEffect(() => {
     setActiveUserModeUserId(authUser?.id ?? null);
-  }, [authUser?.id, modeByUserId, setActiveUserModeUserId]);
+  }, [authUser?.id, setActiveUserModeUserId]);
+
+  // PROBE:FIRST_LOGIN_HOMEHUB_AUDIT:START
+  useEffect(() => {
+    if (!authUser?.id || activeSection !== null) {
+      homeHubBranchAuditRef.current = null;
+      return;
+    }
+
+    const nextKey = `${authUser.id}:homehub`;
+    if (homeHubBranchAuditRef.current === nextKey) return;
+    homeHubBranchAuditRef.current = nextKey;
+
+    markFirstLoginAudit('app:homehub-branch-selected', {
+      userId: sanitizeFirstLoginAuditUserId(authUser.id),
+      activeSection: null,
+    });
+  }, [activeSection, authUser?.id]);
+  // PROBE:FIRST_LOGIN_HOMEHUB_AUDIT:END
   // PROBE:OFFLINE_FIRST_USER_STATE_SYNC:END
 
   return (
@@ -1154,26 +1679,28 @@ function App({ playgroundMode = false, playgroundBottomLayer = true }) {
                     </div>
                   )}
                   {!hideCards && (
-                    <Suspense fallback={<div />}>
-                      <HomeHub
-                        onSelectSection={handleSectionSelect}
-                        activeSection={activeSection}
-                        onStageChange={(hsl, stageName) => handleAvatarStageSelection(stageName)}
-                        isPracticing={isPracticing}
-                        currentStage={effectivePreviewStage}
-                        previewPath={effectivePreviewPath}
-                        previewShowCore={previewShowCore}
-                        previewAttention={previewAttention}
-                        onOpenHardwareGuide={() => setIsHardwareGuideOpen(true)}
-                        lockToHub={playgroundMode}
-                        debugDisableDailyCard={debugDisableDailyCard}
-                        debugBuildProbe={debugBuildProbe && debugShadowScan}
-                        debugShadowScan={debugShadowScan}
-                        debugDailyCardShadowOff={debugDailyCardShadowOff}
-                        debugDailyCardBlurOff={debugDailyCardBlurOff}
-                        debugDailyCardBorderOff={debugDailyCardBorderOff}
-                        debugDailyCardMaskOff={debugDailyCardMaskOff}
-                      />
+                    <Suspense fallback={ENABLE_HOMEHUB_SKELETON_FALLBACK ? <HomeHubLoadingFallback /> : <div />}>
+                      <div className={ENABLE_HOMEHUB_SKELETON_FALLBACK ? "homehub-section-fade-in" : undefined}>
+                        <HomeHub
+                          onSelectSection={handleSectionSelect}
+                          activeSection={activeSection}
+                          onStageChange={(hsl, stageName) => handleAvatarStageSelection(stageName)}
+                          isPracticing={isPracticing}
+                          currentStage={effectivePreviewStage}
+                          previewPath={effectivePreviewPath}
+                          previewShowCore={previewShowCore}
+                          previewAttention={previewAttention}
+                          onOpenHardwareGuide={() => setIsHardwareGuideOpen(true)}
+                          lockToHub={playgroundMode}
+                          debugDisableDailyCard={debugDisableDailyCard}
+                          debugBuildProbe={debugBuildProbe && debugShadowScan}
+                          debugShadowScan={debugShadowScan}
+                          debugDailyCardShadowOff={debugDailyCardShadowOff}
+                          debugDailyCardBlurOff={debugDailyCardBlurOff}
+                          debugDailyCardBorderOff={debugDailyCardBorderOff}
+                          debugDailyCardMaskOff={debugDailyCardMaskOff}
+                        />
+                      </div>
                     </Suspense>
                   )}
                 </div>
