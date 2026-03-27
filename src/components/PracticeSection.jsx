@@ -2,11 +2,7 @@ import React, { useState, useEffect, useRef, useMemo, useCallback, useLayoutEffe
 import { createPortal } from 'react-dom';
 import { InsightMeditationPortal } from './vipassana/InsightMeditationPortal.jsx';
 import { SensorySession } from "./SensorySession.jsx";
-import { GuidanceAudioController } from "./audio/GuidanceAudioController.jsx";
-import { BreathingRing } from "./BreathingRing.jsx";
 import { BREATH_RING_PRESETS } from "./breathingRingPresets.js";
-import { VisualizationCanvas } from "./VisualizationCanvas.jsx";
-import { CymaticsVisualization } from "./CymaticsVisualization.jsx";
 import { VipassanaVisual } from "./vipassana/VipassanaVisual.jsx";
 import { NavigationRitualLibrary } from "./NavigationRitualLibrary.jsx";
 import { CircuitConfig } from "./Cycle/CircuitConfig.jsx";
@@ -14,7 +10,6 @@ import { VIPASSANA_THEMES } from "../data/vipassanaThemes.js";
 import { SoundConfig, BINAURAL_PRESETS, ISOCHRONIC_PRESETS, SOUND_TYPES } from "./SoundConfig.jsx";
 import { BreathConfig } from "./BreathConfig.jsx";
 import { BREATH_PRESETS } from "./breathPresets.js";
-import { BreathBenchmark } from "./BreathBenchmark.jsx";
 import { SensoryConfig, SENSORY_TYPES } from "./SensoryConfig.jsx";
 import { preloadAwarenessImages } from '../utils/preloadAwarenessImages.js';
 import { VisualizationConfig } from "./VisualizationConfig.jsx";
@@ -44,19 +39,10 @@ import { useBreathBenchmarkStore } from "../state/breathBenchmarkStore.js";
 import { useTempoSyncStore } from "../state/tempoSyncStore.js";
 import { useTempoSyncSessionStore } from "../state/tempoSyncSessionStore.js";
 import { TempoSyncPanel } from "./TempoSyncPanel.jsx";
-import { TempoSyncSessionPanel } from "./TempoSyncSessionPanel.jsx";
 import { useBreathSessionState } from "./practice/useBreathSessionState.js";
 import { CircuitTrainingSelector } from "./practice/CircuitTrainingSelector.jsx";
-import PracticeSectionShell from "./practice/PracticeSectionShell.jsx";
-import { FeedbackModal } from "./FeedbackModal.jsx";
-import PracticeHeader from "./practice/PracticeHeader.jsx";
+import { PracticeSectionMainAssembly } from "./practice/PracticeSectionShell.jsx";
 import BreathPracticeCard from "./practice/BreathPracticeCard.jsx";
-import { SessionControls } from "./practice/SessionControls.jsx";
-import { StillnessRingSession } from "./practice/StillnessRingSession.jsx";
-import { PracticeOptionsCard } from "./practice/PracticeOptionsCard.jsx";
-import { InstructionVideoPanel } from "./InstructionVideoPanel.jsx";
-import { GlassIconButton } from "./GlassIconButton.jsx";
-import { SUB_MODE_ICON_MAP } from "./subModeIconMap.js";
 import ParallaxForest from "./ParallaxForest.jsx";
 import { SakshiVisual } from "./SakshiVisual.jsx";
 import { useAwarenessSceneStore } from "../state/awarenessSceneStore.js";
@@ -79,6 +65,7 @@ import {
   usePracticeLaunchState,
 } from "./practice/usePracticeLaunchState.js";
 import { useBreathKeyboardShortcuts } from "../hooks/useBreathKeyboardShortcuts.js";
+import { PracticeVisualizationHost } from "./practice/PracticeVisualizationHost.jsx";
 
 // CONFIG_COMPONENTS moved to PracticeOptionsCard.jsx
 
@@ -2671,318 +2658,60 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, onNav
       computeBreathTapFeedback(lastSignedErrorMs, actualRunningPracticeId, isLight);
 
     return (
-      <section
-        ref={isBreathRunningSession ? breathViewportRootRef : null}
-        className={`w-full h-full min-h-[600px] flex flex-col items-center ${isBreathRunningSession ? "" : "justify-center"}`}
-        style={{
-          position: "relative",
-          width: "100%",
-          minHeight: isBreathRunningSession ? 0 : undefined,
-          height: isBreathRunningSession
-            ? (breathViewportHeightPx ? `${breathViewportHeightPx}px` : "100dvh")
-            : undefined,
-          maxHeight: isBreathRunningSession
-            ? (breathViewportHeightPx ? `${breathViewportHeightPx}px` : "100dvh")
-            : undefined,
-          overflow: isBreathRunningSession ? "hidden" : undefined,
-          paddingBottom: isBreathRunningSession ? 0 : "3rem",
-          justifyContent: isBreathRunningSession ? "flex-start" : undefined,
-        }}
-      >
-        {isBreathRunningSession && (
-          <div
-            aria-hidden="true"
-            style={{
-              position: "absolute",
-              inset: 0,
-              background: "#020207",
-              zIndex: 0,
-              pointerEvents: "none",
-            }}
-          />
-        )}
-
-        <div
-          style={{
-            position: "relative",
-            zIndex: 1,
-            width: "100%",
-            minHeight: 0,
-            height: isBreathRunningSession ? "100%" : undefined,
-            display: "flex",
-            flexDirection: "column",
-            flex: "1 1 auto",
-            overflow: isBreathRunningSession ? "hidden" : undefined,
-            visibility: breathViewportReady ? "visible" : "hidden",
-          }}
-        >
-        {activeCircuitId && circuitConfig && (
-          <div
-            className="fixed top-4 left-1/2 -translate-x-1/2 z-50 flex items-center gap-2 px-4 py-2 rounded-full"
-            style={{
-              background: isLight ? 'var(--light-bg-surface)' : 'rgba(0,0,0,0.7)',
-              border: isLight ? '1px solid var(--light-border)' : '1px solid var(--accent-30)',
-              backdropFilter: 'blur(8px)',
-            }}
-          >
-            <span className="type-label" style={{ color: 'var(--text-secondary)' }}>
-              Circuit
-            </span>
-            <div className="flex gap-1">
-              {circuitConfig.exercises.map((_, idx) => (
-                <div
-                  key={idx}
-                  className="w-2 h-2 rounded-full transition-all duration-300"
-                  style={{
-                    background: idx < circuitExerciseIndex ? 'var(--accent-color)'
-                      : idx === circuitExerciseIndex ? (isLight ? 'var(--text-primary)' : '#fff')
-                        : (isLight ? 'rgba(60,50,35,0.2)' : 'rgba(253,251,245,0.2)'),
-                    boxShadow: idx === circuitExerciseIndex ? (isLight ? '0 2px 8px rgba(60,50,35,0.2)' : '0 0 8px rgba(255,255,255,0.6)') : 'none',
-                  }}
-                />
-              ))}
-            </div>
-            <span className="type-caption text-[10px]" style={{ color: 'var(--text-muted)' }}>
-              {circuitExerciseIndex + 1}/{circuitConfig.exercises.length}
-            </span>
-          </div>
-        )}
-
-        {pathLaunchInstructionVideo && (
-          <div
-            style={{
-              flex: "0 0 auto",
-              width: "100%",
-              display: "flex",
-              justifyContent: "center",
-              padding: isBreathRunningSession ? "max(12px, env(safe-area-inset-top)) 16px 0" : "0 16px 16px",
-            }}
-          >
-            <InstructionVideoPanel
-              video={pathLaunchInstructionVideo}
-              className="w-full max-w-[560px]"
-            />
-          </div>
-        )}
-
-        <div className="flex-1 flex items-center justify-center w-full" style={{ minHeight: 0 }}>
-          {actualRunningPracticeId === "visualization" ? (
-            <VisualizationCanvas
-              geometry={geometry}
-              fadeInDuration={fadeInDuration}
-              displayDuration={displayDuration}
-              fadeOutDuration={fadeOutDuration}
-              voidDuration={voidDuration}
-              audioEnabled={audioEnabled}
-              onCycleComplete={(cycle) => setVisualizationCycles(cycle)}
-            />
-          ) : actualRunningPracticeId === "cymatics" ? (
-            <CymaticsVisualization
-              frequency={selectedFrequency.hz}
-              n={selectedFrequency.n}
-              m={selectedFrequency.m}
-              fadeInDuration={fadeInDuration}
-              displayDuration={displayDuration}
-              fadeOutDuration={fadeOutDuration}
-              voidDuration={voidDuration}
-              driftEnabled={driftEnabled}
-              audioEnabled={audioEnabled}
-              onCycleComplete={(cycle) => setVisualizationCycles(cycle)}
-            />
-          ) : actualRunningPracticeId === "breath" ? (
-          <div
-            className="w-full h-full flex flex-col"
-            style={{
-              overflow: isBreathRunningSession ? "hidden" : "visible",
-              minHeight: 0,
-              flex: "1 1 auto",
-              minWidth: 0,
-            }}
-          >
-              <div
-                style={{
-                  flex: "0 0 auto",
-                  minHeight: 0,
-                  paddingTop: "env(safe-area-inset-top)",
-                }}
-              />
-
-              <div
-                style={{
-                  flex: "1 1 auto",
-                  minHeight: 0,
-                  width: "100%",
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                }}
-              >
-                {breathSubmode === 'stillness' ? (
-                  <StillnessRingSession
-                    isRunning={isRunning}
-                    isPaused={isSessionPaused}
-                    sessionStartTime={sessionStartTime}
-                    totalDurationSec={duration * 60}
-                    config={stillnessConfig}
-                    ringMode={currentRingPreset.id}
-                    pendingFinish={pendingNaturalFinishMode === 'stillness'}
-                    onPendingBoundaryComplete={handleStillnessBoundaryComplete}
-                  />
-                ) : shouldRenderRingCanvas ? (
-                  <BreathingRing
-                    breathPattern={breathingPatternForRing}
-                    onTap={handleAccuracyTap}
-                    onCycleComplete={handleBreathCycleComplete}
-                    startTime={sessionStartTime}
-                    practiceActive={isRunning}
-                    onUnmount={handleBreathingRingUnmount}
-                    ringMode={currentRingPreset.id}
-                    totalSessionDurationSec={duration}
-                    guidanceAudioActive={isGuidanceAudioActive}
-                  />
-                ) : null}
-              </div>
-
-              <div
-                style={{
-                  flex: "0 0 auto",
-                  minHeight: 0,
-                  display: "flex",
-                  flexDirection: "column",
-                  alignItems: "center",
-                  justifyContent: "flex-end",
-                  gap: "8px",
-                  paddingBottom: "env(safe-area-inset-bottom)",
-                }}
-              >
-                {tempoSessionActive && breathSubmode !== 'stillness' && (
-                  <div style={{ width: '100%', maxWidth: '320px' }}>
-                    <TempoSyncSessionPanel />
-                  </div>
-                )}
-                {pendingCycleFinish && (
-                  <div
-                    className="type-caption text-center"
-                    style={{ color: 'var(--text-muted)', maxWidth: '320px' }}
-                  >
-                    Finishing the current breath cycle...
-                  </div>
-                )}
-                <SessionControls
-                  // Breath pattern + timer are rendered inside the BreathingRing plates.
-                  isBreathPractice={false}
-                  breathingPatternText={breathingPatternText}
-                  showFeedback={showFeedback}
-                  lastSignedErrorMs={lastSignedErrorMs}
-                  feedbackColor={feedbackColor}
-                  feedbackShadow={feedbackShadow}
-                  feedbackText={feedbackText}
-                  onStop={handleStop}
-                  buttonBg={buttonBg}
-                  radialGlow={radialGlow}
-                  buttonShadow={buttonShadow}
-                  timeLeftText={timeLeftText}
-                  showBreathCount={showBreathCountUi}
-                  breathCount={breathCount}
-                />
-              </div>
-            </div>
-          ) : (
-            <div className="flex flex-col items-center justify-center animate-fade-in-up">
-              <div
-                className="type-h2 mb-4 text-center"
-                style={{
-                  color: "var(--accent-color)",
-                  textShadow: "0 0 20px var(--accent-30)"
-                }}
-              >
-                {soundType}
-              </div>
-              <div className="w-32 h-32 rounded-full border border-[var(--accent-20)] flex items-center justify-center relative">
-                <div className="absolute inset-0 rounded-full animate-pulse opacity-20 bg-[var(--accent-color)] blur-xl"></div>
-                <div className="text-4xl opacity-80">✦</div>
-              </div>
-
-              <div className="mt-6 w-64">
-                <div
-                  className="type-label text-[8px] mb-2 flex items-center justify-between"
-                  style={{
-                    color: "var(--text-muted)",
-                  }}
-                >
-                  <span>Volume</span>
-                  <span style={{ color: 'var(--accent-color)' }}>{Math.round(soundVolume * 100)}%</span>
-                </div>
-                <input
-                  type="range"
-                  min="0"
-                  max="1"
-                  step="0.05"
-                  value={soundVolume}
-                  onChange={(e) => setSoundVolume(Number(e.target.value))}
-                  className="w-full sound-volume-slider"
-                />
-              </div>
-            </div>
-          )}
-        </div>
-
-        {!isBreathRunningSession && <SessionControls
-          // Breath pattern + timer are rendered inside the BreathingRing plates.
-          isBreathPractice={false}
-          breathingPatternText={breathingPatternText}
-          showFeedback={showFeedback}
-          lastSignedErrorMs={lastSignedErrorMs}
-          feedbackColor={feedbackColor}
-          feedbackShadow={feedbackShadow}
-          feedbackText={feedbackText}
-          onStop={handleStop}
-          buttonBg={buttonBg}
-          radialGlow={radialGlow}
-          buttonShadow={buttonShadow}
-          timeLeftText={timeLeftText}
-          showBreathCount={showBreathCountUi}
-          breathCount={breathCount}
-        />}
-
-        <style>{`
-          @keyframes fade-in-up {
-            0% { opacity: 0; transform: translateY(5px); }
-            100% { opacity: 1; transform: translateY(0); }
-          }
-          .animate-fade-in-up {
-            animation: fade-in-up 0.2s ease-out forwards;
-          }
-          .sound-volume-slider::-webkit-slider-thumb {
-            appearance: none;
-            width: 16px;
-            height: 16px;
-            border-radius: 50%;
-            background: var(--accent-color);
-            cursor: pointer;
-            box-shadow: 0 0 8px var(--accent-50);
-          }
-          .sound-volume-slider::-webkit-slider-runnable-track {
-            height: 4px;
-            border-radius: 2px;
-            background: rgba(255, 255, 255, 0.2);
-          }
-          .sound-volume-slider::-moz-range-thumb {
-            width: 16px;
-            height: 16px;
-            border-radius: 50%;
-            background: var(--accent-color);
-            cursor: pointer;
-            border: none;
-            box-shadow: 0 0 8px var(--accent-50);
-          }
-          .sound-volume-slider::-moz-range-track {
-            background: transparent;
-            border: none;
-          }
-        `}</style>
-        </div>
-      </section>
+      <PracticeVisualizationHost
+        isBreathRunningSession={isBreathRunningSession}
+        breathViewportRootRef={breathViewportRootRef}
+        breathViewportHeightPx={breathViewportHeightPx}
+        breathViewportReady={breathViewportReady}
+        activeCircuitId={activeCircuitId}
+        circuitConfig={circuitConfig}
+        isLight={isLight}
+        circuitExerciseIndex={circuitExerciseIndex}
+        pathLaunchInstructionVideo={pathLaunchInstructionVideo}
+        actualRunningPracticeId={actualRunningPracticeId}
+        geometry={geometry}
+        fadeInDuration={fadeInDuration}
+        displayDuration={displayDuration}
+        fadeOutDuration={fadeOutDuration}
+        voidDuration={voidDuration}
+        audioEnabled={audioEnabled}
+        setVisualizationCycles={setVisualizationCycles}
+        selectedFrequency={selectedFrequency}
+        driftEnabled={driftEnabled}
+        breathSubmode={breathSubmode}
+        isRunning={isRunning}
+        isSessionPaused={isSessionPaused}
+        sessionStartTime={sessionStartTime}
+        duration={duration}
+        stillnessConfig={stillnessConfig}
+        currentRingPreset={currentRingPreset}
+        pendingNaturalFinishMode={pendingNaturalFinishMode}
+        handleStillnessBoundaryComplete={handleStillnessBoundaryComplete}
+        shouldRenderRingCanvas={shouldRenderRingCanvas}
+        breathingPatternForRing={breathingPatternForRing}
+        handleAccuracyTap={handleAccuracyTap}
+        handleBreathCycleComplete={handleBreathCycleComplete}
+        handleBreathingRingUnmount={handleBreathingRingUnmount}
+        isGuidanceAudioActive={isGuidanceAudioActive}
+        tempoSessionActive={tempoSessionActive}
+        pendingCycleFinish={pendingCycleFinish}
+        breathingPatternText={breathingPatternText}
+        showFeedback={showFeedback}
+        lastSignedErrorMs={lastSignedErrorMs}
+        feedbackColor={feedbackColor}
+        feedbackShadow={feedbackShadow}
+        feedbackText={feedbackText}
+        handleStop={handleStop}
+        buttonBg={buttonBg}
+        radialGlow={radialGlow}
+        buttonShadow={buttonShadow}
+        timeLeftText={timeLeftText}
+        showBreathCountUi={showBreathCountUi}
+        breathCount={breathCount}
+        soundType={soundType}
+        soundVolume={soundVolume}
+        setSoundVolume={setSoundVolume}
+      />
     );
   })() : null;
 
@@ -3029,468 +2758,70 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, onNav
     isEmbedded: true
   };
   return (
-    <>
-      <GuidanceAudioController />
-      <BreathBenchmark isOpen={showBreathBenchmark} onClose={handleBenchmarkClose} />
-      <div
-        style={{
-          position: 'fixed',
-          top: 10,
-          right: 10,
-          zIndex: 10060,
-          display: 'flex',
-          alignItems: 'center',
-          gap: 8,
-          padding: '8px 10px',
-          borderRadius: 999,
-          border: '1px solid rgba(255,255,255,0.22)',
-          background: 'rgba(8, 10, 18, 0.84)',
-          color: 'rgba(255,255,255,0.96)',
-          boxShadow: '0 10px 30px rgba(0,0,0,0.32)',
-          backdropFilter: 'blur(10px)',
-          WebkitBackdropFilter: 'blur(10px)',
-        }}
-      >
-        <span
-          className="type-label"
-          style={{ fontSize: 10, letterSpacing: '0.08em', textTransform: 'uppercase' }}
-        >
-          GUIDANCE AUDIO: {String(guidanceStatus || 'idle').toUpperCase()}
-        </span>
-        {isRunning && (
-          <button
-            type="button"
-            onClick={handleTogglePause}
-            className="type-label"
-            style={{
-              padding: '4px 8px',
-              borderRadius: 999,
-              border: '1px solid rgba(255,255,255,0.16)',
-              background: 'rgba(255,255,255,0.08)',
-              color: 'rgba(255,255,255,0.96)',
-              fontSize: 10,
-              letterSpacing: '0.08em',
-              textTransform: 'uppercase',
-            }}
-          >
-            {isSessionPaused ? 'Resume' : 'Pause'}
-          </button>
-        )}
-      </div>
-      {isRunning && (
-        <div
-          style={{
-            position: 'fixed',
-            top: 52,
-            right: 10,
-            zIndex: 10059,
-            fontSize: '12px',
-            color: 'rgba(255, 255, 255, 0.5)',
-            marginBottom: '8px',
-            fontFamily: 'monospace',
-            padding: '4px 8px',
-            borderRadius: 8,
-            background: 'rgba(8, 10, 18, 0.42)',
-            maxWidth: 'min(92vw, 420px)',
-            wordBreak: 'break-all',
-          }}
-        >
-          Audio: {guidanceSource || 'NULL'}
-        </div>
-      )}
-      {!isActiveBreathSession && (
-        <DevCompleteNowOverlay
-          isRunning={isRunning}
-          onCompleteNow={() => handleStop({ completed: true })}
-        />
-      )}
-      {isRunning && guidanceFallbackSubtitle && (
-        <div
-          aria-live="polite"
-          style={{
-            position: 'fixed',
-            left: '50%',
-            bottom: 'max(88px, calc(env(safe-area-inset-bottom) + 72px))',
-            transform: 'translateX(-50%)',
-            zIndex: 10058,
-            width: 'min(92vw, 460px)',
-            padding: '10px 14px',
-            borderRadius: 16,
-            border: '1px solid rgba(255,255,255,0.18)',
-            background: 'rgba(8, 10, 18, 0.84)',
-            color: 'rgba(255,255,255,0.94)',
-            boxShadow: '0 16px 40px rgba(0,0,0,0.32)',
-            backdropFilter: 'blur(10px)',
-            WebkitBackdropFilter: 'blur(10px)',
-            textAlign: 'center',
-          }}
-        >
-          <div className="type-caption" style={{ fontSize: 12, lineHeight: 1.5 }}>
-            {guidanceFallbackSubtitle}
-          </div>
-        </div>
-      )}
-      {sessionView}
-      {summaryView}
-      {isPresetSwitcherOpen && isBreathPractice && (
-        <div
-          style={{
-            position: 'fixed',
-            top: '20px',
-            left: '50%',
-            transform: 'translateX(-50%)',
-            zIndex: PRESET_SWITCHER_Z_INDEX,
-            minWidth: '260px',
-            maxWidth: 'min(94vw, 420px)',
-            padding: '12px 14px',
-            borderRadius: '12px',
-            border: '1px solid rgba(255,255,255,0.18)',
-            background: 'rgba(8, 10, 18, 0.86)',
-            color: 'rgba(255,255,255,0.95)',
-            textAlign: 'center',
-            boxShadow: '0 14px 50px rgba(0,0,0,0.45)',
-            backdropFilter: 'blur(8px)',
-            WebkitBackdropFilter: 'blur(8px)',
-            pointerEvents: 'none',
-          }}
-        >
-          <div className="type-caption text-[10px]" style={{ opacity: 0.72 }}>
-            Ring Presets
-          </div>
-          <div className="type-label mt-1" style={{ color: 'var(--accent-color)' }}>
-            {currentRingPreset.label}
-          </div>
-          <div
-            className="type-caption text-[10px] mt-2"
-            style={{ opacity: 0.7, display: 'flex', justifyContent: 'center', gap: '8px', flexWrap: 'wrap' }}
-          >
-            {BREATH_RING_PRESETS.map((preset, index) => (
-              <span
-                key={preset.id}
-                style={{
-                  opacity: index === ringPresetIndex ? 1 : 0.5,
-                  color: index === ringPresetIndex ? 'var(--accent-color)' : 'rgba(255,255,255,0.75)',
-                }}
-              >
-                {preset.label}
-              </span>
-            ))}
-          </div>
-          <div className="type-caption text-[10px] mt-2" style={{ opacity: 0.55 }}>
-            F2 open/close | ← → change | Esc close
-          </div>
-        </div>
-      )}
-      
-      {/* Countdown Overlay */}
-      {countdownValue !== null && (
-        <div
-          style={{
-            position: 'fixed',
-            inset: 0,
-            zIndex: 9999,
-            background: 'rgba(0, 0, 0, 0.85)',
-            display: 'flex',
-            flexDirection: 'column',
-            alignItems: 'center',
-            justifyContent: 'center',
-            backdropFilter: 'blur(8px)',
-          }}
-        >
-          <div
-            className="type-display text-[120px] font-bold"
-            style={{
-              color: 'var(--accent-color)',
-              textShadow: '0 0 40px var(--accent-color), 0 0 80px var(--accent-color)',
-              animation: 'countdown-pulse 1s ease-in-out',
-            }}
-          >
-            {countdownValue}
-          </div>
-          <div
-            className="type-label text-[14px] mt-8"
-            style={{
-              color: 'rgba(255, 255, 255, 0.6)',
-            }}
-          >
-            Get Ready...
-          </div>
-          {preDelayInstructionLines && (
-            <div
-              className="type-body text-center mt-6"
-              style={{
-                width: 'min(440px, calc(100vw - 48px))',
-                display: 'flex',
-                flexDirection: 'column',
-                gap: '10px',
-                color: 'rgba(255, 255, 255, 0.82)',
-                fontSize: 'clamp(15px, 3.8vw, 17px)',
-                lineHeight: 1.45,
-                textWrap: 'balance',
-              }}
-            >
-              {preDelayInstructionLines.map((line) => (
-                <div
-                  key={line}
-                  style={{
-                    textShadow: '0 2px 12px rgba(0, 0, 0, 0.45)',
-                  }}
-                >
-                  {line}
-                </div>
-              ))}
-            </div>
-          )}
-          {/* Next practice info for circuit transitions */}
-          {activeCircuitId && circuitConfig && circuitExerciseIndex < circuitConfig.exercises.length && (
-            <div
-              className="type-body text-[16px] text-center mt-6"
-              style={{
-                color: 'rgba(255, 255, 255, 0.8)',
-              }}
-            >
-              <div className="type-caption text-[12px] mb-2" style={{ opacity: 0.6 }}>Next:</div>
-              <div>
-                {circuitConfig.exercises[circuitExerciseIndex].exercise.name}
-                {' '}({circuitConfig.exercises[circuitExerciseIndex].duration}m)
-              </div>
-            </div>
-          )}
-        </div>
-      )}
-
-      {/* Circuit Validation Error Modal */}
-      {circuitValidationError && (
-        <div
-          style={{
-            position: 'fixed',
-            inset: 0,
-            zIndex: 9998,
-            background: 'rgba(0, 0, 0, 0.7)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            backdropFilter: 'blur(4px)',
-          }}
-          onClick={() => setCircuitValidationError(null)}
-        >
-          <div
-            className="type-body"
-            style={{
-              background: 'rgba(20, 20, 30, 0.95)',
-              border: '1px solid rgba(200, 100, 100, 0.4)',
-              borderRadius: '12px',
-              padding: '32px',
-              maxWidth: '420px',
-              color: 'rgba(255, 255, 255, 0.9)',
-              boxShadow: '0 20px 60px rgba(0, 0, 0, 0.8)',
-            }}
-            onClick={(e) => e.stopPropagation()}
-          >
-            <div
-              className="type-h3 mb-4"
-              style={{
-                color: 'rgba(255, 100, 100, 0.9)',
-              }}
-            >
-              Circuit Configuration Error
-            </div>
-            <div
-              className="type-body text-[14px] mb-6"
-              style={{
-                color: 'rgba(255, 255, 255, 0.8)',
-              }}
-            >
-              {circuitValidationError}
-            </div>
-            <button
-              onClick={() => setCircuitValidationError(null)}
-              className="type-body text-[14px] font-semibold"
-              style={{
-                width: '100%',
-                padding: '12px 16px',
-                background: 'rgba(100, 150, 200, 0.3)',
-                border: '1px solid rgba(100, 150, 200, 0.5)',
-                borderRadius: '8px',
-                color: 'rgba(255, 255, 255, 0.9)',
-                cursor: 'pointer',
-                transition: 'all 0.2s ease',
-              }}
-              onMouseEnter={(e) => {
-                e.target.style.background = 'rgba(100, 150, 200, 0.5)';
-                e.target.style.boxShadow = '0 0 20px rgba(100, 150, 200, 0.3)';
-              }}
-              onMouseLeave={(e) => {
-                e.target.style.background = 'rgba(100, 150, 200, 0.3)';
-                e.target.style.boxShadow = 'none';
-              }}
-            >
-              Back to Circuit Config
-            </button>
-          </div>
-        </div>
-      )}
-
-      <PracticeSectionShell
-        className="practice-section-container w-full flex flex-col items-center justify-start"
-        style={{ paddingTop: '8px', paddingBottom: '16px', position: 'relative', display: showSummaryModal || isRunning || _isStarting || pendingPathAutoStart ? 'none' : 'flex' }}
-      >
-        <div className="relative z-[1] w-full flex flex-col items-center justify-start">
-        {/* Sub-Mode Toggle Buttons (above selector) */}
-        {(() => {
-          const practice = getPracticeConfig(practiceId);
-          const hasSubModes = practice?.subModes && Object.keys(practice.subModes).length > 0;
-
-          // Handle breath practice separately (uses breathSubmode instead of subModes)
-          if (practiceId === 'breath') {
-            const modes = [
-              { id: 'breath', label: 'Breath' },
-              { id: 'stillness', label: 'Focus Meditation' }
-            ];
-
-            return (
-              <div
-                className="flex items-center justify-center w-full"
-                style={{
-                  marginTop: '16px',
-                  marginBottom: '16px',
-                  gap: '64px',
-                }}
-              >
-                {modes.map((mode) => (
-                  <GlassIconButton
-                    key={mode.id}
-                    label={mode.label}
-                    iconName={mode.id}
-                    onClick={() => setBreathSubmode(mode.id)}
-                    selected={breathSubmode === mode.id}
-                    data-ui="practice-button"
-                    data-practice-type={mode.id}
-                    data-practice-id={`practice-submode:${mode.id}`}
-                  />
-                ))}
-              </div>
-            );
-          }
-
-          // Handle practices with subModes
-          if (!hasSubModes) return null;
-
-          const activeMode = practiceParams[practiceId]?.activeMode || practice.defaultSubMode;
-          const buttonCount = Object.keys(practice.subModes).length;
-          const practiceTypeForFx = practiceId === 'perception' ? 'visual' : (practiceId === 'resonance' ? 'sound' : practiceId);
-
-          return (
-            <div
-              className="flex items-center justify-center w-full"
-              {...(practiceId === 'awareness' ? { 'data-tutorial': 'awareness-mode-selector' } : {})}
-              style={{
-                marginTop: '16px',
-                marginBottom: '16px',
-                gap: buttonCount === 3 ? '48px' : '64px',
-              }}
-            >
-              {Object.entries(practice.subModes).map(([modeKey, modeConfig]) => {
-                const isActive = activeMode === modeKey;
-                const iconName = SUB_MODE_ICON_MAP[modeKey] || SUB_MODE_ICON_MAP[modeConfig.id] || 'cognitive';
-                const utcSubmodeId = practiceId === 'awareness'
-                  ? (modeKey === 'insight'
-                    ? 'practice:submode:cognitive'
-                    : (modeKey === 'bodyscan'
-                      ? 'practice:submode:somatic'
-                      : (modeKey === 'feeling' ? 'practice:submode:emotion' : null)))
-                  : null;
-
-                return (
-                  <GlassIconButton
-                    key={modeKey}
-                    label={modeConfig.label}
-                    iconName={iconName}
-                    onClick={() => updateParams(practiceId, { activeMode: modeKey })}
-                    selected={isActive}
-                    data-ui="practice-button"
-                    data-practice-type={practiceTypeForFx}
-                    data-practice-id={`practice-submode:${practiceId}:${modeKey}`}
-                    {...(utcSubmodeId ? {
-                      'data-ui-target': 'true',
-                      'data-ui-scope': 'role',
-                      'data-ui-role-group': 'practice',
-                      'data-ui-id': utcSubmodeId,
-                    } : {})}
-                  />
-                );
-              })}
-            </div>
-          );
-        })()}
-
-          <PracticeHeader
-            isSanctuary={isSanctuary}
-            practiceId={practiceId}
-            onSelectPractice={handleSelectPractice}
-            selector={(
-              <PracticeSelector
-                selectedId={practiceId}
-                onSelect={handleSelectPractice}
-                tokens={uiTokens}
-                allowedPracticeIds={allowedPracticeIds}
-              />
-            )}
-          />
-
-        {pathLaunchInstructionVideo && (
-          <div className="w-full flex justify-center px-4 pb-4">
-            <InstructionVideoPanel
-              video={pathLaunchInstructionVideo}
-              className="max-w-[720px]"
-            />
-          </div>
-        )}
-
-        {/* Bottom Layer: Dynamic Options Card */}
-        <PracticeOptionsCard
-          practiceId={practiceId}
-          duration={duration}
-          onDurationChange={setDuration}
-          onStart={handleStart}
-          onQuickStart={handleQuickStart}
+    <PracticeSectionMainAssembly
+      guidanceStatus={guidanceStatus}
+      isRunning={isRunning}
+      handleTogglePause={handleTogglePause}
+      isSessionPaused={isSessionPaused}
+      guidanceSource={guidanceSource}
+      isActiveBreathSession={isActiveBreathSession}
+      devCompleteNowOverlay={DevCompleteNowOverlay}
+      handleStop={handleStop}
+      guidanceFallbackSubtitle={guidanceFallbackSubtitle}
+      sessionView={sessionView}
+      summaryView={summaryView}
+      isPresetSwitcherOpen={isPresetSwitcherOpen}
+      isBreathPractice={isBreathPractice}
+      presetSwitcherZIndex={PRESET_SWITCHER_Z_INDEX}
+      currentRingPreset={currentRingPreset}
+      ringPresetIndex={ringPresetIndex}
+      countdownValue={countdownValue}
+      preDelayInstructionLines={preDelayInstructionLines}
+      activeCircuitId={activeCircuitId}
+      circuitConfig={circuitConfig}
+      circuitExerciseIndex={circuitExerciseIndex}
+      circuitValidationError={circuitValidationError}
+      setCircuitValidationError={setCircuitValidationError}
+      showSummaryModal={showSummaryModal}
+      isStarting={_isStarting}
+      pendingPathAutoStart={pendingPathAutoStart}
+      getPracticeConfig={getPracticeConfig}
+      practiceId={practiceId}
+      practiceParams={practiceParams}
+      updateParams={updateParams}
+      breathSubmode={breathSubmode}
+      setBreathSubmode={setBreathSubmode}
+      isSanctuary={isSanctuary}
+      handleSelectPractice={handleSelectPractice}
+      practiceSelector={(
+        <PracticeSelector
+          selectedId={practiceId}
+          onSelect={handleSelectPractice}
           tokens={uiTokens}
-          params={practiceParams}
-          setters={configProps}
-          hasExpandedOnce={hasExpandedOnce}
-          setHasExpandedOnce={setHasExpandedOnce}
-          onOpenTrajectory={openTrajectoryReport}
-          isRunning={isRunning}
-          tempoSyncEnabled={tempoSyncEnabled}
-          tempoPhaseDuration={tempoPhaseDuration}
-          tempoBeatsPerPhase={tempoBeatsPerPhase}
-          onRunBenchmark={handleRunBenchmark}
-          onDisableBenchmark={() => setShowBreathBenchmark(false)}
-          breathSubmode={breathSubmode}
-          onBreathSubmodeChange={setBreathSubmode}
-          getPracticeConfig={getPracticeConfig}
+          allowedPracticeIds={allowedPracticeIds}
         />
-
-        <style>{`
-          .custom-scrollbar::-webkit-scrollbar { width: 4px; }
-          .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
-          .custom-scrollbar::-webkit-scrollbar-thumb { background: ${isLight ? 'rgba(60,50,35,0.1)' : 'rgba(255,255,255,0.1)'}; border-radius: 2px; }
-          @keyframes countdown-pulse {
-            0% { transform: scale(0.8); opacity: 0; }
-            50% { transform: scale(1.1); opacity: 1; }
-            100% { transform: scale(1); opacity: 1; }
-          }
-        `}</style>
-        </div>
-      </PracticeSectionShell>
-      
-      {/* Evening Feedback Modal */}
-      <FeedbackModal
-        isOpen={showFeedbackModal}
-        onClose={() => setShowFeedbackModal(false)}
-        onSubmit={() => setShowFeedbackModal(false)}
-      />
-    </>
+      )}
+      pathLaunchInstructionVideo={pathLaunchInstructionVideo}
+      duration={duration}
+      setDuration={setDuration}
+      handleStart={handleStart}
+      handleQuickStart={handleQuickStart}
+      uiTokens={uiTokens}
+      configProps={configProps}
+      hasExpandedOnce={hasExpandedOnce}
+      setHasExpandedOnce={setHasExpandedOnce}
+      openTrajectoryReport={openTrajectoryReport}
+      tempoSyncEnabled={tempoSyncEnabled}
+      tempoPhaseDuration={tempoPhaseDuration}
+      tempoBeatsPerPhase={tempoBeatsPerPhase}
+      handleRunBenchmark={handleRunBenchmark}
+      setShowBreathBenchmark={setShowBreathBenchmark}
+      isLight={isLight}
+      showBreathBenchmark={showBreathBenchmark}
+      handleBenchmarkClose={handleBenchmarkClose}
+      showFeedbackModal={showFeedbackModal}
+      setShowFeedbackModal={setShowFeedbackModal}
+    />
   );
 }
 

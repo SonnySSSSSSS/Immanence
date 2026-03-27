@@ -15,7 +15,7 @@
   animation: sectionEnter 300ms ease-out;
 }
 
-@keyframes navigationSectionFadeIn {
+@keyframes sectionFadeIn {
   0% {
     opacity: 0;
     transform: translateY(8px) scale(0.995);
@@ -26,68 +26,12 @@
   }
 }
 
-.navigation-section-fade-in {
-  animation: navigationSectionFadeIn 220ms ease-out;
-}
-
-@keyframes homeHubSectionFadeIn {
-  0% {
-    opacity: 0;
-    transform: translateY(8px) scale(0.995);
-  }
-  100% {
-    opacity: 1;
-    transform: translateY(0) scale(1);
-  }
-}
-
-.homehub-section-fade-in {
-  animation: homeHubSectionFadeIn 220ms ease-out;
-}
-
-@keyframes practiceSectionFadeIn {
-  0% {
-    opacity: 0;
-    transform: translateY(8px) scale(0.995);
-  }
-  100% {
-    opacity: 1;
-    transform: translateY(0) scale(1);
-  }
-}
-
-.practice-section-fade-in {
-  animation: practiceSectionFadeIn 220ms ease-out;
-}
-
-@keyframes wisdomSectionFadeIn {
-  0% {
-    opacity: 0;
-    transform: translateY(8px) scale(0.995);
-  }
-  100% {
-    opacity: 1;
-    transform: translateY(0) scale(1);
-  }
-}
-
-.wisdom-section-fade-in {
-  animation: wisdomSectionFadeIn 220ms ease-out;
-}
-
-@keyframes applicationSectionFadeIn {
-  0% {
-    opacity: 0;
-    transform: translateY(8px) scale(0.995);
-  }
-  100% {
-    opacity: 1;
-    transform: translateY(0) scale(1);
-  }
-}
-
+.navigation-section-fade-in,
+.homehub-section-fade-in,
+.practice-section-fade-in,
+.wisdom-section-fade-in,
 .application-section-fade-in {
-  animation: applicationSectionFadeIn 220ms ease-out;
+  animation: sectionFadeIn 220ms ease-out;
 }
 
 /* Ripple-out press feedback — adapted from Hover.css hvr-ripple-out */
