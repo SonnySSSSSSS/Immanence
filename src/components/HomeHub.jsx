@@ -63,49 +63,40 @@ const SANCTUARY_RAIL_STYLE = {
   position: 'relative',
 };
 
-// PROBE:avatar-hmr-host:START
-const HOME_HUB_HMR_HOST_PROBE_ENABLED = import.meta.env.DEV && Boolean(import.meta.hot);
+const loadAvatarProbeModule = import.meta.env.DEV && import.meta.hot
+  ? (() => {
+      let probeModulePromise = null;
+      return () => {
+        probeModulePromise ??= import('../dev/avatarHmrProbes.js');
+        return probeModulePromise;
+      };
+    })()
+  : null;
 
-function getHomeHubHmrHostProbeContext() {
-  if (!HOME_HUB_HMR_HOST_PROBE_ENABLED || typeof window === 'undefined') return null;
-  const probe = window.__avatarHmrHostProbe__ ?? {
-    eventSeq: 0,
-    appMountSeq: 0,
-    sectionViewMountSeq: 0,
-    homeHubMountSeq: 0,
-    avatarV3MountSeq: 0,
-  };
-  probe.homeHubMountSeq = probe.homeHubMountSeq ?? 0;
-  probe.avatarV3MountSeq = probe.avatarV3MountSeq ?? 0;
-  window.__avatarHmrHostProbe__ = probe;
-  return probe;
+function withAvatarProbe(callback) {
+  if (!loadAvatarProbeModule) return;
+  loadAvatarProbeModule()
+    .then((module) => callback(module))
+    .catch(() => {});
 }
 
-function logHomeHubHmrHostProbe(event, detail = {}) {
-  const probe = getHomeHubHmrHostProbeContext();
-  if (!probe) return;
-  probe.eventSeq += 1;
-  console.info('[PROBE:avatar-hmr-host]', {
-    seq: probe.eventSeq,
-    source: 'HomeHub',
-    event,
-    timestamp: new Date().toISOString(),
-    detail,
+function logHomeHubHostProbe(event, detail = {}) {
+  withAvatarProbe((module) => {
+    module.logAvatarHmrProbe('host', 'HomeHub', event, detail);
   });
 }
 
-if (HOME_HUB_HMR_HOST_PROBE_ENABLED) {
-  logHomeHubHmrHostProbe('module-eval', {
+withAvatarProbe((module) => {
+  module.logAvatarHmrProbe('host', 'HomeHub', 'module-eval', {
     hasHotData: Boolean(import.meta.hot?.data),
   });
-}
+});
 
 // PROBE:FIRST_LOGIN_HOMEHUB_AUDIT:START
 markFirstLoginAudit('homehub:module-eval', {
   source: 'HomeHub',
 });
 // PROBE:FIRST_LOGIN_HOMEHUB_AUDIT:END
-// PROBE:avatar-hmr-host:END
 
 const sanitizeModeTileBackgroundImage = (bgUrl) => {
   const raw = typeof bgUrl === 'string' ? bgUrl.trim() : '';
@@ -276,16 +267,14 @@ function HomeHub({ onSelectSection, activeSection = null, currentStage, previewP
 
   useEffect(() => {
     if (homeHubProbeIdRef.current == null) {
-      if (HOME_HUB_HMR_HOST_PROBE_ENABLED) {
-        const probe = getHomeHubHmrHostProbeContext();
-        probe.homeHubMountSeq += 1;
-        homeHubProbeIdRef.current = probe.homeHubMountSeq;
-      } else {
-        homeHubProbeIdRef.current = 'host-probe-disabled';
-      }
+      homeHubProbeIdRef.current = 'host-probe-pending';
+      withAvatarProbe((module) => {
+        const nextId = module.incrementAvatarHmrProbeCounter('host', 'homeHubMountSeq');
+        homeHubProbeIdRef.current = nextId ?? 'host-probe-disabled';
+      });
     }
 
-    logHomeHubHmrHostProbe('mount', {
+    logHomeHubHostProbe('mount', {
       probeId: homeHubProbeIdRef.current,
       activeSection,
       currentStage,
@@ -305,7 +294,7 @@ function HomeHub({ onSelectSection, activeSection = null, currentStage, previewP
     // PROBE:FIRST_LOGIN_HOMEHUB_AUDIT:END
 
     return () => {
-      logHomeHubHmrHostProbe('unmount', {
+      logHomeHubHostProbe('unmount', {
         probeId: homeHubProbeIdRef.current,
         activeSection,
       });
@@ -380,7 +369,7 @@ function HomeHub({ onSelectSection, activeSection = null, currentStage, previewP
     handleSelectSection('practice');
   };
 
-  logHomeHubHmrHostProbe('render-avatar-host', {
+  logHomeHubHostProbe('render-avatar-host', {
     probeId: homeHubProbeIdRef.current,
     activeSection,
     currentStage,

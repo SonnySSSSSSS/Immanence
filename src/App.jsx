@@ -53,39 +53,34 @@ const ENABLE_WISDOM_SKELETON_FALLBACK = true;
 const ENABLE_APPLICATION_SKELETON_FALLBACK = true;
 const logger = createLogger("App");
 
-// PROBE:avatar-hmr-host:START
-const AVATAR_HMR_HOST_PROBE_ENABLED = import.meta.env.DEV && Boolean(import.meta.hot);
+const loadAvatarProbeModule = import.meta.env.DEV && import.meta.hot
+  ? (() => {
+      let probeModulePromise = null;
+      return () => {
+        probeModulePromise ??= import("./dev/avatarHmrProbes.js");
+        return probeModulePromise;
+      };
+    })()
+  : null;
 
-function getAvatarHmrHostProbeContext() {
-  if (!AVATAR_HMR_HOST_PROBE_ENABLED || typeof window === "undefined") return null;
-  const probe = window.__avatarHmrHostProbe__ ?? {
-    eventSeq: 0,
-    appMountSeq: 0,
-    sectionViewMountSeq: 0,
-  };
-  window.__avatarHmrHostProbe__ = probe;
-  return probe;
+function withAvatarProbe(callback) {
+  if (!loadAvatarProbeModule) return;
+  loadAvatarProbeModule()
+    .then((module) => callback(module))
+    .catch(() => {});
 }
 
-function logAvatarHmrHostProbe(source, event, detail = {}) {
-  const probe = getAvatarHmrHostProbeContext();
-  if (!probe) return;
-  probe.eventSeq += 1;
-  console.info("[PROBE:avatar-hmr-host]", {
-    seq: probe.eventSeq,
-    source,
-    event,
-    timestamp: new Date().toISOString(),
-    detail,
+function logAvatarHostProbe(source, event, detail = {}) {
+  withAvatarProbe((module) => {
+    module.logAvatarHmrProbe("host", source, event, detail);
   });
 }
 
-if (AVATAR_HMR_HOST_PROBE_ENABLED) {
-  logAvatarHmrHostProbe("App", "module-eval", {
+withAvatarProbe((module) => {
+  module.logAvatarHmrProbe("host", "App", "module-eval", {
     hasHotData: Boolean(import.meta.hot?.data),
   });
-}
-// PROBE:avatar-hmr-host:END
+});
 
 function SectionView({ section, isPracticing, onPracticingChange, onBreathStateChange, onStageChange, currentStage, previewPath, previewShowCore, previewAttention, showFxGallery, onNavigate, onOpenHardwareGuide, onOpenPhotic, hideCards, isActiveBreathSession = false, isBreathLayoutLocked = false }) {
   // NOTE: Previously had a special vipassana branch that rendered PracticeSection without wrapper divs.
@@ -98,21 +93,19 @@ function SectionView({ section, isPracticing, onPracticingChange, onBreathStateC
 
   useEffect(() => {
     if (sectionViewProbeIdRef.current == null) {
-      if (AVATAR_HMR_HOST_PROBE_ENABLED) {
-        const probe = getAvatarHmrHostProbeContext();
-        probe.sectionViewMountSeq += 1;
-        sectionViewProbeIdRef.current = probe.sectionViewMountSeq;
-      } else {
-        sectionViewProbeIdRef.current = "host-probe-disabled";
-      }
+      sectionViewProbeIdRef.current = "host-probe-pending";
+      withAvatarProbe((module) => {
+        const nextId = module.incrementAvatarHmrProbeCounter("host", "sectionViewMountSeq");
+        sectionViewProbeIdRef.current = nextId ?? "host-probe-disabled";
+      });
     }
 
-    logAvatarHmrHostProbe("SectionView", "mount", {
+    logAvatarHostProbe("SectionView", "mount", {
       probeId: sectionViewProbeIdRef.current,
       section,
     });
     return () => {
-      logAvatarHmrHostProbe("SectionView", "unmount", {
+      logAvatarHostProbe("SectionView", "unmount", {
         probeId: sectionViewProbeIdRef.current,
         section,
       });
@@ -120,9 +113,9 @@ function SectionView({ section, isPracticing, onPracticingChange, onBreathStateC
   }, [section]);
 
   return (
-    <div className="w-full flex flex-col items-center section-enter" style={{ overflow: 'visible' }}>
+    <div className="w-full flex flex-col items-center" style={{ overflow: 'visible' }}>
       <div
-        className={`w-full relative z-10 ${section === "practice" && isBreathLayoutLocked ? 'px-0 transition-none' : 'px-4 transition-all duration-500'}`}
+        className={`w-full relative z-10 ${section === "practice" && isBreathLayoutLocked ? 'px-0 transition-none' : 'px-4 transition-[padding] duration-500'}`}
         style={{ overflow: section === "practice" && isBreathLayoutLocked ? 'hidden' : 'visible' }}
       >
         {section === "practice" && !hideCards && (
@@ -178,10 +171,7 @@ function SectionView({ section, isPracticing, onPracticingChange, onBreathStateC
   );
 }
 
-function HomeHubLoadingFallback() {
-  const colorScheme = useDisplayModeStore(s => s.colorScheme);
-  const hasLoggedRef = useRef(false);
-  const isLight = colorScheme === 'light';
+function useSkeletonStyles(isLight) {
   const panelStyle = {
     border: isLight ? '1px solid rgba(138, 111, 74, 0.18)' : '1px solid rgba(255,255,255,0.12)',
     background: isLight
@@ -197,6 +187,16 @@ function HomeHubLoadingFallback() {
       ? 'linear-gradient(90deg, rgba(153, 122, 84, 0.12), rgba(153, 122, 84, 0.24), rgba(153, 122, 84, 0.12))'
       : 'linear-gradient(90deg, rgba(155, 180, 218, 0.10), rgba(155, 180, 218, 0.22), rgba(155, 180, 218, 0.10))',
   };
+  const labelColor = isLight ? 'rgba(109, 82, 48, 0.64)' : 'rgba(205, 218, 238, 0.64)';
+  const titleColor = isLight ? 'rgba(58, 42, 25, 0.92)' : 'rgba(244, 247, 252, 0.94)';
+  return { panelStyle, shimmerStyle, labelColor, titleColor };
+}
+
+function HomeHubLoadingFallback() {
+  const colorScheme = useDisplayModeStore(s => s.colorScheme);
+  const hasLoggedRef = useRef(false);
+  const isLight = colorScheme === 'light';
+  const { panelStyle, shimmerStyle, labelColor, titleColor } = useSkeletonStyles(isLight);
 
   useEffect(() => {
     if (hasLoggedRef.current) return;
@@ -231,13 +231,13 @@ function HomeHubLoadingFallback() {
       <div className="rounded-[28px] px-5 py-6" style={panelStyle}>
         <div
           className="text-[11px] uppercase tracking-[0.28em]"
-          style={{ color: isLight ? 'rgba(109, 82, 48, 0.64)' : 'rgba(205, 218, 238, 0.64)' }}
+          style={{ color: labelColor }}
         >
           HomeHub
         </div>
         <div
           className="mt-2 text-[1rem] font-medium"
-          style={{ color: isLight ? 'rgba(58, 42, 25, 0.92)' : 'rgba(244, 247, 252, 0.94)' }}
+          style={{ color: titleColor }}
         >
           Restoring your sanctuary...
         </div>
@@ -259,21 +259,7 @@ function HomeHubLoadingFallback() {
 function NavigationSectionLoadingSkeleton() {
   const colorScheme = useDisplayModeStore(s => s.colorScheme);
   const isLight = colorScheme === 'light';
-  const panelStyle = {
-    border: isLight ? '1px solid rgba(138, 111, 74, 0.18)' : '1px solid rgba(255,255,255,0.12)',
-    background: isLight
-      ? 'linear-gradient(180deg, rgba(247, 241, 230, 0.94), rgba(235, 225, 205, 0.88))'
-      : 'linear-gradient(180deg, rgba(19, 28, 42, 0.88), rgba(11, 18, 30, 0.96))',
-    boxShadow: isLight
-      ? '0 18px 42px rgba(107, 79, 42, 0.12)'
-      : '0 22px 48px rgba(0, 0, 0, 0.34)',
-    backdropFilter: 'blur(14px)',
-  };
-  const shimmerStyle = {
-    background: isLight
-      ? 'linear-gradient(90deg, rgba(153, 122, 84, 0.12), rgba(153, 122, 84, 0.24), rgba(153, 122, 84, 0.12))'
-      : 'linear-gradient(90deg, rgba(155, 180, 218, 0.10), rgba(155, 180, 218, 0.22), rgba(155, 180, 218, 0.10))',
-  };
+  const { panelStyle, shimmerStyle, labelColor, titleColor } = useSkeletonStyles(isLight);
 
   return (
     <div
@@ -301,13 +287,13 @@ function NavigationSectionLoadingSkeleton() {
         <div className="rounded-[28px] px-5 py-6" style={panelStyle}>
           <div
             className="text-[11px] uppercase tracking-[0.28em]"
-            style={{ color: isLight ? 'rgba(109, 82, 48, 0.64)' : 'rgba(205, 218, 238, 0.64)' }}
+            style={{ color: labelColor }}
           >
             Navigation
           </div>
           <div
             className="mt-2 text-[1rem] font-medium"
-            style={{ color: isLight ? 'rgba(58, 42, 25, 0.92)' : 'rgba(244, 247, 252, 0.94)' }}
+            style={{ color: titleColor }}
           >
             Building your path map...
           </div>
@@ -326,21 +312,7 @@ function NavigationSectionLoadingSkeleton() {
 function PracticeSectionLoadingSkeleton() {
   const colorScheme = useDisplayModeStore(s => s.colorScheme);
   const isLight = colorScheme === 'light';
-  const panelStyle = {
-    border: isLight ? '1px solid rgba(138, 111, 74, 0.18)' : '1px solid rgba(255,255,255,0.12)',
-    background: isLight
-      ? 'linear-gradient(180deg, rgba(247, 241, 230, 0.94), rgba(235, 225, 205, 0.88))'
-      : 'linear-gradient(180deg, rgba(19, 28, 42, 0.88), rgba(11, 18, 30, 0.96))',
-    boxShadow: isLight
-      ? '0 18px 42px rgba(107, 79, 42, 0.12)'
-      : '0 22px 48px rgba(0, 0, 0, 0.34)',
-    backdropFilter: 'blur(14px)',
-  };
-  const shimmerStyle = {
-    background: isLight
-      ? 'linear-gradient(90deg, rgba(153, 122, 84, 0.12), rgba(153, 122, 84, 0.24), rgba(153, 122, 84, 0.12))'
-      : 'linear-gradient(90deg, rgba(155, 180, 218, 0.10), rgba(155, 180, 218, 0.22), rgba(155, 180, 218, 0.10))',
-  };
+  const { panelStyle, shimmerStyle, labelColor, titleColor } = useSkeletonStyles(isLight);
 
   return (
     <div
@@ -359,13 +331,13 @@ function PracticeSectionLoadingSkeleton() {
       <div className="rounded-[28px] px-5 py-6" style={panelStyle}>
         <div
           className="text-[11px] uppercase tracking-[0.28em]"
-          style={{ color: isLight ? 'rgba(109, 82, 48, 0.64)' : 'rgba(205, 218, 238, 0.64)' }}
+          style={{ color: labelColor }}
         >
           Practice
         </div>
         <div
           className="mt-2 text-[1rem] font-medium"
-          style={{ color: isLight ? 'rgba(58, 42, 25, 0.92)' : 'rgba(244, 247, 252, 0.94)' }}
+          style={{ color: titleColor }}
         >
           Loading your practice menu...
         </div>
@@ -388,21 +360,7 @@ function PracticeSectionLoadingSkeleton() {
 function WisdomSectionLoadingSkeleton() {
   const colorScheme = useDisplayModeStore(s => s.colorScheme);
   const isLight = colorScheme === 'light';
-  const panelStyle = {
-    border: isLight ? '1px solid rgba(138, 111, 74, 0.18)' : '1px solid rgba(255,255,255,0.12)',
-    background: isLight
-      ? 'linear-gradient(180deg, rgba(247, 241, 230, 0.94), rgba(235, 225, 205, 0.88))'
-      : 'linear-gradient(180deg, rgba(19, 28, 42, 0.88), rgba(11, 18, 30, 0.96))',
-    boxShadow: isLight
-      ? '0 18px 42px rgba(107, 79, 42, 0.12)'
-      : '0 22px 48px rgba(0, 0, 0, 0.34)',
-    backdropFilter: 'blur(14px)',
-  };
-  const shimmerStyle = {
-    background: isLight
-      ? 'linear-gradient(90deg, rgba(153, 122, 84, 0.12), rgba(153, 122, 84, 0.24), rgba(153, 122, 84, 0.12))'
-      : 'linear-gradient(90deg, rgba(155, 180, 218, 0.10), rgba(155, 180, 218, 0.22), rgba(155, 180, 218, 0.10))',
-  };
+  const { panelStyle, shimmerStyle, labelColor, titleColor } = useSkeletonStyles(isLight);
 
   return (
     <div
@@ -417,13 +375,13 @@ function WisdomSectionLoadingSkeleton() {
       <div className="rounded-[28px] px-5 py-6" style={panelStyle}>
         <div
           className="text-[11px] uppercase tracking-[0.28em]"
-          style={{ color: isLight ? 'rgba(109, 82, 48, 0.64)' : 'rgba(205, 218, 238, 0.64)' }}
+          style={{ color: labelColor }}
         >
           Wisdom
         </div>
         <div
           className="mt-2 text-[1rem] font-medium"
-          style={{ color: isLight ? 'rgba(58, 42, 25, 0.92)' : 'rgba(244, 247, 252, 0.94)' }}
+          style={{ color: titleColor }}
         >
           Opening the library...
         </div>
@@ -447,21 +405,7 @@ function WisdomSectionLoadingSkeleton() {
 function ApplicationSectionLoadingSkeleton() {
   const colorScheme = useDisplayModeStore(s => s.colorScheme);
   const isLight = colorScheme === 'light';
-  const panelStyle = {
-    border: isLight ? '1px solid rgba(138, 111, 74, 0.18)' : '1px solid rgba(255,255,255,0.12)',
-    background: isLight
-      ? 'linear-gradient(180deg, rgba(247, 241, 230, 0.94), rgba(235, 225, 205, 0.88))'
-      : 'linear-gradient(180deg, rgba(19, 28, 42, 0.88), rgba(11, 18, 30, 0.96))',
-    boxShadow: isLight
-      ? '0 18px 42px rgba(107, 79, 42, 0.12)'
-      : '0 22px 48px rgba(0, 0, 0, 0.34)',
-    backdropFilter: 'blur(14px)',
-  };
-  const shimmerStyle = {
-    background: isLight
-      ? 'linear-gradient(90deg, rgba(153, 122, 84, 0.12), rgba(153, 122, 84, 0.24), rgba(153, 122, 84, 0.12))'
-      : 'linear-gradient(90deg, rgba(155, 180, 218, 0.10), rgba(155, 180, 218, 0.22), rgba(155, 180, 218, 0.10))',
-  };
+  const { panelStyle, shimmerStyle, labelColor, titleColor } = useSkeletonStyles(isLight);
 
   return (
     <div
@@ -476,13 +420,13 @@ function ApplicationSectionLoadingSkeleton() {
       <div className="rounded-[28px] px-5 py-6" style={panelStyle}>
         <div
           className="text-[11px] uppercase tracking-[0.28em]"
-          style={{ color: isLight ? 'rgba(109, 82, 48, 0.64)' : 'rgba(205, 218, 238, 0.64)' }}
+          style={{ color: labelColor }}
         >
           Application
         </div>
         <div
           className="mt-2 text-[1rem] font-medium"
-          style={{ color: isLight ? 'rgba(58, 42, 25, 0.92)' : 'rgba(244, 247, 252, 0.94)' }}
+          style={{ color: titleColor }}
         >
           Loading your workspace...
         </div>
@@ -583,13 +527,11 @@ function App({ playgroundMode = false, playgroundBottomLayer = true }) {
   const appProbeIdRef = useRef(null);
 
   if (appProbeIdRef.current == null) {
-    if (AVATAR_HMR_HOST_PROBE_ENABLED) {
-      const probe = getAvatarHmrHostProbeContext();
-      probe.appMountSeq += 1;
-      appProbeIdRef.current = probe.appMountSeq;
-    } else {
-      appProbeIdRef.current = "host-probe-disabled";
-    }
+    appProbeIdRef.current = "host-probe-pending";
+    withAvatarProbe((module) => {
+      const nextId = module.incrementAvatarHmrProbeCounter("host", "appMountSeq");
+      appProbeIdRef.current = nextId ?? "host-probe-disabled";
+    });
   }
 
   useEffect(() => {
@@ -628,11 +570,11 @@ function App({ playgroundMode = false, playgroundBottomLayer = true }) {
   }, [accessPosture, activeSection, authUser?.email, authUser?.id, hasChosenUserMode, playgroundMode, userMode]);
 
   useEffect(() => {
-    logAvatarHmrHostProbe("App", "mount", {
+    logAvatarHostProbe("App", "mount", {
       probeId: appProbeIdRef.current,
     });
     return () => {
-      logAvatarHmrHostProbe("App", "unmount", {
+      logAvatarHostProbe("App", "unmount", {
         probeId: appProbeIdRef.current,
       });
     };
@@ -807,7 +749,7 @@ function App({ playgroundMode = false, playgroundBottomLayer = true }) {
   const effectiveAvatarStage = playgroundMode ? overrideStage : avatarStage;
   const appHostBranch = activeSection === null ? "HomeHub" : `SectionView:${activeSection}`;
 
-  logAvatarHmrHostProbe("App", "render-host", {
+  logAvatarHostProbe("App", "render-host", {
     probeId: appProbeIdRef.current,
     activeSection,
     defaultView,

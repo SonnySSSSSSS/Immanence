@@ -29,130 +29,54 @@ const BASE_TRANSFORM_BY_LAYER = {
   ring: { opacity: 1, scale: 1, rotateDeg: 0, x: 0, y: 0 },
 };
 
-// PROBE:avatar-hmr-owner:START
-const AVATAR_COMPOSITE_HMR_OWNER_PROBE_ENABLED = import.meta.env.DEV && Boolean(import.meta.hot);
+const loadAvatarProbeModule = import.meta.env.DEV && import.meta.hot
+  ? (() => {
+      let probeModulePromise = null;
+      return () => {
+        probeModulePromise ??= import('../../dev/avatarHmrProbes.js');
+        return probeModulePromise;
+      };
+    })()
+  : null;
 
-function getAvatarCompositeHmrOwnerProbeContext() {
-  if (!AVATAR_COMPOSITE_HMR_OWNER_PROBE_ENABLED || typeof window === 'undefined') return null;
-  const probe = window.__avatarHmrOwnerProbe__ ?? {
-    eventSeq: 0,
-    renderSeq: 0,
-    mainEvalSeq: 0,
-    mainMountSeq: 0,
-  };
-  window.__avatarHmrOwnerProbe__ = probe;
-  return probe;
+function withAvatarProbe(callback) {
+  if (!loadAvatarProbeModule) return;
+  loadAvatarProbeModule()
+    .then((module) => callback(module))
+    .catch(() => {});
 }
 
-function logAvatarCompositeHmrOwnerProbe(event, detail = {}) {
-  const probe = getAvatarCompositeHmrOwnerProbeContext();
-  if (!probe) return;
-  probe.eventSeq += 1;
-  console.info('[PROBE:avatar-hmr-owner]', {
-    seq: probe.eventSeq,
-    source: 'AvatarComposite',
-    event,
-    timestamp: new Date().toISOString(),
-    detail,
+function logAvatarOwnerProbe(event, detail = {}) {
+  withAvatarProbe((module) => {
+    module.logAvatarHmrProbe('owner', 'AvatarComposite', event, detail);
   });
 }
-// PROBE:avatar-hmr-owner:END
 
-// PROBE:avatar-hmr-derivation:START
-const AVATAR_COMPOSITE_HMR_DERIVATION_PROBE_ENABLED = import.meta.env.DEV && Boolean(import.meta.hot);
+function logAvatarHostProbe(event, detail = {}) {
+  withAvatarProbe((module) => {
+    module.logAvatarHmrProbe('host', 'AvatarComposite', event, detail);
+  });
+}
 
-if (AVATAR_COMPOSITE_HMR_DERIVATION_PROBE_ENABLED) {
-  logAvatarHmrDerivationProbe('AvatarComposite', 'module-eval', {
+function logAvatarSubstrateProbe(event, detail = {}) {
+  withAvatarProbe((module) => {
+    module.logAvatarHmrProbe('substrate', 'AvatarComposite', event, detail);
+  });
+}
+
+withAvatarProbe((module) => {
+  module.logAvatarHmrProbe('derivation', 'AvatarComposite', 'module-eval', {
     hasHotData: Boolean(import.meta.hot?.data),
   });
-}
-// PROBE:avatar-hmr-derivation:END
-
-// PROBE:avatar-hmr-host:START
-const AVATAR_COMPOSITE_HMR_HOST_PROBE_ENABLED = import.meta.env.DEV && Boolean(import.meta.hot);
-
-function getAvatarCompositeHmrHostProbeContext() {
-  if (!AVATAR_COMPOSITE_HMR_HOST_PROBE_ENABLED || typeof window === 'undefined') return null;
-  const probe = window.__avatarHmrHostProbe__ ?? {
-    eventSeq: 0,
-    appMountSeq: 0,
-    sectionViewMountSeq: 0,
-    homeHubMountSeq: 0,
-    avatarV3MountSeq: 0,
-  };
-  window.__avatarHmrHostProbe__ = probe;
-  return probe;
-}
-
-function logAvatarCompositeHmrHostProbe(event, detail = {}) {
-  const probe = getAvatarCompositeHmrHostProbeContext();
-  if (!probe) return;
-  probe.eventSeq += 1;
-  console.info('[PROBE:avatar-hmr-host]', {
-    seq: probe.eventSeq,
-    source: 'AvatarComposite',
-    event,
-    timestamp: new Date().toISOString(),
-    detail,
-  });
-}
-
-if (AVATAR_COMPOSITE_HMR_HOST_PROBE_ENABLED) {
-  logAvatarCompositeHmrHostProbe('module-eval', {
+  module.logAvatarHmrProbe('host', 'AvatarComposite', 'module-eval', {
     hasHotData: Boolean(import.meta.hot?.data),
   });
-}
-// PROBE:avatar-hmr-host:END
-
-// PROBE:avatar-hmr-substrate:START
-const AVATAR_COMPOSITE_HMR_SUBSTRATE_PROBE_ENABLED = import.meta.env.DEV && Boolean(import.meta.hot);
-
-function getAvatarCompositeHmrSubstrateProbeContext() {
-  if (!AVATAR_COMPOSITE_HMR_SUBSTRATE_PROBE_ENABLED || typeof window === 'undefined') return null;
-  const probe = window.__avatarHmrSubstrateProbe__ ?? {
-    eventSeq: 0,
-    mountSeq: 0,
-    nextElementId: 0,
-    elementIds: new WeakMap(),
-    lastDescriptorSignature: null,
-    lastInstanceSignature: null,
-  };
-  probe.elementIds = probe.elementIds ?? new WeakMap();
-  window.__avatarHmrSubstrateProbe__ = probe;
-  return probe;
-}
-
-function logAvatarCompositeHmrSubstrateProbe(event, detail = {}) {
-  const probe = getAvatarCompositeHmrSubstrateProbeContext();
-  if (!probe) return;
-  probe.eventSeq += 1;
-  console.info('[PROBE:avatar-hmr-substrate]', {
-    seq: probe.eventSeq,
-    source: 'AvatarComposite',
-    event,
-    timestamp: new Date().toISOString(),
-    detail,
-  });
-}
-
-function getAvatarCompositeProbeElementId(node, label) {
-  const probe = getAvatarCompositeHmrSubstrateProbeContext();
-  if (!probe || !node) return null;
-  if (!probe.elementIds.has(node)) {
-    probe.nextElementId += 1;
-    probe.elementIds.set(node, `${label}-${probe.nextElementId}`);
-  }
-  return probe.elementIds.get(node);
-}
-
-if (AVATAR_COMPOSITE_HMR_SUBSTRATE_PROBE_ENABLED) {
-  logAvatarCompositeHmrSubstrateProbe('module-eval', {
+  module.logAvatarHmrProbe('substrate', 'AvatarComposite', 'module-eval', {
     hasHotData: Boolean(import.meta.hot?.data),
     substrateKind: 'dom-layer-stack',
     expectedLayerCount: 4,
   });
-}
-// PROBE:avatar-hmr-substrate:END
+});
 
 // PROBE:avatar-scheme-isolation:START
 let _schemeIsolationProbeSeq = 0;
@@ -370,11 +294,10 @@ export function AvatarComposite({ stage, size, path = null }) {
     effectiveLayers[layerId] = resolveEffectiveLayer(layerId, mergedLayers);
   });
 
-  const probe = getAvatarCompositeHmrOwnerProbeContext();
-  if (probe) {
-    probe.renderSeq += 1;
-    logAvatarCompositeHmrOwnerProbe('render', {
-      renderOrder: probe.renderSeq,
+  withAvatarProbe((module) => {
+    const renderOrder = module.incrementAvatarHmrProbeCounter('owner', 'renderSeq');
+    logAvatarOwnerProbe('render', {
+      renderOrder,
       stage: normalizedStage,
       colorScheme,
       useDraftTransforms,
@@ -394,7 +317,7 @@ export function AvatarComposite({ stage, size, path = null }) {
         ring: baseLayers?.ring ?? null,
       },
     });
-  }
+  });
 
   const bgStyle = getDevStyleForLayer('bg', effectiveLayers.bg);
   const stageStyle = getDevStyleForLayer('stage', effectiveLayers.stage);
@@ -583,35 +506,33 @@ export function AvatarComposite({ stage, size, path = null }) {
     ringStyle.transform, ringStyle.opacity,
   ]);
 
-  if (AVATAR_COMPOSITE_HMR_DERIVATION_PROBE_ENABLED) {
-    logAvatarHmrDerivationProbe('AvatarComposite', 'render-derivation', {
-      store: storeProbeSnapshot,
-      configAssets: stageAssets,
-      compositeInput: {
-        stage,
-        normalizedStage,
-        colorScheme,
-        size,
-        useDraftTransforms,
-        showDebugOverlay,
-      },
-      baseLayers,
-      mergedLayers,
-      effectiveLayers,
-      finalRender: {
-        backgroundSrc,
-        stageSrc,
-        glassSrc,
-        ringSrc,
-        bgStyle,
-        stageStyle,
-        glassStyle,
-        ringStyle,
-      },
-    });
-  }
+  logAvatarHmrDerivationProbe('AvatarComposite', 'render-derivation', {
+    store: storeProbeSnapshot,
+    configAssets: stageAssets,
+    compositeInput: {
+      stage,
+      normalizedStage,
+      colorScheme,
+      size,
+      useDraftTransforms,
+      showDebugOverlay,
+    },
+    baseLayers,
+    mergedLayers,
+    effectiveLayers,
+    finalRender: {
+      backgroundSrc,
+      stageSrc,
+      glassSrc,
+      ringSrc,
+      bgStyle,
+      stageStyle,
+      glassStyle,
+      ringStyle,
+    },
+  });
 
-  logAvatarCompositeHmrHostProbe('render-host-correlation', {
+  logAvatarHostProbe('render-host-correlation', {
     parentInput: {
       stage,
       normalizedStage,
@@ -631,63 +552,66 @@ export function AvatarComposite({ stage, size, path = null }) {
     },
   });
 
-  logAvatarCompositeHmrSubstrateProbe('render-descriptor', {
+  logAvatarSubstrateProbe('render-descriptor', {
     substrateDescriptor,
   });
 
   useLayoutEffect(() => {
-    if (!AVATAR_COMPOSITE_HMR_SUBSTRATE_PROBE_ENABLED) return undefined;
-    const probe = getAvatarCompositeHmrSubstrateProbeContext();
-    if (!probe) return undefined;
     if (substrateMountIdRef.current == null) {
-      probe.mountSeq += 1;
-      substrateMountIdRef.current = probe.mountSeq;
+      substrateMountIdRef.current = 'substrate-probe-pending';
+      withAvatarProbe((module) => {
+        const nextId = module.incrementAvatarHmrProbeCounter('substrate', 'mountSeq');
+        substrateMountIdRef.current = nextId ?? 'substrate-probe-disabled';
+      });
     }
 
-    const substrateInstance = {
-      mountId: substrateMountIdRef.current,
-      substrateKind: 'dom-layer-stack',
-      rootElementId: getAvatarCompositeProbeElementId(rootRef.current, 'root'),
-      globeClipElementId: getAvatarCompositeProbeElementId(globeClipRef.current, 'globe'),
-      ringWrapElementId: getAvatarCompositeProbeElementId(ringWrapRef.current, 'ringWrap'),
-      layerElementIds: {
-        bg: getAvatarCompositeProbeElementId(bgImageRef.current, 'bg'),
-        stage: getAvatarCompositeProbeElementId(stageImageRef.current, 'stage'),
-        glass: getAvatarCompositeProbeElementId(glassImageRef.current, 'glass'),
-        ring: getAvatarCompositeProbeElementId(ringImageRef.current, 'ring'),
-      },
-      childCounts: {
-        rootChildren: rootRef.current?.childElementCount ?? null,
-        globeClipChildren: globeClipRef.current?.childElementCount ?? null,
-        ringWrapChildren: ringWrapRef.current?.childElementCount ?? null,
-      },
-      renderedAssets: {
-        bg: getLastPathSegment(bgImageRef.current?.getAttribute('src') ?? ''),
-        stage: getLastPathSegment(stageImageRef.current?.getAttribute('src') ?? ''),
-        glass: getLastPathSegment(glassImageRef.current?.getAttribute('src') ?? ''),
-        ring: getLastPathSegment(ringImageRef.current?.getAttribute('src') ?? ''),
-      },
-      renderedStyles: {
-        bg: bgImageRef.current?.getAttribute('style') ?? null,
-        stage: stageImageRef.current?.getAttribute('style') ?? null,
-        glass: glassImageRef.current?.getAttribute('style') ?? null,
-        ringWrap: ringWrapRef.current?.getAttribute('style') ?? null,
-      },
-    };
+    withAvatarProbe((module) => {
+      const substrateInstance = {
+        mountId: substrateMountIdRef.current,
+        substrateKind: 'dom-layer-stack',
+        rootElementId: module.getAvatarHmrProbeElementId(rootRef.current, 'root'),
+        globeClipElementId: module.getAvatarHmrProbeElementId(globeClipRef.current, 'globe'),
+        ringWrapElementId: module.getAvatarHmrProbeElementId(ringWrapRef.current, 'ringWrap'),
+        layerElementIds: {
+          bg: module.getAvatarHmrProbeElementId(bgImageRef.current, 'bg'),
+          stage: module.getAvatarHmrProbeElementId(stageImageRef.current, 'stage'),
+          glass: module.getAvatarHmrProbeElementId(glassImageRef.current, 'glass'),
+          ring: module.getAvatarHmrProbeElementId(ringImageRef.current, 'ring'),
+        },
+        childCounts: {
+          rootChildren: rootRef.current?.childElementCount ?? null,
+          globeClipChildren: globeClipRef.current?.childElementCount ?? null,
+          ringWrapChildren: ringWrapRef.current?.childElementCount ?? null,
+        },
+        renderedAssets: {
+          bg: getLastPathSegment(bgImageRef.current?.getAttribute('src') ?? ''),
+          stage: getLastPathSegment(stageImageRef.current?.getAttribute('src') ?? ''),
+          glass: getLastPathSegment(glassImageRef.current?.getAttribute('src') ?? ''),
+          ring: getLastPathSegment(ringImageRef.current?.getAttribute('src') ?? ''),
+        },
+        renderedStyles: {
+          bg: bgImageRef.current?.getAttribute('style') ?? null,
+          stage: stageImageRef.current?.getAttribute('style') ?? null,
+          glass: glassImageRef.current?.getAttribute('style') ?? null,
+          ringWrap: ringWrapRef.current?.getAttribute('style') ?? null,
+        },
+      };
 
-    const descriptorSignature = JSON.stringify(substrateDescriptor);
-    const instanceSignature = JSON.stringify(substrateInstance);
+      const descriptorSignature = JSON.stringify(substrateDescriptor);
+      const instanceSignature = JSON.stringify(substrateInstance);
+      const stability = module.compareAndStoreAvatarHmrSubstrateSignatures(
+        descriptorSignature,
+        instanceSignature,
+      );
 
-    logAvatarCompositeHmrSubstrateProbe('commit-instance', {
-      mountId: substrateMountIdRef.current,
-      descriptorStableVsPrevious: probe.lastDescriptorSignature === descriptorSignature,
-      instanceStableVsPrevious: probe.lastInstanceSignature === instanceSignature,
-      substrateDescriptor,
-      substrateInstance,
+      logAvatarSubstrateProbe('commit-instance', {
+        mountId: substrateMountIdRef.current,
+        descriptorStableVsPrevious: stability.descriptorStableVsPrevious,
+        instanceStableVsPrevious: stability.instanceStableVsPrevious,
+        substrateDescriptor,
+        substrateInstance,
+      });
     });
-
-    probe.lastDescriptorSignature = descriptorSignature;
-    probe.lastInstanceSignature = instanceSignature;
 
     const capturedMountId = substrateMountIdRef.current;
     const capturedRoot = rootRef.current;
@@ -697,15 +621,17 @@ export function AvatarComposite({ stage, size, path = null }) {
     const capturedRing = ringImageRef.current;
 
     return () => {
-      logAvatarCompositeHmrSubstrateProbe('unmount-instance', {
-        mountId: capturedMountId,
-        rootElementId: getAvatarCompositeProbeElementId(capturedRoot, 'root'),
-        layerElementIds: {
-          bg: getAvatarCompositeProbeElementId(capturedBg, 'bg'),
-          stage: getAvatarCompositeProbeElementId(capturedStage, 'stage'),
-          glass: getAvatarCompositeProbeElementId(capturedGlass, 'glass'),
-          ring: getAvatarCompositeProbeElementId(capturedRing, 'ring'),
-        },
+      withAvatarProbe((module) => {
+        logAvatarSubstrateProbe('unmount-instance', {
+          mountId: capturedMountId,
+          rootElementId: module.getAvatarHmrProbeElementId(capturedRoot, 'root'),
+          layerElementIds: {
+            bg: module.getAvatarHmrProbeElementId(capturedBg, 'bg'),
+            stage: module.getAvatarHmrProbeElementId(capturedStage, 'stage'),
+            glass: module.getAvatarHmrProbeElementId(capturedGlass, 'glass'),
+            ring: module.getAvatarHmrProbeElementId(capturedRing, 'ring'),
+          },
+        });
       });
     };
   }, [

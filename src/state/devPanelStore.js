@@ -13,31 +13,26 @@ const IS_LOCALHOST_RUNTIME =
   ['localhost', '127.0.0.1'].includes(window.location?.hostname || '');
 const SHOULD_PERSIST_DEV_PANEL = IS_DEV_BUILD || IS_LOCALHOST_RUNTIME;
 
-// PROBE:avatar-hmr-owner:START
-const DEV_PANEL_HMR_OWNER_PROBE_ENABLED = IS_DEV_BUILD && Boolean(import.meta.hot);
+const loadAvatarProbeModule = IS_DEV_BUILD && import.meta.hot
+  ? (() => {
+      let probeModulePromise = null;
+      return () => {
+        probeModulePromise ??= import('../dev/avatarHmrProbes.js');
+        return probeModulePromise;
+      };
+    })()
+  : null;
 
-function getDevPanelHmrOwnerProbeContext() {
-  if (!DEV_PANEL_HMR_OWNER_PROBE_ENABLED || typeof window === 'undefined') return null;
-  const probe = window.__avatarHmrOwnerProbe__ ?? {
-    eventSeq: 0,
-    renderSeq: 0,
-    mainEvalSeq: 0,
-    mainMountSeq: 0,
-  };
-  window.__avatarHmrOwnerProbe__ = probe;
-  return probe;
+function withAvatarProbe(callback) {
+  if (!loadAvatarProbeModule) return;
+  loadAvatarProbeModule()
+    .then((module) => callback(module))
+    .catch(() => {});
 }
 
 function logDevPanelHmrOwnerProbe(event, detail = {}) {
-  const probe = getDevPanelHmrOwnerProbeContext();
-  if (!probe) return;
-  probe.eventSeq += 1;
-  console.info('[PROBE:avatar-hmr-owner]', {
-    seq: probe.eventSeq,
-    source: 'devPanelStore',
-    event,
-    timestamp: new Date().toISOString(),
-    detail,
+  withAvatarProbe((module) => {
+    module.logAvatarHmrProbe('owner', 'devPanelStore', event, detail);
   });
 }
 
@@ -46,7 +41,6 @@ logDevPanelHmrOwnerProbe('module-eval', {
   persistStoragePresent:
     typeof window !== 'undefined' ? window.localStorage?.getItem?.(DEV_PANEL_PERSIST_KEY) != null : null,
 });
-// PROBE:avatar-hmr-owner:END
 
 if (!SHOULD_PERSIST_DEV_PANEL && typeof window !== 'undefined') {
   try {

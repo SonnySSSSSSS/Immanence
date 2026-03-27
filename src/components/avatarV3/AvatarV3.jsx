@@ -11,85 +11,47 @@ import {
 import { markFirstLoginAudit } from '../../utils/firstLoginAudit.js';
 import './AvatarV3.css';
 
-// PROBE:avatar-hmr-derivation:START
-const AVATAR_V3_HMR_DERIVATION_PROBE_ENABLED = import.meta.env.DEV && Boolean(import.meta.hot);
+const loadAvatarProbeModule = import.meta.env.DEV && import.meta.hot
+  ? (() => {
+      let probeModulePromise = null;
+      return () => {
+        probeModulePromise ??= import('../../dev/avatarHmrProbes.js');
+        return probeModulePromise;
+      };
+    })()
+  : null;
 
-if (AVATAR_V3_HMR_DERIVATION_PROBE_ENABLED) {
-  logAvatarHmrDerivationProbe('AvatarV3', 'module-eval', {
+function withAvatarProbe(callback) {
+  if (!loadAvatarProbeModule) return;
+  loadAvatarProbeModule()
+    .then((module) => callback(module))
+    .catch(() => {});
+}
+
+function logAvatarHostProbe(event, detail = {}) {
+  withAvatarProbe((module) => {
+    module.logAvatarHmrProbe('host', 'AvatarV3', event, detail);
+  });
+}
+
+function logAvatarSubstrateProbe(event, detail = {}) {
+  withAvatarProbe((module) => {
+    module.logAvatarHmrProbe('substrate', 'AvatarV3', event, detail);
+  });
+}
+
+withAvatarProbe((module) => {
+  module.logAvatarHmrProbe('derivation', 'AvatarV3', 'module-eval', {
     hasHotData: Boolean(import.meta.hot?.data),
   });
-}
-// PROBE:avatar-hmr-derivation:END
-
-// PROBE:avatar-hmr-host:START
-const AVATAR_V3_HMR_HOST_PROBE_ENABLED = import.meta.env.DEV && Boolean(import.meta.hot);
-
-function getAvatarV3HmrHostProbeContext() {
-  if (!AVATAR_V3_HMR_HOST_PROBE_ENABLED || typeof window === 'undefined') return null;
-  const probe = window.__avatarHmrHostProbe__ ?? {
-    eventSeq: 0,
-    appMountSeq: 0,
-    sectionViewMountSeq: 0,
-    homeHubMountSeq: 0,
-    avatarV3MountSeq: 0,
-  };
-  probe.avatarV3MountSeq = probe.avatarV3MountSeq ?? 0;
-  window.__avatarHmrHostProbe__ = probe;
-  return probe;
-}
-
-function logAvatarV3HmrHostProbe(event, detail = {}) {
-  const probe = getAvatarV3HmrHostProbeContext();
-  if (!probe) return;
-  probe.eventSeq += 1;
-  console.info('[PROBE:avatar-hmr-host]', {
-    seq: probe.eventSeq,
-    source: 'AvatarV3',
-    event,
-    timestamp: new Date().toISOString(),
-    detail,
-  });
-}
-
-if (AVATAR_V3_HMR_HOST_PROBE_ENABLED) {
-  logAvatarV3HmrHostProbe('module-eval', {
+  module.logAvatarHmrProbe('host', 'AvatarV3', 'module-eval', {
     hasHotData: Boolean(import.meta.hot?.data),
   });
-}
-// PROBE:avatar-hmr-host:END
-
-// PROBE:avatar-hmr-substrate:START
-const AVATAR_V3_HMR_SUBSTRATE_PROBE_ENABLED = import.meta.env.DEV && Boolean(import.meta.hot);
-
-function getAvatarV3HmrSubstrateProbeContext() {
-  if (!AVATAR_V3_HMR_SUBSTRATE_PROBE_ENABLED || typeof window === 'undefined') return null;
-  const probe = window.__avatarHmrSubstrateProbe__ ?? {
-    eventSeq: 0,
-  };
-  window.__avatarHmrSubstrateProbe__ = probe;
-  return probe;
-}
-
-function logAvatarV3HmrSubstrateProbe(event, detail = {}) {
-  const probe = getAvatarV3HmrSubstrateProbeContext();
-  if (!probe) return;
-  probe.eventSeq += 1;
-  console.info('[PROBE:avatar-hmr-substrate]', {
-    seq: probe.eventSeq,
-    source: 'AvatarV3',
-    event,
-    timestamp: new Date().toISOString(),
-    detail,
-  });
-}
-
-if (AVATAR_V3_HMR_SUBSTRATE_PROBE_ENABLED) {
-  logAvatarV3HmrSubstrateProbe('module-eval', {
+  module.logAvatarHmrProbe('substrate', 'AvatarV3', 'module-eval', {
     hasHotData: Boolean(import.meta.hot?.data),
     substrateKind: 'avatar-composite-dom',
   });
-}
-// PROBE:avatar-hmr-substrate:END
+});
 
 export function AvatarV3({
   stage,
@@ -106,15 +68,13 @@ export function AvatarV3({
 
   useEffect(() => {
     if (avatarV3ProbeIdRef.current == null) {
-      if (AVATAR_V3_HMR_HOST_PROBE_ENABLED) {
-        const probe = getAvatarV3HmrHostProbeContext();
-        probe.avatarV3MountSeq += 1;
-        avatarV3ProbeIdRef.current = probe.avatarV3MountSeq;
-      } else {
-        avatarV3ProbeIdRef.current = 'host-probe-disabled';
-      }
+      avatarV3ProbeIdRef.current = 'host-probe-pending';
+      withAvatarProbe((module) => {
+        const nextId = module.incrementAvatarHmrProbeCounter('host', 'avatarV3MountSeq');
+        avatarV3ProbeIdRef.current = nextId ?? 'host-probe-disabled';
+      });
     }
-    logAvatarV3HmrHostProbe('mount', {
+    logAvatarHostProbe('mount', {
       probeId: avatarV3ProbeIdRef.current,
       stage,
       path,
@@ -128,7 +88,7 @@ export function AvatarV3({
     });
     // PROBE:FIRST_LOGIN_HOMEHUB_AUDIT:END
     return () => {
-      logAvatarV3HmrHostProbe('unmount', {
+      logAvatarHostProbe('unmount', {
         probeId: avatarV3ProbeIdRef.current,
         stage,
         path,
@@ -162,17 +122,15 @@ export function AvatarV3({
   // If axis-misaligned movement is observed, the origin is in AvatarComposite's render path
   // or in the parent host wrapping AvatarV3 — NOT in this component.
   // PROBE:avatar-rotation-space:END
-  if (AVATAR_V3_HMR_DERIVATION_PROBE_ENABLED) {
-    logAvatarHmrDerivationProbe('AvatarV3', 'render-pass-through', {
-      stage,
-      path,
-      size,
-      normalizedWeights,
-      dominantMode,
-      ariaLabel,
-    });
-  }
-  logAvatarV3HmrHostProbe('render-parent-props', {
+  logAvatarHmrDerivationProbe('AvatarV3', 'render-pass-through', {
+    stage,
+    path,
+    size,
+    normalizedWeights,
+    dominantMode,
+    ariaLabel,
+  });
+  logAvatarHostProbe('render-parent-props', {
     stage,
     path,
     size,
@@ -181,7 +139,7 @@ export function AvatarV3({
     dominantMode,
     hasOnTap: typeof onTap === 'function',
   });
-  logAvatarV3HmrSubstrateProbe('render-descriptor', {
+  logAvatarSubstrateProbe('render-descriptor', {
     stage,
     path,
     size,

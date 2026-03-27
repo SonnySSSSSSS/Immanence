@@ -22,31 +22,32 @@ const AVATAR_STAGE_DEFAULT_LAYER = Object.freeze({
   linkOpacity: false,
 });
 
-// PROBE:avatar-hmr-owner:START
-const AVATAR_HMR_OWNER_PROBE_ENABLED = import.meta.env.DEV && Boolean(import.meta.hot);
+const loadAvatarProbeModule = import.meta.env.DEV && import.meta.hot
+  ? (() => {
+      let probeModulePromise = null;
+      return () => {
+        probeModulePromise ??= import('../dev/avatarHmrProbes.js');
+        return probeModulePromise;
+      };
+    })()
+  : null;
 
-function getAvatarHmrOwnerProbeContext() {
-  if (!AVATAR_HMR_OWNER_PROBE_ENABLED || typeof window === 'undefined') return null;
-  const probe = window.__avatarHmrOwnerProbe__ ?? {
-    eventSeq: 0,
-    renderSeq: 0,
-    mainEvalSeq: 0,
-    mainMountSeq: 0,
-  };
-  window.__avatarHmrOwnerProbe__ = probe;
-  return probe;
+function withAvatarProbe(callback) {
+  if (!loadAvatarProbeModule) return;
+  loadAvatarProbeModule()
+    .then((module) => callback(module))
+    .catch(() => {});
 }
 
 function logAvatarHmrOwnerProbe(source, event, detail = {}) {
-  const probe = getAvatarHmrOwnerProbeContext();
-  if (!probe) return;
-  probe.eventSeq += 1;
-  console.info('[PROBE:avatar-hmr-owner]', {
-    seq: probe.eventSeq,
-    source,
-    event,
-    timestamp: new Date().toISOString(),
-    detail,
+  withAvatarProbe((module) => {
+    module.logAvatarHmrProbe('owner', source, event, detail);
+  });
+}
+
+export function logAvatarHmrDerivationProbe(source, event, detail = {}) {
+  withAvatarProbe((module) => {
+    module.logAvatarHmrProbe('derivation', source, event, detail);
   });
 }
 
@@ -56,44 +57,11 @@ logAvatarHmrOwnerProbe('avatarV3Store', 'module-eval', {
   snapshotStoragePresent:
     typeof window !== 'undefined' ? window.localStorage?.getItem?.(AVATAR_STAGE_DEFAULTS_PERSIST_KEY) != null : null,
 });
-// PROBE:avatar-hmr-owner:END
-
-// PROBE:avatar-hmr-derivation:START
-const AVATAR_HMR_DERIVATION_PROBE_ENABLED = import.meta.env.DEV && Boolean(import.meta.hot);
-
-function getAvatarHmrDerivationProbeContext() {
-  if (!AVATAR_HMR_DERIVATION_PROBE_ENABLED || typeof window === 'undefined') return null;
-  const probe = window.__avatarHmrDerivationProbe__ ?? {
-    eventSeq: 0,
-    events: [],
-  };
-  window.__avatarHmrDerivationProbe__ = probe;
-  return probe;
-}
-
-export function logAvatarHmrDerivationProbe(source, event, detail = {}) {
-  const probe = getAvatarHmrDerivationProbeContext();
-  if (!probe) return;
-  probe.eventSeq += 1;
-  const payload = {
-    seq: probe.eventSeq,
-    source,
-    event,
-    timestamp: new Date().toISOString(),
-    detail,
-  };
-  probe.events.push(payload);
-  if (probe.events.length > 400) {
-    probe.events.shift();
-  }
-  console.info('[PROBE:avatar-hmr-derivation]', payload);
-}
 
 logAvatarHmrDerivationProbe('avatarV3Store', 'module-eval', {
   persistKey: AVATAR_STAGE_DEFAULTS_PERSIST_KEY,
   hasHotData: Boolean(import.meta.hot?.data),
 });
-// PROBE:avatar-hmr-derivation:END
 
 function clampAvatarDefault(value, min, max) {
   return Math.max(min, Math.min(max, value));
