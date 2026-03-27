@@ -70,12 +70,16 @@ export function ThemeProvider({ children, currentStage = 'Flame' }) {
         const stageTheme = STAGE_THEMES[stageKey] || STAGE_THEMES.FLAME;
         const root = document.documentElement;
 
-        console.log('🎨 ThemeProvider updating for stage:', currentStage, '→', stageKey);
+        if (import.meta.env.DEV) {
+            console.log('🎨 ThemeProvider updating for stage:', currentStage, '→', stageKey);
+        }
 
         // Convert primary color to HSL for backward compatibility
         const hsl = hexToHSL(stageTheme.accent.primary);
 
-        console.log('  Primary color:', stageTheme.accent.primary, '→ HSL:', hsl);
+        if (import.meta.env.DEV) {
+            console.log('  Primary color:', stageTheme.accent.primary, '→ HSL:', hsl);
+        }
 
         // Backward compatibility - existing components use these
         root.style.setProperty('--accent-h', String(hsl.h));
@@ -83,7 +87,9 @@ export function ThemeProvider({ children, currentStage = 'Flame' }) {
         root.style.setProperty('--accent-l', `${hsl.l}%`);
         root.style.setProperty('--accent-color', `hsl(${hsl.h} ${hsl.s}% ${hsl.l}%)`);
 
-        console.log('  Set --accent-color to:', `hsl(${hsl.h} ${hsl.s}% ${hsl.l}%)`);
+        if (import.meta.env.DEV) {
+            console.log('  Set --accent-color to:', `hsl(${hsl.h} ${hsl.s}% ${hsl.l}%)`);
+        }
 
         // RGB components for rgba() usage
         const primaryRgb = hexToRgb(stageTheme.accent.primary);

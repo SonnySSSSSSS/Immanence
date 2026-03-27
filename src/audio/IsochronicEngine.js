@@ -75,13 +75,17 @@ export class IsochronicEngine {
 
   setMasterGain(value01) {
     const v = clamp(Number(value01), 0, 1);
-    console.log("[IsoEngine] setMasterGain clamped to:", v, "masterGain node:", this.masterGain);
+    if (import.meta.env.DEV) {
+      console.log("[IsoEngine] setMasterGain clamped to:", v, "masterGain node:", this.masterGain);
+    }
     // Smooth a bit to avoid abrupt level jumps
     const t = this.ctx.currentTime;
     this.masterGain.gain.cancelScheduledValues(t);
     this.masterGain.gain.setValueAtTime(this.masterGain.gain.value, t);
     this.masterGain.gain.linearRampToValueAtTime(v, t + 0.05);
-    console.log("[IsoEngine] After ramp, gain value:", this.masterGain.gain.value);
+    if (import.meta.env.DEV) {
+      console.log("[IsoEngine] After ramp, gain value:", this.masterGain.gain.value);
+    }
   }
 
   setCarrierHz(hz) {

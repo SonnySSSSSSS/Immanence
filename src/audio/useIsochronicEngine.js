@@ -62,7 +62,9 @@ export function useIsochronicEngine() {
 
   const setMasterGain = useCallback((value01) => {
     const engine = ensureEngine();
-    console.log("[useIsoEngine] setMasterGain called with:", value01);
+    if (import.meta.env.DEV) {
+      console.log("[useIsoEngine] setMasterGain called with:", value01);
+    }
     engine.setMasterGain(value01);
   }, [ensureEngine]);
 

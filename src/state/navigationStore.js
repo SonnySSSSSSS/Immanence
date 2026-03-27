@@ -212,7 +212,9 @@ export const useNavigationStore = create(
             // Selection state (before beginning a path)
             setSelectedPath: (id) => {
                 const normalizedPathId = normalizeNavigationPathId(id);
-                console.log("[navigationStore] setSelectedPath ->", normalizedPathId);
+                if (import.meta.env.DEV) {
+                    console.log("[navigationStore] setSelectedPath ->", normalizedPathId);
+                }
                 console.trace("[navigationStore] setSelectedPath stack");
                 const path = normalizedPathId ? getPathById(normalizedPathId) : null;
                 const requiresBenchmark = Boolean(path?.showBreathBenchmark);

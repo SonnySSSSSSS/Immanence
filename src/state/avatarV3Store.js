@@ -554,8 +554,12 @@ if (import.meta.env.DEV) {
             `%c[AvatarDefaults] committed change: ${scheme}/${stageKey}`,
             'color: orange; font-weight: bold',
           );
-          console.log('Before:', JSON.parse(prevVal));
-          console.log('After: ', JSON.parse(nextVal));
+          if (import.meta.env.DEV) {
+            console.log('Before:', JSON.parse(prevVal));
+          }
+          if (import.meta.env.DEV) {
+            console.log('After: ', JSON.parse(nextVal));
+          }
         }
         console.trace('Source (the set() call is a few frames above this line)');
         console.groupEnd();
