@@ -82,15 +82,3 @@ function createSupabaseClient() {
 }
 
 export const supabase = createSupabaseClient();
-
-// For revoked-but-not-yet-expired tokens the SDK will still attempt a refresh,
-// get a 401/400, internally call _removeSession(), and emit SIGNED_OUT. Once
-// that fires we call signOut({ scope: 'local' }) to guarantee any residual
-// local state is cleared and no further auto-refresh retries are queued.
-if (authRuntimeMode.enabled) {
-  supabase.auth.onAuthStateChange((event) => {
-    if (event === 'SIGNED_OUT') {
-      supabase.auth.signOut({ scope: 'local' }).catch(() => {});
-    }
-  });
-}

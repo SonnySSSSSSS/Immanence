@@ -6,8 +6,22 @@ import { createLogger } from "../../utils/logger.js";
 import { RuntimeFailureCode, normalizeRuntimeFailure } from "../../utils/runtimeFailure.js";
 import { createAuthVerification, publishRuntimeCheck } from "../../utils/runtimeChecks.js";
 import { setAuthUser } from "../../state/useAuthUser.js";
+import {
+  beginFirstLoginAuditAttempt,
+  endFirstLoginAuditAttempt,
+  markFirstLoginAudit,
+  sanitizeFirstLoginAuditEmail,
+  sanitizeFirstLoginAuditUserId,
+} from "../../utils/firstLoginAudit.js";
 
 const logger = createLogger("AuthGate");
+
+// Module-level lock — serializes concurrent Supabase auth init calls.
+// React StrictMode double-invokes useEffect; without this the two concurrent
+// supabase.auth.getSession() calls fight over navigator.locks and the loser
+// emits an unhandled AbortError that triggers Vite's dev error overlay.
+let _supabaseInitLocked = false;
+const _supabaseInitWaiters = [];
 
 // Lazy import to avoid Supabase initialization when auth is disabled
 const getSupabase = () => import("../../lib/supabaseClient").then(m => m.supabase);
@@ -18,6 +32,13 @@ export default function AuthGate({ children, onAuthChange }) {
   const [loading, setLoading] = useState(authRuntimeMode.enabled);
   const authDisabledReportedRef = useRef(false);
 
+  // Stable ref so the auth subscription effect never re-runs just because
+  // the parent's handleAuthChange callback was recreated between renders.
+  // Without this, each sign-out cycle recreates the Supabase subscription,
+  // which fires SIGNED_OUT immediately on the new subscription, causing a loop.
+  const onAuthChangeRef = useRef(onAuthChange);
+  onAuthChangeRef.current = onAuthChange;
+
   const [mode, setMode] = useState("signin"); // "signin" | "signup"
   const [name, setName] = useState("");
   const [nameErr, setNameErr] = useState("");
@@ -27,6 +48,7 @@ export default function AuthGate({ children, onAuthChange }) {
   const [namePromptOpen, setNamePromptOpen] = useState(false);
   const [namePromptValue, setNamePromptValue] = useState("");
   const [namePromptErr, setNamePromptErr] = useState("");
+  const authSurfaceAuditRef = useRef(null);
 
   useEffect(() => {
     // Skip auth initialization when disabled
@@ -59,7 +81,7 @@ export default function AuthGate({ children, onAuthChange }) {
           },
         })
       );
-      onAuthChange?.("INITIAL_SESSION", null);
+      onAuthChangeRef.current?.("INITIAL_SESSION", null);
       return;
     }
 
@@ -97,6 +119,12 @@ export default function AuthGate({ children, onAuthChange }) {
     let unsubscribe = null;
 
     const init = async () => {
+      // Queue behind any in-flight init (StrictMode double-invoke serialization).
+      if (_supabaseInitLocked) {
+        await new Promise(r => _supabaseInitWaiters.push(r));
+        if (!mounted) return;
+      }
+      _supabaseInitLocked = true;
       try {
         const supabase = await getSupabase();
         const { data, error } = await supabase.auth.getSession();
@@ -122,7 +150,7 @@ export default function AuthGate({ children, onAuthChange }) {
         const nextSession = data?.session ?? null;
         setSession(nextSession);
         setAuthUser(nextSession?.user ?? null);
-        onAuthChange?.("INITIAL_SESSION", nextSession);
+        onAuthChangeRef.current?.("INITIAL_SESSION", nextSession);
         setLoading(false);
         if (!error) {
           publishRuntimeCheck(
@@ -136,7 +164,17 @@ export default function AuthGate({ children, onAuthChange }) {
         }
 
         const { data: sub } = supabase.auth.onAuthStateChange((event, newSession) => {
-          if (!mounted) return;
+          // PROBE:FIRST_LOGIN_HOMEHUB_AUDIT:START
+          markFirstLoginAudit('authgate:on-auth-state-change', {
+            event,
+            hasSession: Boolean(newSession),
+            userId: sanitizeFirstLoginAuditUserId(newSession?.user?.id ?? null),
+          });
+          // PROBE:FIRST_LOGIN_HOMEHUB_AUDIT:END
+
+          // The subscription lifecycle is already owned by unsubscribe() in cleanup.
+          // Guarding on the effect-local mounted flag drops real SIGNED_OUT events
+          // after StrictMode tears down the first effect pass.
           const nextAuthSession = newSession ?? null;
           setSession(nextAuthSession);
           setAuthUser(nextAuthSession?.user ?? null);
@@ -148,7 +186,7 @@ export default function AuthGate({ children, onAuthChange }) {
               session: nextAuthSession,
             })
           );
-          onAuthChange?.(event, nextAuthSession);
+          onAuthChangeRef.current?.(event, nextAuthSession);
         });
         unsubscribe = () => sub?.subscription?.unsubscribe?.();
       } catch (error) {
@@ -169,6 +207,9 @@ export default function AuthGate({ children, onAuthChange }) {
           })
         );
         setLoading(false);
+      } finally {
+        _supabaseInitLocked = false;
+        _supabaseInitWaiters.splice(0).forEach(r => r());
       }
     };
 
@@ -178,11 +219,27 @@ export default function AuthGate({ children, onAuthChange }) {
       mounted = false;
       unsubscribe?.();
     };
-  }, [authRuntimeMode.enabled, onAuthChange]);
+  }, [authRuntimeMode.enabled]);
 
   useEffect(() => {
     if (mode !== "signup") setNameErr("");
   }, [mode]);
+
+  // PROBE:FIRST_LOGIN_HOMEHUB_AUDIT:START
+  useEffect(() => {
+    if (loading) return;
+
+    const userId = sanitizeFirstLoginAuditUserId(session?.user?.id ?? null);
+    const nextKey = `${userId || "anon"}:${session ? "authed" : "signed-out"}`;
+    if (authSurfaceAuditRef.current === nextKey) return;
+    authSurfaceAuditRef.current = nextKey;
+
+    markFirstLoginAudit('authgate:surface-resolved', {
+      hasSession: Boolean(session),
+      userId,
+    });
+  }, [loading, session]);
+  // PROBE:FIRST_LOGIN_HOMEHUB_AUDIT:END
 
   // PROBE:ACCOUNT_NAME:START
   const getDisplayNameFromUser = (user) => {
@@ -269,9 +326,29 @@ export default function AuthGate({ children, onAuthChange }) {
     setErr("");
     setNameErr("");
 
+    // PROBE:FIRST_LOGIN_HOMEHUB_AUDIT:START
+    let attemptId = null;
+    if (mode === "signin") {
+      attemptId = beginFirstLoginAuditAttempt({
+        surface: "AuthGate",
+        mode,
+        email: sanitizeFirstLoginAuditEmail(email),
+      });
+      markFirstLoginAudit('authgate:submit', {
+        mode,
+        email: sanitizeFirstLoginAuditEmail(email),
+      }, attemptId);
+    }
+    // PROBE:FIRST_LOGIN_HOMEHUB_AUDIT:END
+
     try {
       if (!email || !password) {
         setErr("Email and password are required.");
+        // PROBE:FIRST_LOGIN_HOMEHUB_AUDIT:START
+        if (attemptId) {
+          endFirstLoginAuditAttempt('blocked', { reason: 'missing-email-or-password' }, attemptId);
+        }
+        // PROBE:FIRST_LOGIN_HOMEHUB_AUDIT:END
         return;
       }
 
@@ -289,13 +366,40 @@ export default function AuthGate({ children, onAuthChange }) {
       } else {
         const { error } = await supabase.auth.signInWithPassword({ email, password });
         if (error) throw error;
+        // PROBE:FIRST_LOGIN_HOMEHUB_AUDIT:START
+        markFirstLoginAudit('authgate:sign-in-request-resolved', {
+          email: sanitizeFirstLoginAuditEmail(email),
+        }, attemptId);
+        // PROBE:FIRST_LOGIN_HOMEHUB_AUDIT:END
       }
     } catch (e2) {
       setErr(e2?.message || "Auth error");
+      // PROBE:FIRST_LOGIN_HOMEHUB_AUDIT:START
+      if (attemptId) {
+        markFirstLoginAudit('authgate:request-failed', {
+          mode,
+          email: sanitizeFirstLoginAuditEmail(email),
+          message: e2?.message || "Auth error",
+        }, attemptId);
+        endFirstLoginAuditAttempt('failed', {
+          message: e2?.message || "Auth error",
+        }, attemptId);
+      }
+      // PROBE:FIRST_LOGIN_HOMEHUB_AUDIT:END
     }
   }
 
-  if (loading) return null;
+  if (loading) return (
+    <div style={{ minHeight: "100vh", display: "grid", placeItems: "center" }}>
+      <div style={{
+        width: 28, height: 28, borderRadius: "50%",
+        border: "2px solid rgba(255,255,255,0.15)",
+        borderTopColor: "rgba(255,255,255,0.55)",
+        animation: "authgate-spin 0.75s linear infinite",
+      }} />
+      <style>{`@keyframes authgate-spin { to { transform: rotate(360deg); } }`}</style>
+    </div>
+  );
 
   // When auth is disabled, just render children
   if (!authRuntimeMode.enabled) {
