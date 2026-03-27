@@ -202,8 +202,10 @@ function useSkeletonStyles(isLight) {
   };
   const shimmerStyle = {
     background: isLight
-      ? 'linear-gradient(90deg, rgba(153, 122, 84, 0.12), rgba(153, 122, 84, 0.24), rgba(153, 122, 84, 0.12))'
-      : 'linear-gradient(90deg, rgba(155, 180, 218, 0.10), rgba(155, 180, 218, 0.22), rgba(155, 180, 218, 0.10))',
+      ? 'linear-gradient(90deg, rgba(153, 122, 84, 0.08) 25%, rgba(153, 122, 84, 0.22) 50%, rgba(153, 122, 84, 0.08) 75%)'
+      : 'linear-gradient(90deg, rgba(155, 180, 218, 0.06) 25%, rgba(155, 180, 218, 0.20) 50%, rgba(155, 180, 218, 0.06) 75%)',
+    backgroundSize: '200% 100%',
+    animation: 'shimmerSweep 1.6s ease-in-out infinite',
   };
   const labelColor = isLight ? 'rgba(109, 82, 48, 0.64)' : 'rgba(205, 218, 238, 0.64)';
   const titleColor = isLight ? 'rgba(58, 42, 25, 0.92)' : 'rgba(244, 247, 252, 0.94)';

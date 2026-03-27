@@ -97,7 +97,7 @@ export function CircularProgress({
                         strokeDasharray={circumference}
                         strokeDashoffset={offset}
                         style={{
-                            transition: `stroke-dashoffset ${ANIM.mount}ms ease-out`
+                            transition: `stroke-dashoffset 600ms cubic-bezier(0.2, 0.9, 0.2, 1)`
                         }}
                     />
                 </svg>

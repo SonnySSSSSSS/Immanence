@@ -119,7 +119,7 @@ export function RitualSelectionDeck({ onSelectRitual, selectedRitualId }) {
                             No rituals available yet
                         </div>
                     ) : (
-                        rituals.map((ritual) => {
+                        rituals.map((ritual, ritualIdx) => {
                             const isSelected = resolvedSelectedId === ritual.id;
 
                             return (
@@ -131,8 +131,9 @@ export function RitualSelectionDeck({ onSelectRitual, selectedRitualId }) {
                                     }}
                                     onMouseEnter={() => handleMouseEnter(ritual.id)}
                                     onMouseLeave={handleMouseLeave}
-                                    className="rounded-2xl flex flex-col items-center text-center transition-all duration-300 hover:scale-[1.02] active:scale-[0.98] group"
+                                    className="rounded-2xl flex flex-col items-center text-center transition-all duration-300 hover:scale-[1.02] active:scale-[0.98] group practice-stagger-item"
                                     style={{
+                                        '--stagger-i': ritualIdx,
                                         minWidth: 0,
                                         minHeight: '122px',
                                         padding: '14px 10px',

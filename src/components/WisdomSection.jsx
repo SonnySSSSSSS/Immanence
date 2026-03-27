@@ -587,7 +587,7 @@ export function WisdomSection() {
           />
 
           {/* Content */}
-          <section className="min-h-[400px] relative z-10">
+          <section key={activeView} className="min-h-[400px] relative z-10 wisdom-tab-fade">
             {activeView === "Treatise" && renderTreatiseView()}
             {activeView === "Bookmarks" && renderBookmarksView()}
             {activeView === "Videos" && renderVideosView()}

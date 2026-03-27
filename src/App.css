@@ -218,6 +218,56 @@
   animation: sectionFadeIn 220ms ease-out;
 }
 
+/* ── Modal panel scale-in reveal ── */
+@keyframes modalPanelReveal {
+  from { opacity: 0; transform: scale(0.95) translateY(8px); }
+  to   { opacity: 1; transform: scale(1)    translateY(0); }
+}
+.modal-panel-reveal {
+  animation: modalPanelReveal 300ms cubic-bezier(0.2, 0.9, 0.2, 1) both;
+}
+
+/* ── Wisdom tab content cross-fade ── */
+@keyframes wisdomTabFadeIn {
+  from { opacity: 0; transform: translateY(6px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.wisdom-tab-fade {
+  animation: wisdomTabFadeIn 260ms cubic-bezier(0.2, 0.9, 0.2, 1) both;
+}
+
+/* ── Path card selection tap feedback ── */
+.im-card {
+  transition: transform 140ms ease, box-shadow 140ms ease;
+  will-change: transform;
+}
+.im-card:active {
+  transform: scale(0.975);
+}
+
+/* ── Skeleton shimmer sweep ── */
+@keyframes shimmerSweep {
+  0%   { background-position: -200% center; }
+  100% { background-position:  200% center; }
+}
+.skeleton-shimmer {
+  background: linear-gradient(
+    90deg,
+    var(--skeleton-base, rgba(255,255,255,0.06)) 25%,
+    var(--skeleton-sheen, rgba(255,255,255,0.14)) 50%,
+    var(--skeleton-base, rgba(255,255,255,0.06)) 75%
+  );
+  background-size: 200% 100%;
+  animation: shimmerSweep 1.6s ease-in-out infinite;
+  border-radius: 4px;
+}
+
+/* ── Practice selection grid stagger ── */
+.practice-stagger-item {
+  animation: navCardStaggerIn 480ms cubic-bezier(0.2, 0.9, 0.2, 1) both;
+  animation-delay: calc(min(var(--stagger-i, 0), 7) * 45ms);
+}
+
 @media (prefers-reduced-motion: reduce) {
   .section-enter,
   .navigation-section-fade-in,
@@ -231,14 +281,24 @@
   .app-surface-reveal,
   .app-header-home-choreo--visible,
   .nav-stagger-scope > .nav-stagger-item,
-  .wisdom-stagger-scope > .wisdom-stagger-item {
+  .wisdom-stagger-scope > .wisdom-stagger-item,
+  .modal-panel-reveal,
+  .wisdom-tab-fade,
+  .skeleton-shimmer,
+  .practice-stagger-item {
     animation: none !important;
     transform: none !important;
     filter: none !important;
   }
 
+  .modal-panel-reveal,
+  .wisdom-tab-fade {
+    opacity: 1 !important;
+  }
+
   .app-header-control-cluster,
-  .app-header-home-choreo--hidden {
+  .app-header-home-choreo--hidden,
+  .im-card {
     transition: none !important;
   }
 

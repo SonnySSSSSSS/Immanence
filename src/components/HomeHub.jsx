@@ -213,6 +213,19 @@ function HomeHub({ onSelectSection, activeSection = null, currentStage, previewP
   const [leftRolled, setLeftRolled] = useState(false);
   const [rightRolled, setRightRolled] = useState(false);
   const [decayExpanded, setDecayExpanded] = useState(false);
+  const [avatarParallax, setAvatarParallax] = useState({ x: 0, y: 0 });
+  const avatarZoneRef = useRef(null);
+  function handleAvatarZoneMouseMove(e) {
+    const zone = avatarZoneRef.current;
+    if (!zone) return;
+    const rect = zone.getBoundingClientRect();
+    const MAX = 6;
+    setAvatarParallax({
+      x: ((e.clientX - (rect.left + rect.width / 2)) / (rect.width / 2)) * MAX,
+      y: ((e.clientY - (rect.top + rect.height / 2)) / (rect.height / 2)) * MAX,
+    });
+  }
+  function handleAvatarZoneMouseLeave() { setAvatarParallax({ x: 0, y: 0 }); }
   useEffect(() => {
     setShowCurriculumHubState(false);
     setShowCurriculumOnboarding(false);
@@ -701,6 +714,9 @@ function HomeHub({ onSelectSection, activeSection = null, currentStage, previewP
       >
         {/* PROBE:flank-housing:START */}
         <div
+          ref={avatarZoneRef}
+          onMouseMove={handleAvatarZoneMouseMove}
+          onMouseLeave={handleAvatarZoneMouseLeave}
           style={{
             display: 'flex',
             alignItems: 'center',
@@ -817,7 +833,10 @@ function HomeHub({ onSelectSection, activeSection = null, currentStage, previewP
               }}
             />
 
-            <div className="relative z-10 flex items-center justify-center">
+            <div
+              className="relative z-10 flex items-center justify-center"
+              style={{ transform: `translate(${avatarParallax.x}px, ${avatarParallax.y}px)`, transition: 'transform 400ms cubic-bezier(0.2, 0.9, 0.2, 1)' }}
+            >
               <AvatarV3
                 stage={normalizedStage}
                 modeWeights={modeWeights}

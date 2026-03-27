@@ -289,7 +289,7 @@ export function VideoPlayerModal({ video, isOpen, onClose }) {
             onClick={onClose}
         >
             <div
-                className="w-full max-w-4xl rounded-2xl overflow-hidden"
+                className="w-full max-w-4xl rounded-2xl overflow-hidden modal-panel-reveal"
                 style={{
                     background: 'rgba(10, 10, 18, 0.98)',
                     border: '1px solid rgba(255, 255, 255, 0.08)',

@@ -118,7 +118,7 @@ export function VacationToggle({ compact = false }) {
                     onClick={() => setShowConfirm(false)}
                 >
                     <div
-                        className="w-full max-w-xs rounded-2xl p-5"
+                        className="w-full max-w-xs rounded-2xl p-5 modal-panel-reveal"
                         style={{
                             background: isLight
                                 ? 'linear-gradient(180deg, #FDFBF5 0%, #F5F0E6 100%)'

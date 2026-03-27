@@ -55,7 +55,7 @@ export function HonorLogModal({ isOpen, onClose }) {
             onClick={onClose}
         >
             <div
-                className="w-full max-w-sm rounded-2xl p-6 relative"
+                className="w-full max-w-sm rounded-2xl p-6 relative modal-panel-reveal"
                 style={{
                     background: isLight
                         ? 'linear-gradient(180deg, #FDFBF5 0%, #F5F0E6 100%)'
