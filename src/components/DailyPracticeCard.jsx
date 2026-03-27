@@ -164,6 +164,79 @@ function isSameInitiationPathIdentity(a, b) {
     return normalizeInitiationPathIdentity(a) === normalizeInitiationPathIdentity(b);
 }
 
+function normalizeWallpaperPracticeLabel(value) {
+    if (typeof value !== 'string') return '';
+    return value
+        .toLowerCase()
+        .replace(/\s+/g, ' ')
+        .trim();
+}
+
+function resolveWallpaperKeyFromRowSignal({
+    practiceLabel = '',
+    practiceId = '',
+    hasStillnessConfig = false,
+} = {}) {
+    const normalizedLabel = normalizeWallpaperPracticeLabel(practiceLabel);
+    const normalizedPracticeId = normalizeWallpaperPracticeLabel(practiceId);
+
+    if (normalizedLabel.includes('stillness meditation') || normalizedLabel.includes('focus reset') || hasStillnessConfig) {
+        return 'stillness';
+    }
+    if (normalizedLabel.includes('pranayama') || normalizedPracticeId === 'breath' || normalizedLabel.includes('breath practice')) {
+        return 'pranayama';
+    }
+    if (normalizedLabel.includes('insight meditation')) {
+        return 'insight';
+    }
+    if (normalizedLabel.includes('body scan')) {
+        return 'body-scan';
+    }
+    if (normalizedLabel.includes('kasina')) {
+        return 'kasina';
+    }
+    if (normalizedLabel.includes('sound') || normalizedPracticeId === 'resonance') {
+        return 'sound';
+    }
+
+    return 'off-day';
+}
+
+function getWallpaperUrlByKey(wallpaperKey, baseUrl, offDayUrl) {
+    if (wallpaperKey === 'pranayama') return `${baseUrl}pranayama%20meditation.webp`;
+    if (wallpaperKey === 'stillness') return `${baseUrl}stilness%20meditation.webp`;
+    if (wallpaperKey === 'insight') return `${baseUrl}insight%20meditation.webp`;
+    if (wallpaperKey === 'body-scan') return `${baseUrl}body%20scan%20meditation.webp`;
+    if (wallpaperKey === 'kasina') return `${baseUrl}kasina%20meditation.webp`;
+    if (wallpaperKey === 'sound') return `${baseUrl}sound%20meditation.webp`;
+    return offDayUrl;
+}
+
+function getWallpaperPresentationByKey(wallpaperKey) {
+    // Keep the same strip surface, but vary framing so different wallpapers read distinctly.
+    if (wallpaperKey === 'stillness') {
+        return {
+            backgroundSize: 'cover',
+            backgroundPosition: '82% 50%',
+            opacity: 0.68,
+        };
+    }
+
+    if (wallpaperKey === 'off-day') {
+        return {
+            backgroundSize: 'auto 100%',
+            backgroundPosition: 'left center',
+            opacity: 0.44,
+        };
+    }
+
+    return {
+        backgroundSize: 'auto 100%',
+        backgroundPosition: '0% 50%',
+        opacity: 0.48,
+    };
+}
+
 export function DailyPracticeCard({ onStartPractice, onViewCurriculum, onNavigate, hasPersistedCurriculumData, onStartSetup, onboardingComplete: onboardingCompleteProp, practiceTimeSlots: practiceTimeSlotsProp, isTutorialTarget = false, showPerLegCompletion = true, showDailyCompletionNotice = false, showSessionMeter = true, debugShadowOff = false, debugBlurOff = false, debugBorderOff = false, debugMaskOff = false, devCardActive = null, devCardCarouselId = null }) {
     const colorScheme = useDisplayModeStore(s => s.colorScheme);
     const isLight = colorScheme === 'light';
@@ -503,6 +576,23 @@ export function DailyPracticeCard({ onStartPractice, onViewCurriculum, onNavigat
     const theme = useTheme();
     const primaryHex = theme?.accent?.primary || '#4ade80';
     const sessionRowWallpaperUrl = `${import.meta.env.BASE_URL}off%20day.webp`;
+    const resolveSessionRowWallpaperDecision = useCallback(({ practiceLabel = '', practiceId = '', hasStillnessConfig = false, isOffDay = false } = {}) => {
+        const wallpaperKey = isOffDay
+            ? 'off-day'
+            : resolveWallpaperKeyFromRowSignal({
+                practiceLabel,
+                practiceId,
+                hasStillnessConfig,
+            });
+        const wallpaperUrl = getWallpaperUrlByKey(wallpaperKey, import.meta.env.BASE_URL, sessionRowWallpaperUrl);
+
+        return {
+            wallpaperKey,
+            wallpaperUrl,
+            isOffDayUrl: wallpaperUrl === sessionRowWallpaperUrl,
+            presentation: getWallpaperPresentationByKey(wallpaperKey),
+        };
+    }, [sessionRowWallpaperUrl]);
     const activeScheduleDays = useMemo(
         () => frozenActiveDays.length > 0 ? frozenActiveDays : [0, 1, 2, 3, 4, 5, 6],
         [frozenActiveDays]
@@ -545,17 +635,20 @@ export function DailyPracticeCard({ onStartPractice, onViewCurriculum, onNavigat
         opacity,
     }), [isLight]);
 
-    const renderSessionRowWallpaper = useCallback(() => (
+    const renderSessionRowWallpaper = useCallback((wallpaperDecision = null) => {
+        const wallpaperUrl = wallpaperDecision?.wallpaperUrl || sessionRowWallpaperUrl;
+        const wallpaperPresentation = wallpaperDecision?.presentation || getWallpaperPresentationByKey('off-day');
+        return (
         <>
             <div
                 className="absolute inset-y-0 left-0 pointer-events-none"
                 style={{
                     width: '40%',
-                    backgroundImage: `url(${sessionRowWallpaperUrl})`,
-                    backgroundSize: 'auto 100%',
+                    backgroundImage: `url(${wallpaperUrl})`,
+                    backgroundSize: wallpaperPresentation.backgroundSize,
                     backgroundRepeat: 'no-repeat',
-                    backgroundPosition: 'left center',
-                    opacity: 0.48,
+                    backgroundPosition: wallpaperPresentation.backgroundPosition,
+                    opacity: wallpaperPresentation.opacity,
                 }}
             />
             <div
@@ -568,7 +661,8 @@ export function DailyPracticeCard({ onStartPractice, onViewCurriculum, onNavigat
                 }}
             />
         </>
-    ), [isLight, sessionRowWallpaperUrl]);
+    );
+    }, [isLight, sessionRowWallpaperUrl]);
     const progressBarColor = theme?.ui?.progressBar || '#4ade80';
 
     const maybeShadow = (shadow) => (debugShadowOff ? 'none' : shadow);
@@ -1230,13 +1324,22 @@ export function DailyPracticeCard({ onStartPractice, onViewCurriculum, onNavigat
                                                         }),
                                                     };
 
+                                                const rowPracticeId = row.slot?.practiceId || '';
+                                                const rowHasStillnessConfig = Boolean(row.slot?.practiceConfig?.stillness);
+                                                const rowWallpaperDecision = resolveSessionRowWallpaperDecision({
+                                                    practiceLabel: row.title,
+                                                    practiceId: rowPracticeId,
+                                                    hasStillnessConfig: rowHasStillnessConfig,
+                                                    isOffDay: isInfoRow,
+                                                });
+
                                                 return (
                                                     <div
                                                         key={row.key}
                                                         className="rounded border p-4 flex items-center gap-3 transition-all"
                                                         style={getSessionRowStyle(isInfoRow ? 1 : (row.isDone ? 0.7 : 1))}
                                                     >
-                                                        {renderSessionRowWallpaper()}
+                                                        {renderSessionRowWallpaper(rowWallpaperDecision)}
                                                         {/* Leg Number / Status */}
                                                         <div
                                                             className="relative z-10 w-7 h-7 rounded-lg flex items-center justify-center text-xs font-semibold shrink-0 transition-all"
@@ -1936,13 +2039,18 @@ export function DailyPracticeCard({ onStartPractice, onViewCurriculum, onNavigat
                                         const isActionable = isNextCandidate && !isSoftLocked;
                                         const isLockedLeg = !leg.completed && !isNextCandidate; // sequencing lock only
                                         const legTimeStr = resolveLegTimeStr(leg);
+                                        const legWallpaperDecision = resolveSessionRowWallpaperDecision({
+                                            practiceLabel: leg.label || leg.practiceType || '',
+                                            isOffDay: isRestDayToday,
+                                        });
+
                                         return (
                                             <div
                                                 key={`${dayNumber}-${leg.legNumber}`}
                                                 className="rounded border p-4 flex items-center gap-3 transition-all"
                                                 style={getSessionRowStyle(isLockedLeg ? 0.5 : ((expired || tooEarly) ? 0.75 : 1))}
                                             >
-                                                {renderSessionRowWallpaper()}
+                                                {renderSessionRowWallpaper(legWallpaperDecision)}
                                                 {/* Leg Number / Status */}
                                                 <div
                                                     className="relative z-10 w-10 h-10 rounded-xl flex items-center justify-center text-sm font-black shrink-0 transition-all"
