@@ -237,11 +237,13 @@
 }
 
 /* ── Path card selection tap feedback ── */
-.im-card {
+.im-card:is(button, a, [role="button"]),
+.psg-card {
   transition: transform 140ms ease, box-shadow 140ms ease;
   will-change: transform;
 }
-.im-card:active {
+.im-card:is(button, a, [role="button"]):active,
+.psg-card:active {
   transform: scale(0.975);
 }
 
@@ -298,7 +300,8 @@
 
   .app-header-control-cluster,
   .app-header-home-choreo--hidden,
-  .im-card {
+  .im-card,
+  .psg-card {
     transition: none !important;
   }
 
