@@ -1,4 +1,5 @@
 import { captureUserStateBundle, applyUserStateBundle } from './offlineFirstUserStateSnapshot.js';
+import { getFirstLoginAuditNow, markFirstLoginAudit, sanitizeFirstLoginAuditUserId } from '../utils/firstLoginAudit.js';
 
 const DEVICE_ID_KEY = 'immanence-device-id';
 const OUTBOX_KEY = 'immanence-sync-outbox-v1';
@@ -355,7 +356,13 @@ function emitSupabaseCorsProbe(event, payload = {}) {
 }
 // PROBE:SUPABASE_CORS:END
 
-export function initOfflineFirstUserStateSync({ supabase, keys, userId, debug = false }) {
+export function initOfflineFirstUserStateSync({
+  supabase,
+  keys,
+  userId,
+  debug = false,
+  initialTickDelayMs = 0,
+}) {
   if (!supabase) return () => {};
   if (typeof window === 'undefined') return () => {};
 
@@ -380,7 +387,24 @@ export function initOfflineFirstUserStateSync({ supabase, keys, userId, debug = 
 
   let stopped = false;
   let timerId = null;
+  let initialTickTimerId = null;
   let inFlight = false;
+  let firstTickReported = false;
+  let firstTickCompleteReported = false;
+  let firstPushReported = false;
+  let firstPullReported = false;
+  let firstApplyReported = false;
+
+  // PROBE:FIRST_LOGIN_HOMEHUB_AUDIT:START
+  markFirstLoginAudit('user-state-sync:init', {
+    userId: sanitizeFirstLoginAuditUserId(scopedUserId),
+    keyCount: Array.isArray(keys) ? keys.length : 0,
+  });
+  // PROBE:FIRST_LOGIN_HOMEHUB_AUDIT:END
+
+  const safeInitialTickDelayMs = Number.isFinite(initialTickDelayMs)
+    ? Math.max(0, Math.floor(initialTickDelayMs))
+    : 0;
 
   const ensureBaselineHashes = () => {
     const bundle = captureUserStateBundle(keys);
@@ -421,9 +445,20 @@ export function initOfflineFirstUserStateSync({ supabase, keys, userId, debug = 
   };
 
   const pushOutbox = async (userId) => {
+    const pushStartedAt = getFirstLoginAuditNow();
     if (!canAttemptNetwork()) return;
     const outbox = readOutbox(storageKeys);
-    if (!Array.isArray(outbox) || outbox.length === 0) return;
+    if (!Array.isArray(outbox) || outbox.length === 0) {
+      if (!firstPushReported) {
+        firstPushReported = true;
+        markFirstLoginAudit('user-state-sync:first-push-skip', {
+          userId: sanitizeFirstLoginAuditUserId(userId),
+          reason: 'empty-outbox',
+          durationMs: Number((getFirstLoginAuditNow() - pushStartedAt).toFixed(2)),
+        });
+      }
+      return;
+    }
 
     let index = 0;
     while (!stopped && index < outbox.length) {
@@ -488,6 +523,14 @@ export function initOfflineFirstUserStateSync({ supabase, keys, userId, debug = 
           errorDetails,
           result.error
         );
+        if (!firstPushReported) {
+          firstPushReported = true;
+          markFirstLoginAudit('user-state-sync:first-push-error', {
+            userId: sanitizeFirstLoginAuditUserId(userId),
+            durationMs: Number((getFirstLoginAuditNow() - pushStartedAt).toFixed(2)),
+            message: result.error?.message || 'push failed',
+          });
+        }
         return;
       }
 
@@ -500,9 +543,18 @@ export function initOfflineFirstUserStateSync({ supabase, keys, userId, debug = 
       writeOutbox(storageKeys, outbox);
       logDebug('pushed', { hash: pushedHash, remaining: outbox.length });
     }
+
+    if (!firstPushReported) {
+      firstPushReported = true;
+      markFirstLoginAudit('user-state-sync:first-push-complete', {
+        userId: sanitizeFirstLoginAuditUserId(userId),
+        durationMs: Number((getFirstLoginAuditNow() - pushStartedAt).toFixed(2)),
+      });
+    }
   };
 
   const pullAndApplyIfSafe = async (userId) => {
+    const pullStartedAt = getFirstLoginAuditNow();
     if (!canAttemptNetwork()) return;
 
     emitSupabaseCorsProbe('pull:query:build', {
@@ -566,11 +618,28 @@ export function initOfflineFirstUserStateSync({ supabase, keys, userId, debug = 
         errorDetails,
         result.error
       );
+      if (!firstPullReported) {
+        firstPullReported = true;
+        markFirstLoginAudit('user-state-sync:first-pull-error', {
+          userId: sanitizeFirstLoginAuditUserId(userId),
+          durationMs: Number((getFirstLoginAuditNow() - pullStartedAt).toFixed(2)),
+          message: result.error?.message || 'pull failed',
+        });
+      }
       return;
     }
 
     const remoteBundle = stampProgressBundleOwner(result?.data?.doc ?? null, userId);
-    if (!remoteBundle || remoteBundle.schema !== 'progress_bundle_v1') return;
+    if (!remoteBundle || remoteBundle.schema !== 'progress_bundle_v1') {
+      if (!firstPullReported) {
+        firstPullReported = true;
+        markFirstLoginAudit('user-state-sync:first-pull-empty', {
+          userId: sanitizeFirstLoginAuditUserId(userId),
+          durationMs: Number((getFirstLoginAuditNow() - pullStartedAt).toFixed(2)),
+        });
+      }
+      return;
+    }
 
     const remoteCapturedAtMs = parseIsoToMs(remoteBundle.capturedAt);
     if (!remoteCapturedAtMs) return;
@@ -584,11 +653,27 @@ export function initOfflineFirstUserStateSync({ supabase, keys, userId, debug = 
     const lastPushedHash = readTextFromLocalStorage(storageKeys.lastPushedHash);
     if (!lastPushedHash || localHash !== lastPushedHash) {
       logDebug('skip apply (local diverged)', { localHash, lastPushedHash });
+      if (!firstPullReported) {
+        firstPullReported = true;
+        markFirstLoginAudit('user-state-sync:first-pull-deferred', {
+          userId: sanitizeFirstLoginAuditUserId(userId),
+          durationMs: Number((getFirstLoginAuditNow() - pullStartedAt).toFixed(2)),
+          reason: 'local-hash-diverged',
+        });
+      }
       return;
     }
 
+    const applyStartedAt = getFirstLoginAuditNow();
     applyUserStateBundle(remoteBundle, keys);
     await bestEffortRehydrateAfterApply();
+    if (!firstApplyReported) {
+      firstApplyReported = true;
+      markFirstLoginAudit('user-state-sync:first-remote-apply', {
+        userId: sanitizeFirstLoginAuditUserId(userId),
+        durationMs: Number((getFirstLoginAuditNow() - applyStartedAt).toFixed(2)),
+      });
+    }
 
     const appliedHash = computeBundleContentHash(remoteBundle, keys);
     writeTextToLocalStorage(storageKeys.lastAppliedRemoteAt, remoteBundle.capturedAt);
@@ -596,6 +681,14 @@ export function initOfflineFirstUserStateSync({ supabase, keys, userId, debug = 
     writeTextToLocalStorage(storageKeys.lastEnqueuedHash, appliedHash);
 
     logDebug('applied remote', { capturedAt: remoteBundle.capturedAt, hash: appliedHash, userId });
+    if (!firstPullReported) {
+      firstPullReported = true;
+      markFirstLoginAudit('user-state-sync:first-pull-complete', {
+        userId: sanitizeFirstLoginAuditUserId(userId),
+        durationMs: Number((getFirstLoginAuditNow() - pullStartedAt).toFixed(2)),
+        appliedRemote: true,
+      });
+    }
   };
 
   // tick() is the single auth-check bottleneck for all Supabase DB calls.
@@ -611,6 +704,14 @@ export function initOfflineFirstUserStateSync({ supabase, keys, userId, debug = 
     if (!isTabVisible()) return;
     if (inFlight) return;
     inFlight = true;
+    const tickStartedAt = getFirstLoginAuditNow();
+
+    if (!firstTickReported) {
+      firstTickReported = true;
+      markFirstLoginAudit('user-state-sync:first-tick-start', {
+        userId: sanitizeFirstLoginAuditUserId(scopedUserId),
+      });
+    }
 
     try {
       emitSupabaseCorsProbe('tick:session:start', {
@@ -645,13 +746,31 @@ export function initOfflineFirstUserStateSync({ supabase, keys, userId, debug = 
       await pullAndApplyIfSafe(userId);
     } finally {
       inFlight = false;
+      if (!firstTickCompleteReported) {
+        firstTickCompleteReported = true;
+        markFirstLoginAudit('user-state-sync:first-tick-complete', {
+          userId: sanitizeFirstLoginAuditUserId(scopedUserId),
+          durationMs: Number((getFirstLoginAuditNow() - tickStartedAt).toFixed(2)),
+        });
+      }
     }
   };
 
   ensureBaselineHashes();
 
-  // Kick once immediately (best-effort) then poll.
-  tick();
+  // Kick once after an optional startup delay, then continue polling.
+  if (safeInitialTickDelayMs > 0) {
+    markFirstLoginAudit('user-state-sync:first-tick-scheduled', {
+      userId: sanitizeFirstLoginAuditUserId(scopedUserId),
+      delayMs: safeInitialTickDelayMs,
+    });
+    initialTickTimerId = window.setTimeout(() => {
+      initialTickTimerId = null;
+      tick();
+    }, safeInitialTickDelayMs);
+  } else {
+    tick();
+  }
   timerId = window.setInterval(tick, 3000);
 
   const onOnline = () => tick();
@@ -672,6 +791,11 @@ export function initOfflineFirstUserStateSync({ supabase, keys, userId, debug = 
     stopped = true;
     try {
       if (timerId) window.clearInterval(timerId);
+    } catch {
+      // ignore
+    }
+    try {
+      if (initialTickTimerId) window.clearTimeout(initialTickTimerId);
     } catch {
       // ignore
     }

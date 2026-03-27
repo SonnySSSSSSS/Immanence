@@ -13,6 +13,7 @@ import { computeScheduleAnchorStartAt, getStartWindowState, localDateTimeFromDat
 import { CurriculumPrecisionRail } from './infographics/CurriculumPrecisionRail.jsx';
 import { getProgramDefinition, getProgramDay } from '../data/programRegistry.js';
 import { isUiPickingActive } from '../dev/uiControlsCaptureManager.js';
+import { markFirstLoginAudit } from '../utils/firstLoginAudit.js';
 import {
     computeCurriculumCompletionState,
     isScheduleActiveDay,
@@ -175,6 +176,7 @@ export function DailyPracticeCard({ onStartPractice, onViewCurriculum, onNavigat
     const [isPathActionsMenuOpen, setIsPathActionsMenuOpen] = useState(false);
     const pathActionsMenuRef = useRef(null);
     const pathActionsPopupRef = useRef(null);
+    const dailyPracticeCardAuditRef = useRef(false);
 
     // Close menu on outside click
     useEffect(() => {
@@ -235,6 +237,19 @@ export function DailyPracticeCard({ onStartPractice, onViewCurriculum, onNavigat
     const todayDow = new Date().getDay();
     const isActiveDay = isScheduleActiveDay({ activeDays: frozenActiveDays, todayDow });
     const isRestDayToday = Boolean(activePathObj) && !isActiveDay;
+
+    // PROBE:FIRST_LOGIN_HOMEHUB_AUDIT:START
+    useEffect(() => {
+        if (dailyPracticeCardAuditRef.current) return;
+        dailyPracticeCardAuditRef.current = true;
+        markFirstLoginAudit('daily-practice-card:mount', {
+            hasActivePath,
+            isSetupEmptyState,
+            slotCount: Array.isArray(times) ? times.length : 0,
+            hasPracticeLaunchContext: Boolean(practiceLaunchContext),
+        });
+    }, [hasActivePath, isSetupEmptyState, practiceLaunchContext, times]);
+    // PROBE:FIRST_LOGIN_HOMEHUB_AUDIT:END
 
     // Today's session tracking (using local date key for timezone correctness, scoped to current run)
     const todayKey = getLocalDateKey();

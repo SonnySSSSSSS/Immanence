@@ -40,6 +40,7 @@ import { ANCHORS } from "../tutorials/anchorIds.js";
 import { AvatarV3 } from "./avatarV3/AvatarV3.jsx";
 import { useAvatarV3State } from "../state/avatarV3Store.js";
 import { usePathStore } from "../state/pathStore.js";
+import { getFirstLoginAuditNow, markFirstLoginAudit, sanitizeFirstLoginAuditUserId } from "../utils/firstLoginAudit.js";
 import {
   DEFAULT_CURRICULUM_ID,
   getHomeHubDashboardState,
@@ -98,6 +99,12 @@ if (HOME_HUB_HMR_HOST_PROBE_ENABLED) {
     hasHotData: Boolean(import.meta.hot?.data),
   });
 }
+
+// PROBE:FIRST_LOGIN_HOMEHUB_AUDIT:START
+markFirstLoginAudit('homehub:module-eval', {
+  source: 'HomeHub',
+});
+// PROBE:FIRST_LOGIN_HOMEHUB_AUDIT:END
 // PROBE:avatar-hmr-host:END
 
 const sanitizeModeTileBackgroundImage = (bgUrl) => {
@@ -234,6 +241,13 @@ function HomeHub({ onSelectSection, activeSection = null, currentStage, previewP
 
       setFrameRect(rect);
       void tag;
+      // PROBE:FIRST_LOGIN_HOMEHUB_AUDIT:START
+      markFirstLoginAudit('homehub:frame-rect-measured', {
+        tag,
+        width: Number(rect.width.toFixed(2)),
+        height: Number(rect.height.toFixed(2)),
+      });
+      // PROBE:FIRST_LOGIN_HOMEHUB_AUDIT:END
     };
 
     update("initial");
@@ -257,6 +271,8 @@ function HomeHub({ onSelectSection, activeSection = null, currentStage, previewP
   const [archiveOptions, setArchiveOptions] = useState({ initialTab: 'all', initialReportDomain: null });
   const trackerLaunchContext = useUiStore(s => s.trackerLaunchContext);
   const homeHubProbeIdRef = useRef(null);
+  const homeHubMountAuditRef = useRef(false);
+  const homeHubDashboardAuditDurationRef = useRef(null);
 
   useEffect(() => {
     if (homeHubProbeIdRef.current == null) {
@@ -275,6 +291,19 @@ function HomeHub({ onSelectSection, activeSection = null, currentStage, previewP
       currentStage,
       previewPath,
     });
+
+    // PROBE:FIRST_LOGIN_HOMEHUB_AUDIT:START
+    if (!homeHubMountAuditRef.current) {
+      homeHubMountAuditRef.current = true;
+      markFirstLoginAudit('homehub:mount', {
+        activeSection,
+        currentStage,
+        previewPath,
+        userId: sanitizeFirstLoginAuditUserId(activeUserId),
+      });
+    }
+    // PROBE:FIRST_LOGIN_HOMEHUB_AUDIT:END
+
     return () => {
       logHomeHubHmrHostProbe('unmount', {
         probeId: homeHubProbeIdRef.current,
@@ -420,7 +449,9 @@ function HomeHub({ onSelectSection, activeSection = null, currentStage, previewP
     }
   }, [trackerLaunchContext]);
 
-
+  // PROBE:FIRST_LOGIN_HOMEHUB_AUDIT:START
+  const dashboardComputeStartedAt = getFirstLoginAuditNow();
+  // PROBE:FIRST_LOGIN_HOMEHUB_AUDIT:END
   const activeLauncher = launcherContext
     ? getProgramLauncher(launcherContext.programId || activeCurriculumId, launcherContext.leg?.launcherId)
     : null;
@@ -430,6 +461,21 @@ function HomeHub({ onSelectSection, activeSection = null, currentStage, previewP
     activeRunId: activePath?.runId,
     accessPosture,
   });
+  // PROBE:FIRST_LOGIN_HOMEHUB_AUDIT:START
+  if (homeHubDashboardAuditDurationRef.current == null) {
+    homeHubDashboardAuditDurationRef.current = Number((getFirstLoginAuditNow() - dashboardComputeStartedAt).toFixed(2));
+  }
+
+  useEffect(() => {
+    if (homeHubDashboardAuditDurationRef.current == null) return;
+    markFirstLoginAudit('homehub:dashboard-computed', {
+      durationMs: homeHubDashboardAuditDurationRef.current,
+      hasActivePath: Boolean(activePath?.runId),
+      hubTileKeys: Object.keys(hubTiles || {}),
+    });
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+  // PROBE:FIRST_LOGIN_HOMEHUB_AUDIT:END
 
   // PROBE:HOMEHUB_SIDE_PANEL_GEOM
   const RAIL_W = SANCTUARY_MODULE_MAX_WIDTH;

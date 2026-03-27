@@ -8,6 +8,7 @@ import {
   getDominantMode,
   normalizeModeWeights,
 } from './constants.js';
+import { markFirstLoginAudit } from '../../utils/firstLoginAudit.js';
 import './AvatarV3.css';
 
 // PROBE:avatar-hmr-derivation:START
@@ -119,6 +120,13 @@ export function AvatarV3({
       path,
       size,
     });
+    // PROBE:FIRST_LOGIN_HOMEHUB_AUDIT:START
+    markFirstLoginAudit('avatar-v3:mount', {
+      stage,
+      path,
+      size,
+    });
+    // PROBE:FIRST_LOGIN_HOMEHUB_AUDIT:END
     return () => {
       logAvatarV3HmrHostProbe('unmount', {
         probeId: avatarV3ProbeIdRef.current,
