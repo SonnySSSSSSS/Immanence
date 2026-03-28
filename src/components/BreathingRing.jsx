@@ -644,6 +644,36 @@ function StillnessVisualRing({ stillnessVisual, practiceActive = true }) {
                   pointerEvents: normalizedMode === "rainbow" ? "auto" : "none",
                 }}
               >
+                {normalizedMode === 'bracelet' && (
+                  <div
+                    aria-hidden="true"
+                    style={{
+                      position: 'absolute',
+                      top: '50%',
+                      left: '50%',
+                      width: `${Math.round(ringStageSize * 0.78) + 16}px`,
+                      height: `${Math.round(ringStageSize * 0.78) + 16}px`,
+                      transform: 'translate(-50%, -50%)',
+                      borderRadius: '50%',
+                      overflow: 'hidden',
+                      zIndex: 6,
+                      pointerEvents: 'none',
+                    }}
+                  >
+                    <img
+                      src="/assets/ancient_relic_focus.webp"
+                      alt=""
+                      style={{
+                        width: '100%',
+                        height: '100%',
+                        objectFit: 'cover',
+                        objectPosition: 'center top',
+                        display: 'block',
+                      }}
+                    />
+                  </div>
+                )}
+
                 {!isOrb && (
                   <div
                     aria-hidden="true"
@@ -1782,6 +1812,37 @@ export function BreathingRing({
               pointerEvents: rndRingMode === 'rainbow' ? "auto" : "none",
             }}
           >
+            {/* Portrait image — bracelet preset only */}
+            {rndRingMode === 'bracelet' && (
+              <div
+                aria-hidden="true"
+                style={{
+                  position: 'absolute',
+                  top: '50%',
+                  left: '50%',
+                  width: `${Math.round(ringStageSize * 0.78) + 16}px`,
+                  height: `${Math.round(ringStageSize * 0.78) + 16}px`,
+                  transform: 'translate(-50%, -50%)',
+                  borderRadius: '50%',
+                  overflow: 'hidden',
+                  zIndex: 6,
+                  pointerEvents: 'none',
+                }}
+              >
+                <img
+                  src="/assets/ancient_relic_focus.webp"
+                  alt=""
+                  style={{
+                    width: '100%',
+                    height: '100%',
+                    objectFit: 'cover',
+                    objectPosition: 'center top',
+                    display: 'block',
+                  }}
+                />
+              </div>
+            )}
+
             {/* Center depth well: improves phase text legibility without a boxed panel */}
             {!isOrb && (
               <div
@@ -1847,22 +1908,36 @@ export function BreathingRing({
           </div>
         )}
 
-        {showArcPhaseLabel && (
+        {showArcPhaseLabel && rndRingMode === 'bracelet' && (
           <div
             aria-hidden="true"
             style={{
               position: "absolute",
-              ...(rndRingMode === 'bracelet'
-                ? {
-                    top: "60%",
-                    left: "50%",
-                    width: "70%",
-                    height: "70%",
-                    transform: "translate(-50%, -50%)",
-                  }
-                : {
-                    inset: 0,
-                  }),
+              top: "90%",
+              left: "50%",
+              transform: "translateX(-50%)",
+              zIndex: 25,
+              pointerEvents: "none",
+              textTransform: "uppercase",
+              color: "var(--accent-primary)",
+              fontFamily: "var(--font-display)",
+              fontSize: "clamp(1.1rem, 3.5vw, 1.4rem)",
+              fontWeight: 500,
+              letterSpacing: "0.18em",
+              opacity: 0.88,
+              textShadow: "0 2px 12px rgba(0,0,0,0.58)",
+              whiteSpace: "nowrap",
+            }}
+          >
+            {phaseLabel}
+          </div>
+        )}
+        {showArcPhaseLabel && rndRingMode !== 'bracelet' && (
+          <div
+            aria-hidden="true"
+            style={{
+              position: "absolute",
+              inset: 0,
               zIndex: 25,
               pointerEvents: "none",
             }}

@@ -76,32 +76,32 @@ export function PracticeSectionMainAssembly({
     <>
       <GuidanceAudioController />
       <BreathBenchmark isOpen={showBreathBenchmark} onClose={handleBenchmarkClose} />
-      <div
-        style={{
-          position: 'fixed',
-          top: 10,
-          right: 10,
-          zIndex: 10060,
-          display: 'flex',
-          alignItems: 'center',
-          gap: 8,
-          padding: '8px 10px',
-          borderRadius: 999,
-          border: '1px solid rgba(255,255,255,0.22)',
-          background: 'rgba(8, 10, 18, 0.84)',
-          color: 'rgba(255,255,255,0.96)',
-          boxShadow: '0 10px 30px rgba(0,0,0,0.32)',
-          backdropFilter: 'blur(10px)',
-          WebkitBackdropFilter: 'blur(10px)',
-        }}
-      >
-        <span
-          className="type-label"
-          style={{ fontSize: 10, letterSpacing: '0.08em', textTransform: 'uppercase' }}
+      {isRunning && (
+        <div
+          style={{
+            position: 'fixed',
+            top: 10,
+            right: 10,
+            zIndex: 10060,
+            display: 'flex',
+            alignItems: 'center',
+            gap: 8,
+            padding: '8px 10px',
+            borderRadius: 999,
+            border: '1px solid rgba(255,255,255,0.22)',
+            background: 'rgba(8, 10, 18, 0.84)',
+            color: 'rgba(255,255,255,0.96)',
+            boxShadow: '0 10px 30px rgba(0,0,0,0.32)',
+            backdropFilter: 'blur(10px)',
+            WebkitBackdropFilter: 'blur(10px)',
+          }}
         >
-          GUIDANCE AUDIO: {String(guidanceStatus || 'idle').toUpperCase()}
-        </span>
-        {isRunning && (
+          <span
+            className="type-label"
+            style={{ fontSize: 10, letterSpacing: '0.08em', textTransform: 'uppercase' }}
+          >
+            GUIDANCE AUDIO: {String(guidanceStatus || 'idle').toUpperCase()}
+          </span>
           <button
             type="button"
             onClick={handleTogglePause}
@@ -119,8 +119,8 @@ export function PracticeSectionMainAssembly({
           >
             {isSessionPaused ? 'Resume' : 'Pause'}
           </button>
-        )}
-      </div>
+        </div>
+      )}
       {isRunning && (
         <div
           style={{
