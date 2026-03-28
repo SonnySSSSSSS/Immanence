@@ -9,7 +9,7 @@ export const Beam = forwardRef(({ children, position, stride = 4, width = 8, upd
   const glow = useRef(null)
   const reflect = useRef(null)
   const frameCounterRef = useRef(0)
-  const [streakTexture, glowTexture] = useTexture(['/textures/lensflare/lensflare2.png', '/textures/lensflare/lensflare0_bw.jpg'])
+  const [streakTexture, glowTexture] = useTexture(['/textures/lensflare/lensflare2.png', '/textures/lensflare/lensflare0.png'])
 
   const obj = new THREE.Object3D()
   const f = new THREE.Vector3()

@@ -8,7 +8,7 @@ export const Flare = forwardRef(({ streak = [8, 20, 1], visible, ...props }, fRe
   const [streakTexture, dotTexture, glowTexture] = useTexture([
     '/textures/lensflare/lensflare2.png',
     '/textures/lensflare/lensflare3.png',
-    '/textures/lensflare/lensflare0_bw.png'
+    '/textures/lensflare/lensflare0.png'
   ])
   const config = {
     transparent: true,

@@ -872,6 +872,7 @@ function App({ playgroundMode = false, playgroundBottomLayer = true }) {
   // }, [curriculumOnboardingComplete, isCurriculumComplete]);
 
 
+  // v3.27.290 - fix(rainbow-prism): restore missing lensflare textures and repoint broken glow texture paths
   // v3.27.289 - tune(ui-motion): smooth transition timing and add first-paint wisdom card stagger
   // v3.27.288 - feat(ui-motion): add header/home choreography and first-paint navigation card stagger
   // v3.27.287 - feat(ui-motion): add directional hub/section transitions and section surface reveal animations
