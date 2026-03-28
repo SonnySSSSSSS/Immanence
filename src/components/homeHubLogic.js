@@ -3,6 +3,10 @@ import { getHomeDashboardPolicy } from '../reporting/tilePolicy.js';
 
 export const DEFAULT_CURRICULUM_ID = 'ritual-initiation-14-v2';
 
+// Prefix used by the auth-disabled smoke-mode identity created in App.jsx.
+// Used here to safely extend the ownership fallback for null navigation owners.
+const LOCAL_SMOKE_USER_PREFIX = 'local-smoke-';
+
 export function getOwnedNavigationScheduleSlots({
   activeUserId,
   navigationOwnerUserId,
@@ -32,8 +36,22 @@ export function resolveHomeHubCoordinatorState({
   rawActivePath,
   navigationScheduleSlots,
 }) {
+  const isLocalSmokeIdentity = typeof activeUserId === 'string'
+    && activeUserId.startsWith(LOCAL_SMOKE_USER_PREFIX);
+  const canUseUnownedCurriculumState = Boolean(
+    activeUserId
+    && !curriculumOwnerUserId
+    && (
+      navigationOwnerUserId === activeUserId
+      || (isLocalSmokeIdentity && navigationOwnerUserId === null)
+    )
+  );
   const isCurriculumStateOwnedByCurrentUser = Boolean(
-    activeUserId && curriculumOwnerUserId === activeUserId
+    activeUserId
+    && (
+      curriculumOwnerUserId === activeUserId
+      || canUseUnownedCurriculumState
+    )
   );
   const isNavigationStateOwnedByCurrentUser = Boolean(
     activeUserId && navigationOwnerUserId === activeUserId
@@ -49,7 +67,7 @@ export function resolveHomeHubCoordinatorState({
     ? navigationScheduleSlots.map((slot) => slot.time)
     : curriculumPracticeTimeSlots;
   const activeCurriculumId = isCurriculumStateOwnedByCurrentUser
-    ? rawActiveCurriculumId
+    ? (rawActiveCurriculumId ?? DEFAULT_CURRICULUM_ID)
     : DEFAULT_CURRICULUM_ID;
   const hasPersistedCurriculumData = Boolean(
     isCurriculumStateOwnedByCurrentUser

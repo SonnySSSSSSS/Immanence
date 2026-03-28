@@ -1232,6 +1232,35 @@ function App({ playgroundMode = false, playgroundBottomLayer = true }) {
       return;
     }
 
+    // Auth-disabled smoke mode: INITIAL_SESSION arrives with null session.
+    // Supply a stable local device identity so ownership logic can function
+    // without breaking real authenticated flows.
+    if (event === "INITIAL_SESSION" && !session && !runtimeEnv.enableAuth) {
+      const LOCAL_SMOKE_KEY = 'immanenceOS.localSmokeUserId';
+      let localSmokeId;
+      try {
+        localSmokeId = localStorage.getItem(LOCAL_SMOKE_KEY);
+        if (!localSmokeId) {
+          localSmokeId = 'local-smoke-' + (
+            typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function'
+              ? crypto.randomUUID()
+              : Math.random().toString(36).slice(2) + Date.now().toString(36)
+          );
+          localStorage.setItem(LOCAL_SMOKE_KEY, localSmokeId);
+        }
+      } catch {
+        localSmokeId = 'local-smoke-fallback';
+      }
+      setActiveUserModeUserId(localSmokeId);
+      // Ensure a default curriculum ID is in the store so DailyPracticeCard
+      // does not trigger the "no curriculum selected" setup state.
+      const curriculumSnapshot = useCurriculumStore.getState();
+      if (!curriculumSnapshot.activeCurriculumId) {
+        curriculumSnapshot.setActiveCurriculumId?.('ritual-initiation-14-v2');
+      }
+      return;
+    }
+
     if ((event === "SIGNED_IN" || event === "INITIAL_SESSION") && session) {
       stopUserStateSync();
       const userId = session?.user?.id ?? null;
@@ -1274,6 +1303,9 @@ function App({ playgroundMode = false, playgroundBottomLayer = true }) {
   }, [activeSection, authUser?.id, isHomeHubModuleReady, scheduleUserStateSyncStart]);
 
   useEffect(() => {
+    // In auth-disabled smoke mode the identity is set by handleAuthChange;
+    // skip this effect to avoid clobbering it with null on every mount.
+    if (!runtimeEnv.enableAuth) return;
     setActiveUserModeUserId(authUser?.id ?? null);
   }, [authUser?.id, setActiveUserModeUserId]);
 
