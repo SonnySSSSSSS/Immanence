@@ -5,6 +5,7 @@ import { useDisplayModeStore } from '../state/displayModeStore.js';
 import { useNavigationStore } from '../state/navigationStore.js';
 import { useProgressStore } from '../state/progressStore.js';
 import { useBreathBenchmarkStore } from '../state/breathBenchmarkStore.js';
+import { useUserModeStore } from '../state/userModeStore.js';
 import { useUiStore } from '../state/uiStore.js';
 import { useTheme } from '../context/ThemeContext.jsx';
 import { getPathById } from '../data/navigationData.js';
@@ -239,6 +240,7 @@ function getWallpaperPresentationByKey(wallpaperKey) {
 
 export function DailyPracticeCard({ onStartPractice, onViewCurriculum, onNavigate, hasPersistedCurriculumData, onStartSetup, onboardingComplete: onboardingCompleteProp, practiceTimeSlots: practiceTimeSlotsProp, isTutorialTarget = false, showPerLegCompletion = true, showDailyCompletionNotice = false, showSessionMeter = true, debugShadowOff = false, debugBlurOff = false, debugBorderOff = false, debugMaskOff = false, devCardActive = null, devCardCarouselId = null }) {
     const colorScheme = useDisplayModeStore(s => s.colorScheme);
+    const accessPosture = useUserModeStore(s => s.accessPosture);
     const isLight = colorScheme === 'light';
     const config = THEME_CONFIG[isLight ? 'light' : 'dark'];
 
@@ -664,6 +666,24 @@ export function DailyPracticeCard({ onStartPractice, onViewCurriculum, onNavigat
     );
     }, [isLight, sessionRowWallpaperUrl]);
     const progressBarColor = theme?.ui?.progressBar || '#4ade80';
+
+    const shouldBypassScheduleGateForExplorerBreath = useCallback(({ practiceId = null, leg = null } = {}) => {
+        if (accessPosture !== 'full') return false;
+
+        const normalizedPracticeId = typeof practiceId === 'string'
+            ? practiceId.trim().toLowerCase()
+            : (typeof leg?.practiceId === 'string' ? leg.practiceId.trim().toLowerCase() : '');
+        if (normalizedPracticeId === 'breath') return true;
+
+        const normalizedPracticeType = typeof leg?.practiceType === 'string'
+            ? leg.practiceType.trim().toLowerCase()
+            : '';
+        const normalizedLabel = typeof leg?.label === 'string'
+            ? leg.label.trim().toLowerCase()
+            : '';
+
+        return normalizedPracticeType.includes('breath') || normalizedLabel.includes('breath');
+    }, [accessPosture]);
 
     const maybeShadow = (shadow) => (debugShadowOff ? 'none' : shadow);
     const maybeBlur = (blur) => (debugBlurOff ? 'none' : blur);
@@ -1282,7 +1302,12 @@ export function DailyPracticeCard({ onStartPractice, onViewCurriculum, onNavigat
                                                 const slotDateKey = slotDates[idx] || todayKey;
                                                 const scheduledAt = localDateTimeFromDateKeyAndTime(slotDateKey, time);
                                                 const { tooEarly, expired } = scheduledAt ? getStartWindowState({ now: new Date(), scheduledAt }) : { tooEarly: false, expired: false };
-                                                const isOutsideWindow = tooEarly || expired;
+                                                const shouldBypassWindow = shouldBypassScheduleGateForExplorerBreath({
+                                                    practiceId: slotLaunches[idx]?.practiceId,
+                                                });
+                                                const effectiveTooEarly = shouldBypassWindow ? false : tooEarly;
+                                                const effectiveExpired = shouldBypassWindow ? false : expired;
+                                                const isOutsideWindow = effectiveTooEarly || effectiveExpired;
                                                 const isActionable = !isDone && !isOutsideWindow && slotLaunches[idx]?.practiceId;
                                                 const dateStr = formatPracticeDateLabel(slotDateKey);
 
@@ -1292,12 +1317,12 @@ export function DailyPracticeCard({ onStartPractice, onViewCurriculum, onNavigat
                                                     badge: isDone ? '✓' : idx + 1,
                                                     eyebrow: dateStr,
                                                     title: practiceLabels[idx] || 'Scheduled session',
-                                                    actionLabel: expired ? 'Missed' : (tooEarly ? 'Not Yet' : 'Start'),
+                                                    actionLabel: effectiveExpired ? 'Missed' : (effectiveTooEarly ? 'Not Yet' : 'Start'),
                                                     time,
                                                     isDone,
                                                     isActionable,
-                                                    expired,
-                                                    tooEarly,
+                                                    expired: effectiveExpired,
+                                                    tooEarly: effectiveTooEarly,
                                                     isOutsideWindow,
                                                     slotDateKey,
                                                     slot: slotLaunches[idx],
@@ -1795,17 +1820,19 @@ export function DailyPracticeCard({ onStartPractice, onViewCurriculum, onNavigat
 
         const expired = isLegExpired(leg);
         const tooEarly = isLegTooEarly(leg);
+        const shouldBypassWindow = shouldBypassScheduleGateForExplorerBreath({ leg });
 
         console.log('[TIME WINDOW CHECK]', {
             isDevForceStart,
             expired,
             tooEarly,
+            shouldBypassWindow,
             leg: leg?.legNumber,
             dayNumber,
         });
 
         // Outside the allowed +/- 60 minute window: block start UNLESS shift-click bypass
-        if (!isDevForceStart && (expired || tooEarly)) {
+        if (!isDevForceStart && !shouldBypassWindow && (expired || tooEarly)) {
             console.log('[BLOCKED] Time window violation (shift+click would bypass)');
             const t = resolveLegTimeStr(leg);
             setMissedLegWarning({

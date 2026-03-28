@@ -1797,6 +1797,111 @@ export function BreathingRing({
               flexShrink: 0,
             }}
           >
+          {rndRingMode === 'bracelet' && (() => {
+            // Arc-biased sparkle layout: each entry = [angleDeg, rFactor, sizePx, dimOp, brightOp, twinkleDelaySec]
+            // Arc center: 0° = 3 o'clock (right). Dense in ±22°, sparse to ±50°.
+            const sparkleConfig = [
+              // Group A (first 12): dense core, oscillates braceletArcDriftA
+              [-21, 0.486, 2, 0.50, 0.88, 0.0],
+              [-16, 0.500, 3, 0.60, 0.95, 0.55],
+              [-12, 0.478, 2, 0.48, 0.82, 1.1],
+              [-8,  0.496, 4, 0.65, 1.00, 0.3],
+              [-4,  0.488, 2, 0.58, 0.90, 1.7],
+              [-1,  0.504, 3, 0.62, 0.96, 2.2],
+              [2,   0.492, 5, 0.68, 1.00, 0.1],
+              [6,   0.480, 2, 0.55, 0.88, 1.4],
+              [10,  0.498, 3, 0.60, 0.94, 0.8],
+              [15,  0.486, 2, 0.50, 0.82, 2.0],
+              [20,  0.502, 3, 0.55, 0.88, 0.6],
+              [-18, 0.514, 2, 0.42, 0.72, 1.3],
+              // Group B (last 12): secondary band + sparse fringe, oscillates braceletArcDriftB
+              [-9,  0.470, 2, 0.44, 0.76, 0.4],
+              [4,   0.520, 2, 0.40, 0.70, 1.6],
+              [12,  0.468, 2, 0.46, 0.78, 0.9],
+              [-5,  0.518, 2, 0.38, 0.68, 2.4],
+              [8,   0.476, 3, 0.52, 0.84, 0.2],
+              [-14, 0.506, 2, 0.44, 0.74, 1.8],
+              [-30, 0.492, 2, 0.22, 0.42, 0.7],
+              [-40, 0.498, 2, 0.14, 0.28, 1.3],
+              [-48, 0.486, 2, 0.08, 0.18, 2.1],
+              [30,  0.494, 2, 0.20, 0.38, 0.5],
+              [40,  0.490, 2, 0.12, 0.25, 1.9],
+              [48,  0.488, 2, 0.07, 0.15, 0.3],
+            ];
+            return (
+              <div
+                aria-hidden="true"
+                style={{
+                  position: 'absolute',
+                  top: '50%',
+                  left: '50%',
+                  width: `${ringStageSize}px`,
+                  height: `${ringStageSize}px`,
+                  transform: 'translate(-50%, -50%)',
+                  borderRadius: '50%',
+                  overflow: 'visible',
+                  pointerEvents: 'none',
+                  zIndex: 12,
+                }}
+              >
+                {[0, 1].map((groupIndex) => {
+                  const groupSparkles = sparkleConfig.slice(groupIndex === 0 ? 0 : 12, groupIndex === 0 ? 12 : 24);
+                  const driftAnim = groupIndex === 0
+                    ? 'braceletArcDriftA 8s ease-in-out infinite alternate'
+                    : 'braceletArcDriftB 11s ease-in-out infinite alternate';
+                  return (
+                    <div
+                      key={`bracelet-arc-group-${groupIndex}`}
+                      style={{
+                        position: 'absolute',
+                        inset: 0,
+                        pointerEvents: 'none',
+                        transformOrigin: '50% 50%',
+                        animation: driftAnim,
+                      }}
+                    >
+                      {groupSparkles.map(([deg, rFactor, size, dimOp, brightOp, delay], i) => {
+                        const angle = (deg * Math.PI) / 180;
+                        const r = ringStageSize * rFactor;
+                        const x = Math.cos(angle) * r;
+                        const y = Math.sin(angle) * r;
+                        const isAccent = size >= 4;
+                        return (
+                          <span
+                            key={`bracelet-sparkle-${groupIndex}-${i}`}
+                            style={{
+                              position: 'absolute',
+                              top: '50%',
+                              left: '50%',
+                              width: `${size}px`,
+                              height: `${size}px`,
+                              borderRadius: '999px',
+                              background: isAccent
+                                ? 'radial-gradient(circle at 32% 28%, #ffffff 0%, #eaffff 22%, #8bf6ff 55%, #30e9ff 100%)'
+                                : 'radial-gradient(circle at 32% 30%, #f8ffff 0%, #dcffff 30%, #8bf6ff 62%, #30e9ff 100%)',
+                              '--sparkle-x': `${x}px`,
+                              '--sparkle-y': `${y}px`,
+                              '--sparkle-dim': String(dimOp),
+                              '--sparkle-bright': String(brightOp),
+                              transform: 'translate(-50%, -50%) translate(var(--sparkle-x), var(--sparkle-y)) scale(0.9)',
+                              opacity: dimOp,
+                              boxShadow: isAccent
+                                ? '0 0 6px rgba(220,255,255,0.95), 0 0 14px rgba(74,240,255,0.78), 0 0 26px rgba(24,207,232,0.50)'
+                                : '0 0 3px rgba(220,255,255,0.88), 0 0 8px rgba(74,240,255,0.60)',
+                              animation: `braceletSparkleTwinkle ${(2.6 + (groupIndex * 12 + i) * 0.22).toFixed(2)}s ease-in-out -${delay}s infinite`,
+                              pointerEvents: 'none',
+                              willChange: 'opacity, transform',
+                            }}
+                          />
+                        );
+                      })}
+                    </div>
+                  );
+                })}
+              </div>
+            );
+          })()}
+
           {/* Safe drawing box: expands renderer region beyond layout box */}
           <div
             style={{
@@ -2249,6 +2354,28 @@ export function BreathingRing({
           }
           100% {
             opacity: 0;
+          }
+        }
+
+        @keyframes braceletArcDriftA {
+          0%   { transform: rotate(-8deg); }
+          100% { transform: rotate(8deg); }
+        }
+
+        @keyframes braceletArcDriftB {
+          0%   { transform: rotate(6deg); }
+          100% { transform: rotate(-10deg); }
+        }
+
+        @keyframes braceletSparkleTwinkle {
+          0%,
+          100% {
+            opacity: var(--sparkle-dim, 0.45);
+            transform: translate(-50%, -50%) translate(var(--sparkle-x), var(--sparkle-y)) scale(0.9);
+          }
+          50% {
+            opacity: var(--sparkle-bright, 1);
+            transform: translate(-50%, -50%) translate(var(--sparkle-x), var(--sparkle-y)) scale(1.1);
           }
         }
       `}</style>
