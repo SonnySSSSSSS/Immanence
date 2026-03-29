@@ -1,6 +1,7 @@
 // src/reporting/dashboardProjection.js
 // Composed dashboard queries built from selectSessions + aggregators
 // High-level reporting interface for UI-agnostic dashboard metrics
+// @ts-check
 
 import { selectSessions } from './selectSessions.js';
 import {
@@ -13,13 +14,23 @@ import {
 } from './aggregators.js';
 import { familyKeyOfSession, labelForFamilyKey } from './familyKeyMap.js';
 
+/** @typedef {'lifetime' | 'runId' | 'today'} DashboardScope */
+/** @typedef {'7d' | '14d' | '30d' | '90d' | '365d' | 'all'} DashboardRange */
+/** @typedef {{ scope?: DashboardScope, range?: DashboardRange, activeRunId?: string | null }} DashboardOptions */
+/** @typedef {{ minutes_total: number, sessions_total: number, days_active: number, completion_rate: number, on_time_rate: number | null }} QuickTiles */
+/** @typedef {{ familyKey: string, label: string, minutes: number, count: number, percent: number }} PracticeBreakdownItem */
+/** @typedef {{ familyKey: string, label: string, totalMinutes: number, sessionCount: number, activeDays: number, completionRate: number, avgDurationMin: number, adherencePercent: number }} PracticeDetailMetrics */
+/** @typedef {{ dayOfWeek: number, label: string, count: number, totalMinutes: number }} WeeklyHeatmapRow */
+/** @typedef {{ completed: number, abandoned: number, partial: number, completionRate: number }} CompletionRateBreakdown */
+/** @typedef {{ completionBreakdown: CompletionRateBreakdown, scheduleAdherence: ReturnType<typeof aggScheduleAdherence>, weeklyActivity: WeeklyHeatmapRow[] }} DashboardDetail */
+
 /**
  * Get quick dashboard tiles for overview display
  * Returns 5 key metrics with stable IDs: total minutes, session count, active days, completion rate, on-time rate
- * @param {Object} options
- * @param {string} options.scope - 'lifetime' | 'runId' | 'today'
- * @param {string} options.range - '7d' | '14d' | '30d' | '90d' | '365d' | 'all'
- * @returns {Object} - { minutes_total, sessions_total, days_active, completion_rate (0-100), on_time_rate (0-100 or null) }
+ * @param {DashboardOptions} options
+ * @param {DashboardScope} options.scope - 'lifetime' | 'runId' | 'today'
+ * @param {DashboardRange} options.range - '7d' | '14d' | '30d' | '90d' | '365d' | 'all'
+ * @returns {QuickTiles} - { minutes_total, sessions_total, days_active, completion_rate (0-100), on_time_rate (0-100 or null) }
  */
 export function getQuickDashboardTiles(options = {}) {
     const {
@@ -88,11 +99,11 @@ export function getQuickDashboardTiles(options = {}) {
 /**
  * Get curriculum practice breakdown by family key
  * Returns aggregated metrics for each practice family
- * @param {Object} options
- * @param {string} options.scope - 'lifetime' | 'runId' | 'today'
- * @param {string} options.range - '7d' | '14d' | '30d' | '90d' | '365d' | 'all'
+ * @param {DashboardOptions} options
+ * @param {DashboardScope} options.scope - 'lifetime' | 'runId' | 'today'
+ * @param {DashboardRange} options.range - '7d' | '14d' | '30d' | '90d' | '365d' | 'all'
  * @param {string} options.activeRunId - Optional override for runId scope
- * @returns {Array} - Array of { familyKey, label, minutes, count, percent }
+ * @returns {PracticeBreakdownItem[]} - Array of { familyKey, label, minutes, count, percent }
  */
 export function getCurriculumPracticeBreakdown(options = {}) {
     const {
@@ -136,12 +147,12 @@ export function getCurriculumPracticeBreakdown(options = {}) {
 /**
  * Get detailed metrics for a specific practice
  * Returns comprehensive stats for a single practice family
- * @param {Object} options
- * @param {string} options.scope - 'lifetime' | 'runId' | 'today'
- * @param {string} options.range - '7d' | '14d' | '30d' | '90d' | '365d' | 'all'
+ * @param {DashboardOptions & { practiceFamily?: string | null }} options
+ * @param {DashboardScope} options.scope - 'lifetime' | 'runId' | 'today'
+ * @param {DashboardRange} options.range - '7d' | '14d' | '30d' | '90d' | '365d' | 'all'
  * @param {string} options.practiceFamily - Family key (e.g. 'breathwork', 'stillness')
  * @param {string} options.activeRunId - Optional override for runId scope
- * @returns {Object} - { familyKey, label, totalMinutes, sessionCount, activeDays,
+ * @returns {PracticeDetailMetrics | null} - { familyKey, label, totalMinutes, sessionCount, activeDays,
  *                        completionRate, avgDurationMin, adherencePercent }
  */
 export function getPracticeDetailMetrics(options = {}) {
@@ -209,11 +220,11 @@ export function getPracticeDetailMetrics(options = {}) {
 /**
  * Get weekly practice calendar heatmap
  * Returns matrix of activity per day of week
- * @param {Object} options
- * @param {string} options.scope - 'lifetime' | 'runId' | 'today'
- * @param {string} options.range - '7d' | '14d' | '30d' | '90d' | '365d' | 'all'
+ * @param {DashboardOptions} options
+ * @param {DashboardScope} options.scope - 'lifetime' | 'runId' | 'today'
+ * @param {DashboardRange} options.range - '7d' | '14d' | '30d' | '90d' | '365d' | 'all'
  * @param {string} options.activeRunId - Optional override for runId scope
- * @returns {Array} - Array of 7 objects { dayOfWeek, label, count, totalMinutes }
+ * @returns {WeeklyHeatmapRow[]} - Array of 7 objects { dayOfWeek, label, count, totalMinutes }
  */
 export function getWeeklyActivityHeatmap(options = {}) {
     const {
@@ -270,11 +281,11 @@ export function getWeeklyActivityHeatmap(options = {}) {
 
 /**
  * Get completion rate breakdown by completion status
- * @param {Object} options
- * @param {string} options.scope - 'lifetime' | 'runId' | 'today'
- * @param {string} options.range - '7d' | '14d' | '30d' | '90d' | '365d' | 'all'
+ * @param {DashboardOptions} options
+ * @param {DashboardScope} options.scope - 'lifetime' | 'runId' | 'today'
+ * @param {DashboardRange} options.range - '7d' | '14d' | '30d' | '90d' | '365d' | 'all'
  * @param {string} options.activeRunId - Optional override for runId scope
- * @returns {Object} - { completed, abandoned, partial, completionRate }
+ * @returns {CompletionRateBreakdown} - { completed, abandoned, partial, completionRate }
  */
 export function getCompletionRateBreakdown(options = {}) {
     const {
@@ -308,11 +319,11 @@ export function getCompletionRateBreakdown(options = {}) {
 /**
  * Get dashboard detail payload for modal display
  * Composes existing aggregators to provide breakdown charts and adherence data
- * @param {Object} options
- * @param {string} options.scope - 'lifetime' | 'runId' | 'today'
- * @param {string} options.range - '7d' | '14d' | '30d' | '90d' | '365d' | 'all'
+ * @param {DashboardOptions} options
+ * @param {DashboardScope} options.scope - 'lifetime' | 'runId' | 'today'
+ * @param {DashboardRange} options.range - '7d' | '14d' | '30d' | '90d' | '365d' | 'all'
  * @param {string} options.activeRunId - Optional override for runId scope
- * @returns {Object} - { completionBreakdown, scheduleAdherence, weeklyActivity }
+ * @returns {DashboardDetail} - { completionBreakdown, scheduleAdherence, weeklyActivity }
  */
 export function getDashboardDetail(options = {}) {
     const {

@@ -1,27 +1,63 @@
+// @ts-check
+
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 
+/** @typedef {'student' | 'explorer'} UserMode */
+/** @typedef {'guided' | 'full'} AccessPosture */
+/** @typedef {Record<string, UserMode>} ModeByUserId */
+/** @typedef {Record<string, boolean>} CompletionByUserId */
+/** @typedef {Record<string, AccessPosture>} AccessPostureByUserId */
+
+/**
+ * @typedef {object} ResolvedModeState
+ * @property {string | null} activeUserId
+ * @property {UserMode} userMode
+ * @property {boolean} hasChosenUserMode
+ * @property {AccessPosture} accessPosture
+ */
+
+/**
+ * @typedef {ResolvedModeState & {
+ *   modeByUserId: ModeByUserId;
+ *   hasCompletedAccessChoiceByUserId: CompletionByUserId;
+ *   accessPostureByUserId: AccessPostureByUserId;
+ * }} UserModeState
+ */
+
 const DEFAULT_USER_MODE = 'explorer';
+/** @type {Set<UserMode>} */
 const VALID_USER_MODES = new Set(['student', 'explorer']);
+/** @type {Readonly<ModeByUserId>} */
 const EMPTY_USER_MODE_MAP = Object.freeze({});
+/** @type {Readonly<CompletionByUserId>} */
 const EMPTY_CHOOSER_COMPLETION_MAP = Object.freeze({});
 
+/** @type {Set<AccessPosture>} */
 const VALID_ACCESS_POSTURES = new Set(['guided', 'full']);
 const DEFAULT_ACCESS_POSTURE = 'guided';
+/** @type {Readonly<AccessPostureByUserId>} */
 const EMPTY_ACCESS_POSTURE_MAP = Object.freeze({});
 
+/** @param {unknown} posture */
 function isValidAccessPosture(posture) {
   return VALID_ACCESS_POSTURES.has(posture);
 }
 
+/** @param {AccessPosture} posture */
+/** @returns {UserMode} */
 function postureToUserMode(posture) {
   return posture === 'full' ? 'explorer' : 'student';
 }
 
+/** @param {UserMode} mode */
+/** @returns {AccessPosture} */
 function userModeToPosture(mode) {
   return mode === 'explorer' ? 'full' : 'guided';
 }
 
+/** @param {string} label */
+/** @param {Record<string, unknown>} payload */
 function publishUserModeProbe(label, payload) {
   const snapshot = {
     label,
@@ -34,16 +70,27 @@ function publishUserModeProbe(label, payload) {
   }
 }
 
+/** @param {unknown} userId */
+/** @returns {string | null} */
 function normalizeUserId(userId) {
   if (typeof userId !== 'string') return null;
   const trimmed = userId.trim();
   return trimmed || null;
 }
 
+/** @param {unknown} mode */
+/** @returns {mode is UserMode} */
 function hasValidStoredMode(mode) {
   return VALID_USER_MODES.has(mode);
 }
 
+/**
+ * @param {ModeByUserId} modeByUserId
+ * @param {CompletionByUserId} hasCompletedAccessChoiceByUserId
+ * @param {AccessPostureByUserId} accessPostureByUserId
+ * @param {unknown} userId
+ * @returns {ResolvedModeState}
+ */
 function getResolvedModeState(modeByUserId, hasCompletedAccessChoiceByUserId, accessPostureByUserId, userId) {
   const normalizedUserId = normalizeUserId(userId);
   if (!normalizedUserId) {
@@ -73,6 +120,8 @@ function getResolvedModeState(modeByUserId, hasCompletedAccessChoiceByUserId, ac
   };
 }
 
+/** @param {unknown} modeByUserId */
+/** @returns {ModeByUserId} */
 function sanitizeModeByUserId(modeByUserId) {
   if (!modeByUserId || typeof modeByUserId !== 'object') return EMPTY_USER_MODE_MAP;
 
@@ -81,6 +130,8 @@ function sanitizeModeByUserId(modeByUserId) {
   );
 }
 
+/** @param {unknown} hasCompletedAccessChoiceByUserId */
+/** @returns {CompletionByUserId} */
 function sanitizeChooserCompletionByUserId(hasCompletedAccessChoiceByUserId) {
   if (!hasCompletedAccessChoiceByUserId || typeof hasCompletedAccessChoiceByUserId !== 'object') {
     return EMPTY_CHOOSER_COMPLETION_MAP;
@@ -91,6 +142,8 @@ function sanitizeChooserCompletionByUserId(hasCompletedAccessChoiceByUserId) {
   );
 }
 
+/** @param {unknown} accessPostureByUserId */
+/** @returns {AccessPostureByUserId} */
 function sanitizeAccessPostureByUserId(accessPostureByUserId) {
   if (!accessPostureByUserId || typeof accessPostureByUserId !== 'object') return EMPTY_ACCESS_POSTURE_MAP;
   return Object.fromEntries(
@@ -100,6 +153,7 @@ function sanitizeAccessPostureByUserId(accessPostureByUserId) {
 
 export const useUserModeStore = create(
   persist(
+    /** @param {(updater: (state: UserModeState) => Partial<UserModeState>) => void} set */
     (set) => ({
       activeUserId: null,
       userMode: DEFAULT_USER_MODE,
@@ -109,6 +163,7 @@ export const useUserModeStore = create(
       hasCompletedAccessChoiceByUserId: EMPTY_CHOOSER_COMPLETION_MAP,
       accessPostureByUserId: EMPTY_ACCESS_POSTURE_MAP,
 
+      /** @param {unknown} userId */
       setActiveUserId: (userId) => {
         set((state) => {
           const resolvedState = getResolvedModeState(
@@ -131,6 +186,7 @@ export const useUserModeStore = create(
         });
       },
 
+      /** @param {unknown} posture */
       setAccessPosture: (posture) => {
         const normalizedPosture = isValidAccessPosture(posture) ? posture : DEFAULT_ACCESS_POSTURE;
         set((state) => {
@@ -169,6 +225,7 @@ export const useUserModeStore = create(
         });
       },
 
+      /** @param {unknown} mode */
       setUserMode: (mode) => {
         const normalizedMode = VALID_USER_MODES.has(mode) ? mode : DEFAULT_USER_MODE;
         set((state) => {
@@ -263,12 +320,16 @@ export const useUserModeStore = create(
     {
       name: 'immanence-user-mode',
       version: 3,
+      /** @param {unknown} persistedState */
       migrate: (persistedState) => persistedState,
+      /** @param {UserModeState} state */
       partialize: (state) => ({
         modeByUserId: state.modeByUserId,
         hasCompletedAccessChoiceByUserId: state.hasCompletedAccessChoiceByUserId,
         accessPostureByUserId: state.accessPostureByUserId,
       }),
+      /** @param {Partial<UserModeState> | null | undefined} persistedState */
+      /** @param {UserModeState} currentState */
       merge: (persistedState, currentState) => ({
         ...currentState,
         modeByUserId: sanitizeModeByUserId(persistedState?.modeByUserId),

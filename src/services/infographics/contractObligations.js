@@ -1,15 +1,89 @@
+// @ts-check
+
 import { getLocalDateKey } from '../../utils/dateUtils.js';
 import { resolveCategoryIdFromSessionV2 } from './sessionCategory.js';
 import { MATCH_POLICY } from '../../data/curriculumMatching.js';
 
+/** @typedef {'green' | 'red'} CountableStatus */
+/** @typedef {'green' | 'red' | null} SlotStatus */
+
+/**
+ * @typedef {object} ContractSession
+ * @property {string} id
+ * @property {string | null | undefined} startedAt
+ * @property {string | null | undefined} endedAt
+ * @property {'completed' | 'abandoned' | 'partial' | 'early_exit' | 'earlyExit' | null | undefined} completion
+ * @property {{ runId?: string | null, activePathId?: string | null } | null | undefined} pathContext
+ * @property {{ legNumber?: number, status?: SlotStatus, deltaMinutes?: number } | null | undefined} scheduleMatched
+ * @property {boolean | null | undefined} satisfiedObligation
+ * @property {string | null | undefined} practiceId
+ * @property {string | null | undefined} practiceMode
+ */
+
+/**
+ * @typedef {object} RequiredLeg
+ * @property {number} legNumber
+ * @property {string | null | undefined} categoryId
+ * @property {string | null | undefined} matchPolicy
+ * @property {string | null | undefined} practiceId
+ * @property {boolean | null | undefined} required
+ */
+
+/**
+ * @typedef {object} DayState
+ * @property {string} dateKeyLocal
+ * @property {boolean} isObligationDay
+ * @property {number} obligations
+ * @property {number} satisfied
+ * @property {boolean} daySatisfied
+ */
+
+/**
+ * @typedef {object} RailSlot
+ * @property {number} legNumber
+ * @property {string | null | undefined} categoryId
+ * @property {string | null | undefined} matchPolicy
+ * @property {string | null} time
+ * @property {SlotStatus} status
+ * @property {number | null} deltaMinutes
+ * @property {string | null} matchedSessionId
+ */
+
+/**
+ * @typedef {object} RailDay
+ * @property {string} dateKeyLocal
+ * @property {number} dayOfWeek
+ * @property {boolean} isOffDay
+ * @property {boolean} isVacation
+ * @property {string} precisionMode
+ * @property {number | null} curriculumDayNumber
+ * @property {RailSlot[]} satisfiedSlots
+ * @property {'gray' | 'blank' | 'green' | 'red'} dayStatus
+ */
+
+/**
+ * @typedef {object} ContractObligationSummary
+ * @property {string} windowStartLocalDateKey
+ * @property {string} windowEndLocalDateKey
+ * @property {number} totalObligations
+ * @property {number} satisfiedObligations
+ * @property {number} satisfiedDays
+ * @property {number} requiredDays
+ * @property {DayState[]} dayStates
+ * @property {RailDay[]} railDays
+ */
+
 // Adherence contract uses "did the obligation happen", not "was it perfectly on time":
 // GREEN + RED both count as satisfied because RED is still within the 30-minute rail window.
+/** @type {readonly CountableStatus[]} */
 export const CONTRACT_ADHERENCE_SATISFIED_STATUSES = Object.freeze(['green', 'red']);
 
 /**
  * Parse "HH:mm" time string to minutes since midnight
  * Must stay aligned with curriculum rail/session snapshot semantics.
  */
+/** @param {unknown} timeStr */
+/** @returns {number | null} */
 function parseTimeToMinutes(timeStr) {
     if (!timeStr || typeof timeStr !== 'string') return null;
     const parts = timeStr.split(':');
@@ -24,6 +98,8 @@ function parseTimeToMinutes(timeStr) {
 /**
  * Extract hour and minute from ISO timestamp in local timezone
  */
+/** @param {unknown} isoTime */
+/** @returns {number | null} */
 function getLocalMinutesFromISO(isoTime) {
     if (!isoTime) return null;
     const date = new Date(isoTime);
@@ -35,6 +111,8 @@ function getLocalMinutesFromISO(isoTime) {
  * Compute time delta: actual - scheduled (in minutes)
  * Positive = late, negative = early
  */
+/** @param {number} actualMinutes */
+/** @param {number} scheduledMinutes */
 function computeDeltaMinutes(actualMinutes, scheduledMinutes) {
     return actualMinutes - scheduledMinutes;
 }
@@ -46,6 +124,8 @@ function computeDeltaMinutes(actualMinutes, scheduledMinutes) {
  * null (does not count): |delta| > 30
  */
 // SLOT_TOLERANCE_MINUTES = 30 — keep in sync with sessionRecorder.js
+/** @param {number} deltaMinutes */
+/** @returns {SlotStatus} */
 function getDeltaStatus(deltaMinutes) {
     const absDelta = Math.abs(deltaMinutes);
     if (absDelta <= 15) return 'green';
@@ -57,6 +137,7 @@ function getDeltaStatus(deltaMinutes) {
  * Get day of week (0=Sun, 1=Mon, ..., 6=Sat) from local date string.
  * NOTE: This intentionally preserves existing rail behavior.
  */
+/** @param {string} dateKeyLocal */
 function getDayOfWeek(dateKeyLocal) {
     const date = new Date(dateKeyLocal);
     return date.getDay();
@@ -65,6 +146,9 @@ function getDayOfWeek(dateKeyLocal) {
 /**
  * Compute curriculum day number for a given date
  */
+/** @param {Date} date */
+/** @param {string | null} curriculumStartDate */
+/** @returns {number | null} */
 function getCurriculumDayNumber(date, curriculumStartDate) {
     if (!curriculumStartDate) return null;
     const start = new Date(curriculumStartDate);
@@ -100,6 +184,9 @@ function resolveWindowRange({
     };
 }
 
+/** @param {string} windowStartLocalDateKey */
+/** @param {string} windowEndLocalDateKey */
+/** @returns {string[]} */
 function enumerateDateKeys(windowStartLocalDateKey, windowEndLocalDateKey) {
     if (!windowStartLocalDateKey || !windowEndLocalDateKey) return [];
     if (windowStartLocalDateKey > windowEndLocalDateKey) return [];
@@ -116,14 +203,19 @@ function enumerateDateKeys(windowStartLocalDateKey, windowEndLocalDateKey) {
     return keys;
 }
 
+/** @param {unknown} status */
+/** @returns {status is CountableStatus} */
 function isSnapshotStatusCountable(status) {
     return status === 'green' || status === 'red';
 }
 
+/** @param {unknown} status */
 function isStatusSatisfiedForAdherence(status) {
     return CONTRACT_ADHERENCE_SATISFIED_STATUSES.includes(status);
 }
 
+/** @param {ContractSession} session */
+/** @returns {string | null} */
 function getSessionDateKeyLocal(session) {
     const iso = session?.startedAt || null;
     if (!iso) return null;
@@ -134,6 +226,9 @@ function getSessionDateKeyLocal(session) {
 
 /**
  * Check if a session matches a curriculum leg's category/matchPolicy requirement.
+ * @param {ContractSession} session
+ * @param {RequiredLeg} leg
+ * @returns {boolean}
  */
 export function doesSessionMatchLegCategory(session, leg) {
     if (!leg || !leg.categoryId) return false;
@@ -154,6 +249,7 @@ export function doesSessionMatchLegCategory(session, leg) {
 /**
  * Build a session predicate for a specific active path run.
  * Mirrors existing run-scoping fallback behavior for backward compatibility.
+ * @returns {(session: ContractSession) => boolean}
  */
 export function createPathRunSessionFilter({
     runId = null,
@@ -184,6 +280,7 @@ export function createPathRunSessionFilter({
  * Shared contract-obligation model used by both:
  * - curriculum rail rendering
  * - navigation adherence + miss-state metrics
+ * @returns {ContractObligationSummary}
  */
 export function computeContractObligationSummary({
     today = new Date(),
@@ -231,7 +328,9 @@ export function computeContractObligationSummary({
         .filter((session) => session?.completion === 'completed')
         .filter((session) => (typeof isSessionEligible === 'function' ? isSessionEligible(session) : true));
 
+    /** @type {DayState[]} */
     const dayStates = [];
+    /** @type {RailDay[]} */
     const railDays = [];
 
     for (const dateKeyLocal of dayKeys) {
@@ -430,6 +529,10 @@ export function computeContractObligationSummary({
 /**
  * Contract miss rule: a day is missed if it is an obligation day and is not fully satisfied.
  */
+/**
+ * @param {DayState[]} dayStates
+ * @returns {{ consecutiveMissedDays: number, broken: boolean }}
+ */
 export function computeContractMissState(dayStates = []) {
     if (!Array.isArray(dayStates) || dayStates.length === 0) {
         return { consecutiveMissedDays: 0, broken: false };
@@ -459,6 +562,10 @@ export function computeContractMissState(dayStates = []) {
  * - daysPracticed: obligation days where all obligations are satisfied
  * - streakCurrent: consecutive satisfied obligation days up to window end (off-days skipped)
  * - streakBest: best consecutive satisfied obligation-day streak in window (off-days skipped)
+ */
+/**
+ * @param {DayState[]} dayStates
+ * @returns {{ daysPracticed: number, streakCurrent: number, streakBest: number }}
  */
 export function computeContractDayCompletionStats(dayStates = []) {
     if (!Array.isArray(dayStates) || dayStates.length === 0) {

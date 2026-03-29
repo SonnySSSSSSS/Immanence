@@ -4,6 +4,8 @@
 // and § "Non-Negotiable Invariants". Time thresholds (GREEN ≤15, RED ≤60),
 // category/matchPolicy enforcement, and snapshot determinism must not be changed
 // without updating architecture.md and reviewing curriculumRail.js § "Phase 7".
+// @ts-check
+
 import { useProgressStore } from '../state/progressStore';
 import { useNavigationStore } from '../state/navigationStore.js';
 import { useCurriculumStore } from '../state/curriculumStore.js';
@@ -14,6 +16,74 @@ import { resolveCategoryIdFromSessionV2 } from './infographics/sessionCategory.j
 import { MATCH_POLICY } from '../data/curriculumMatching.js';
 import { getPathContract } from '../utils/pathContract.js';
 
+/** @typedef {'completed' | 'abandoned' | 'partial'} CanonicalCompletion */
+
+/**
+ * @typedef {object} PathContext
+ * @property {string | null} runId
+ * @property {string | null} activePathId
+ * @property {number | null} dayIndex
+ * @property {number | null} weekIndex
+ * @property {number | null} slotIndex
+ * @property {string | null} slotTime
+ */
+
+/**
+ * @typedef {object} ScheduleMatchedSnapshot
+ * @property {number} legNumber
+ * @property {string | null | undefined} categoryId
+ * @property {string | null | undefined} matchPolicy
+ * @property {string | null | undefined} scheduledTime
+ * @property {number} deltaMinutes
+ * @property {'green' | 'red' | null} status
+ * @property {string} matchedAt
+ * @property {boolean=} forceStartApplied
+ */
+
+/**
+ * @typedef {object} SessionRecord
+ * @property {string | null} id
+ * @property {string | null} startedAt
+ * @property {string} endedAt
+ * @property {number | null} durationSec
+ * @property {string | null} practiceId
+ * @property {string | null} practiceMode
+ * @property {Record<string, unknown> | null} configSnapshot
+ * @property {CanonicalCompletion} completion
+ * @property {PathContext} pathContext
+ * @property {ScheduleMatchedSnapshot | null} scheduleMatched
+ * @property {boolean} satisfiedObligation
+ */
+
+/**
+ * @typedef {object} SessionRecordPayload
+ * @property {string | null | undefined} domain
+ * @property {number | null | undefined} duration
+ * @property {Record<string, unknown> | null | undefined} instrumentation
+ * @property {string | null | undefined} exitType
+ * @property {string | null | undefined} practiceId
+ * @property {string | null | undefined} practiceMode
+ * @property {Record<string, unknown> | null | undefined} configSnapshot
+ * @property {CanonicalCompletion | null | undefined} completion
+ * @property {string | null | undefined} activePathId
+ * @property {string | null | undefined} runId
+ * @property {number | null | undefined} dayIndex
+ * @property {number | null | undefined} weekIndex
+ * @property {number | null | undefined} slotIndex
+ * @property {string | null | undefined} slotTime
+ * @property {string | null | undefined} startedAt
+ * @property {string | null | undefined} endedAt
+ * @property {number | null | undefined} durationSec
+ * @property {{ slotIndex?: number, slotTime?: string } | null | undefined} forceScheduleMatched
+ * @property {boolean | null | undefined} persistSession
+ * @property {boolean | null | undefined} syncMandala
+ * @property {boolean | null | undefined} cycleEnabled
+ * @property {number | null | undefined} cycleMinDuration
+ * @property {{ type?: string, duration?: number } | null | undefined} cyclePracticeData
+ */
+
+/** @typedef {{ persistSession?: boolean, syncMandala?: boolean, cycleEnabled?: boolean, cycleMinDuration?: number, cyclePracticeData?: { type?: string, duration?: number } | null }} SessionRecordOptions */
+
 // DEV-only regression guard: prevent legacy writer reintroduction
 if (import.meta.env.DEV) {
   const ps = useProgressStore.getState();
@@ -22,12 +92,16 @@ if (import.meta.env.DEV) {
   }
 }
 
+/** @param {unknown} domain */
 const mapDomainToCycleType = (domain) => {
     if (domain === 'breathwork') return 'breath';
     if (domain === 'visualization') return 'focus';
     return 'body';
 };
 
+/** @param {CanonicalCompletion | null | undefined} explicitCompletion */
+/** @param {string | null | undefined} exitType */
+/** @returns {CanonicalCompletion} */
 const resolveCompletion = (explicitCompletion, exitType) => {
     if (explicitCompletion) return explicitCompletion;
     if (exitType === 'completed') return 'completed';
@@ -35,6 +109,8 @@ const resolveCompletion = (explicitCompletion, exitType) => {
     return 'partial';
 };
 
+/** @param {{ durationSec?: unknown, durationMinutes?: unknown, instrumentation?: { duration_ms?: unknown } | null }} arg0 */
+/** @returns {number | null} */
 const resolveDurationSec = ({ durationSec, durationMinutes, instrumentation }) => {
     if (typeof durationSec === 'number' && !Number.isNaN(durationSec)) return Math.round(durationSec);
     if (instrumentation?.duration_ms) return Math.round(instrumentation.duration_ms / 1000);
@@ -42,6 +118,8 @@ const resolveDurationSec = ({ durationSec, durationMinutes, instrumentation }) =
     return null;
 };
 
+/** @param {{ startedAt?: string | null, endedAt?: string | null, durationSec?: number | null }} arg0 */
+/** @returns {string | null} */
 const resolveStartedAt = ({ startedAt, endedAt, durationSec }) => {
     if (startedAt) return startedAt;
     if (!endedAt || !durationSec) return null;
@@ -50,6 +128,8 @@ const resolveStartedAt = ({ startedAt, endedAt, durationSec }) => {
     return new Date(endMs - (durationSec * 1000)).toISOString();
 };
 
+/** @param {{ activePath?: { activePathId?: string | null, runId?: string | null, startedAt?: string | null } | null, activePathId?: string | null, endedAt?: string | null, slotIndex?: number | null, slotTime?: string | null }} arg0 */
+/** @returns {PathContext} */
 const buildPathContext = ({ activePath, activePathId, endedAt, slotIndex = null, slotTime = null }) => {
     const normalizedSlotIndex = Number.isFinite(Number(slotIndex)) ? Number(slotIndex) : null;
     const normalizedSlotTime = typeof slotTime === 'string' ? slotTime.substring(0, 5) : null;
@@ -104,6 +184,7 @@ const buildPathContext = ({ activePath, activePathId, endedAt, slotIndex = null,
     };
 };
 
+/** @param {{ activePath?: { runId?: string | null, activePathId?: string | null } | null, providedPathContext: Partial<PathContext>, persistedPathContext: PathContext, sessionId?: string | null }} arg0 */
 function devAssertSessionPathContext({ activePath, providedPathContext, persistedPathContext, sessionId }) {
     const hasActivePath = !!activePath;
     const activeRunId = activePath?.runId || null;
@@ -146,6 +227,8 @@ function devAssertSessionPathContext({ activePath, providedPathContext, persiste
  * Parse "HH:mm" time string to minutes since midnight
  * MUST MATCH curriculumRail.js implementation
  */
+/** @param {unknown} timeStr */
+/** @returns {number | null} */
 function parseTimeToMinutes(timeStr) {
     if (!timeStr || typeof timeStr !== 'string') return null;
     const parts = timeStr.split(':');
@@ -161,6 +244,8 @@ function parseTimeToMinutes(timeStr) {
  * Extract hour and minute from ISO timestamp in local timezone
  * MUST MATCH curriculumRail.js implementation
  */
+/** @param {unknown} isoTime */
+/** @returns {number | null} */
 function getLocalMinutesFromISO(isoTime) {
     if (!isoTime) return null;
     const date = new Date(isoTime);
@@ -173,6 +258,8 @@ function getLocalMinutesFromISO(isoTime) {
  * Positive = late, negative = early
  * MUST MATCH curriculumRail.js implementation
  */
+/** @param {number} actualMinutes */
+/** @param {number} scheduledMinutes */
 function computeDeltaMinutes(actualMinutes, scheduledMinutes) {
     return actualMinutes - scheduledMinutes;
 }
@@ -184,6 +271,8 @@ function computeDeltaMinutes(actualMinutes, scheduledMinutes) {
  * null (does not count): |delta| > 60
  * MUST MATCH curriculumRail.js implementation
  */
+/** @param {number} deltaMinutes */
+/** @returns {'green' | 'red' | null} */
 function getDeltaStatus(deltaMinutes) {
     const absDelta = Math.abs(deltaMinutes);
     if (absDelta <= 15) return 'green';
@@ -195,6 +284,9 @@ function getDeltaStatus(deltaMinutes) {
  * Compute curriculum day number for a given date
  * MUST MATCH curriculumRail.js implementation
  */
+/** @param {Date} date */
+/** @param {string | null | undefined} curriculumStartDate */
+/** @returns {number | null} */
 function getCurriculumDayNumber(date, curriculumStartDate) {
     if (!curriculumStartDate) return null;
     const start = new Date(curriculumStartDate);
@@ -212,6 +304,8 @@ function getCurriculumDayNumber(date, curriculumStartDate) {
  * Snapshots are persisted at record time so rail can use them without recomputing
  * Returns null if session does not satisfy any curriculum leg requirement
  */
+/** @param {{ startedAtISO: string | null | undefined, practiceId: string | null | undefined, practiceMode: string | null | undefined, forceScheduleMatched?: { slotIndex?: number, slotTime?: string } | null }} arg0 */
+/** @returns {ScheduleMatchedSnapshot | null} */
 function computeScheduleMatchedSnapshot({ startedAtISO, practiceId, practiceMode, forceScheduleMatched = null }) {
     if (!startedAtISO) return null;
 
@@ -352,6 +446,11 @@ function computeScheduleMatchedSnapshot({ startedAtISO, practiceId, practiceMode
  * Record a completed practice session through the centralized pipeline.
  * Payload supports: domain, duration, metadata, instrumentation, exitType,
  * persistSession, syncMandala, cycleEnabled, cycleMinDuration, cyclePracticeData.
+ */
+/**
+ * @param {SessionRecordPayload} payload
+ * @param {SessionRecordOptions} options
+ * @returns {SessionRecord | null}
  */
 export function recordPracticeSession(payload = {}, options = {}) {
     const {

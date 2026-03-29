@@ -1,10 +1,57 @@
 // src/reporting/selectSessions.js
 // Pure session selection & filtering over progressStore
 // No side effects, no imports from components or UI
+// @ts-check
 
 import { useNavigationStore } from '../state/navigationStore.js';
 import { useProgressStore } from '../state/progressStore.js';
 import { getLocalDateKey } from '../utils/dateUtils.js';
+
+/** @typedef {'lifetime' | 'runId' | 'month' | 'week' | 'today'} SessionScope */
+/** @typedef {'7d' | '14d' | '30d' | '90d' | '365d' | 'all'} SessionRange */
+/** @typedef {'completed' | 'abandoned' | 'partial' | 'early_exit' | 'earlyExit'} CompletionToken */
+
+/**
+ * @typedef {object} SessionLike
+ * @property {string} id
+ * @property {string | null} startedAt
+ * @property {string | null} endedAt
+ * @property {number | null} durationSec
+ * @property {string | null} practiceId
+ * @property {string | null} practiceMode
+ * @property {Record<string, unknown> | null} configSnapshot
+ * @property {CompletionToken | null} completion
+ * @property {{ runId?: string | null } | null} pathContext
+ * @property {{ status?: string | null } | null} scheduleMatched
+ * @property {{ isHonor?: boolean; honorNote?: string } | null} metadata
+ */
+
+/**
+ * @typedef {object} HonorLog
+ * @property {string} id
+ * @property {string} date
+ * @property {number | null | undefined} duration
+ * @property {string | null | undefined} domain
+ * @property {string | null | undefined} note
+ */
+
+/**
+ * @typedef {object} SelectSessionsOptions
+ * @property {SessionScope=} scope
+ * @property {SessionRange=} range
+ * @property {boolean=} includeHonor
+ * @property {CompletionToken[] | null=} completion
+ * @property {string[] | null=} practiceIds
+ * @property {string[] | null=} familyKeys
+ * @property {string | null=} activeRunId
+ */
+
+/**
+ * @typedef {object} ActiveRunContext
+ * @property {string | null} runId
+ * @property {string | null} activePathId
+ * @property {string | null} startedAt
+ */
 
 /**
  * Get active run context (runId, activePathId)
@@ -28,16 +75,14 @@ export function selectActiveRunContext() {
 /**
  * Pure session selector with filtering
  *
- * @param {Object} options
- * @param {string} options.scope - 'lifetime' | 'runId' | 'month' | 'week' | 'today'
- * @param {string} options.range - '7d' | '14d' | '30d' | '90d' | '365d' | 'all'
+ * @param {SelectSessionsOptions} options
  * @param {boolean} options.includeHonor - Include honor logs as synthetic sessions
- * @param {string[]} options.completion - Filter by ['completed', 'abandoned', 'partial']
+ * @param {CompletionToken[]} options.completion - Filter by ['completed', 'abandoned', 'partial']
  * @param {string[]} options.practiceIds - Filter by specific practiceIds
  * @param {string[]} options.familyKeys - Filter by practice family keys
  * @param {string} options.activeRunId - Optional override for 'runId' scope
  *
- * @returns {Array} - Canonical session objects with honor logs converted to sessions
+ * @returns {SessionLike[]} - Canonical session objects with honor logs converted to sessions
  */
 export function selectSessions(options = {}) {
     const {
@@ -57,6 +102,7 @@ export function selectSessions(options = {}) {
         : null;
 
     // Get all sessions (V2 only, authoritative source)
+    /** @type {SessionLike[]} */
     let sessions = [...(progressState.sessionsV2 || [])];
 
     // SCOPE filtering
@@ -106,6 +152,7 @@ export function selectSessions(options = {}) {
     if (includeHonor && scope !== 'runId' && progressState.honorLogs && progressState.honorLogs.length > 0) {
         const honorSessions = progressState.honorLogs
             .filter(h => new Date(h.date).getTime() >= cutoffMs)
+            /** @param {HonorLog} h */
             .map(h => ({
                 id: `honor_${h.id}`,
                 startedAt: h.date, // Assume "date" is ISO string or convertible
@@ -124,7 +171,7 @@ export function selectSessions(options = {}) {
     }
 
     // Sort by startedAt descending (newest first)
-    sessions.sort((a, b) => new Date(b.startedAt).getTime() - new Date(a.startedAt).getTime());
+    sessions.sort((a, b) => new Date(b.startedAt || 0).getTime() - new Date(a.startedAt || 0).getTime());
 
     return sessions;
 }
@@ -133,10 +180,10 @@ export function selectSessions(options = {}) {
  * Filter sessions by family keys
  * Requires familyKeyOfSession function as parameter
  *
- * @param {Array} sessions - Sessions to filter
+ * @param {SessionLike[]} sessions - Sessions to filter
  * @param {string[]} familyKeys - Target family keys
- * @param {Function} familyKeyOfSession - Function to map session to family key
- * @returns {Array} - Filtered sessions
+ * @param {(session: SessionLike) => string} familyKeyOfSession - Function to map session to family key
+ * @returns {SessionLike[]} - Filtered sessions
  */
 export function filterSessionsByFamilyKeys(sessions, familyKeys, familyKeyOfSession) {
     if (!familyKeys || familyKeys.length === 0) {

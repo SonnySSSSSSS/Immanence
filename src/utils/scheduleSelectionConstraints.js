@@ -1,13 +1,31 @@
+// @ts-check
+
 import { getPathById } from '../data/navigationData.js';
 import { getPathContract } from './pathContract.js';
+
+/**
+ * @typedef {object} ScheduleConstraint
+ * @property {number | null} requiredCount
+ * @property {number | null} minCount
+ * @property {number | null} maxCount
+ * @property {string | null} errorMessage
+ */
+
+/** @typedef {{ includeDefault?: boolean }} NormalizeConstraintOptions */
+/** @typedef {{ ok: boolean, error: string | null }} ScheduleValidationResult */
 
 const DEFAULT_MAX_COUNT = 3;
 const DEFAULT_MIN_COUNT = 1;
 
+/** @param {unknown} value */
 const isPositiveInteger = (value) => Number.isInteger(value) && value > 0;
 
+/** @param {number} count */
+/** @param {string} singular */
+/** @param {string} [plural] */
 const pluralize = (count, singular, plural = `${singular}s`) => (count === 1 ? singular : plural);
 
+/** @param {{ requiredCount: number | null, minCount: number | null, maxCount: number | null }} arg0 */
 const buildDefaultError = ({ requiredCount, minCount, maxCount }) => {
     if (isPositiveInteger(requiredCount)) {
         return `Please select exactly ${requiredCount} ${pluralize(requiredCount, 'time slot')} to begin this path.`;
@@ -27,6 +45,11 @@ const buildDefaultError = ({ requiredCount, minCount, maxCount }) => {
     return null;
 };
 
+/**
+ * @param {unknown} constraint
+ * @param {NormalizeConstraintOptions} [arg1]
+ * @returns {ScheduleConstraint | null}
+ */
 export function normalizeScheduleConstraint(constraint, { includeDefault = false } = {}) {
     const raw = (constraint && typeof constraint === 'object') ? constraint : null;
 
@@ -60,6 +83,8 @@ export function normalizeScheduleConstraint(constraint, { includeDefault = false
     };
 }
 
+/** @param {string | null | undefined} pathId */
+/** @returns {ScheduleConstraint | null} */
 export function getScheduleConstraintForPath(pathId) {
     const path = pathId ? getPathById(pathId) : null;
     if (!path) return null;
@@ -75,6 +100,11 @@ export function getScheduleConstraintForPath(pathId) {
     return normalizeScheduleConstraint(merged, { includeDefault: true });
 }
 
+/**
+ * @param {unknown} selectedTimes
+ * @param {unknown} constraint
+ * @returns {ScheduleValidationResult}
+ */
 export function validateSelectedTimes(selectedTimes, constraint) {
     const times = Array.isArray(selectedTimes)
         ? selectedTimes.filter((time) => typeof time === 'string' && time.trim().length > 0)
@@ -102,6 +132,11 @@ export function validateSelectedTimes(selectedTimes, constraint) {
     return { ok: true, error: null };
 }
 
+/**
+ * @param {unknown} nextSelectedTimes
+ * @param {unknown} constraint
+ * @returns {boolean}
+ */
 export function canToggleTime(nextSelectedTimes, constraint) {
     const normalizedConstraint = normalizeScheduleConstraint(constraint);
     if (!normalizedConstraint) return true;

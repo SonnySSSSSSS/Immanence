@@ -1,5 +1,31 @@
+// @ts-check
+
 import { computeScheduleAnchorStartAt, normalizeAndSortTimeSlots } from '../utils/scheduleUtils.js';
 
+/**
+ * @typedef {object} NavigationScheduleContract
+ * @property {number | null | undefined} practiceDaysPerWeek
+ * @property {number | null | undefined} requiredTimeSlots
+ * @property {number | null | undefined} requiredLegsPerDay
+ * @property {number | null | undefined} maxLegsPerDay
+ */
+
+/**
+ * @typedef {object} NavigationSchedule
+ * @property {string[] | null | undefined} selectedTimes
+ * @property {Array<number | string> | null | undefined} selectedDaysOfWeek
+ * @property {Array<number | string> | null | undefined} activeDays
+ * @property {number | null | undefined} practiceDaysPerWeek
+ * @property {number | null | undefined} requiredTimeSlots
+ * @property {number | null | undefined} requiredLegsPerDay
+ * @property {number | null | undefined} maxLegsPerDay
+ */
+
+/** @typedef {NavigationSchedule & { selectedTimes: string[], selectedDaysOfWeek: number[], activeDays: number[] }} NormalizedNavigationSchedule */
+
+/** @param {string | null | undefined} startedAt */
+/** @param {number | null | undefined} durationDays */
+/** @returns {string | null} */
 export function computeEndsAt(startedAt, durationDays) {
     if (!startedAt || !durationDays) return null;
     const start = new Date(startedAt);
@@ -8,6 +34,7 @@ export function computeEndsAt(startedAt, durationDays) {
     return end.toISOString();
 }
 
+/** @returns {string | null} */
 export function getTimezone() {
     try {
         return Intl.DateTimeFormat().resolvedOptions().timeZone || null;
@@ -16,6 +43,8 @@ export function getTimezone() {
     }
 }
 
+/** @param {unknown} [days=[]] */
+/** @returns {number[]} */
 export function normalizeDayOfWeekList(days = []) {
     const normalized = Array.isArray(days)
         ? days.map((d) => {
@@ -43,6 +72,8 @@ export function normalizeDayOfWeekList(days = []) {
     return [...new Set(normalized)].sort((a, b) => a - b);
 }
 
+/** @param {NavigationSchedule | null} [schedule] */
+/** @returns {number[]} */
 export function getFrozenScheduleDaysOfWeek(schedule = null) {
     const selectedDaysOfWeek = normalizeDayOfWeekList(schedule?.selectedDaysOfWeek || []);
     if (selectedDaysOfWeek.length > 0) return selectedDaysOfWeek;
@@ -57,6 +88,10 @@ export function getFrozenScheduleDaysOfWeek(schedule = null) {
     return [0, 1, 2, 3, 4, 5, 6];
 }
 
+/**
+ * @param {{ startedAt?: string | null, selectedTimes?: string[], selectedDaysOfWeek?: number[] }} [arg0]
+ * @returns {Date | null}
+ */
 export function getCanonicalScheduledStartDate({
     startedAt = null,
     selectedTimes = [],
@@ -77,12 +112,18 @@ export function getCanonicalScheduledStartDate({
     });
 }
 
+/** @param {unknown[]} [offDays=[]] */
+/** @returns {number[]} */
 export function selectedDaysFromOffDays(offDays = []) {
     // LEGACY migration helper only. Do not use this for new run contract authoring.
     const offSet = new Set(normalizeDayOfWeekList(offDays));
     return [0, 1, 2, 3, 4, 5, 6].filter((day) => !offSet.has(day));
 }
 
+/**
+ * @param {{ schedule?: NavigationSchedule | null, contract?: NavigationScheduleContract, maxLegsPerDay?: number, fallbackOffDays?: number[] }} [arg0]
+ * @returns {NormalizedNavigationSchedule}
+ */
 export function normalizePersistedNavigationSchedule({
     schedule = null,
     contract = {},
@@ -114,6 +155,10 @@ export function normalizePersistedNavigationSchedule({
     };
 }
 
+/**
+ * @param {{ schedule?: NavigationSchedule | null, contract?: NavigationScheduleContract, fallbackOffDays?: number[] }} [arg0]
+ * @returns {NormalizedNavigationSchedule}
+ */
 export function normalizeRehydratedNavigationSchedule({
     schedule = null,
     contract = {},

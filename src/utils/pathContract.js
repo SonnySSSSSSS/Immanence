@@ -1,6 +1,22 @@
+// @ts-check
+
 import { getPathById } from '../data/navigationData.js';
 import { normalizeAndSortTimeSlots } from './scheduleUtils.js';
 
+/**
+ * @typedef {object} PathContract
+ * @property {number | null} totalDays
+ * @property {number | null} practiceDaysPerWeek
+ * @property {number | null} maxLegsPerDay
+ * @property {number | null} requiredLegsPerDay
+ * @property {number | null} requiredTimeSlots
+ */
+
+/** @typedef {{ selectedDaysOfWeek?: unknown[], selectedTimes?: unknown[] }} PathSelectionInput */
+/** @typedef {{ selectedDaysOfWeek: number[], selectedTimes: string[] }} NormalizedPathSelections */
+/** @typedef {{ ok: boolean, error: string | null, warning: 'contract_invariant_normalized' | null, contract: PathContract, selectedDaysOfWeek: number[], selectedTimes: string[] }} PathActivationValidation */
+
+/** @type {Readonly<PathContract>} */
 const DEFAULT_CONTRACT = Object.freeze({
   totalDays: null,
   practiceDaysPerWeek: null,
@@ -9,12 +25,16 @@ const DEFAULT_CONTRACT = Object.freeze({
   requiredTimeSlots: null,
 });
 
+/** @param {unknown} value */
+/** @returns {number | null} */
 const normalizePositiveInt = (value) => {
   const n = Number(value);
   if (!Number.isInteger(n) || n <= 0) return null;
   return n;
 };
 
+/** @param {unknown} [days=[]] */
+/** @returns {number[]} */
 const normalizeDays = (days = []) => {
   const normalized = Array.isArray(days)
     ? days.filter((d) => Number.isInteger(d) && d >= 0 && d <= 6)
@@ -22,6 +42,8 @@ const normalizeDays = (days = []) => {
   return [...new Set(normalized)].sort((a, b) => a - b);
 };
 
+/** @param {string | Record<string, unknown> | null | undefined} pathOrId */
+/** @returns {PathContract} */
 export function getPathContract(pathOrId) {
   const path = typeof pathOrId === 'string' ? getPathById(pathOrId) : pathOrId;
   if (!path || typeof path !== 'object') return { ...DEFAULT_CONTRACT };
@@ -51,6 +73,8 @@ export function getPathContract(pathOrId) {
   };
 }
 
+/** @param {PathSelectionInput} [arg0] */
+/** @returns {NormalizedPathSelections} */
 export function normalizePathSelections({ selectedDaysOfWeek = [], selectedTimes = [] } = {}) {
   return {
     selectedDaysOfWeek: normalizeDays(selectedDaysOfWeek),
@@ -59,6 +83,8 @@ export function normalizePathSelections({ selectedDaysOfWeek = [], selectedTimes
   };
 }
 
+/** @param {PathContract} contract */
+/** @returns {{ contract: PathContract, warning: 'contract_invariant_normalized' | null }} */
 const normalizeContractSafe = (contract) => {
   const next = { ...contract };
   let warning = null;
@@ -79,6 +105,9 @@ const normalizeContractSafe = (contract) => {
   return { contract: next, warning };
 };
 
+/** @param {string | Record<string, unknown> | null | undefined} pathOrId */
+/** @param {PathSelectionInput} [selections] */
+/** @returns {PathActivationValidation} */
 export function validatePathActivationSelections(pathOrId, selections = {}) {
   const path = typeof pathOrId === 'string' ? getPathById(pathOrId) : pathOrId;
   const normalizedContract = normalizeContractSafe(getPathContract(path));

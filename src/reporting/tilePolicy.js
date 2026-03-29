@@ -1,15 +1,33 @@
 // src/reporting/tilePolicy.js
 // Pure policy helper: determine dashboard selector inputs (NOT data)
 // Used by HomeHub to decide scope/range/honor settings for tile rendering
+// @ts-check
+
+/** @typedef {'student' | 'explorer'} UserMode */
+/** @typedef {'guided' | 'full'} AccessPosture */
+/** @typedef {'runId' | 'lifetime'} DashboardScope */
+/** @typedef {'14d' | '90d'} DashboardRange */
+/** @typedef {'hubCard'} DashboardVariant */
+/** @typedef {'completion_rate' | 'on_time_rate' | 'sessions_total' | 'days_active'} PrimaryMetricId */
+
+/**
+ * @typedef {object} HomeDashboardPolicy
+ * @property {DashboardScope} scope
+ * @property {DashboardRange} range
+ * @property {boolean} includeHonor
+ * @property {string | null} activeRunId
+ * @property {DashboardVariant} variant
+ * @property {PrimaryMetricId[]} primaryMetricIds
+ */
 
 /**
  * Determine dashboard tile selector inputs based on navigation state
  * Pure function: no side effects, no store reads
- * @param {Object} options
+ * @param {{ activeRunId?: string | null, accessPosture?: AccessPosture | null, userMode?: UserMode }} options
  * @param {string} options.activeRunId - Optional active run ID
  * @param {string} options.accessPosture - Access posture ('guided' | 'full'). Replaces legacy userMode.
  * @param {string} [options.userMode] - Legacy compat: still accepted, ignored if accessPosture provided
- * @returns {Object} - Home dashboard policy object
+ * @returns {HomeDashboardPolicy} - Home dashboard policy object
  */
 export function getHomeDashboardPolicy(options = {}) {
     const { activeRunId = null, accessPosture = null, userMode = 'explorer' } = options;

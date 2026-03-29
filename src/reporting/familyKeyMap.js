@@ -1,6 +1,7 @@
 // src/reporting/familyKeyMap.js
 // Canonical practice family key mapping
 // Maps session practiceId/mode to standardized family keys for aggregation
+// @ts-check
 
 // Canonical family keys: breathwork, stillness, awareness_emotion, awareness_body_scan,
 // awareness_sakshi, ritual, treatise, video, quiz, other
@@ -70,11 +71,21 @@ const FAMILY_KEY_MAPPINGS = {
     'cymatics': 'stillness',
 };
 
+/** @typedef {'breathwork' | 'stillness' | 'awareness_emotion' | 'awareness_body_scan' | 'awareness_sakshi' | 'ritual' | 'treatise' | 'video' | 'quiz' | 'other'} FamilyKey */
+
+/**
+ * @typedef {object} FamilySession
+ * @property {string | null | undefined} practiceId
+ * @property {string | null | undefined} practiceMode
+ * @property {{ practiceType?: string | null } | null | undefined} configSnapshot
+ * @property {{ isHonor?: boolean } | null | undefined} metadata
+ */
+
 /**
  * Map a session to its canonical family key
  * Supports multi-tier resolution: practiceId → practiceMode → configSnapshot.practiceType → fallback
- * @param {Object} session - Session object
- * @returns {string} - One of: breathwork, stillness, awareness_emotion, awareness_body_scan,
+ * @param {FamilySession | null | undefined} session - Session object
+ * @returns {FamilyKey} - One of: breathwork, stillness, awareness_emotion, awareness_body_scan,
  *                             awareness_sakshi, ritual, treatise, video, quiz, other
  */
 export function familyKeyOfSession(session) {
@@ -114,7 +125,7 @@ export function familyKeyOfSession(session) {
 
 /**
  * Get all canonical family keys
- * @returns {string[]} - Array of valid family key values
+ * @returns {FamilyKey[]} - Array of valid family key values
  */
 export function getAllFamilyKeys() {
     return [
@@ -133,7 +144,7 @@ export function getAllFamilyKeys() {
 
 /**
  * Get human-readable label for a family key
- * @param {string} familyKey - One of the canonical family keys
+ * @param {FamilyKey} familyKey - One of the canonical family keys
  * @returns {string} - Display label
  */
 export function labelForFamilyKey(familyKey) {

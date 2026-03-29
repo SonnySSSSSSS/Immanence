@@ -1,14 +1,32 @@
 // src/reporting/aggregators.js
 // Pure reducer functions for session aggregation
 // All functions operate on immutable session arrays with no side effects
+// @ts-check
+
+/** @typedef {'completed' | 'abandoned' | 'partial' | 'early_exit' | 'earlyExit'} CompletionToken */
+
+/**
+ * @typedef {object} SessionLike
+ * @property {string | null | undefined} practiceId
+ * @property {number | null | undefined} durationSec
+ * @property {string | null | undefined} startedAt
+ * @property {CompletionToken | null | undefined} completion
+ * @property {{ status?: string | null } | null | undefined} scheduleMatched
+ */
+
+/** @typedef {(session: SessionLike) => string | null | undefined} GroupKeySelector */
+/** @typedef {{ familyKeyOf?: GroupKeySelector }} AggregatorOptions */
+/** @typedef {{ greenCount: number, redCount: number, totalMatched: number, adherencePercent: number }} ScheduleAdherence */
+/** @typedef {{ completionRate: number, completedCount: number, totalCount: number, avgDurationMin: number, matchedSessionsPercent: number }} QualitySignals */
+/** @typedef {{ completed: number, abandoned: number, partial: number }} CompletionBreakdown */
 
 /**
  * Aggregate session duration (minutes) grouped by family key or practice ID
- * @param {Array} sessions - Session objects with durationSec, practiceId
- * @param {Object} options
- * @param {Function} options.familyKeyOf - Function to map session to family key
+ * @param {SessionLike[]} sessions - Session objects with durationSec, practiceId
+ * @param {AggregatorOptions} options
+ * @param {GroupKeySelector} options.familyKeyOf - Function to map session to family key
  * @param {Function} options.practiceIdOf - Function to map session to practiceId
- * @returns {Object} - { [groupKey]: totalMinutes }
+ * @returns {Record<string, number>} - { [groupKey]: totalMinutes }
  */
 export function aggMinutes(sessions, options = {}) {
     const { familyKeyOf = s => s.practiceId } = options;
@@ -20,16 +38,16 @@ export function aggMinutes(sessions, options = {}) {
         const minutes = (session.durationSec || 0) / 60;
         acc[key] = (acc[key] || 0) + minutes;
         return acc;
-    }, {});
+    }, /** @type {Record<string, number>} */ ({}));
 }
 
 /**
  * Aggregate session counts grouped by family key or practice ID
- * @param {Array} sessions - Session objects
- * @param {Object} options
- * @param {Function} options.familyKeyOf - Function to map session to family key
+ * @param {SessionLike[]} sessions - Session objects
+ * @param {AggregatorOptions} options
+ * @param {GroupKeySelector} options.familyKeyOf - Function to map session to family key
  * @param {Function} options.practiceIdOf - Function to map session to practiceId
- * @returns {Object} - { [groupKey]: count }
+ * @returns {Record<string, number>} - { [groupKey]: count }
  */
 export function aggCounts(sessions, options = {}) {
     const { familyKeyOf = s => s.practiceId } = options;
@@ -40,14 +58,14 @@ export function aggCounts(sessions, options = {}) {
 
         acc[key] = (acc[key] || 0) + 1;
         return acc;
-    }, {});
+    }, /** @type {Record<string, number>} */ ({}));
 }
 
 /**
  * Count unique calendar days with at least one session
- * @param {Array} sessions - Session objects with startedAt
- * @param {Object} options
- * @param {Function} options.dateKeyOf - Function to extract date key from session
+ * @param {SessionLike[]} sessions - Session objects with startedAt
+ * @param {{ dateKeyOf?: (session: SessionLike) => string | null }} options
+ * @param {(session: SessionLike) => string | null} options.dateKeyOf - Function to extract date key from session
  * @returns {number} - Count of unique days
  */
 export function aggActiveDays(sessions, options = {}) {
@@ -69,8 +87,8 @@ export function aggActiveDays(sessions, options = {}) {
 /**
  * Aggregate curriculum schedule adherence from scheduleMatched snapshots
  * Returns green/red counts and overall adherence percentage
- * @param {Array} sessions - Session objects with scheduleMatched snapshot
- * @returns {Object} - { greenCount, redCount, totalMatched, adherencePercent }
+ * @param {SessionLike[]} sessions - Session objects with scheduleMatched snapshot
+ * @returns {ScheduleAdherence} - { greenCount, redCount, totalMatched, adherencePercent }
  */
 export function aggScheduleAdherence(sessions) {
     let greenCount = 0;
@@ -104,8 +122,8 @@ export function aggScheduleAdherence(sessions) {
 /**
  * Aggregate quality signals from sessions
  * Returns completion rate, average duration, and precision metrics
- * @param {Array} sessions - Session objects with completion, durationSec, scheduleMatched
- * @returns {Object} - { completionRate, completedCount, totalCount, avgDurationMin, matchedSessionsPercent }
+ * @param {SessionLike[]} sessions - Session objects with completion, durationSec, scheduleMatched
+ * @returns {QualitySignals} - { completionRate, completedCount, totalCount, avgDurationMin, matchedSessionsPercent }
  */
 export function aggQualitySignals(sessions) {
     if (sessions.length === 0) {
@@ -139,11 +157,11 @@ export function aggQualitySignals(sessions) {
 /**
  * Aggregate session count by completion status
  * Normalizes legacy completion tokens (early_exit, earlyExit) to canonical 'partial'.
- * @param {Array} sessions - Session objects with completion
- * @returns {Object} - { completed, abandoned, partial } (canonical keys only)
+ * @param {SessionLike[]} sessions - Session objects with completion
+ * @returns {CompletionBreakdown} - { completed, abandoned, partial } (canonical keys only)
  */
 export function aggCompletionBreakdown(sessions) {
-    return sessions.reduce((acc, session) => {
+     return sessions.reduce((acc, session) => {
         let status = session.completion || 'partial';
 
         // Normalize legacy tokens to canonical 'partial'
@@ -153,5 +171,5 @@ export function aggCompletionBreakdown(sessions) {
 
         acc[status] = (acc[status] || 0) + 1;
         return acc;
-    }, { completed: 0, abandoned: 0, partial: 0 });
+    }, /** @type {CompletionBreakdown} */ ({ completed: 0, abandoned: 0, partial: 0 }));
 }
