@@ -1,7 +1,6 @@
 import { RuntimeFailureCode, createRuntimeFailure } from "../utils/runtimeFailure.js";
 import {
   getAuthModeCheck,
-  getLlmConfigCheck,
   getStartupRuntimeCheck,
 } from "../utils/runtimeChecks.js";
 
@@ -40,7 +39,6 @@ export const runtimeEnv = {
   supabaseUrl: readEnvString("VITE_SUPABASE_URL"),
   supabaseAnonKey: readEnvString("VITE_SUPABASE_ANON_KEY"),
   enableAuth: parseEnableAuth(),
-  llmProxyUrl: readEnvString("VITE_LLM_PROXY_URL"),
   isDev: readEnvBoolean("DEV"),
   isProd: readEnvBoolean("PROD"),
   baseUrl: readEnvString("BASE_URL") || "/",
@@ -52,10 +50,6 @@ export function getAuthRuntimeMode() {
 
 export function getStartupRuntimeVerification() {
   return getStartupRuntimeCheck(runtimeEnv, getMissingAuthEnvNames());
-}
-
-export function getLlmRuntimeVerification() {
-  return getLlmConfigCheck(runtimeEnv);
 }
 
 export function getMissingAuthEnvNames() {
@@ -79,18 +73,4 @@ export function assertAuthRuntimeEnvConfigured() {
   if (missingNames.length > 0) {
     throw createAuthEnvError(missingNames);
   }
-}
-
-export function requireLlmProxyUrl() {
-  if (!runtimeEnv.llmProxyUrl) {
-    throw createRuntimeFailure(null, {
-      code: RuntimeFailureCode.LLM_PROXY_MISSING,
-      category: "llm",
-      message:
-        "Missing required runtime environment variable VITE_LLM_PROXY_URL for LLM calls. Configure it before invoking Four Modes validation.",
-      details: { envVar: "VITE_LLM_PROXY_URL" },
-    });
-  }
-
-  return runtimeEnv.llmProxyUrl;
 }

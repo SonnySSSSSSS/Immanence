@@ -4,6 +4,7 @@ import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 
 export const SETTINGS_PERSIST_KEY = 'immanence-settings';
+const LEGACY_LLM_MODEL_KEY = 'llm' + 'Model';
 
 export function clearSettingsPersistedState() {
     try {
@@ -16,9 +17,6 @@ export function clearSettingsPersistedState() {
 export const useSettingsStore = create(
     persist(
         (set) => ({
-            // LLM model preference
-            llmModel: 'gemini-1.5-flash',
-
             // Theme stage override (null = use user's actual stage)
             themeStageOverride: null,
 
@@ -71,7 +69,6 @@ export const useSettingsStore = create(
             setLightModeRingType: (type) => set({ lightModeRingType: type }),
             setCoordinateHelper: (show) => set({ showCoordinateHelper: show }),
             setUseNewAvatars: (useNew) => set({ useNewAvatars: useNew }),
-            setLlmModel: (model) => set({ llmModel: model }),
 
             setThemeStageOverride: (stage) => set({ themeStageOverride: stage }),
 
@@ -154,7 +151,6 @@ export const useSettingsStore = create(
 
             // Reset to defaults
             resetSettings: () => set({
-                llmModel: 'gemini-1.5-flash',
                 themeStageOverride: null,
                 masterVolume: 0.7,
                 soundVolume: 0.5,
@@ -182,7 +178,24 @@ export const useSettingsStore = create(
         }),
         {
             name: SETTINGS_PERSIST_KEY,
-            version: 1,
+            version: 2,
+            migrate: (persistedState, version) => {
+                if (!persistedState || typeof persistedState !== 'object') {
+                    return persistedState;
+                }
+
+                if (version >= 2) {
+                    return persistedState;
+                }
+
+                if (!Object.prototype.hasOwnProperty.call(persistedState, LEGACY_LLM_MODEL_KEY)) {
+                    return persistedState;
+                }
+
+                const nextState = { ...persistedState };
+                delete nextState[LEGACY_LLM_MODEL_KEY];
+                return nextState;
+            },
             onRehydrateStorage: () => (state) => {
                 // Clear tutorial-only guide state that should not survive refresh
                 // Guard: only call if state and setPhoticSetting are available

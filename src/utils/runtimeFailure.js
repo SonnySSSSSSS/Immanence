@@ -1,16 +1,9 @@
 export const RuntimeFailureCode = Object.freeze({
   RUNTIME_CONFIG_MISSING: "runtime_config_missing",
-  LLM_PROXY_MISSING: "llm_proxy_missing",
   AUTH_DISABLED: "auth_disabled",
   AUTH_SESSION_RESTORE_FAILED: "auth_session_restore_failed",
   AUTH_INIT_FAILED: "auth_init_failed",
   AUTH_REQUEST_FAILED: "auth_request_failed",
-  LLM_CONFIGURATION_ERROR: "configuration_error",
-  LLM_API_ERROR: "api_error",
-  LLM_NETWORK_ERROR: "network_error",
-  LLM_INVALID_RESPONSE_SHAPE: "invalid_response_shape",
-  LLM_EMPTY_RESPONSE: "empty_response",
-  LLM_PARSE_ERROR: "parse_error",
 });
 
 function normalizeCause(errorLike) {

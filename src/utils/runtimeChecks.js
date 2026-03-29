@@ -9,16 +9,6 @@ const AUTH_PHASE_BY_CODE = Object.freeze({
   [RuntimeFailureCode.AUTH_SESSION_RESTORE_FAILED]: "session_restore_failed",
 });
 
-const LLM_PHASE_BY_CODE = Object.freeze({
-  [RuntimeFailureCode.LLM_PROXY_MISSING]: "missing_config",
-  [RuntimeFailureCode.LLM_CONFIGURATION_ERROR]: "missing_config",
-  [RuntimeFailureCode.LLM_API_ERROR]: "api_error",
-  [RuntimeFailureCode.LLM_NETWORK_ERROR]: "network_error",
-  [RuntimeFailureCode.LLM_INVALID_RESPONSE_SHAPE]: "invalid_response",
-  [RuntimeFailureCode.LLM_EMPTY_RESPONSE]: "empty_response",
-  [RuntimeFailureCode.LLM_PARSE_ERROR]: "parse_error",
-});
-
 function normalizeVerificationFailure(failureLike, defaults = {}) {
   if (
     failureLike &&
@@ -124,14 +114,6 @@ export function getStartupRuntimeCheck(runtimeEnv, missingAuthEnvNames = []) {
   };
 }
 
-export function getLlmConfigCheck(runtimeEnv) {
-  const configured = Boolean(runtimeEnv?.llmProxyUrl);
-  return {
-    configured,
-    config: configured ? "configured" : "missing_config",
-  };
-}
-
 export function createAuthVerification({ runtimeEnv, phase = "ready", event = null, session = null, failure = null } = {}) {
   const authMode = getAuthModeCheck(runtimeEnv);
   const normalizedFailure = failure ? normalizeVerificationFailure(failure) : null;
@@ -151,38 +133,5 @@ export function createAuthVerification({ runtimeEnv, phase = "ready", event = nu
     failureCode: normalizedFailure?.code ?? null,
     message: normalizedFailure?.message ?? null,
     details: normalizedFailure?.details ?? null,
-  };
-}
-
-export function createLlmVerification({ runtimeEnv, phase = null, failure = null, details = null } = {}) {
-  const llmConfig = getLlmConfigCheck(runtimeEnv);
-  const normalizedFailure = failure ? normalizeVerificationFailure(failure) : null;
-  const resolvedPhase = normalizedFailure
-    ? LLM_PHASE_BY_CODE[normalizedFailure.code] || "runtime_error"
-    : phase || (llmConfig.configured ? "idle" : "missing_config");
-
-  let availability = "unknown";
-  if (!llmConfig.configured) {
-    availability = "unconfigured";
-  } else if (resolvedPhase === "available" || resolvedPhase === "success") {
-    availability = "available";
-  } else if (resolvedPhase === "api_error" || resolvedPhase === "network_error") {
-    availability = "unavailable";
-  } else if (
-    resolvedPhase === "invalid_response" ||
-    resolvedPhase === "empty_response" ||
-    resolvedPhase === "parse_error"
-  ) {
-    availability = "available";
-  }
-
-  return {
-    config: llmConfig.config,
-    configured: llmConfig.configured,
-    phase: resolvedPhase,
-    availability,
-    failureCode: normalizedFailure?.code ?? null,
-    message: normalizedFailure?.message ?? null,
-    details: details ?? normalizedFailure?.details ?? null,
   };
 }
