@@ -11,7 +11,7 @@ import {
     aggScheduleAdherence,
     aggQualitySignals,
     aggCompletionBreakdown,
-} from './aggregators.js';
+} from './aggregators';
 import { familyKeyOfSession, labelForFamilyKey } from './familyKeyMap.js';
 
 /** @typedef {'lifetime' | 'runId' | 'today'} DashboardScope */

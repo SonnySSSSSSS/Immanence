@@ -8,11 +8,11 @@ import {
   getStartupRuntimeVerification,
   runtimeEnv,
   validateStartupRuntimeEnv,
-} from "./config/runtimeEnv.js";
+} from "./config/runtimeEnv";
 import { installGlobalErrorHandlers, reportDiagnostic } from "./utils/errorReporter.js";
 import { createDiagnostic, emitDiagnostic } from "./utils/diagnostics.js";
 import { createLogger } from "./utils/logger.js";
-import { publishRuntimeCheck } from "./utils/runtimeChecks.js";
+import { publishRuntimeCheck } from "./utils/runtimeChecks";
 import "./immanence.css";
 import "./index.css";
 

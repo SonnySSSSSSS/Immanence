@@ -1,5 +1,5 @@
 import { getQuickDashboardTiles } from '../reporting/dashboardProjection.js';
-import { getHomeDashboardPolicy } from '../reporting/tilePolicy.js';
+import { getHomeDashboardPolicy } from '../reporting/tilePolicy';
 
 export const DEFAULT_CURRICULUM_ID = 'ritual-initiation-14-v2';
 

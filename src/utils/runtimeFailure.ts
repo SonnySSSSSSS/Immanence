@@ -6,7 +6,17 @@ export const RuntimeFailureCode = Object.freeze({
   AUTH_REQUEST_FAILED: "auth_request_failed",
 });
 
-function normalizeCause(errorLike) {
+export type RuntimeFailureCode = typeof RuntimeFailureCode[keyof typeof RuntimeFailureCode];
+
+interface Failure {
+  code: string;
+  category: string;
+  message: string;
+  cause: Error;
+  details?: unknown;
+}
+
+function normalizeCause(errorLike: unknown): Error {
   if (errorLike instanceof Error) return errorLike;
   if (typeof errorLike === "string") return new Error(errorLike);
 
@@ -17,7 +27,10 @@ function normalizeCause(errorLike) {
   }
 }
 
-export function normalizeRuntimeFailure(errorLike, defaults = {}) {
+export function normalizeRuntimeFailure(
+  errorLike: unknown,
+  defaults: Partial<Failure> = {}
+): Failure {
   const causeError = normalizeCause(errorLike);
   const {
     code = "runtime_error",
@@ -35,20 +48,35 @@ export function normalizeRuntimeFailure(errorLike, defaults = {}) {
   };
 }
 
-export function createRuntimeFailure(errorLike, defaults = {}) {
+export function createRuntimeFailure(
+  errorLike: unknown,
+  defaults: Partial<Failure> = {}
+): Error {
   const failure = normalizeRuntimeFailure(errorLike, defaults);
   const error = new Error(failure.message, { cause: failure.cause });
   error.name = "RuntimeFailure";
-  error.code = failure.code;
-  error.category = failure.category;
+  (error as any).code = failure.code;
+  (error as any).category = failure.category;
   if (failure.details !== undefined) {
-    error.details = failure.details;
+    (error as any).details = failure.details;
   }
 
   return error;
 }
 
-export function toFailureResult(errorLike, defaults = {}, extra = {}) {
+interface FailureResult {
+  success: false;
+  error: string;
+  category: string;
+  message: string;
+  [key: string]: any;
+}
+
+export function toFailureResult(
+  errorLike: unknown,
+  defaults: Partial<Failure> = {},
+  extra: Record<string, any> = {}
+): FailureResult {
   const failure = normalizeRuntimeFailure(errorLike, defaults);
   return {
     success: false,

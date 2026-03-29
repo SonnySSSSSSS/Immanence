@@ -1,4 +1,4 @@
-import { normalizeRuntimeFailure } from "./runtimeFailure.js";
+import { normalizeRuntimeFailure } from "./runtimeFailure";
 
 function normalizeDiagnosticCause(cause) {
   if (cause instanceof Error) {

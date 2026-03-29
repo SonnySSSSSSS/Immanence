@@ -4,7 +4,7 @@
 
 import React, { useState, useCallback, useEffect, Suspense } from 'react';
 import { generateMockSessions, MOCK_PATTERNS } from '../utils/devDataGenerator';
-import { readRuntimeChecksSnapshot, RUNTIME_CHECKS_EVENT } from '../utils/runtimeChecks.js';
+import { readRuntimeChecksSnapshot, RUNTIME_CHECKS_EVENT } from '../utils/runtimeChecks';
 import { useProgressStore } from '../state/progressStore';
 import { useSettingsStore } from '../state/settingsStore';
 import { useDisplayModeStore } from '../state/displayModeStore';

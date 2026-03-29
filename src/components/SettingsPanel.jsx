@@ -1,7 +1,7 @@
 // src/components/SettingsPanel.jsx
 // Settings panel with reset functionality for pilot testing
 import React, { useEffect, useMemo, useState } from 'react';
-import { runtimeEnv } from '../config/runtimeEnv.js';
+import { runtimeEnv } from '../config/runtimeEnv';
 import { useDisplayModeStore } from '../state/displayModeStore.js';
 import { clearSettingsPersistedState, useSettingsStore } from '../state/settingsStore';
 import { setAuthUser, useAuthUser } from '../state/useAuthUser.js';

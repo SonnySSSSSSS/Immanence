@@ -1,4 +1,4 @@
-import { runtimeEnv } from "../config/runtimeEnv.js";
+import { runtimeEnv } from "../config/runtimeEnv";
 
 const isProduction = runtimeEnv.isProd;
 

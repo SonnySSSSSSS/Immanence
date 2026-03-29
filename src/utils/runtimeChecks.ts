@@ -3,50 +3,100 @@ import { RuntimeFailureCode, normalizeRuntimeFailure } from "./runtimeFailure.js
 export const RUNTIME_CHECKS_KEY = "__IMMANENCE_RUNTIME_CHECKS__";
 export const RUNTIME_CHECKS_EVENT = "immanence:runtime-checks-updated";
 
+interface Failure {
+  code: string;
+  category: string;
+  message: string;
+  details?: unknown;
+  cause: Error;
+}
+
+interface RuntimeChecksTarget {
+  version: number;
+  updatedAt: string | null;
+  [key: string]: any;
+}
+
+interface RuntimeChecksSnapshot {
+  version: number;
+  updatedAt: string | null;
+  startup: any;
+  auth: any;
+  llm: any;
+}
+
+interface AuthModeCheck {
+  enabled: boolean;
+  mode: 'enabled' | 'disabled';
+}
+
+interface StartupRuntimeCheck {
+  ok: boolean;
+  phase: 'valid' | 'invalid';
+  authMode: 'enabled' | 'disabled';
+  authEnabled: boolean;
+  missingEnvNames: string[];
+}
+
+interface AuthVerification {
+  mode: 'enabled' | 'disabled';
+  enabled: boolean;
+  phase: string;
+  event: any;
+  hasSession: boolean;
+  userId: string | null;
+  failureCode: string | null;
+  message: string | null;
+  details: unknown;
+}
+
 const AUTH_PHASE_BY_CODE = Object.freeze({
   [RuntimeFailureCode.AUTH_DISABLED]: "disabled",
   [RuntimeFailureCode.AUTH_INIT_FAILED]: "init_failed",
   [RuntimeFailureCode.AUTH_SESSION_RESTORE_FAILED]: "session_restore_failed",
 });
 
-function normalizeVerificationFailure(failureLike, defaults = {}) {
+function normalizeVerificationFailure(
+  failureLike: unknown,
+  defaults: Partial<Failure> = {}
+): Failure {
   if (
     failureLike &&
     typeof failureLike === "object" &&
     !(failureLike instanceof Error) &&
-    (typeof failureLike.code === "string" || typeof failureLike.error === "string")
+    (typeof (failureLike as any).code === "string" || typeof (failureLike as any).error === "string")
   ) {
-    const code = failureLike.code || failureLike.error || defaults.code || "runtime_error";
-    const message = failureLike.message || defaults.message || "Unknown runtime failure";
+    const code = (failureLike as any).code || (failureLike as any).error || defaults.code || "runtime_error";
+    const message = (failureLike as any).message || defaults.message || "Unknown runtime failure";
 
     return {
       code,
-      category: failureLike.category || defaults.category || "runtime",
+      category: (failureLike as any).category || defaults.category || "runtime",
       message,
-      details: failureLike.details ?? defaults.details,
-      cause: failureLike.cause instanceof Error ? failureLike.cause : new Error(message),
+      details: (failureLike as any).details ?? defaults.details,
+      cause: (failureLike as any).cause instanceof Error ? (failureLike as any).cause : new Error(message),
     };
   }
 
   return normalizeRuntimeFailure(failureLike, defaults);
 }
 
-function getRuntimeChecksTarget() {
+function getRuntimeChecksTarget(): RuntimeChecksTarget | null {
   if (typeof window === "undefined") {
     return null;
   }
 
-  const existing = window[RUNTIME_CHECKS_KEY];
+  const existing = (window as any)[RUNTIME_CHECKS_KEY];
   if (existing && typeof existing === "object") {
-    return existing;
+    return existing as RuntimeChecksTarget;
   }
 
-  const nextTarget = { version: 1, updatedAt: null };
-  window[RUNTIME_CHECKS_KEY] = nextTarget;
+  const nextTarget: RuntimeChecksTarget = { version: 1, updatedAt: null };
+  (window as any)[RUNTIME_CHECKS_KEY] = nextTarget;
   return nextTarget;
 }
 
-export function readRuntimeChecksSnapshot() {
+export function readRuntimeChecksSnapshot(): RuntimeChecksSnapshot {
   if (typeof window === "undefined") {
     return {
       version: 1,
@@ -68,7 +118,7 @@ export function readRuntimeChecksSnapshot() {
   };
 }
 
-export function publishRuntimeCheck(name, payload) {
+export function publishRuntimeCheck(name: string, payload: any): any {
   const target = getRuntimeChecksTarget();
   if (!target) {
     return payload;
@@ -93,7 +143,7 @@ export function publishRuntimeCheck(name, payload) {
   return target[name];
 }
 
-export function getAuthModeCheck(runtimeEnv) {
+export function getAuthModeCheck(runtimeEnv: any): AuthModeCheck {
   const enabled = Boolean(runtimeEnv?.enableAuth);
   return {
     enabled,
@@ -101,7 +151,10 @@ export function getAuthModeCheck(runtimeEnv) {
   };
 }
 
-export function getStartupRuntimeCheck(runtimeEnv, missingAuthEnvNames = []) {
+export function getStartupRuntimeCheck(
+  runtimeEnv: any,
+  missingAuthEnvNames: string[] = []
+): StartupRuntimeCheck {
   const authMode = getAuthModeCheck(runtimeEnv);
   const missingEnvNames = [...missingAuthEnvNames];
 
@@ -114,13 +167,27 @@ export function getStartupRuntimeCheck(runtimeEnv, missingAuthEnvNames = []) {
   };
 }
 
-export function createAuthVerification({ runtimeEnv, phase = "ready", event = null, session = null, failure = null } = {}) {
+interface AuthVerificationOptions {
+  runtimeEnv?: any;
+  phase?: string;
+  event?: any;
+  session?: any;
+  failure?: unknown;
+}
+
+export function createAuthVerification({
+  runtimeEnv,
+  phase = "ready",
+  event = null,
+  session = null,
+  failure = null,
+}: AuthVerificationOptions = {}): AuthVerification {
   const authMode = getAuthModeCheck(runtimeEnv);
   const normalizedFailure = failure ? normalizeVerificationFailure(failure) : null;
   const resolvedPhase = !authMode.enabled
     ? "disabled"
     : normalizedFailure
-      ? AUTH_PHASE_BY_CODE[normalizedFailure.code] || "failed"
+      ? (AUTH_PHASE_BY_CODE as any)[normalizedFailure.code] || "failed"
       : phase;
 
   return {

@@ -1,9 +1,9 @@
 import { createClient } from '@supabase/supabase-js';
-import { assertAuthRuntimeEnvConfigured, getAuthRuntimeMode, runtimeEnv } from '../config/runtimeEnv.js';
+import { assertAuthRuntimeEnvConfigured, getAuthRuntimeMode, runtimeEnv } from '../config/runtimeEnv';
 import { createLogger } from '../utils/logger.js';
 import { reportDiagnostic } from '../utils/errorReporter.js';
 import { createDiagnostic, emitDiagnostic } from '../utils/diagnostics.js';
-import { RuntimeFailureCode, createRuntimeFailure } from '../utils/runtimeFailure.js';
+import { RuntimeFailureCode, createRuntimeFailure } from '../utils/runtimeFailure';
 
 const logger = createLogger('supabaseClient');
 const authRuntimeMode = getAuthRuntimeMode();

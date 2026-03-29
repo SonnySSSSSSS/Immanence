@@ -31,7 +31,7 @@ import { TUTORIALS } from "./tutorials/tutorialRegistry.js";
 import { hasDevtoolsQueryFlag, isDevtoolsUnlocked, setDevtoolsUnlocked } from "./dev/uiDevtoolsGate.js";
 import { getDevPanelProdGate } from "./lib/devPanelGate.js";
 import { APP_VERSION_LABEL } from "./config/appMeta.js";
-import { runtimeEnv } from "./config/runtimeEnv.js";
+import { runtimeEnv } from "./config/runtimeEnv";
 import { createLogger } from "./utils/logger.js";
 import { markFirstLoginAudit, sanitizeFirstLoginAuditUserId } from "./utils/firstLoginAudit.js";
 // import { VerificationGallery } from "./components/avatar/VerificationGallery.jsx"; // Dev tool - not used

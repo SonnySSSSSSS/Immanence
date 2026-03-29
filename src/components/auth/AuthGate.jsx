@@ -1,10 +1,10 @@
 import React, { useEffect, useRef, useState } from "react";
-import { getAuthRuntimeMode, runtimeEnv } from "../../config/runtimeEnv.js";
+import { getAuthRuntimeMode, runtimeEnv } from "../../config/runtimeEnv";
 import { reportDiagnostic } from "../../utils/errorReporter.js";
 import { createDiagnostic, emitDiagnostic } from "../../utils/diagnostics.js";
 import { createLogger } from "../../utils/logger.js";
-import { RuntimeFailureCode, normalizeRuntimeFailure } from "../../utils/runtimeFailure.js";
-import { createAuthVerification, publishRuntimeCheck } from "../../utils/runtimeChecks.js";
+import { RuntimeFailureCode, normalizeRuntimeFailure } from "../../utils/runtimeFailure";
+import { createAuthVerification, publishRuntimeCheck } from "../../utils/runtimeChecks";
 import { setAuthUser } from "../../state/useAuthUser.js";
 import {
   beginFirstLoginAuditAttempt,
