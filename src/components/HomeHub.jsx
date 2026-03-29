@@ -23,11 +23,10 @@ import { useDisplayModeStore } from "../state/displayModeStore.js";
 import { useUserModeStore } from "../state/userModeStore.js";
 import { calculateGradientAngle, getAvatarCenter, getDynamicGoldGradient } from "../utils/dynamicLighting.js";
 import { SimpleModeButton } from "./SimpleModeButton.jsx";
-import { DailyPracticeCard } from "./DailyPracticeCard.jsx";
+import { DailyPracticeCardHost } from "./DailyPracticeCardHost.jsx";
 import { QuickDashboardTiles } from "./dashboard/QuickDashboardTiles.jsx";
-import { CurriculumHub } from "./CurriculumHub.jsx";
 import { CurriculumOnboarding } from "./CurriculumOnboarding.jsx";
-import { CurriculumCompletionReport } from "./CurriculumCompletionReport.jsx";
+import { CurriculumHubPortal } from "./CurriculumHubPortal.jsx";
 import { ThoughtDetachmentOnboarding } from "./ThoughtDetachmentOnboarding.jsx";
 import { useCurriculumStore } from "../state/curriculumStore.js";
 import { useNavigationStore } from "../state/navigationStore.js";
@@ -1225,218 +1224,36 @@ function HomeHub({ onSelectSection, activeSection = null, currentStage, previewP
         )}
 
         {/* PRACTICE + PROGRESS: Curriculum Card */}
-        <div className="w-full pt-2" style={{
-          ...SANCTUARY_RAIL_STYLE,
-          borderTop: `1px solid ${isLight ? 'rgba(100, 80, 60, 0.15)' : 'rgba(255, 255, 255, 0.08)'}`,
-        }}>
-          <div className="w-full" style={{ position: 'relative' }}>
-            <div data-tutorial={ANCHORS.HOME_DAILY_CARD}>
-              <DailyPracticeCard
-                onStartPractice={handleStartPractice}
-                onViewCurriculum={openCurriculumHub}
-                onNavigate={handleSelectSection}
-                hasPersistedCurriculumData={hasPersistedCurriculumData}
-                onboardingComplete={curriculumOnboardingComplete}
-                practiceTimeSlots={practiceTimeSlots}
-                onStartSetup={handleOpenCurriculumSetup}
-                isTutorialTarget={isDailyCardTutorialTarget}
-                showPerLegCompletion={false}
-                showDailyCompletionNotice={true}
-                showSessionMeter={false}
-              />
-            </div>
-          {/* Guided / Full Access pill toggle — docked to card bottom-right */}
-          <button
-            type="button"
-            role="switch"
-            aria-checked={accessPosture === 'full'}
-            data-testid="posture-pill-toggle"
-            onClick={() => setAccessPosture(accessPosture === 'guided' ? 'full' : 'guided')}
-            className="inline-flex items-center rounded-full border select-none"
-            style={{
-              position: 'absolute',
-              bottom: '-22px',
-              right: '28px',
-              zIndex: 10,
-              height: '22px',
-              padding: '2px',
-              gap: 0,
-              borderColor: isLight ? 'var(--accent-30)' : 'var(--accent-30)',
-              background: isLight ? 'rgba(236,246,248,0.72)' : 'rgba(7,14,20,0.78)',
-              backdropFilter: 'blur(8px)',
-              WebkitBackdropFilter: 'blur(8px)',
-              transition: 'border-color 200ms',
-            }}
-          >
-            {/* Sliding indicator */}
-            <span
-              aria-hidden="true"
-              style={{
-                position: 'absolute',
-                top: '2px',
-                bottom: '2px',
-                borderRadius: '999px',
-                width: '50%',
-                left: accessPosture === 'guided' ? '2px' : 'calc(50% - 2px)',
-                transition: 'left 200ms cubic-bezier(0.4,0,0.2,1)',
-                background: isLight ? 'var(--accent-40)' : 'var(--accent-50)',
-                boxShadow: '0 1px 4px var(--accent-20)',
-              }}
-            />
-            {/* GUIDED label */}
-            <span
-              className="relative z-10 font-black uppercase tracking-[0.14em]"
-              style={{
-                fontSize: '9px',
-                padding: '0 8px',
-                color: accessPosture === 'guided'
-                  ? (isLight ? 'var(--accent-color)' : 'var(--accent-90)')
-                  : (isLight ? 'rgba(80,80,80,0.45)' : 'rgba(200,200,200,0.38)'),
-                transition: 'color 200ms',
-                userSelect: 'none',
-                WebkitUserSelect: 'none',
-              }}
-            >
-              GUIDED
-            </span>
-            {/* FULL label */}
-            <span
-              className="relative z-10 font-black uppercase tracking-[0.14em]"
-              style={{
-                fontSize: '9px',
-                padding: '0 8px',
-                color: accessPosture === 'full'
-                  ? (isLight ? 'var(--accent-color)' : 'var(--accent-90)')
-                  : (isLight ? 'rgba(80,80,80,0.45)' : 'rgba(200,200,200,0.38)'),
-                transition: 'color 200ms',
-                userSelect: 'none',
-                WebkitUserSelect: 'none',
-              }}
-            >
-              FULL
-            </span>
-          </button>
-          </div>
-        </div>
+        <DailyPracticeCardHost
+          dailyCardAnchor={ANCHORS.HOME_DAILY_CARD}
+          handleStartPractice={handleStartPractice}
+          openCurriculumHub={openCurriculumHub}
+          handleSelectSection={handleSelectSection}
+          hasPersistedCurriculumData={hasPersistedCurriculumData}
+          curriculumOnboardingComplete={curriculumOnboardingComplete}
+          practiceTimeSlots={practiceTimeSlots}
+          handleOpenCurriculumSetup={handleOpenCurriculumSetup}
+          isDailyCardTutorialTarget={isDailyCardTutorialTarget}
+          accessPosture={accessPosture}
+          setAccessPosture={setAccessPosture}
+          isLight={isLight}
+          sanctuaryRailStyle={SANCTUARY_RAIL_STYLE}
+        />
 
         {/* Curriculum Hub/Report Modal - Portaled to document.body */}
-        {showCurriculumHub && createPortal(
-          (() => {
-            const isComplete = isCurriculumComplete();
-            
-            // Calculate clamped bounds for the host
-            const getHostStyle = () => {
-              if (!frameRect) return { left: 0, right: 0 };
-              const vw = window.innerWidth;
-              const rawLeft = frameRect.left;
-              const rawRight = frameRect.left + frameRect.width;
-              const left = Math.max(0, rawLeft);
-              const right = Math.max(0, vw - rawRight);
-              return { left, right };
-            };
-
-            const hostStyle = getHostStyle();
-
-            return isComplete ? (
-              // Show completion report if curriculum is done
-              <CurriculumCompletionReport
-                onDismiss={closeCurriculumHub}
-              />
-            ) : (
-              // Show curriculum hub - PORTAL with frame wrapper
-              <div className="fixed inset-0 z-[9999] isolate">
-                {/* backdrop */}
-                <div 
-                  className="absolute inset-0 bg-black/40 backdrop-blur-xl"
-                  onClick={() => {
-                    closeCurriculumHub();
-                  }}
-                />
-
-                {/* frame-aligned modal host - ALWAYS RENDER with fail-safe clamping */}
-                <div
-                  className="absolute top-0 bottom-0 flex justify-center py-6"
-                  style={hostStyle}
-                >
-                  {/* PANEL - now always mounts to avoid "ghosted app" state */}
-                  <div 
-                    className="w-full max-w-5xl px-4 overflow-hidden rounded-[28px] flex flex-col shadow-2xl"
-                    data-card="true"
-                    data-card-id="modal:curriculumHub"
-                    style={{
-                      background: isLight ? '#f6f1e6' : 'rgba(10, 10, 15, 1)',
-                      maxHeight: 'calc(100vh - 48px)',
-                    }}
-                    onClick={(e) => e.stopPropagation()}
-                  >
-                    {/* Header - fixed, non-scrolling */}
-                    <div className="shrink-0 px-6 pt-6 pb-4 flex items-center justify-between" style={{
-                      background: isLight ? '#f6f1e6' : 'rgba(10, 10, 15, 1)',
-                      borderBottom: `1px solid ${isLight ? 'rgba(0,0,0,0.1)' : 'rgba(255,255,255,0.1)'}`,
-                    }}>
-                      <div className="min-w-0">
-                        <h2
-                          className="type-h2"
-                          style={{
-                            color: 'var(--accent-color)',
-                          }}
-                        >
-                          {activeProgram?.name || 'Curriculum'}
-                        </h2>
-                        {activeProgram?.curriculum?.description && (
-                          <div
-                            className="text-sm mt-1"
-                            style={{ color: isLight ? 'rgba(60, 50, 40, 0.65)' : 'rgba(253,251,245,0.65)' }}
-                          >
-                            {activeProgram.curriculum.description}
-                          </div>
-                        )}
-                      </div>
-                      <button
-                        onClick={() => {
-                          closeCurriculumHub();
-                        }}
-                        className="p-2 rounded-full transition-colors"
-                        style={{
-                          background: isLight ? 'rgba(0,0,0,0.05)' : 'rgba(255,255,255,0.05)',
-                        }}
-                      >
-                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                          <path d="M18 6L6 18M6 6l12 12" />
-                        </svg>
-                      </button>
-                    </div>
-
-                    {/* Body - THE ONLY SCROLL CONTAINER */}
-                    <div className="flex-1 min-h-0 overflow-y-auto no-scrollbar">
-                      {curriculumSetupError && (
-                        <div
-                          className="mx-6 mt-5 rounded-xl px-4 py-3 text-sm"
-                          style={{
-                            background: isLight ? 'rgba(200, 100, 80, 0.1)' : 'rgba(200, 100, 80, 0.12)',
-                            border: `1px solid ${isLight ? 'rgba(200, 100, 80, 0.22)' : 'rgba(255, 170, 140, 0.22)'}`,
-                            color: isLight ? 'rgba(110, 55, 35, 0.92)' : 'rgba(255, 205, 190, 0.95)',
-                          }}
-                        >
-                          {curriculumSetupError}
-                        </div>
-                      )}
-                      <CurriculumHub
-                        isInModal
-                        onBeginSetup={() => {
-                          setCurriculumSetupError(null);
-                          setShowCurriculumHubState(false);
-                          setShowCurriculumOnboarding(true);
-                        }}
-                      />
-                    </div>
-                  </div>
-                </div>
-              </div>
-            );
-          })(),
-          document.body
-        )}
+        <CurriculumHubPortal
+          showCurriculumHub={showCurriculumHub}
+          isCurriculumComplete={isCurriculumComplete}
+          frameRect={frameRect}
+          isLight={isLight}
+          activeProgram={activeProgram}
+          closeCurriculumHub={closeCurriculumHub}
+          curriculumSetupError={curriculumSetupError}
+          setCurriculumSetupError={setCurriculumSetupError}
+          setShowCurriculumHubState={setShowCurriculumHubState}
+          setShowCurriculumOnboarding={setShowCurriculumOnboarding}
+          portalTarget={document.body}
+        />
 
         {showCurriculumOnboarding && createPortal(
           <CurriculumOnboarding
