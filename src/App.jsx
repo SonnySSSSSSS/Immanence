@@ -1440,12 +1440,9 @@ function App({ playgroundMode = false, playgroundBottomLayer = true }) {
                 <SectionView
                   section={activeSection}
                   isPracticing={isPracticing}
-                  currentPracticeId={activePracticeId}
-                  isFullscreenExperience={isFullscreenExperience}
                   isActiveBreathSession={isActiveBreathSession}
                   isBreathLayoutLocked={isBreathLayoutLocked}
                   onPracticingChange={handlePracticingChange}
-                  breathState={breathState}
                   onBreathStateChange={setBreathState}
                   onStageChange={(hsl, stageName) => handleAvatarStageSelection(stageName)}
                   currentStage={effectivePreviewStage}
@@ -1455,7 +1452,6 @@ function App({ playgroundMode = false, playgroundBottomLayer = true }) {
                   showFxGallery={showFxGallery}
                   onNavigate={handleSectionSelect}
                   onOpenHardwareGuide={() => setIsHardwareGuideOpen(true)}
-                  onRitualComplete={() => handleSectionSelect(null)}
                   onOpenPhotic={handleOpenPhotic}
                   hideCards={hideCards}
                 />
