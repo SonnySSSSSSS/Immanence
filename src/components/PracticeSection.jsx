@@ -1,10 +1,6 @@
 import React, { useState, useEffect, useRef, useMemo, useCallback, useLayoutEffect } from "react";
-import { createPortal } from 'react-dom';
-import { InsightMeditationPortal } from './vipassana/InsightMeditationPortal.jsx';
-import { SensorySession } from "./SensorySession.jsx";
 import { BREATH_RING_PRESETS } from "./breathingRingPresets.js";
 import { VipassanaVisual } from "./vipassana/VipassanaVisual.jsx";
-import { NavigationRitualLibrary } from "./NavigationRitualLibrary.jsx";
 import { CircuitConfig } from "./Cycle/CircuitConfig.jsx";
 import { VIPASSANA_THEMES } from "../data/vipassanaThemes.js";
 import { SoundConfig, BINAURAL_PRESETS, ISOCHRONIC_PRESETS, SOUND_TYPES } from "./SoundConfig.jsx";
@@ -42,9 +38,8 @@ import { TempoSyncPanel } from "./TempoSyncPanel.jsx";
 import { useBreathSessionState } from "./practice/useBreathSessionState.js";
 import { CircuitTrainingSelector } from "./practice/CircuitTrainingSelector.jsx";
 import { PracticeSectionMainAssembly } from "./practice/PracticeSectionShell.jsx";
+import { PracticeActiveSessionView } from "./practice/PracticeActiveSessionView.jsx";
 import BreathPracticeCard from "./practice/BreathPracticeCard.jsx";
-import ParallaxForest from "./ParallaxForest.jsx";
-import { SakshiVisual } from "./SakshiVisual.jsx";
 import { useAwarenessSceneStore } from "../state/awarenessSceneStore.js";
 import { recordPracticeSession } from "../services/sessionRecorder.js";
 import { getPathById } from "../data/navigationData.js";
@@ -65,7 +60,6 @@ import {
   usePracticeLaunchState,
 } from "./practice/usePracticeLaunchState.js";
 import { useBreathKeyboardShortcuts } from "../hooks/useBreathKeyboardShortcuts.js";
-import { PracticeVisualizationHost } from "./practice/PracticeVisualizationHost.jsx";
 
 // CONFIG_COMPONENTS moved to PracticeOptionsCard.jsx
 
@@ -2533,187 +2527,81 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, onNav
   }, [isRunning]);
 
   // RENDER PRIORITY 1: Active Practice Session
-  const sessionView = isRunning ? (() => {
-    const breathViewportReady = !isBreathRunningSession || Number.isFinite(breathViewportHeightPx);
-    if (renderPractice === "Rituals") {
-      return (
-        <section className="w-full h-full min-h-[600px] flex flex-col items-center justify-center overflow-visible pb-12">
-          <NavigationRitualLibrary
-            onComplete={handleStop}
-            onNavigate={onNavigate}
-            selectedRitual={activeRitual}
-            onSelectRitual={handleSelectRitual}
-            onRitualReturn={handleRitualReturn}
-          />
-        </section>
-      );
-    }
-
-    // Render vipassana portal when renderPracticeId is cognitive vipassana (thought labeling)
-    // Somatic vipassana uses inline SensorySession component (mobile-friendly)
-    if (renderPracticeId === "cognitive_vipassana") {
-      if (sensoryType === "sakshi") {
-        const sakshiButtonBg = 'linear-gradient(180deg, var(--accent-primary) 0%, var(--accent-secondary) 100%)';
-        const sakshiButtonShadow = 'inset 0 1px 0 rgba(255,255,255,0.35)';
-        const sakshiTitle = sakshiVersion === 1 ? 'Sakshi (Forest)' : 'Sakshi (Reflection)';
-        return (
-          <section className="relative w-full h-full min-h-[600px] flex flex-col items-center justify-center overflow-visible pb-10">
-            <div
-              className="relative"
-              style={{
-                width: 'min(92vw, 420px)',
-                aspectRatio: '3 / 4',
-                borderRadius: '20px',
-                overflow: 'hidden',
-                border: isLight ? '1px solid var(--light-border)' : '1px solid var(--accent-20)',
-                background: isLight ? 'rgba(255,255,255,0.04)' : 'rgba(0,0,0,0.25)',
-                boxShadow: isLight ? '0 12px 36px rgba(0,0,0,0.12)' : '0 20px 60px rgba(0,0,0,0.65)',
-              }}
-            >
-              <div className="absolute inset-0 pointer-events-none z-0">
-                {sakshiVersion === 1 ? <ParallaxForest /> : <SakshiVisual />}
-              </div>
-              <div className="relative z-[1] flex items-start justify-center w-full pt-3">
-                <div
-                  className="type-label tracking-[0.18em]"
-                  style={{
-                    color: "rgba(255,255,255,0.85)",
-                    textShadow: '0 2px 16px rgba(0,0,0,0.6)',
-                  }}
-                >
-                  {sakshiTitle}
-                </div>
-              </div>
-            </div>
-
-            <div className="relative z-[2] mt-8">
-              <SessionControls
-                isBreathPractice={false}
-                breathingPatternText={breathingPatternText}
-                showFeedback={false}
-                lastSignedErrorMs={lastSignedErrorMs}
-                feedbackColor="var(--accent-primary)"
-                feedbackShadow="none"
-                feedbackText=""
-                onStop={handleStop}
-                buttonBg={sakshiButtonBg}
-                radialGlow=""
-                buttonShadow={sakshiButtonShadow}
-                timeLeftText={timeLeftText}
-                showBreathCount={false}
-                breathCount={breathCount}
-              />
-            </div>
-          </section>
-        );
-      }
-      return createPortal(
-        <InsightMeditationPortal 
-          onExit={activeCircuitId ? handleCircuitComplete : handleStop}
-        />,
-        document.body
-      );
-    }
-    
-    // Somatic vipassana - use inline SensorySession (body scan with guided prompts)
-    if (renderPracticeId === "somatic_vipassana") {
-      return (
-        <section className="w-full h-full min-h-[400px] flex flex-col items-center justify-center overflow-visible pb-8">
-          <SensorySession
-            sensoryType={sensoryType}
-            duration={duration}
-            onStop={activeCircuitId ? handleCircuitComplete : handleStop}
-            onTimeUpdate={(remaining) => setTimeLeft(remaining)}
-            pendingFinish={pendingNaturalFinishMode === 'step'}
-            onPendingBoundaryComplete={handleStepBoundaryComplete}
-            scanType={scanType}
-            onScanTypeChange={setScanType}
-            isLight={isLight}
-          />
-        </section>
-      );
-    }
-
-    // Emotion practice - use SensorySession with emotion mode and prompt style
-    if (renderPracticeId === "feeling") {
-      return (
-        <section className="w-full h-full min-h-[400px] flex flex-col items-center justify-center overflow-visible pb-8">
-          <SensorySession
-            sensoryType="emotion"
-            duration={duration}
-            onStop={activeCircuitId ? handleCircuitComplete : handleStop}
-            onTimeUpdate={(remaining) => setTimeLeft(remaining)}
-            pendingFinish={pendingNaturalFinishMode === 'step'}
-            onPendingBoundaryComplete={handleStepBoundaryComplete}
-            emotionMode={emotionMode}
-            emotionPromptMode={emotionPromptMode}
-            isLight={isLight}
-          />
-        </section>
-      );
-    }
-
-    const buttonShadow = 'inset 0 1px 0 rgba(255,255,255,0.35)';
-    const { feedbackColor, feedbackText, feedbackShadow, buttonBg, radialGlow } =
-      computeBreathTapFeedback(lastSignedErrorMs, actualRunningPracticeId, isLight);
-
-    return (
-      <PracticeVisualizationHost
-        isBreathRunningSession={isBreathRunningSession}
-        breathViewportRootRef={breathViewportRootRef}
-        breathViewportHeightPx={breathViewportHeightPx}
-        breathViewportReady={breathViewportReady}
-        activeCircuitId={activeCircuitId}
-        circuitConfig={circuitConfig}
-        isLight={isLight}
-        circuitExerciseIndex={circuitExerciseIndex}
-        pathLaunchInstructionVideo={pathLaunchInstructionVideo}
-        actualRunningPracticeId={actualRunningPracticeId}
-        geometry={geometry}
-        fadeInDuration={fadeInDuration}
-        displayDuration={displayDuration}
-        fadeOutDuration={fadeOutDuration}
-        voidDuration={voidDuration}
-        audioEnabled={audioEnabled}
-        setVisualizationCycles={setVisualizationCycles}
-        selectedFrequency={selectedFrequency}
-        driftEnabled={driftEnabled}
-        breathSubmode={breathSubmode}
-        isRunning={isRunning}
-        isSessionPaused={isSessionPaused}
-        sessionStartTime={sessionStartTime}
-        duration={duration}
-        stillnessConfig={stillnessConfig}
-        currentRingPreset={currentRingPreset}
-        pendingNaturalFinishMode={pendingNaturalFinishMode}
-        handleStillnessBoundaryComplete={handleStillnessBoundaryComplete}
-        shouldRenderRingCanvas={shouldRenderRingCanvas}
-        breathingPatternForRing={breathingPatternForRing}
-        handleAccuracyTap={handleAccuracyTap}
-        handleBreathCycleComplete={handleBreathCycleComplete}
-        handleBreathingRingUnmount={handleBreathingRingUnmount}
-        isGuidanceAudioActive={isGuidanceAudioActive}
-        tempoSessionActive={tempoSessionActive}
-        pendingCycleFinish={pendingCycleFinish}
-        breathingPatternText={breathingPatternText}
-        showFeedback={showFeedback}
-        lastSignedErrorMs={lastSignedErrorMs}
-        feedbackColor={feedbackColor}
-        feedbackShadow={feedbackShadow}
-        feedbackText={feedbackText}
-        handleStop={handleStop}
-        buttonBg={buttonBg}
-        radialGlow={radialGlow}
-        buttonShadow={buttonShadow}
-        timeLeftText={timeLeftText}
-        showBreathCountUi={showBreathCountUi}
-        breathCount={breathCount}
-        soundType={soundType}
-        soundVolume={soundVolume}
-        setSoundVolume={setSoundVolume}
-      />
-    );
-  })() : null;
+  const breathViewportReady = !isBreathRunningSession || Number.isFinite(breathViewportHeightPx);
+  const buttonShadow = 'inset 0 1px 0 rgba(255,255,255,0.35)';
+  const { feedbackColor, feedbackText, feedbackShadow, buttonBg, radialGlow } =
+    computeBreathTapFeedback(lastSignedErrorMs, actualRunningPracticeId, isLight);
+  const sessionView = (
+    <PracticeActiveSessionView
+      isRunning={isRunning}
+      renderPractice={renderPractice}
+      renderPracticeId={renderPracticeId}
+      onNavigate={onNavigate}
+      activeRitual={activeRitual}
+      onSelectRitual={handleSelectRitual}
+      onRitualReturn={handleRitualReturn}
+      breathingPatternText={breathingPatternText}
+      lastSignedErrorMs={lastSignedErrorMs}
+      onStop={handleStop}
+      timeLeftText={timeLeftText}
+      breathCount={breathCount}
+      activeCircuitId={activeCircuitId}
+      onCircuitComplete={handleCircuitComplete}
+      sensoryType={sensoryType}
+      sakshiVersion={sakshiVersion}
+      isLight={isLight}
+      duration={duration}
+      onTimeUpdate={setTimeLeft}
+      pendingNaturalFinishMode={pendingNaturalFinishMode}
+      onStepBoundaryComplete={handleStepBoundaryComplete}
+      scanType={scanType}
+      onScanTypeChange={setScanType}
+      emotionMode={emotionMode}
+      emotionPromptMode={emotionPromptMode}
+      actualRunningPracticeId={actualRunningPracticeId}
+      isBreathRunningSession={isBreathRunningSession}
+      breathViewportRootRef={breathViewportRootRef}
+      breathViewportHeightPx={breathViewportHeightPx}
+      breathViewportReady={breathViewportReady}
+      circuitConfig={circuitConfig}
+      circuitExerciseIndex={circuitExerciseIndex}
+      pathLaunchInstructionVideo={pathLaunchInstructionVideo}
+      geometry={geometry}
+      fadeInDuration={fadeInDuration}
+      displayDuration={displayDuration}
+      fadeOutDuration={fadeOutDuration}
+      voidDuration={voidDuration}
+      audioEnabled={audioEnabled}
+      setVisualizationCycles={setVisualizationCycles}
+      selectedFrequency={selectedFrequency}
+      driftEnabled={driftEnabled}
+      breathSubmode={breathSubmode}
+      isSessionPaused={isSessionPaused}
+      sessionStartTime={sessionStartTime}
+      stillnessConfig={stillnessConfig}
+      currentRingPreset={currentRingPreset}
+      onStillnessBoundaryComplete={handleStillnessBoundaryComplete}
+      shouldRenderRingCanvas={shouldRenderRingCanvas}
+      breathingPatternForRing={breathingPatternForRing}
+      onAccuracyTap={handleAccuracyTap}
+      onBreathCycleComplete={handleBreathCycleComplete}
+      onBreathingRingUnmount={handleBreathingRingUnmount}
+      isGuidanceAudioActive={isGuidanceAudioActive}
+      tempoSessionActive={tempoSessionActive}
+      pendingCycleFinish={pendingCycleFinish}
+      showFeedback={showFeedback}
+      feedbackColor={feedbackColor}
+      feedbackShadow={feedbackShadow}
+      feedbackText={feedbackText}
+      buttonBg={buttonBg}
+      radialGlow={radialGlow}
+      buttonShadow={buttonShadow}
+      showBreathCountUi={showBreathCountUi}
+      soundType={soundType}
+      soundVolume={soundVolume}
+      setSoundVolume={setSoundVolume}
+    />
+  );
 
   // RENDER PRIORITY 2: Session Summary Modal
   const summaryView = showSummaryModal ? (

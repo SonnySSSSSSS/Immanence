@@ -39,6 +39,7 @@ import { APP_VERSION_LABEL } from "./config/appMeta.js";
 import { runtimeEnv } from "./config/runtimeEnv";
 import { createLogger } from "./utils/logger.js";
 import { markFirstLoginAudit, sanitizeFirstLoginAuditUserId } from "./utils/firstLoginAudit.js";
+import { resolveSectionSelection } from "./utils/appSectionAccess.js";
 // import { VerificationGallery } from "./components/avatar/VerificationGallery.jsx"; // Dev tool - not used
 import "./App.css";
 import AuthGate from "./components/auth/AuthGate";
@@ -552,34 +553,18 @@ function App({ playgroundMode = false, playgroundBottomLayer = true }) {
   }, [playgroundMode, setOverrideStage]);
 
   const handleSectionSelect = useCallback((section, options = undefined) => {
-    if (playgroundMode) {
-      setActiveSection(null);
-      return;
-    }
-    if (accessPosture !== 'guided') {
-      setActiveSection(section);
-      return;
-    }
-    if (section === null) {
-      setActiveSection(null);
-      return;
-    }
-    if (section === 'navigation') {
-      if (needsSetup || options?.forceStudentNavigation === true) {
-        setActiveSection('navigation');
-      }
-      return;
-    }
-    if (section === 'practice') {
-      if (practiceLaunchContext) {
-        setActiveSection('practice');
-        return;
-      }
-      if (options?.forceStudentNavigation === true && activePath?.activePathId) {
-        setActiveSection('practice');
-      }
-      return;
-    }
+    const decision = resolveSectionSelection({
+      requestedSection: section,
+      options,
+      playgroundMode,
+      accessPosture,
+      needsSetup,
+      hasPracticeLaunchContext: Boolean(practiceLaunchContext),
+      hasActivePath: Boolean(activePath?.activePathId),
+    });
+
+    if (!decision.shouldUpdate) return;
+    setActiveSection(decision.nextSection);
   }, [accessPosture, activePath, needsSetup, playgroundMode, practiceLaunchContext]);
 
   // Sync avatarStage with previewStage so theme colors update
