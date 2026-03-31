@@ -219,7 +219,7 @@ function App({ playgroundMode = false, playgroundBottomLayer = true }) {
   const APP_FRAME_WIDTH = '430px';
   // Single, authoritative content rail width. Individual cards can be narrower, but sections
   // should not invent their own viewport widths.
-  const UI_RAIL_MAX_WIDTH = 'min(430px, 94vw)';
+  const UI_RAIL_MAX_WIDTH = '410px';
 
   // Expose layout vars globally so portals rendered into document.body can still align to the
   // same frame/rail as the rest of the app.
@@ -1134,10 +1134,11 @@ function App({ playgroundMode = false, playgroundBottomLayer = true }) {
           {/* Inner App Container */}
           <div
             data-app-frame
-            className={`relative w-full h-[100dvh] flex flex-col items-center overflow-hidden transition-all duration-500 ${isLight ? 'text-[#3D3425]' : 'text-white'}`}
+            className={`relative h-[100dvh] flex flex-col items-center overflow-hidden transition-colors duration-500 ${isLight ? 'text-[#3D3425]' : 'text-white'}`}
             style={{
-              width: 'var(--app-frame-width)',
-              maxWidth: 'var(--app-frame-width)',
+              width: APP_FRAME_WIDTH,
+              minWidth: APP_FRAME_WIDTH,
+              maxWidth: APP_FRAME_WIDTH,
               height: '100dvh',
               maxHeight: '100dvh',
               boxShadow: 'none',
