@@ -25,6 +25,9 @@ function buildInitialProgressState() {
         sessions: [],
         sessionsV2: [],
         honorLogs: [],
+        bankedHonor: 0,
+        honorBankAccrualAt: null,
+        curriculumHonorLog: [],
         streak: {
             lastPracticeDate: null,
             longest: 0
@@ -809,17 +812,85 @@ export const useProgressStore = create(
                 const lifetimeMilestones = updateLifetimeMilestones(annualRollups, sessions);
                 
                 set({ annualRollups, lifetimeMilestones });
+            },
+
+            // ============================
+            // HONOR BANK ACTIONS
+            // ============================
+
+            /**
+             * Compute and apply Honor accrual (1 per 14 days, cap 6).
+             * INVARIANT: Does NOT touch sessionsV2, streak, practice minutes, benchmarks.
+             * Safe to call on every Honor panel open. Returns current banked count.
+             */
+            computeHonorAccrual: () => {
+                const state = get();
+                const ACCRUAL_PERIOD_MS = 14 * 24 * 60 * 60 * 1000;
+                const CAP = 6;
+                const now = Date.now();
+
+                if (state.honorBankAccrualAt === null) {
+                    set({ honorBankAccrualAt: new Date(now).toISOString() });
+                    return state.bankedHonor;
+                }
+
+                const accrualMs = new Date(state.honorBankAccrualAt).getTime();
+                if (!Number.isFinite(accrualMs)) {
+                    set({ honorBankAccrualAt: new Date(now).toISOString() });
+                    return state.bankedHonor;
+                }
+
+                const elapsed = now - accrualMs;
+                const periodsEarned = Math.floor(elapsed / ACCRUAL_PERIOD_MS);
+
+                if (periodsEarned <= 0) return state.bankedHonor;
+
+                const newBanked = Math.min(state.bankedHonor + periodsEarned, CAP);
+                const newAccrualAt = new Date(accrualMs + periodsEarned * ACCRUAL_PERIOD_MS).toISOString();
+                set({ bankedHonor: newBanked, honorBankAccrualAt: newAccrualAt });
+                return newBanked;
+            },
+
+            /**
+             * Spend 1 banked Honor and log the honor event.
+             * INVARIANT: Does NOT modify sessionsV2, sessions, streak, practice minutes,
+             *   benchmark scores, or path signal. Only decrements bankedHonor and appends log.
+             * @param {{ dayNumber, legKey, reason, note }} entry
+             * @returns {boolean} true if spend was successful (bank > 0)
+             */
+            spendBankedHonor: (entry) => {
+                const state = get();
+                if (!state.bankedHonor || state.bankedHonor <= 0) return false;
+
+                const logEntry = {
+                    id: (typeof crypto !== 'undefined' && crypto?.randomUUID?.()) || String(Date.now()),
+                    timestamp: new Date().toISOString(),
+                    dayNumber: entry?.dayNumber ?? null,
+                    legKey: typeof entry?.legKey === 'string' ? entry.legKey : null,
+                    reason: typeof entry?.reason === 'string' ? entry.reason : 'other',
+                    note: typeof entry?.note === 'string' ? entry.note.slice(0, 200) : '',
+                };
+
+                set((s) => ({
+                    bankedHonor: Math.max(0, s.bankedHonor - 1),
+                    curriculumHonorLog: [...(s.curriculumHonorLog || []), logEntry],
+                }));
+
+                return true;
             }
         };
         },
         {
             name: 'immanenceOS.progress',
-            version: 2,
+            version: 3,
             partialize: (state) => ({
                 ownerUserId: normalizeUserId(state.ownerUserId),
                 sessions: Array.isArray(state.sessions) ? state.sessions : [],
                 sessionsV2: Array.isArray(state.sessionsV2) ? state.sessionsV2 : [],
                 honorLogs: Array.isArray(state.honorLogs) ? state.honorLogs : [],
+                bankedHonor: typeof state.bankedHonor === 'number' ? Math.min(6, Math.max(0, state.bankedHonor)) : 0,
+                honorBankAccrualAt: state.honorBankAccrualAt ?? null,
+                curriculumHonorLog: Array.isArray(state.curriculumHonorLog) ? state.curriculumHonorLog : [],
                 streak: state.streak || buildInitialProgressState().streak,
                 vacation: state.vacation || buildInitialProgressState().vacation,
                 displayPreference: state.displayPreference || buildInitialProgressState().displayPreference,
@@ -842,6 +913,9 @@ export const useProgressStore = create(
                     sessions: Array.isArray(next.sessions) ? next.sessions : [],
                     sessionsV2: Array.isArray(next.sessionsV2) ? next.sessionsV2 : [],
                     honorLogs: Array.isArray(next.honorLogs) ? next.honorLogs : [],
+                    bankedHonor: typeof next.bankedHonor === 'number' ? Math.min(6, Math.max(0, next.bankedHonor)) : 0,
+                    honorBankAccrualAt: typeof next.honorBankAccrualAt === 'string' ? next.honorBankAccrualAt : null,
+                    curriculumHonorLog: Array.isArray(next.curriculumHonorLog) ? next.curriculumHonorLog : [],
                     practiceHistory: Array.isArray(next.practiceHistory) ? next.practiceHistory : [],
                     annualRollups: Array.isArray(next.annualRollups) ? next.annualRollups : [],
                     lifetimeMilestones: next.lifetimeMilestones || {},
@@ -1024,7 +1098,8 @@ export function migrateFromLegacyStore() {
                 tapStats: s.tapStats,
                 subType: s.subType,
                 legacyImport: true
-            }
+            },
+
         }));
 
         // Calculate streak from migrated sessions

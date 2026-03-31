@@ -88,6 +88,7 @@ const buildInitialCurriculumState = () => ({
     curriculumStartDate: null,
     dayCompletions: {},
     legCompletions: {},
+    legHonors: {},
     activePracticeSession: null,
     activePracticeLeg: null,
     activePracticeStartedAt: null,
@@ -490,6 +491,8 @@ getNextLeg: (dayNumber, offset = 1) => {
                     time: practiceTimeSlots && practiceTimeSlots[timeIndex] ? practiceTimeSlots[timeIndex] : leg.time,
                     completed: state.isLegComplete(dayNumber, leg.legNumber),
                     completion: state.legCompletions[`${dayNumber}-${leg.legNumber}`] || null,
+                    honored: state.isLegHonored ? state.isLegHonored(dayNumber, leg.legNumber) : false,
+                    honorEntry: (state.legHonors || {})[`${dayNumber}-${leg.legNumber}`] || null,
                     });
                 });
             },
@@ -631,6 +634,74 @@ getNextLeg: (dayNumber, offset = 1) => {
             },
 
             // PRECISION RAIL ACTIONS
+            // ============================
+            // HONOR LEG ACTIONS
+            // ============================
+
+            /**
+             * Check if a specific leg is honored.
+             * INVARIANT: honored !== completed. These are separate states.
+             */
+            isLegHonored: (dayNumber, legNumber) => {
+                const state = get();
+                const legKey = `${dayNumber}-${legNumber}`;
+                return (state.legHonors || {})[legKey]?.honored === true;
+            },
+
+            /**
+             * Mark a curriculum leg as honored.
+             * INVARIANT: Does NOT set completed:true. Does NOT add practice minutes,
+             *   sessions, benchmark scores, or path signal.
+             *   Honor is semantically distinct from completion.
+             */
+            logLegHonor: (dayNumber, legNumber, { reason = 'other', note = '' } = {}) => {
+                const legKey = `${dayNumber}-${legNumber}`;
+                set((state) => ({
+                    legHonors: {
+                        ...(state.legHonors || {}),
+                        [legKey]: {
+                            honored: true,
+                            date: new Date().toISOString(),
+                            dayNumber: Number(dayNumber),
+                            legNumber: Number(legNumber),
+                            reason: typeof reason === 'string' ? reason : 'other',
+                            note: typeof note === 'string' ? note.slice(0, 200) : '',
+                        },
+                    },
+                }));
+            },
+
+            /**
+             * Return eligible legs for Honor activation.
+             * Eligible: unresolved (not completed AND not honored), current day or previous day only.
+             * accessPosture 'guided' guard MUST be applied at the UI layer.
+             */
+            getEligibleHonorLegs: () => {
+                const state = get();
+                const currentDay = state.getCurrentDayNumber();
+                const eligible = [];
+
+                const checkDay = (dn) => {
+                    if (!Number.isFinite(dn) || dn < 1) return;
+                    const legsForDay = state.getDayLegsWithStatus(dn);
+                    legsForDay.forEach((leg) => {
+                        if (!leg.completed && !leg.honored) {
+                            eligible.push({
+                                ...leg,
+                                dayNumber: dn,
+                                legKey: `${dn}-${leg.legNumber}`,
+                            });
+                        }
+                    });
+                };
+
+                checkDay(currentDay);
+                checkDay(currentDay - 1);
+
+                return eligible;
+            },
+
+            // PRECISION RAIL ACTIONS
             setPrecisionMode: (mode) => {
                 if (mode === 'curriculum' || mode === 'advanced') {
                     set({ precisionMode: mode });
@@ -653,7 +724,7 @@ getNextLeg: (dayNumber, offset = 1) => {
         }),
         {
             name: 'immanenceOS.curriculum',
-            version: 5,
+            version: 6,
             partialize: (state) => ({
                 ownerUserId: normalizeUserId(state.ownerUserId),
                 onboardingComplete: state.onboardingComplete,
@@ -666,6 +737,7 @@ getNextLeg: (dayNumber, offset = 1) => {
                 curriculumStartDate: state.curriculumStartDate,
                 dayCompletions: state.dayCompletions,
                 legCompletions: state.legCompletions,
+                legHonors: state.legHonors || {},
                 activePracticeSession: state.activePracticeSession,
                 activePracticeLeg: state.activePracticeLeg,
                 activePracticeStartedAt: state.activePracticeStartedAt,
@@ -686,6 +758,9 @@ getNextLeg: (dayNumber, offset = 1) => {
                     selectedDaysOfWeekDraft: selectedDaysOfWeekDraft.length > 0
                         ? selectedDaysOfWeekDraft
                         : DEFAULT_SELECTED_DAYS_OF_WEEK,
+                    legHonors: (next.legHonors && typeof next.legHonors === 'object' && !Array.isArray(next.legHonors))
+                        ? next.legHonors
+                        : {},
                 };
             },
             merge: (persistedState, currentState) => ({

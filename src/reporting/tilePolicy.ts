@@ -16,6 +16,8 @@ export interface HomeDashboardPolicy {
   activeRunId: string | null;
   variant: DashboardVariant;
   primaryMetricIds: PrimaryMetricId[];
+  /** Show honor bank UI in guided/student mode */
+  includeHonorBank: boolean;
 }
 
 interface GetHomeDashboardPolicyOptions {
@@ -47,6 +49,7 @@ export function getHomeDashboardPolicy(options: GetHomeDashboardPolicyOptions = 
     // Include honor logs: true by default for comprehensive view
     const includeHonor = true;
     const variant: DashboardVariant = 'hubCard';
+    const includeHonorBank = effectivePosture === 'guided';
     const primaryMetricIds: PrimaryMetricId[] = effectivePosture === 'guided'
         ? ['completion_rate', 'on_time_rate']
         : ['sessions_total', 'days_active'];
@@ -58,5 +61,6 @@ export function getHomeDashboardPolicy(options: GetHomeDashboardPolicyOptions = 
         activeRunId,
         variant,
         primaryMetricIds,
+      includeHonorBank,
     };
 }

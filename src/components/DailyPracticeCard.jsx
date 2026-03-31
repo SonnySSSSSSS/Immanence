@@ -253,6 +253,12 @@ export function DailyPracticeCard({ onStartPractice, onViewCurriculum, onNavigat
     const pathActionsPopupRef = useRef(null);
     const dailyPracticeCardAuditRef = useRef(false);
 
+    // Honor activation panel state
+    const [isHonorPanelOpen, setIsHonorPanelOpen] = useState(false);
+    const [honorSelectedLegKey, setHonorSelectedLegKey] = useState(null);
+    const [honorReason, setHonorReason] = useState('other');
+    const [honorNote, setHonorNote] = useState('');
+
     // Close menu on outside click
     useEffect(() => {
         if (!isPathActionsMenuOpen) return;
@@ -289,7 +295,21 @@ export function DailyPracticeCard({ onStartPractice, onViewCurriculum, onNavigat
         practiceTimeSlots: storePracticeTimeSlots,
         lastSessionFailed,
         clearLastSessionFailed,
+        logLegHonor,
+        getEligibleHonorLegs,
     } = useCurriculumStore();
+    // Subscribe to legHonors so component re-renders when a leg is honored
+    const legHonors = useCurriculumStore(s => s.legHonors);
+    const legCompletions = useCurriculumStore(s => s.legCompletions);
+        const eligibleHonorLegs = useMemo(
+            () => (isHonorPanelOpen && accessPosture === 'guided') ? getEligibleHonorLegs() : [],
+            // eslint-disable-next-line react-hooks/exhaustive-deps -- legHonors/legCompletions trigger recompute on store write
+            [isHonorPanelOpen, accessPosture, getEligibleHonorLegs, legHonors, legCompletions]
+        );
+    // Honor bank state from progressStore
+    const bankedHonor = useProgressStore(s => s.bankedHonor || 0);
+    const computeHonorAccrual = useProgressStore(s => s.computeHonorAccrual);
+    const spendBankedHonor = useProgressStore(s => s.spendBankedHonor);
     const onboardingComplete = onboardingCompleteProp ?? storeOnboardingComplete;
     const practiceTimeSlots = practiceTimeSlotsProp ?? storePracticeTimeSlots;
     const progressSnapshot = getProgress();
@@ -325,6 +345,13 @@ export function DailyPracticeCard({ onStartPractice, onViewCurriculum, onNavigat
         });
     }, [hasActivePath, isSetupEmptyState, practiceLaunchContext, times]);
     // PROBE:FIRST_LOGIN_HOMEHUB_AUDIT:END
+
+    // Today's session tracking (using local date key for timezone correctness, scoped to current run)
+    // Compute Honor accrual when the Honor panel opens
+    useEffect(() => {
+        if (!isHonorPanelOpen) return;
+        computeHonorAccrual?.();
+    }, [isHonorPanelOpen, computeHonorAccrual]);
 
     // Today's session tracking (using local date key for timezone correctness, scoped to current run)
     const todayKey = getLocalDateKey();
@@ -1885,6 +1912,9 @@ export function DailyPracticeCard({ onStartPractice, onViewCurriculum, onNavigat
     const isDailyComplete = legs.length > 0 && completedLegs === legs.length;
     const shouldHighlightCompletion = showDailyCompletionNotice && isDailyComplete;
 
+    // Eligible legs for Honor panel (recomputes when legHonors or legCompletions change)
+    // useMemo ensures recompute whenever legHonors or legCompletions change (reactivity deps)
+
     return (
             <div
                 className={`dpc-root w-full relative transition-all duration-700 ease-in-out${isTutorialTarget ? ' tutorial-target' : ''}`}
@@ -1894,7 +1924,6 @@ export function DailyPracticeCard({ onStartPractice, onViewCurriculum, onNavigat
                     margin: '0 auto',
                 }}
             >
-            <style>{`.dpc-root { outline: 3px solid blue; }`}</style>
             {/* OUTER: Frame with Shadow */}
             <div
                 className="w-full relative"
@@ -2024,10 +2053,48 @@ export function DailyPracticeCard({ onStartPractice, onViewCurriculum, onNavigat
                                 <div className="absolute inset-0 pointer-events-none" style={{ background: isLight ? 'radial-gradient(circle at 10% 10%, rgba(180, 140, 60, 0.12), transparent 30%), radial-gradient(circle at 90% 90%, rgba(180, 140, 60, 0.12), transparent 30%)' : 'radial-gradient(circle at 10% 10%, rgba(255, 255, 255, 0.06), transparent 30%), radial-gradient(circle at 90% 90%, rgba(255, 255, 255, 0.06), transparent 30%)' }} />
 
                                 {/* Header */}
+                                {/* PROBE:CURRICULUM_HONOR:START — confirms curriculum-card honor affordance location */}
                                 <div className="flex flex-col gap-2 mb-4">
-                                    <div className="text-[11px] font-bold uppercase tracking-[0.24em]" style={{ color: isLight ? 'rgba(60, 50, 35, 0.5)' : 'var(--accent-60)', letterSpacing: '0.08em' }}>
-                                        Today's Practice
+                                    <div className="flex items-center justify-between">
+                                        <div className="text-[11px] font-bold uppercase tracking-[0.24em]" style={{ color: isLight ? 'rgba(60, 50, 35, 0.5)' : 'var(--accent-60)', letterSpacing: '0.08em' }}>
+                                            Today's Practice
+                                        </div>
+                                        {accessPosture === 'guided' && (
+                                            <button
+                                                type="button"
+                                                data-testid="honor-card-action"
+                                                onClick={() => {
+                                                    const opening = !isHonorPanelOpen;
+                                                    setIsHonorPanelOpen(opening);
+                                                    if (opening) {
+                                                        setHonorSelectedLegKey(null);
+                                                        setHonorReason('other');
+                                                        setHonorNote('');
+                                                    }
+                                                }}
+                                                aria-label="Honor Activation"
+                                                style={{
+                                                    background: isHonorPanelOpen
+                                                        ? (isLight ? 'rgba(184,134,11,0.15)' : 'rgba(218,165,32,0.12)')
+                                                        : 'transparent',
+                                                    border: `1px solid ${isHonorPanelOpen ? '#b8860b' : (isLight ? 'rgba(0,0,0,0)' : 'rgba(255,255,255,0)')}`,
+                                                    borderRadius: 6,
+                                                    cursor: 'pointer',
+                                                    color: isHonorPanelOpen ? '#b8860b' : (isLight ? 'rgba(80,60,20,0.45)' : 'rgba(255,255,255,0.45)'),
+                                                    padding: '2px 6px',
+                                                    fontSize: '9px',
+                                                    fontWeight: 700,
+                                                    letterSpacing: '0.1em',
+                                                    textTransform: 'uppercase',
+                                                    fontFamily: 'var(--font-ui)',
+                                                    transition: 'all 0.15s',
+                                                }}
+                                            >
+                                                ◆ Honor
+                                            </button>
+                                        )}
                                     </div>
+                                    {/* PROBE:CURRICULUM_HONOR:END */}
                                     <div className="flex items-center justify-between gap-3">
                                         <div className="text-xl font-bold tracking-tight" style={{ color: isLight ? '#3c3020' : '#fdfbf5', fontFamily: 'var(--font-ui)' }}>
                                             {todaysPractice.title || `Day ${dayNumber}`}
@@ -2054,6 +2121,190 @@ export function DailyPracticeCard({ onStartPractice, onViewCurriculum, onNavigat
                                     </div>
                                 )}
 
+                                {/* Honor Activation Panel — student/guided mode only */}
+                                {isHonorPanelOpen && accessPosture === 'guided' && (
+                                    <div
+                                        className="mb-4 rounded-xl border"
+                                        style={{
+                                            borderColor: isLight ? 'rgba(184,134,11,0.35)' : 'rgba(218,165,32,0.28)',
+                                            background: isLight ? 'rgba(255,248,220,0.92)' : 'rgba(28,22,8,0.92)',
+                                            color: isLight ? '#3c3020' : '#fdfbf5',
+                                            padding: '14px',
+                                        }}
+                                    >
+                                        {/* Panel header row */}
+                                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 }}>
+                                            <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: '0.14em', textTransform: 'uppercase', color: '#b8860b' }}>
+                                                ◆ Honor Activation
+                                            </div>
+                                            <div style={{ fontSize: 11, color: isLight ? 'rgba(60,50,35,0.65)' : 'rgba(253,251,245,0.65)' }}>
+                                                Bank: <span style={{ fontWeight: 700, color: '#b8860b' }}>{bankedHonor}</span> / 6
+                                            </div>
+                                        </div>
+
+                                        {bankedHonor <= 0 && (
+                                            <div style={{ fontSize: 11, opacity: 0.68, lineHeight: 1.5 }}>
+                                                No Honor banked. 1 Honor accrues per 14 days, cap 6.
+                                            </div>
+                                        )}
+
+                                        {bankedHonor > 0 && eligibleHonorLegs.length === 0 && (
+                                            <div style={{ fontSize: 11, opacity: 0.68, lineHeight: 1.5 }}>
+                                                No eligible legs. Honor applies only to unresolved legs from today or yesterday.
+                                            </div>
+                                        )}
+
+                                        {bankedHonor > 0 && eligibleHonorLegs.length > 0 && (
+                                            <>
+                                                {/* Leg selection */}
+                                                <div style={{ marginBottom: 9 }}>
+                                                    <div style={{ fontSize: 9, opacity: 0.6, marginBottom: 4, textTransform: 'uppercase', letterSpacing: '0.1em' }}>Select leg</div>
+                                                    <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+                                                        {eligibleHonorLegs.map((leg) => {
+                                                            const lk = leg.legKey || `${leg.dayNumber}-${leg.legNumber}`;
+                                                            const isSelected = honorSelectedLegKey === lk;
+                                                            return (
+                                                                <button
+                                                                    key={lk}
+                                                                    type="button"
+                                                                    onClick={() => setHonorSelectedLegKey(isSelected ? null : lk)}
+                                                                    style={{
+                                                                        padding: '6px 10px',
+                                                                        borderRadius: 8,
+                                                                        border: `1px solid ${isSelected ? '#b8860b' : (isLight ? 'rgba(0,0,0,0.12)' : 'rgba(255,255,255,0.12)')}`,
+                                                                        background: isSelected ? (isLight ? 'rgba(184,134,11,0.12)' : 'rgba(218,165,32,0.12)') : 'transparent',
+                                                                        cursor: 'pointer',
+                                                                        textAlign: 'left',
+                                                                        fontSize: 11,
+                                                                        fontWeight: isSelected ? 600 : 400,
+                                                                        color: isSelected ? '#b8860b' : (isLight ? '#3c3020' : '#fdfbf5'),
+                                                                        width: '100%',
+                                                                    }}
+                                                                >
+                                                                    {leg.dayNumber !== dayNumber ? `Day ${leg.dayNumber} · ` : ''}Leg {leg.legNumber}{leg.label ? ` — ${leg.label}` : ''}
+                                                                </button>
+                                                            );
+                                                        })}
+                                                    </div>
+                                                </div>
+
+                                                {/* Reason */}
+                                                <div style={{ marginBottom: 8 }}>
+                                                    <div style={{ fontSize: 9, opacity: 0.6, marginBottom: 4, textTransform: 'uppercase', letterSpacing: '0.1em' }}>Reason</div>
+                                                    <select
+                                                        value={honorReason}
+                                                        onChange={(e) => setHonorReason(e.target.value)}
+                                                        style={{
+                                                            width: '100%',
+                                                            padding: '5px 8px',
+                                                            borderRadius: 6,
+                                                            border: `1px solid ${isLight ? 'rgba(0,0,0,0.15)' : 'rgba(255,255,255,0.15)'}`,
+                                                            background: isLight ? 'rgba(255,255,255,0.6)' : 'rgba(40,35,20,0.7)',
+                                                            color: isLight ? '#3c3020' : '#fdfbf5',
+                                                            fontSize: 11,
+                                                        }}
+                                                    >
+                                                        <option value="illness">Illness</option>
+                                                        <option value="family_duty">Family duty</option>
+                                                        <option value="travel_disruption">Travel disruption</option>
+                                                        <option value="emergency">Emergency</option>
+                                                        <option value="schedule_rupture">Schedule rupture</option>
+                                                        <option value="other">Other</option>
+                                                    </select>
+                                                </div>
+
+                                                {/* Optional note */}
+                                                <div style={{ marginBottom: 10 }}>
+                                                    <div style={{ fontSize: 9, opacity: 0.6, marginBottom: 4, textTransform: 'uppercase', letterSpacing: '0.1em' }}>Note (optional)</div>
+                                                    <input
+                                                        type="text"
+                                                        value={honorNote}
+                                                        onChange={(e) => setHonorNote(e.target.value.slice(0, 200))}
+                                                        placeholder="Brief note…"
+                                                        maxLength={200}
+                                                        style={{
+                                                            width: '100%',
+                                                            padding: '5px 8px',
+                                                            borderRadius: 6,
+                                                            border: `1px solid ${isLight ? 'rgba(0,0,0,0.15)' : 'rgba(255,255,255,0.15)'}`,
+                                                            background: isLight ? 'rgba(255,255,255,0.6)' : 'rgba(40,35,20,0.7)',
+                                                            color: isLight ? '#3c3020' : '#fdfbf5',
+                                                            fontSize: 11,
+                                                            boxSizing: 'border-box',
+                                                        }}
+                                                    />
+                                                </div>
+
+                                                {/* Confirmation copy */}
+                                                <div style={{ fontSize: 10, opacity: 0.6, marginBottom: 10, lineHeight: 1.5, fontStyle: 'italic' }}>
+                                                    Preserves continuity for this leg. Does not count as completed practice and will not add practice minutes, session count, or benchmark scores.
+                                                </div>
+
+                                                {/* Action buttons */}
+                                                <div style={{ display: 'flex', gap: 7 }}>
+                                                    <button
+                                                        type="button"
+                                                        disabled={!honorSelectedLegKey}
+                                                        onClick={() => {
+                                                            if (!honorSelectedLegKey) return;
+                                                            const parts = honorSelectedLegKey.split('-');
+                                                            const dn = Number(parts[0]);
+                                                            const ln = Number(parts[1]);
+                                                            if (!Number.isFinite(dn) || !Number.isFinite(ln)) return;
+                                                            const ok = spendBankedHonor({ dayNumber: dn, legKey: honorSelectedLegKey, reason: honorReason, note: honorNote });
+                                                            if (!ok) return;
+                                                            logLegHonor(dn, ln, { reason: honorReason, note: honorNote });
+                                                            setIsHonorPanelOpen(false);
+                                                            setHonorSelectedLegKey(null);
+                                                            setHonorReason('other');
+                                                            setHonorNote('');
+                                                        }}
+                                                        style={{
+                                                            flex: 1,
+                                                            padding: '7px 10px',
+                                                            borderRadius: 8,
+                                                            border: 'none',
+                                                            background: !honorSelectedLegKey
+                                                                ? (isLight ? 'rgba(0,0,0,0.07)' : 'rgba(255,255,255,0.07)')
+                                                                : 'linear-gradient(135deg, #b8860b, #daa520)',
+                                                            color: !honorSelectedLegKey
+                                                                ? (isLight ? 'rgba(60,50,35,0.35)' : 'rgba(255,255,255,0.25)')
+                                                                : '#fff',
+                                                            fontSize: 9,
+                                                            fontWeight: 700,
+                                                            letterSpacing: '0.1em',
+                                                            textTransform: 'uppercase',
+                                                            cursor: !honorSelectedLegKey ? 'not-allowed' : 'pointer',
+                                                            fontFamily: 'var(--font-ui)',
+                                                        }}
+                                                    >
+                                                        Confirm Honor
+                                                    </button>
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => setIsHonorPanelOpen(false)}
+                                                        style={{
+                                                            padding: '7px 12px',
+                                                            borderRadius: 8,
+                                                            border: `1px solid ${isLight ? 'rgba(0,0,0,0.12)' : 'rgba(255,255,255,0.12)'}`,
+                                                            background: 'transparent',
+                                                            color: isLight ? 'rgba(60,50,35,0.65)' : 'rgba(253,251,245,0.55)',
+                                                            fontSize: 9,
+                                                            fontWeight: 600,
+                                                            letterSpacing: '0.08em',
+                                                            textTransform: 'uppercase',
+                                                            cursor: 'pointer',
+                                                            fontFamily: 'var(--font-ui)',
+                                                        }}
+                                                    >
+                                                        Cancel
+                                                    </button>
+                                                </div>
+                                            </>
+                                        )}
+                                    </div>
+                                )}
+
                                 {/* Legs List */}
                                 <div className="space-y-5">
                                     {missedLegWarning && (
@@ -2075,11 +2326,11 @@ export function DailyPracticeCard({ onStartPractice, onViewCurriculum, onNavigat
                                     )}
                                     {legs.map((leg, index) => {
                                         const expired = !leg.completed && isLegExpired(leg);
-                                        const isNextCandidate = !leg.completed && legs.slice(0, index).every(l => l.completed || isLegExpired(l));
+                                        const isNextCandidate = !leg.completed && !leg.honored && legs.slice(0, index).every(l => l.completed || l.honored || isLegExpired(l));
                                         const tooEarly = isNextCandidate && !leg.completed && isLegTooEarly(leg);
                                         const isSoftLocked = expired || tooEarly; // requires hidden Shift override (dev-only)
                                         const isActionable = isNextCandidate && !isSoftLocked;
-                                        const isLockedLeg = !leg.completed && !isNextCandidate; // sequencing lock only
+                                        const isLockedLeg = !leg.completed && !leg.honored && !isNextCandidate; // sequencing lock only
                                         const legTimeStr = resolveLegTimeStr(leg);
                                         const legWallpaperDecision = resolveSessionRowWallpaperDecision({
                                             practiceLabel: leg.label || leg.practiceType || '',
@@ -2090,7 +2341,13 @@ export function DailyPracticeCard({ onStartPractice, onViewCurriculum, onNavigat
                                             <div
                                                 key={`${dayNumber}-${leg.legNumber}`}
                                                 className="rounded border p-4 flex items-center gap-2 transition-all"
-                                                style={getSessionRowStyle(isLockedLeg ? 0.5 : ((expired || tooEarly) ? 0.75 : 1))}
+                                                style={{
+                                                    ...getSessionRowStyle(isLockedLeg ? 0.5 : ((expired || tooEarly) ? 0.75 : 1)),
+                                                    ...(leg.honored && {
+                                                        borderColor: isLight ? 'rgba(184,134,11,0.35)' : 'rgba(218,165,32,0.25)',
+                                                        background: isLight ? 'rgba(255,248,220,0.18)' : 'rgba(28,22,8,0.18)',
+                                                    }),
+                                                }}
                                             >
                                                 {renderSessionRowWallpaper(legWallpaperDecision)}
                                                 {/* Leg Number / Status — overlaid on image bottom-left */}
@@ -2102,12 +2359,18 @@ export function DailyPracticeCard({ onStartPractice, onViewCurriculum, onNavigat
                                                         bottom: 6,
                                                         background: leg.completed
                                                             ? 'linear-gradient(135deg, var(--accent-color), var(--accent-60))'
+                                                            : leg.honored
+                                                            ? 'linear-gradient(135deg, #b8860b, #daa520)'
                                                             : 'rgba(0,0,0,0.55)',
-                                                        color: leg.completed ? '#fff' : 'var(--accent-60)',
-                                                        boxShadow: leg.completed ? '0 4px 12px var(--accent-25)' : 'none',
+                                                        color: (leg.completed || leg.honored) ? '#fff' : 'var(--accent-60)',
+                                                        boxShadow: leg.completed ? '0 4px 12px var(--accent-25)' : leg.honored ? '0 3px 8px rgba(184,134,11,0.35)' : 'none',
                                                     }}
                                                 >
-                                                    {leg.completed && showPerLegCompletion ? '✓' : leg.legNumber}
+                                                    {leg.completed && showPerLegCompletion
+                                                        ? '✓'
+                                                        : leg.honored
+                                                        ? '◆'
+                                                        : leg.legNumber}
                                                 </div>
 
                                                 {/* Leg Details */}
@@ -2128,7 +2391,25 @@ export function DailyPracticeCard({ onStartPractice, onViewCurriculum, onNavigat
                                                 </div>
 
                                                 {/* Action */}
-                                                {!leg.completed ? (
+                                                {leg.honored ? (
+                                                    /* Honored state — distinct from completed; no further action */
+                                                    <div className="relative z-10 flex flex-col items-end gap-1" style={{ flexShrink: 0 }}>
+                                                        {legTimeStr && (
+                                                            <div className="text-[11px] font-mono uppercase tracking-wider" style={{ color: isLight ? '#8b7b63' : 'var(--accent-40)' }}>
+                                                                {legTimeStr}
+                                                            </div>
+                                                        )}
+                                                        <div style={{
+                                                            fontSize: '9px',
+                                                            fontFamily: 'var(--font-ui)',
+                                                            fontWeight: 700,
+                                                            color: '#b8860b',
+                                                            letterSpacing: '0.08em',
+                                                        }}>
+                                                            Honored
+                                                        </div>
+                                                    </div>
+                                                ) : !leg.completed ? (
                                                     <div className="relative z-10 flex flex-col items-end gap-1">
                                                         {legTimeStr && (
                                                             <div className="text-[11px] font-mono uppercase tracking-wider" style={{ color: 'var(--accent-color)' }}>
