@@ -46,32 +46,26 @@ export function EigengrauConfig({
   const stats = useMemo(() => computeCalibrationStats({ stage, days: 14 }), [stage]);
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
-      <div className="type-caption" style={{ color: 'var(--text-muted)', lineHeight: 1.5 }}>
-        Threshold-awareness training in a restrained eigengrau field. Calibration builds signal trust;
-        practice removes correctness chasing.
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+      <div className="type-caption" style={{ color: 'var(--text-muted)', lineHeight: 1.5, textAlign: 'center' }}>
+        Threshold-awareness training in a restrained eigengrau field.
       </div>
 
-      <div>
-        <div className="type-label" style={{ fontSize: '9px', marginBottom: '8px', color: 'var(--text-muted)' }}>
-          Session Type
-        </div>
-        <div style={{ display: 'flex', gap: '8px' }}>
-          <button
-            type="button"
-            onClick={() => setEigengrauSessionType?.('calibration')}
-            style={surfaceButtonStyle(eigengrauSessionType === 'calibration')}
-          >
-            Calibration
-          </button>
-          <button
-            type="button"
-            onClick={() => setEigengrauSessionType?.('practice')}
-            style={surfaceButtonStyle(eigengrauSessionType === 'practice')}
-          >
-            Practice
-          </button>
-        </div>
+      <div style={{ display: 'flex', gap: '8px', justifyContent: 'center' }}>
+        <button
+          type="button"
+          onClick={() => setEigengrauSessionType?.('calibration')}
+          style={{ ...surfaceButtonStyle(eigengrauSessionType === 'calibration'), flex: '1', textAlign: 'center' }}
+        >
+          Calibration
+        </button>
+        <button
+          type="button"
+          onClick={() => setEigengrauSessionType?.('practice')}
+          style={{ ...surfaceButtonStyle(eigengrauSessionType === 'practice'), flex: '1', textAlign: 'center' }}
+        >
+          Practice
+        </button>
       </div>
 
       {eigengrauSessionType === 'calibration' && (
@@ -132,10 +126,7 @@ export function EigengrauConfig({
       )}
 
       <div>
-        <div className="type-label" style={{ fontSize: '9px', marginBottom: '8px', color: 'var(--text-muted)' }}>
-          Visibility Assist
-        </div>
-        <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+        <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', justifyContent: 'center' }}>
           {ASSIST_OPTIONS.map((option) => (
             <button
               key={option.id}
@@ -156,8 +147,8 @@ export function EigengrauConfig({
             </button>
           ))}
         </div>
-        <div className="type-caption" style={{ color: 'var(--text-muted)', marginTop: '8px', lineHeight: 1.5 }}>
-          Adjusts threshold visibility to your display conditions. Not an opacity slider.
+        <div className="type-caption" style={{ color: 'var(--text-muted)', marginTop: '8px', lineHeight: 1.5, textAlign: 'center' }}>
+          Visibility assist — adjusts threshold visibility to your display conditions, not opacity.
           {assistLocked ? ' Assist locked for this calibration block.' : ''}
         </div>
         {assistLocked && (
@@ -172,7 +163,7 @@ export function EigengrauConfig({
       </div>
 
       {eigengrauSessionType === 'practice' && (
-        <label className="type-caption" style={{ color: 'var(--text-muted)', display: 'flex', alignItems: 'center', gap: '8px' }}>
+        <label className="type-caption" style={{ color: 'var(--text-muted)', display: 'flex', alignItems: 'center', gap: '8px', justifyContent: 'center' }}>
           <input
             type="checkbox"
             checked={Boolean(eigengrauPracticeMarkerEnabled)}

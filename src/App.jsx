@@ -642,6 +642,8 @@ function App({ playgroundMode = false, playgroundBottomLayer = true }) {
   // }, [curriculumOnboardingComplete, isCurriculumComplete]);
 
 
+  // v3.27.301 - refactor(eigengrau-ui): center-align button groups and text for visual symmetry
+  // v3.27.300 - refactor(eigengrau-ui): remove redundant section labels and compress description — less busy, better hierarchy
   // v3.27.292 - refactor(app): extract Navigation/Practice/Wisdom/Application skeleton fallbacks into dedicated component files
   // v3.27.291 - tune(bracelet-halo): reshape sparkle halo from orbiting dots to arc-hugging sparkle sweep
   // v3.27.290 - fix(rainbow-prism): restore missing lensflare textures and repoint broken glow texture paths
