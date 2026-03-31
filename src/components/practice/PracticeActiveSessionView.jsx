@@ -75,6 +75,10 @@ function PracticeActiveSessionView({
   soundType,
   soundVolume,
   setSoundVolume,
+  eigengrauSessionType,
+  eigengrauCalibrationStage,
+  eigengrauVisibilityAssist,
+  eigengrauPracticeMarkerEnabled,
 }) {
   if (!isRunning) return null;
 
@@ -245,6 +249,10 @@ function PracticeActiveSessionView({
       soundType={soundType}
       soundVolume={soundVolume}
       setSoundVolume={setSoundVolume}
+      eigengrauSessionType={eigengrauSessionType}
+      eigengrauCalibrationStage={eigengrauCalibrationStage}
+      eigengrauVisibilityAssist={eigengrauVisibilityAssist}
+      eigengrauPracticeMarkerEnabled={eigengrauPracticeMarkerEnabled}
     />
   );
 }

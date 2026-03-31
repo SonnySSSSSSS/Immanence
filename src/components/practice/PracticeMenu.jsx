@@ -13,6 +13,7 @@ import { PhoticControlPanel } from "../PhoticControlPanel.jsx";
 import { SensoryConfig } from "../SensoryConfig.jsx";
 import { BodyScanConfig } from "../BodyScanConfig.jsx";
 import { EmotionConfig } from "../EmotionConfig.jsx";
+import { EigengrauConfig } from "../EigengrauConfig.jsx";
 
 // Map string names to actual components
 const CONFIG_COMPONENTS = {
@@ -25,6 +26,7 @@ const CONFIG_COMPONENTS = {
   SensoryConfig,
   BodyScanConfig,
   EmotionConfig,
+  EigengrauConfig,
 };
 
 function getTutorialAnchorId(practiceId, isConfigPhotic) {

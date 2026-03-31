@@ -2,6 +2,7 @@ import React from "react";
 import { BreathingRing } from "../BreathingRing.jsx";
 import { VisualizationCanvas } from "../VisualizationCanvas.jsx";
 import { CymaticsVisualization } from "../CymaticsVisualization.jsx";
+import { EigengrauField } from "./EigengrauField.jsx";
 import { SessionControls } from "./SessionControls.jsx";
 import { StillnessRingSession } from "./StillnessRingSession.jsx";
 import { InstructionVideoPanel } from "../InstructionVideoPanel.jsx";
@@ -60,33 +61,42 @@ export function PracticeVisualizationHost({
   soundType,
   soundVolume,
   setSoundVolume,
+  eigengrauSessionType,
+  eigengrauCalibrationStage,
+  eigengrauVisibilityAssist,
+  eigengrauPracticeMarkerEnabled,
 }) {
+  const isEigengrauSession = actualRunningPracticeId === "eigengrau";
+
   return (
     <section
       ref={isBreathRunningSession ? breathViewportRootRef : null}
-      className={`w-full h-full min-h-[600px] flex flex-col items-center ${isBreathRunningSession ? "" : "justify-center"}`}
+      className={`w-full h-full min-h-[600px] flex flex-col items-center ${isBreathRunningSession || isEigengrauSession ? "" : "justify-center"}`}
       style={{
-        position: "relative",
+        position: isEigengrauSession ? "fixed" : "relative",
+        inset: isEigengrauSession ? 0 : undefined,
+        zIndex: isEigengrauSession ? 120 : undefined,
         width: "100%",
-        minHeight: isBreathRunningSession ? 0 : undefined,
-        height: isBreathRunningSession
-          ? (breathViewportHeightPx ? `${breathViewportHeightPx}px` : "100dvh")
+        minHeight: isBreathRunningSession || isEigengrauSession ? 0 : undefined,
+        height: isBreathRunningSession || isEigengrauSession
+          ? (breathViewportHeightPx && isBreathRunningSession ? `${breathViewportHeightPx}px` : "100dvh")
           : undefined,
-        maxHeight: isBreathRunningSession
-          ? (breathViewportHeightPx ? `${breathViewportHeightPx}px` : "100dvh")
+        maxHeight: isBreathRunningSession || isEigengrauSession
+          ? (breathViewportHeightPx && isBreathRunningSession ? `${breathViewportHeightPx}px` : "100dvh")
           : undefined,
-        overflow: isBreathRunningSession ? "hidden" : undefined,
-        paddingBottom: isBreathRunningSession ? 0 : "3rem",
-        justifyContent: isBreathRunningSession ? "flex-start" : undefined,
+        overflow: isBreathRunningSession || isEigengrauSession ? "hidden" : undefined,
+        paddingBottom: isBreathRunningSession || isEigengrauSession ? 0 : "3rem",
+        justifyContent: isBreathRunningSession || isEigengrauSession ? "flex-start" : undefined,
+        background: isEigengrauSession ? "#06070b" : undefined,
       }}
     >
-      {isBreathRunningSession && (
+      {(isBreathRunningSession || isEigengrauSession) && (
         <div
           aria-hidden="true"
           style={{
             position: "absolute",
             inset: 0,
-            background: "#020207",
+            background: isEigengrauSession ? "#06070b" : "#020207",
             zIndex: 0,
             pointerEvents: "none",
           }}
@@ -99,11 +109,11 @@ export function PracticeVisualizationHost({
           zIndex: 1,
           width: "100%",
           minHeight: 0,
-          height: isBreathRunningSession ? "100%" : undefined,
+          height: isBreathRunningSession || isEigengrauSession ? "100%" : undefined,
           display: "flex",
           flexDirection: "column",
           flex: "1 1 auto",
-          overflow: isBreathRunningSession ? "hidden" : undefined,
+          overflow: isBreathRunningSession || isEigengrauSession ? "hidden" : undefined,
           visibility: breathViewportReady ? "visible" : "hidden",
         }}
       >
@@ -139,7 +149,7 @@ export function PracticeVisualizationHost({
           </div>
         )}
 
-        {pathLaunchInstructionVideo && (
+        {pathLaunchInstructionVideo && !isEigengrauSession && (
           <div
             style={{
               flex: "0 0 auto",
@@ -156,7 +166,10 @@ export function PracticeVisualizationHost({
           </div>
         )}
 
-        <div className="flex-1 flex items-center justify-center w-full" style={{ minHeight: 0 }}>
+        <div
+          className="flex-1 flex items-center justify-center w-full"
+          style={{ minHeight: 0, alignItems: isEigengrauSession ? "stretch" : "center" }}
+        >
           {actualRunningPracticeId === "visualization" ? (
             <VisualizationCanvas
               geometry={geometry}
@@ -179,6 +192,13 @@ export function PracticeVisualizationHost({
               driftEnabled={driftEnabled}
               audioEnabled={audioEnabled}
               onCycleComplete={(cycle) => setVisualizationCycles(cycle)}
+            />
+          ) : actualRunningPracticeId === "eigengrau" ? (
+            <EigengrauField
+              sessionType={eigengrauSessionType}
+              calibrationStage={eigengrauCalibrationStage}
+              visibilityAssist={eigengrauVisibilityAssist}
+              practiceMarkerEnabled={eigengrauPracticeMarkerEnabled}
             />
           ) : actualRunningPracticeId === "breath" ? (
             <div

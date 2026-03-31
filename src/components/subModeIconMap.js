@@ -18,6 +18,7 @@ export const SUB_MODE_ICON_MAP = {
   visualization: 'kasina',
   kasina: 'kasina',
   photic: 'photonic',
+  eigengrau: 'kasina',
 
   // Foundation subModes (for future use)
   breath: 'breath',

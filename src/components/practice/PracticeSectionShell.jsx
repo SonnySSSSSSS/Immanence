@@ -19,6 +19,7 @@ export function PracticeSectionMainAssembly({
   handleTogglePause,
   isSessionPaused,
   guidanceSource,
+  suppressGuidanceHud,
   isActiveBreathSession,
   devCompleteNowOverlay,
   handleStop,
@@ -76,7 +77,7 @@ export function PracticeSectionMainAssembly({
     <>
       <GuidanceAudioController />
       <BreathBenchmark isOpen={showBreathBenchmark} onClose={handleBenchmarkClose} />
-      {isRunning && (
+      {!suppressGuidanceHud && isRunning && (
         <div
           style={{
             position: 'fixed',
@@ -121,7 +122,7 @@ export function PracticeSectionMainAssembly({
           </button>
         </div>
       )}
-      {isRunning && (
+      {!suppressGuidanceHud && isRunning && (
         <div
           style={{
             position: 'fixed',

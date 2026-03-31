@@ -70,6 +70,13 @@ const PER_PRACTICE_DEFAULTS = {
     fadeOutDuration: 2.5,
     voidDuration: 10,
   },
+  eigengrau: {
+    sessionType: 'calibration',
+    calibrationStage: 1,
+    visibilityAssist: 'balanced',
+    assistLockedUntilMs: 0,
+    practiceMarkerEnabled: true,
+  },
   photic: {},
   integration: {},
   awareness: {

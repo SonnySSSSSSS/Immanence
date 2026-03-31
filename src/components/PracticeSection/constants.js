@@ -71,7 +71,8 @@ export const PRACTICE_REGISTRY = {
     requiresFullscreen: false,
     subModes: {
       visualization: { id: "visualization", label: "Kasina", configComponent: "VisualizationConfig" },
-      photic: { id: "photic", label: "Photonic", configComponent: "PhoticControlPanel" }
+      photic: { id: "photic", label: "Photonic", configComponent: "PhoticControlPanel" },
+      eigengrau: { id: "eigengrau", label: "Eigengrau", configComponent: "EigengrauConfig" }
     },
     defaultSubMode: "visualization",
   },

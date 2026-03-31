@@ -957,6 +957,13 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, onNav
     driftEnabled,
     audioEnabled: _cymaticsAudioEnabled
   } = practiceParams.cymatics;
+  const {
+    sessionType: eigengrauSessionType = 'calibration',
+    calibrationStage: eigengrauCalibrationStage = 1,
+    visibilityAssist: eigengrauVisibilityAssist = 'balanced',
+    assistLockedUntilMs: eigengrauAssistLockedUntilMs = 0,
+    practiceMarkerEnabled: eigengrauPracticeMarkerEnabled = true,
+  } = practiceParams.eigengrau || {};
 
   // Emotion params
   const { mode: emotionMode = 'discomfort', promptMode: emotionPromptMode = 'minimal' } = practiceParams.feeling || {};
@@ -1044,6 +1051,11 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, onNav
     updateParams('cymatics', { selectedFrequencyIndex: idx !== -1 ? idx : 0 });
   };
   const setDriftEnabled = (val) => updateParams('cymatics', { driftEnabled: val });
+  const setEigengrauSessionType = (val) => updateParams('eigengrau', { sessionType: val });
+  const setEigengrauCalibrationStage = (val) => updateParams('eigengrau', { calibrationStage: Math.max(1, Math.min(3, Number(val) || 1)) });
+  const setEigengrauVisibilityAssist = (val) => updateParams('eigengrau', { visibilityAssist: val });
+  const setEigengrauAssistLockedUntilMs = (val) => updateParams('eigengrau', { assistLockedUntilMs: Math.max(0, Number(val) || 0) });
+  const setEigengrauPracticeMarkerEnabled = (val) => updateParams('eigengrau', { practiceMarkerEnabled: !!val });
   const setEmotionMode = (val) => updateParams('feeling', { mode: val });
   const setEmotionPromptMode = (val) => updateParams('feeling', { promptMode: val });
   const launchStillnessRuntimeConfig = launchStillnessConfig
@@ -2101,7 +2113,7 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, onNav
 
     const p = actualPracticeId; // Use the actual practice ID to determine domain
     let domain = 'breathwork';
-    if (p === 'visualization' || p === 'cymatics') domain = 'visualization';
+    if (p === 'visualization' || p === 'cymatics' || p === 'eigengrau') domain = 'visualization';
     else if (p.includes('vipassana')) domain = isCognitive ? 'focus' : 'body';
     else if (p === 'ritual' || practiceId === 'integration') domain = 'ritual';
     else if (p === 'sound') domain = 'sound';
@@ -2529,6 +2541,7 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, onNav
   // RENDER PRIORITY 1: Active Practice Session
   const breathViewportReady = !isBreathRunningSession || Number.isFinite(breathViewportHeightPx);
   const buttonShadow = 'inset 0 1px 0 rgba(255,255,255,0.35)';
+  const suppressGuidanceHud = actualRunningPracticeId === 'eigengrau';
   const { feedbackColor, feedbackText, feedbackShadow, buttonBg, radialGlow } =
     computeBreathTapFeedback(lastSignedErrorMs, actualRunningPracticeId, isLight);
   const sessionView = (
@@ -2600,6 +2613,10 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, onNav
       soundType={soundType}
       soundVolume={soundVolume}
       setSoundVolume={setSoundVolume}
+      eigengrauSessionType={eigengrauSessionType}
+      eigengrauCalibrationStage={eigengrauCalibrationStage}
+      eigengrauVisibilityAssist={eigengrauVisibilityAssist}
+      eigengrauPracticeMarkerEnabled={eigengrauPracticeMarkerEnabled}
     />
   );
 
@@ -2630,6 +2647,11 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, onNav
     preDelaySec: sharedBreathPreDelaySec,
     sensoryType, vipassanaTheme, vipassanaElement, scanType, geometry, fadeInDuration, displayDuration,
     fadeOutDuration, voidDuration, audioEnabled, frequencySet, selectedFrequency, driftEnabled,
+    eigengrauSessionType,
+    eigengrauCalibrationStage,
+    eigengrauVisibilityAssist,
+    eigengrauAssistLockedUntilMs,
+    eigengrauPracticeMarkerEnabled,
     mode: emotionMode, promptMode: emotionPromptMode,
     activeMode,
     setPreset, setPattern, setSoundType, setSoundVolume, setBinauralPreset, setIsochronicPreset,
@@ -2638,6 +2660,11 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, onNav
     setSensoryType, setVipassanaTheme, setVipassanaElement, setScanType, setGeometry,
     setFadeInDuration, setDisplayDuration, setFadeOutDuration, setVoidDuration, setAudioEnabled,
     setFrequencySet, setSelectedFrequency, setDriftEnabled,
+    setEigengrauSessionType,
+    setEigengrauCalibrationStage,
+    setEigengrauVisibilityAssist,
+    setEigengrauAssistLockedUntilMs,
+    setEigengrauPracticeMarkerEnabled,
     setMode: setEmotionMode, setPromptMode: setEmotionPromptMode,
     setActiveMode: (modeKey) => setActiveMode(practiceId, modeKey),
     onToggleRunning: handleStart,
@@ -2652,6 +2679,7 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, onNav
       handleTogglePause={handleTogglePause}
       isSessionPaused={isSessionPaused}
       guidanceSource={guidanceSource}
+      suppressGuidanceHud={suppressGuidanceHud}
       isActiveBreathSession={isActiveBreathSession}
       devCompleteNowOverlay={DevCompleteNowOverlay}
       handleStop={handleStop}

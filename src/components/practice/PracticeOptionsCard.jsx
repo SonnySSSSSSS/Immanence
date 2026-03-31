@@ -15,6 +15,7 @@ import { CymaticsConfig } from '../CymaticsConfig.jsx';
 import { RitualSelectionDeck } from '../RitualSelectionDeck.jsx';
 import { PhoticControlPanel } from '../PhoticControlPanel.jsx';
 import { EmotionConfig } from '../EmotionConfig.jsx';
+import { EigengrauConfig } from '../EigengrauConfig.jsx';
 import { getPracticeHousingStyles, PracticeHousingChrome } from './practiceHousing.jsx';
 
 // Map string names to actual components (direct imports, not lazy)
@@ -26,6 +27,7 @@ const CONFIG_COMPONENTS = {
   RitualSelectionDeck,
   PhoticControlPanel,
   EmotionConfig,
+  EigengrauConfig,
 };
 
 export function PracticeOptionsCard({ 
