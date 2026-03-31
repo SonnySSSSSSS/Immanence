@@ -101,9 +101,26 @@ export function selectSessions(options = {}) {
         ? (activeRunId || navState.activePath?.runId || null)
         : null;
 
-    // Get all sessions (V2 only, authoritative source)
     /** @type {SessionLike[]} */
-    let sessions = [...(progressState.sessionsV2 || [])];
+    const honorSessions = includeHonor && progressState.honorLogs && progressState.honorLogs.length > 0
+        ? progressState.honorLogs.map(h => ({
+            id: `honor_${h.id}`,
+            startedAt: h.date,
+            endedAt: h.date,
+            durationSec: (h.duration || 10) * 60,
+            practiceId: h.domain || 'honor',
+            practiceMode: null,
+            configSnapshot: null,
+            completion: 'completed',
+            pathContext: null,
+            scheduleMatched: null,
+            metadata: { isHonor: true, honorNote: h.note || '' },
+        }))
+        : [];
+
+    // Get all sessions (V2 authoritative source plus optional synthetic honor sessions)
+    /** @type {SessionLike[]} */
+    let sessions = [...(progressState.sessionsV2 || []), ...honorSessions];
 
     // SCOPE filtering
     if (scope === 'runId') {
@@ -145,29 +162,6 @@ export function selectSessions(options = {}) {
     if (familyKeys && Array.isArray(familyKeys) && familyKeys.length > 0) {
         // Note: filtering by family keys is done by caller using familyKeyOfSession
         // This is a no-op here; filtering is applied after caller maps sessions
-    }
-
-    // ADD honor logs as synthetic sessions (if requested)
-    // Honor logs are off-path and have no runId, so they must not leak into run-scoped curriculum tiles.
-    if (includeHonor && scope !== 'runId' && progressState.honorLogs && progressState.honorLogs.length > 0) {
-        const honorSessions = progressState.honorLogs
-            .filter(h => new Date(h.date).getTime() >= cutoffMs)
-            /** @param {HonorLog} h */
-            .map(h => ({
-                id: `honor_${h.id}`,
-                startedAt: h.date, // Assume "date" is ISO string or convertible
-                endedAt: h.date,
-                durationSec: (h.duration || 10) * 60, // Honor logged in minutes
-                practiceId: h.domain || 'honor', // Preserve domain or use generic 'honor'
-                practiceMode: null,
-                configSnapshot: null,
-                completion: 'completed',
-                pathContext: null, // Honor logs are off-path
-                scheduleMatched: null,
-                metadata: { isHonor: true, honorNote: h.note || '' },
-            }));
-
-        sessions = [...sessions, ...honorSessions];
     }
 
     // Sort by startedAt descending (newest first)

@@ -69,14 +69,18 @@ function markViteImportRecoveryAttempted(modulePath) {
   if (typeof window === "undefined") return;
   try {
     window.sessionStorage.setItem(getViteImportRecoveryKey(modulePath), "1");
-  } catch {}
+  } catch {
+    return;
+  }
 }
 
 function clearViteImportRecoveryAttempt(modulePath) {
   if (typeof window === "undefined") return;
   try {
     window.sessionStorage.removeItem(getViteImportRecoveryKey(modulePath));
-  } catch {}
+  } catch {
+    return;
+  }
 }
 
 function createNamedExportLazyWithViteRecovery(modulePath, exportName) {
@@ -642,6 +646,7 @@ function App({ playgroundMode = false, playgroundBottomLayer = true }) {
   // }, [curriculumOnboardingComplete, isCurriculumComplete]);
 
 
+  // v3.27.302 - fix(reporting): route synthetic honor logs through the same selector filters and restore lint baseline
   // v3.27.301 - refactor(eigengrau-ui): center-align button groups and text for visual symmetry
   // v3.27.300 - refactor(eigengrau-ui): remove redundant section labels and compress description — less busy, better hierarchy
   // v3.27.292 - refactor(app): extract Navigation/Practice/Wisdom/Application skeleton fallbacks into dedicated component files
