@@ -53,7 +53,7 @@ function HomeHubAvatarRail({
 }) {
   return (
     <div
-      className="w-full flex flex-col items-center gap-0 pb-0 transition-all duration-500 overflow-visible"
+      className="w-full flex flex-col items-center gap-0 pb-0 transition-colors duration-500 overflow-visible"
       style={{ paddingTop: '12px' }}
     >
       {/* PROBE:flank-housing:START */}
@@ -150,7 +150,7 @@ function HomeHubAvatarRail({
           style={{ flex: '1 1 auto', minWidth: 0 }}
         >
           <div
-            className="absolute transition-all duration-500"
+            className="absolute transition-opacity duration-500"
             style={{
               top: '50%',
               left: '50%',

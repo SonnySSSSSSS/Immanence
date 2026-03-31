@@ -216,7 +216,7 @@ function App({ playgroundMode = false, playgroundBottomLayer = true }) {
   const outerBackground = isLight
     ? 'linear-gradient(135deg, #F5F0E6 0%, #EDE5D8 100%)'
     : '#000';
-  const APP_FRAME_WIDTH = 'min(100vw, calc(100dvh * 1080 / 1920))';
+  const APP_FRAME_WIDTH = '430px';
   // Single, authoritative content rail width. Individual cards can be narrower, but sections
   // should not invent their own viewport widths.
   const UI_RAIL_MAX_WIDTH = 'min(430px, 94vw)';

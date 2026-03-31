@@ -212,94 +212,17 @@ function HomeHub({ onSelectSection, activeSection = null, currentStage, previewP
   const [decayExpanded, setDecayExpanded] = useState(false);
   const [avatarParallax, setAvatarParallax] = useState({ x: 0, y: 0 });
   const avatarZoneRef = useRef(null);
-  const avatarParallaxRef = useRef({ x: 0, y: 0 });
-  const pointerInsideZoneRef = useRef(false);
   function handleAvatarZoneMouseMove(e) {
     const zone = avatarZoneRef.current;
     if (!zone) return;
-    pointerInsideZoneRef.current = true;
     const rect = zone.getBoundingClientRect();
     const MAX = 6;
-    const next = {
+    setAvatarParallax({
       x: ((e.clientX - (rect.left + rect.width / 2)) / (rect.width / 2)) * MAX,
       y: ((e.clientY - (rect.top + rect.height / 2)) / (rect.height / 2)) * MAX,
-    };
-    avatarParallaxRef.current = next;
-    setAvatarParallax(next);
-  }
-  function handleAvatarZoneMouseLeave() {
-    pointerInsideZoneRef.current = false;
-    avatarParallaxRef.current = { x: 0, y: 0 };
-    setAvatarParallax({ x: 0, y: 0 });
-    console.log('[PARALLAX-PROBE] mouseleave → reset to {0,0}');
-  }
-  // ── PROBE: drift diagnosis (position + parallax + layout) ──
-  const driftBaselineRef = useRef(null);
-  useEffect(() => {
-    const getAvatarRect = () => {
-      const el = document.querySelector('[data-tutorial="home-avatar-ring"]');
-      if (!el) return null;
-      const r = el.getBoundingClientRect();
-      return { top: r.top, left: r.left, w: r.width, h: r.height };
-    };
-    const fmt = (r) => r ? `top=${r.top.toFixed(1)} left=${r.left.toFixed(1)} ${r.w.toFixed(0)}×${r.h.toFixed(0)}` : 'null';
-    const delta = (cur) => {
-      if (!cur || !driftBaselineRef.current) return '';
-      const b = driftBaselineRef.current;
-      const dt = cur.top - b.top, dl = cur.left - b.left;
-      if (Math.abs(dt) < 0.5 && Math.abs(dl) < 0.5) return ' Δ=none';
-      return ` Δtop=${dt.toFixed(1)} Δleft=${dl.toFixed(1)}`;
-    };
-    // Capture baseline after first stable render
-    requestAnimationFrame(() => {
-      driftBaselineRef.current = getAvatarRect();
-      console.log(`[DRIFT-PROBE] baseline: ${fmt(driftBaselineRef.current)}`);
     });
-    window.addEventListener('resize', () => {
-      const vw = document.documentElement.clientWidth;
-      const frameW = getComputedStyle(document.documentElement).getPropertyValue('--app-frame-width');
-      const rect = getAvatarRect();
-      console.log(`[DRIFT-PROBE] resize | vw=${vw} --app-frame-width=${frameW} | rect: ${fmt(rect)}${delta(rect)}`);
-    }, { passive: true });
-    const onVisChange = () => {
-      const hidden = document.hidden;
-      const p = avatarParallaxRef.current;
-      const inside = pointerInsideZoneRef.current;
-      const rect = getAvatarRect();
-      console.log(`[DRIFT-PROBE] visibilitychange hidden=${hidden} | rect: ${fmt(rect)}${delta(rect)} | parallax={${p.x.toFixed(2)}, ${p.y.toFixed(2)}} inside=${inside}`);
-      // On return, schedule a delayed check to catch post-render drift
-      if (!hidden) {
-        setTimeout(() => {
-          const rect2 = getAvatarRect();
-          const p2 = avatarParallaxRef.current;
-          console.log(`[DRIFT-PROBE] +200ms settle | rect: ${fmt(rect2)}${delta(rect2)} | parallax={${p2.x.toFixed(2)}, ${p2.y.toFixed(2)}}`);
-        }, 200);
-        setTimeout(() => {
-          const rect3 = getAvatarRect();
-          const p3 = avatarParallaxRef.current;
-          console.log(`[DRIFT-PROBE] +600ms settle | rect: ${fmt(rect3)}${delta(rect3)} | parallax={${p3.x.toFixed(2)}, ${p3.y.toFixed(2)}}`);
-        }, 600);
-      }
-    };
-    const onBlur = () => {
-      const rect = getAvatarRect();
-      const p = avatarParallaxRef.current;
-      console.log(`[DRIFT-PROBE] blur | rect: ${fmt(rect)}${delta(rect)} | parallax={${p.x.toFixed(2)}, ${p.y.toFixed(2)}}`);
-    };
-    const onFocus = () => {
-      const rect = getAvatarRect();
-      const p = avatarParallaxRef.current;
-      console.log(`[DRIFT-PROBE] focus | rect: ${fmt(rect)}${delta(rect)} | parallax={${p.x.toFixed(2)}, ${p.y.toFixed(2)}}`);
-    };
-    document.addEventListener('visibilitychange', onVisChange);
-    window.addEventListener('blur', onBlur);
-    window.addEventListener('focus', onFocus);
-    return () => {
-      document.removeEventListener('visibilitychange', onVisChange);
-      window.removeEventListener('blur', onBlur);
-      window.removeEventListener('focus', onFocus);
-    };
-  }, []);
+  }
+  function handleAvatarZoneMouseLeave() { setAvatarParallax({ x: 0, y: 0 }); }
   useEffect(() => {
     setShowCurriculumHubState(false);
     setShowCurriculumOnboarding(false);
