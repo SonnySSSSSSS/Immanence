@@ -4,6 +4,11 @@
 import React from 'react';
 import { useDisplayModeStore } from '../state/displayModeStore';
 
+function isDynamicImportBoundaryError(error) {
+    const message = typeof error?.message === 'string' ? error.message : '';
+    return message.includes('dynamically imported module');
+}
+
 export class ErrorBoundary extends React.Component {
     constructor(props) {
         super(props);
@@ -19,9 +24,17 @@ export class ErrorBoundary extends React.Component {
         this.setState({ error, errorInfo });
     }
 
+    handleReset = () => {
+        if (isDynamicImportBoundaryError(this.state.error) && typeof window !== 'undefined') {
+            window.location.reload();
+            return;
+        }
+        this.setState({ hasError: false, error: null, errorInfo: null });
+    };
+
     render() {
         if (this.state.hasError) {
-            return <ErrorDisplay error={this.state.error} errorInfo={this.state.errorInfo} onReset={() => this.setState({ hasError: false, error: null, errorInfo: null })} />;
+            return <ErrorDisplay error={this.state.error} errorInfo={this.state.errorInfo} onReset={this.handleReset} />;
         }
         return this.props.children;
     }
@@ -30,6 +43,7 @@ export class ErrorBoundary extends React.Component {
 function ErrorDisplay({ error, errorInfo, onReset }) {
     const colorScheme = useDisplayModeStore(s => s.colorScheme);
     const isLight = colorScheme === 'light';
+    const isImportError = isDynamicImportBoundaryError(error);
 
     const bgColor = isLight ? 'rgba(245, 240, 230, 0.98)' : 'rgba(10, 15, 25, 0.98)';
     const textColor = isLight ? 'rgba(35, 20, 10, 0.95)' : 'rgba(253, 251, 245, 0.95)';
@@ -39,14 +53,18 @@ function ErrorDisplay({ error, errorInfo, onReset }) {
         <div style={{ padding: '40px 20px', backgroundColor: bgColor, color: textColor, minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
             <div style={{ maxWidth: '600px', border: `1px solid ${borderColor}`, borderRadius: '12px', padding: '40px', backgroundColor: isLight ? 'rgba(255,255,255,0.3)' : 'rgba(0,0,0,0.2)' }}>
                 <h1 style={{ margin: '0 0 16px 0', fontSize: '24px', fontWeight: 'bold', color: '#ef4444' }}>⚠️ Something went wrong</h1>
-                <p style={{ margin: '0 0 20px 0', fontSize: '14px', opacity: 0.8, lineHeight: '1.6' }}>An unexpected error occurred. The error has been logged and our team will investigate.</p>
+                <p style={{ margin: '0 0 20px 0', fontSize: '14px', opacity: 0.8, lineHeight: '1.6' }}>
+                    {isImportError
+                        ? 'A module failed to load, usually because the dev server restarted while this page was open. Reload to reconnect to the current module graph.'
+                        : 'An unexpected error occurred. The error has been logged and our team will investigate.'}
+                </p>
                 {error && (
                     <details style={{ marginBottom: '20px', padding: '12px', backgroundColor: isLight ? 'rgba(0,0,0,0.05)' : 'rgba(255,255,255,0.05)', borderRadius: '6px', border: `1px solid ${borderColor}`, cursor: 'pointer' }}>
                         <summary style={{ fontWeight: '600', fontSize: '12px', userSelect: 'none' }}>Error details</summary>
                         <pre style={{ margin: '12px 0 0 0', fontSize: '11px', overflow: 'auto', maxHeight: '200px', opacity: 0.7, whiteSpace: 'pre-wrap', wordBreak: 'break-word' }}>{error.toString()}{errorInfo?.componentStack}</pre>
                     </details>
                 )}
-                <button onClick={onReset} style={{ padding: '12px 24px', backgroundColor: '#3b82f6', border: 'none', borderRadius: '6px', color: '#fff', cursor: 'pointer', fontSize: '13px', fontWeight: '600' }}>Try Again</button>
+                <button onClick={onReset} style={{ padding: '12px 24px', backgroundColor: '#3b82f6', border: 'none', borderRadius: '6px', color: '#fff', cursor: 'pointer', fontSize: '13px', fontWeight: '600' }}>{isImportError ? 'Reload App' : 'Try Again'}</button>
             </div>
         </div>
     );

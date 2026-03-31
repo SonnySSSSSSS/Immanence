@@ -2,7 +2,7 @@
 import { useState, useEffect, useCallback, useRef, lazy, Suspense } from "react";
 // Test CI lane enforcement - trivial comment
 import { StageTitle } from "./components/StageTitle.jsx";
-const PracticeSection = lazy(() => import("./components/PracticeSection.jsx").then(m => ({ default: m.PracticeSection })));
+const PracticeSection = createNamedExportLazyWithViteRecovery("./components/PracticeSection.jsx", "PracticeSection");
 const loadHomeHubModule = () => import("./components/HomeHub.jsx");
 const HomeHub = lazy(() => loadHomeHubModule().then(m => ({ default: m.HomeHub })));
 
@@ -43,6 +43,59 @@ import { resolveSectionSelection } from "./utils/appSectionAccess.js";
 // import { VerificationGallery } from "./components/avatar/VerificationGallery.jsx"; // Dev tool - not used
 import "./App.css";
 import AuthGate from "./components/auth/AuthGate";
+
+const VITE_IMPORT_RECOVERY_PREFIX = "immanenceOS.viteImportRecovery";
+
+function isDynamicImportRecoveryCandidate(error, modulePath) {
+  const message = typeof error?.message === "string" ? error.message : "";
+  if (!message) return false;
+  return message.includes("dynamically imported module") && message.includes(modulePath);
+}
+
+function getViteImportRecoveryKey(modulePath) {
+  return `${VITE_IMPORT_RECOVERY_PREFIX}:${modulePath}`;
+}
+
+function shouldAttemptViteImportRecovery(modulePath) {
+  if (!import.meta.env.DEV || typeof window === "undefined") return false;
+  try {
+    return window.sessionStorage.getItem(getViteImportRecoveryKey(modulePath)) !== "1";
+  } catch {
+    return false;
+  }
+}
+
+function markViteImportRecoveryAttempted(modulePath) {
+  if (typeof window === "undefined") return;
+  try {
+    window.sessionStorage.setItem(getViteImportRecoveryKey(modulePath), "1");
+  } catch {}
+}
+
+function clearViteImportRecoveryAttempt(modulePath) {
+  if (typeof window === "undefined") return;
+  try {
+    window.sessionStorage.removeItem(getViteImportRecoveryKey(modulePath));
+  } catch {}
+}
+
+function createNamedExportLazyWithViteRecovery(modulePath, exportName) {
+  return lazy(() =>
+    import(modulePath)
+      .then((module) => {
+        clearViteImportRecoveryAttempt(modulePath);
+        return { default: module[exportName] };
+      })
+      .catch((error) => {
+        if (isDynamicImportRecoveryCandidate(error, modulePath) && shouldAttemptViteImportRecovery(modulePath)) {
+          markViteImportRecoveryAttempted(modulePath);
+          window.location.reload();
+          return new Promise(() => {});
+        }
+        throw error;
+      })
+  );
+}
 
 const DISABLE_SELECTION = false;
 const USER_STATE_SYNC_DEBUG = false;
