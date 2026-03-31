@@ -255,6 +255,12 @@ function HomeHub({ onSelectSection, activeSection = null, currentStage, previewP
       driftBaselineRef.current = getAvatarRect();
       console.log(`[DRIFT-PROBE] baseline: ${fmt(driftBaselineRef.current)}`);
     });
+    window.addEventListener('resize', () => {
+      const vw = document.documentElement.clientWidth;
+      const frameW = getComputedStyle(document.documentElement).getPropertyValue('--app-frame-width');
+      const rect = getAvatarRect();
+      console.log(`[DRIFT-PROBE] resize | vw=${vw} --app-frame-width=${frameW} | rect: ${fmt(rect)}${delta(rect)}`);
+    }, { passive: true });
     const onVisChange = () => {
       const hidden = document.hidden;
       const p = avatarParallaxRef.current;
@@ -378,7 +384,7 @@ function HomeHub({ onSelectSection, activeSection = null, currentStage, previewP
         activeSection,
       });
     };
-  }, [activeSection, currentStage, previewPath]);
+  }, [activeSection, currentStage, previewPath, activeUserId]);
 
   // Dynamic max-width based on display mode: sanctuary=1024px, hearth=580px (narrower for visual balance)
   const streakInfo = getStreakInfo();

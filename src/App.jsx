@@ -257,7 +257,7 @@ function App({ playgroundMode = false, playgroundBottomLayer = true }) {
     return defaultView === 'navigation' ? 'navigation' : null;
   });
   const [isPracticing, setIsPracticing] = useState(false);
-  const [breathState, setBreathState] = useState({ phase: 'rest', progress: 0, isPracticing: false });
+  const [, setBreathState] = useState({ phase: 'rest', progress: 0, isPracticing: false });
   const [avatarStage, setAvatarStage] = useState("Seedling"); // Track avatar stage name for theme
   const showFxGallery = true; // FX Gallery dev mode
   const isDev = runtimeEnv.isDev;
@@ -686,7 +686,7 @@ function App({ playgroundMode = false, playgroundBottomLayer = true }) {
   const [activePracticeId, setActivePracticeId] = useState(null);
   const [selectedPracticeId, setSelectedPracticeId] = useState(null);
   const [breathLayoutSticky, setBreathLayoutSticky] = useState(false);
-  const [isFullscreenExperience, setIsFullscreenExperience] = useState(false);
+  const [, setIsFullscreenExperience] = useState(false);
 
   const handlePracticingChange = (val, pid = null, requiresFullscreen = false, selectedId = null) => {
     setIsPracticing(val);

@@ -4,21 +4,25 @@ import { useNavigationStore } from '../state/navigationStore.js';
 import { useCurriculumStore } from '../state/curriculumStore.js';
 import { PracticeTimesPicker } from './schedule/PracticeTimesPicker.jsx';
 import { useDisplayModeStore } from '../state/displayModeStore.js';
+import { treatiseChapters } from '../data/treatise.generated.js';
 import { useUiStore } from '../state/uiStore.js';
 import { BreathBenchmark } from './BreathBenchmark.jsx';
 import { useBreathBenchmarkStore } from '../state/breathBenchmarkStore.js';
-import { validateSelectedTimes } from '../utils/scheduleSelectionConstraints.js';
-import { validatePathActivationSelections } from '../utils/pathContract.js';
+import { getScheduleConstraintForPath, validateSelectedTimes } from '../utils/scheduleSelectionConstraints.js';
+import { getPathContract, validatePathActivationSelections } from '../utils/pathContract.js';
 import { InstructionVideoModal } from './InstructionVideoModal.jsx';
-import { getResumableNavigationPathId } from '../state/curriculumStore.js';
-import {
-    buildPathOverviewViewModel,
-    getAutoInstructionVideo,
-    getChapterTitle,
-    getNextSelectedDays,
-    normalizeChapterEntry,
-    normalizeVideoEntry
-} from './pathOverviewPanelLogic.js';
+
+const ACCEPTANCE_STEP_VIDEO_MAP = Object.freeze({
+    1: {
+        title: 'The Mechanics of Meaning',
+        videoUrl: '/videos/The_Mechanics_of_Meaning.mp4',
+    },
+    2: {
+        title: 'Music: A Transmission of Consciousness',
+        videoUrl: '/videos/Music__A_Transmission_of_Consciousness.mp4',
+    },
+});
+const ACCEPTANCE_PATH_ID = 'initiation';
 
 export function PathOverviewPanel({ path, onBegin, onClose, onNavigate }) {
     const colorScheme = useDisplayModeStore(s => s.colorScheme);
@@ -26,7 +30,7 @@ export function PathOverviewPanel({ path, onBegin, onClose, onNavigate }) {
     const setContentLaunchContext = useUiStore(s => s.setContentLaunchContext);
     const goldLabelColor = isLight ? 'rgba(180, 120, 40, 0.75)' : 'var(--gold-80)';
 
-    const { beginPath, activePath } = useNavigationStore();
+    const { beginPath } = useNavigationStore();
     const {
         practiceTimeSlots,
         setPracticeTimeSlots,
@@ -34,7 +38,6 @@ export function PathOverviewPanel({ path, onBegin, onClose, onNavigate }) {
         setSelectedDaysOfWeekDraft,
         getSelectedDaysOfWeekDraft,
     } = useCurriculumStore();
-    const resumablePathId = useCurriculumStore(getResumableNavigationPathId);
     const [expandedWeeks, setExpandedWeeks] = useState([]);
     const [scheduleError, setScheduleError] = useState(null);
     const [daysError, setDaysError] = useState(null);
@@ -57,42 +60,58 @@ export function PathOverviewPanel({ path, onBegin, onClose, onNavigate }) {
     const attemptUsesPrevious = attemptBenchmark?.source === 'reuse';
     const canReuseForAttempt = Boolean(attemptRunId && canReuseLastBenchmark(14));
 
-    const viewModel = (path && !path.placeholder)
-        ? buildPathOverviewViewModel({
-            path,
-            activePath,
-            resumablePathId,
-            practiceTimeSlots,
-            selectedDaysOfWeekDraft,
-            getSelectedDaysOfWeekDraft,
-            attemptBenchmarkDone,
-            currentStep
-        })
-        : null;
-    const {
-        isInitiationPath,
-        isAcceptancePath,
-        contract,
-        orderedDayOptions,
-        selectedDays,
-        scheduleTimes,
-        scheduleConstraint,
-        scheduleValidation,
-        requiredDays,
-        daysValidation,
-        benchmarkValidation,
-        canBeginPath,
-        totalSteps,
-        canAdvanceCurrentStep,
-        scheduleInstruction
-    } = viewModel ?? {};
+    const isAcceptancePath = path?.id === ACCEPTANCE_PATH_ID;
+
+    useEffect(() => {
+        if (!path || path.placeholder) return;
+        const targetVideo = isAcceptancePath ? ACCEPTANCE_STEP_VIDEO_MAP[currentStep] ?? null : null;
+        const targetKey = targetVideo ? `${path.id}:${currentStep}` : null;
+
+        if (!targetKey) {
+            lastAutoOpenedVideoKeyRef.current = null;
+            return;
+        }
+
+        if (lastAutoOpenedVideoKeyRef.current === targetKey) {
+            return;
+        }
+
+        lastAutoOpenedVideoKeyRef.current = targetKey;
+        // eslint-disable-next-line react-hooks/set-state-in-effect
+        setActiveInstructionVideo(targetVideo);
+    }, [currentStep, isAcceptancePath, path]);
+
+    if (!path || path.placeholder) return null;
+    const isInitiationPath = path.id === ACCEPTANCE_PATH_ID;
+    const contract = getPathContract(path);
+    const orderedDayOptions = [
+        { value: 1, label: 'Mon' },
+        { value: 2, label: 'Tue' },
+        { value: 3, label: 'Wed' },
+        { value: 4, label: 'Thu' },
+        { value: 5, label: 'Fri' },
+        { value: 6, label: 'Sat' },
+        { value: 0, label: 'Sun' },
+    ];
+    const selectedDays = (() => {
+        const fromGetter = getSelectedDaysOfWeekDraft?.();
+        const base = Array.isArray(fromGetter) ? fromGetter : selectedDaysOfWeekDraft;
+        const normalized = Array.isArray(base)
+            ? base.filter((d) => Number.isInteger(d) && d >= 0 && d <= 6)
+            : [];
+        return [...new Set(normalized)].sort((a, b) => a - b);
+    })();
     const toggleSelectedDay = (dayValue) => {
-        const nextSelectedDays = getNextSelectedDays({
-            selectedDays,
-            dayValue,
-            maxDays: contract.practiceDaysPerWeek ?? 7
-        });
-        setSelectedDaysOfWeekDraft(nextSelectedDays);
+        const isSelected = selectedDays.includes(dayValue);
+        if (isSelected) {
+            setSelectedDaysOfWeekDraft(selectedDays.filter((d) => d !== dayValue));
+            return;
+        }
+        const maxDays = contract.practiceDaysPerWeek ?? 7;
+        if (selectedDays.length >= maxDays) {
+            return;
+        }
+        setSelectedDaysOfWeekDraft([...selectedDays, dayValue].sort((a, b) => a - b));
     };
 
     const toggleWeek = (weekNumber) => {
@@ -102,6 +121,37 @@ export function PathOverviewPanel({ path, onBegin, onClose, onNavigate }) {
                 : [...prev, weekNumber]
         );
     };
+
+    const scheduleTimes = (practiceTimeSlots || []).filter(Boolean);
+    const scheduleConstraint = getScheduleConstraintForPath(path.id);
+    const scheduleValidation = validateSelectedTimes(scheduleTimes, scheduleConstraint);
+    const requiredDays = contract.practiceDaysPerWeek;
+    const daysValidation = isInitiationPath && Number.isInteger(requiredDays)
+        ? {
+            ok: selectedDays.length === requiredDays,
+            error: selectedDays.length !== requiredDays
+                ? `Select exactly ${requiredDays} active practice days. One rest day is required.`
+                : null,
+        }
+        : { ok: true, error: null };
+    const benchmarkValidation = path.showBreathBenchmark
+        ? {
+            ok: attemptBenchmarkDone,
+            error: attemptBenchmarkDone ? null : 'Complete the breathing benchmark first.',
+        }
+        : { ok: true, error: null };
+    const canBeginPath = scheduleValidation.ok && daysValidation.ok && benchmarkValidation.ok;
+    const totalSteps = 5;
+    const canAdvanceStep3 = daysValidation.ok && scheduleValidation.ok;
+    const canAdvanceStep4 = benchmarkValidation.ok;
+    const canAdvanceCurrentStep = currentStep === 3
+        ? canAdvanceStep3
+        : currentStep === 4
+            ? canAdvanceStep4
+            : true;
+    const scheduleInstruction = scheduleConstraint?.requiredCount === 2 && scheduleConstraint?.maxCount === 2
+        ? 'Select exactly 2 time slots for practice (morning and evening).'
+        : 'Choose at least one time to begin this path.';
 
     const handleScheduleChange = (nextTimes) => {
         const normalizedTimes = Array.isArray(nextTimes) ? nextTimes.filter(Boolean) : [];
@@ -204,26 +254,43 @@ export function PathOverviewPanel({ path, onBegin, onClose, onNavigate }) {
         onNavigate?.('wisdom');
     };
 
-    useEffect(() => {
-        if (!path || path.placeholder) return;
-        const targetVideo = getAutoInstructionVideo({ isAcceptancePath, currentStep });
-        const targetKey = targetVideo ? `${path?.id}:${currentStep}` : null;
+    // Helper to get chapter title from ID
+    const getChapterTitle = (chapterId) => {
+        const chapter = treatiseChapters.find(ch => ch.id === chapterId);
+        if (chapter) return chapter.title;
 
-        if (!targetKey) {
-            lastAutoOpenedVideoKeyRef.current = null;
-            return;
+        // Fallback: format the ID nicely
+        return chapterId
+            .replace(/chapter-/g, 'Chapter ')
+            .replace(/-/g, ' ')
+            .split(' ')
+            .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+            .join(' ');
+    };
+
+    const normalizeChapterEntry = (entry) => {
+        if (!entry) return null;
+        if (typeof entry === 'string') return { chapterId: entry, durationMin: undefined };
+        if (typeof entry === 'object') {
+            const chapterId = entry.chapterId || entry.id || entry.sectionId || null;
+            const durationMinRaw = entry.durationMin ?? entry.minutes ?? entry.min ?? undefined;
+            const durationMin = typeof durationMinRaw === 'number' ? durationMinRaw : undefined;
+            return chapterId ? { chapterId, durationMin } : null;
         }
+        return null;
+    };
 
-        if (lastAutoOpenedVideoKeyRef.current === targetKey) {
-            return;
+    const normalizeVideoEntry = (entry) => {
+        if (!entry) return null;
+        if (typeof entry === 'string') return { videoId: entry, durationMin: undefined };
+        if (typeof entry === 'object') {
+            const videoId = entry.videoId || entry.id || null;
+            const durationMinRaw = entry.durationMin ?? entry.minutes ?? entry.min ?? undefined;
+            const durationMin = typeof durationMinRaw === 'number' ? durationMinRaw : undefined;
+            return videoId ? { videoId, durationMin } : null;
         }
-
-        lastAutoOpenedVideoKeyRef.current = targetKey;
-        // eslint-disable-next-line react-hooks/set-state-in-effect
-        setActiveInstructionVideo(targetVideo);
-    }, [currentStep, isAcceptancePath, path?.id, path]);
-
-    if (!path || path.placeholder) return null;
+        return null;
+    };
 
     return (
         <div
@@ -702,7 +769,7 @@ export function PathOverviewPanel({ path, onBegin, onClose, onNavigate }) {
                                     transition: 'background 250ms ease, border-color 250ms ease, color 250ms ease',
                                 }}
                             >
-                                {`Use previous benchmark${lastBenchmark?.measuredAt ? ` (${new Date(lastBenchmark.measuredAt).toLocaleDateString()})` : ''}`}
+                                {`Use previous benchmark (${lastBenchmark?.measuredAt ? new Date(lastBenchmark.measuredAt).toLocaleDateString() : 'previous'})`}
                             </button>
                         </div>
                     )}
