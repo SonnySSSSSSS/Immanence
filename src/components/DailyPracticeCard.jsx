@@ -641,29 +641,42 @@ export function DailyPracticeCard({ onStartPractice, onViewCurriculum, onNavigat
         const wallpaperUrl = wallpaperDecision?.wallpaperUrl || sessionRowWallpaperUrl;
         const wallpaperPresentation = wallpaperDecision?.presentation || getWallpaperPresentationByKey('off-day');
         return (
-        <>
             <div
-                className="absolute inset-y-0 left-0 pointer-events-none"
                 style={{
-                    width: '40%',
-                    backgroundImage: `url(${wallpaperUrl})`,
-                    backgroundSize: wallpaperPresentation.backgroundSize,
-                    backgroundRepeat: 'no-repeat',
-                    backgroundPosition: wallpaperPresentation.backgroundPosition,
-                    opacity: wallpaperPresentation.opacity,
+                    flexShrink: 0,
+                    width: 110,
+                    alignSelf: 'stretch',
+                    // Pull flush to card edges, negating card's p-4 left (16px) and inline paddingTop/Bottom (14px)
+                    marginLeft: -16,
+                    marginTop: -14,
+                    marginBottom: -14,
+                    position: 'relative',
+                    overflow: 'hidden',
+                    pointerEvents: 'none',
                 }}
-            />
-            <div
-                className="absolute inset-y-0 left-0 pointer-events-none"
-                style={{
-                    width: '52%',
-                    background: isLight
-                        ? 'linear-gradient(90deg, rgba(255,255,255,0.62) 0%, rgba(255,255,255,0.46) 42%, rgba(255,255,255,0) 100%)'
-                        : 'linear-gradient(90deg, rgba(8,14,24,0.80) 0%, rgba(8,14,24,0.48) 42%, rgba(8,14,24,0) 100%)',
-                }}
-            />
-        </>
-    );
+            >
+                <div
+                    style={{
+                        position: 'absolute',
+                        inset: 0,
+                        backgroundImage: `url(${wallpaperUrl})`,
+                        backgroundSize: 'cover',
+                        backgroundRepeat: 'no-repeat',
+                        backgroundPosition: wallpaperPresentation.backgroundPosition,
+                        opacity: wallpaperPresentation.opacity,
+                    }}
+                />
+                <div
+                    style={{
+                        position: 'absolute',
+                        inset: 0,
+                        background: isLight
+                            ? 'linear-gradient(90deg, transparent 55%, rgba(236,246,248,0.96) 100%)'
+                            : 'linear-gradient(90deg, transparent 55%, rgba(8,14,24,0.96) 100%)',
+                    }}
+                />
+            </div>
+        );
     }, [isLight, sessionRowWallpaperUrl]);
     const progressBarColor = theme?.ui?.progressBar || '#4ade80';
 
@@ -1361,22 +1374,24 @@ export function DailyPracticeCard({ onStartPractice, onViewCurriculum, onNavigat
                                                 return (
                                                     <div
                                                         key={row.key}
-                                                        className="rounded border p-4 flex items-center gap-3 transition-all"
+                                                        className="rounded border p-4 flex items-center gap-2 transition-all"
                                                         style={getSessionRowStyle(isInfoRow ? 1 : (row.isDone ? 0.7 : 1))}
                                                     >
                                                         {renderSessionRowWallpaper(rowWallpaperDecision)}
-                                                        {/* Leg Number / Status */}
+                                                        {/* Leg Number / Status — overlaid on image bottom-left */}
                                                         <div
-                                                            className="relative z-10 w-7 h-7 rounded-lg flex items-center justify-center text-xs font-semibold shrink-0 transition-all"
+                                                            className="z-20 w-5 h-5 rounded flex items-center justify-center text-[9px] font-semibold transition-all"
                                                             style={{
+                                                                position: 'absolute',
+                                                                left: 6,
+                                                                bottom: 6,
                                                                 background: isInfoRow
-                                                                    ? (isLight ? 'rgba(160, 120, 60, 0.14)' : 'rgba(255, 255, 255, 0.10)')
+                                                                    ? (isLight ? 'rgba(160, 120, 60, 0.14)' : 'rgba(0,0,0,0.55)')
                                                                     : row.isDone
                                                                     ? 'linear-gradient(135deg, var(--accent-color), var(--accent-60))'
-                                                                    : (isLight ? 'rgba(160, 120, 60, 0.1)' : 'rgba(255, 255, 255, 0.08)'),
+                                                                    : 'rgba(0,0,0,0.55)',
                                                                 color: (!isInfoRow && row.isDone) ? '#fff' : (isLight ? '#3c3020' : '#fdfbf5'),
                                                                 boxShadow: 'none',
-                                                                transform: 'scale(1)',
                                                             }}
                                                         >
                                                             {row.badge}
@@ -1384,10 +1399,10 @@ export function DailyPracticeCard({ onStartPractice, onViewCurriculum, onNavigat
 
                                                         {/* Leg Details */}
                                                         <div className="relative z-10 flex-1 min-w-0">
-                                                            <div className="text-[11px] leading-snug" style={{ color: isLight ? 'rgba(60, 50, 35, 0.7)' : 'rgba(253,251,245,0.55)' }}>
+                                                            <div className="text-[10px] leading-snug" style={{ color: isLight ? 'rgba(60, 50, 35, 0.7)' : 'rgba(253,251,245,0.55)' }}>
                                                                 {row.eyebrow}
                                                             </div>
-                                                            <div className="text-sm font-bold leading-tight mt-1" style={{ color: isLight ? '#3c3020' : '#fdfbf5', fontFamily: 'var(--font-ui)' }}>
+                                                            <div className="text-[12px] font-bold leading-tight mt-1" style={{ color: isLight ? '#3c3020' : '#fdfbf5', fontFamily: 'var(--font-ui)' }}>
                                                                 {row.title}
                                                             </div>
                                                             {isInfoRow && (
@@ -1469,7 +1484,7 @@ export function DailyPracticeCard({ onStartPractice, onViewCurriculum, onNavigat
                                                                         data-ui="practice-button"
                                                                         data-practice-type={row.slot?.practiceId === 'perception' ? 'visual' : (row.slot?.practiceId === 'resonance' ? 'sound' : (row.slot?.practiceId || undefined))}
                                                                         data-practice-id={row.slot?.practiceId ? `daily-slot:${row.idx}:${row.slot.practiceId}` : undefined}
-                                                                        className="px-4 py-2 rounded-sm text-[10px] font-black uppercase tracking-wider transition-all hover:scale-105 disabled:opacity-60 disabled:cursor-not-allowed"
+                                                                        className="px-3 py-1.5 rounded-sm text-[9px] font-black uppercase tracking-wider transition-all hover:scale-105 disabled:opacity-60 disabled:cursor-not-allowed"
                                                                         style={actionStyle}
                                                                     >
                                                                         {row.actionLabel}
@@ -2020,7 +2035,7 @@ export function DailyPracticeCard({ onStartPractice, onViewCurriculum, onNavigat
                                         <div className="flex flex-col items-end gap-1">
                                             {streak > 1 && (
                                                 <div className="px-2 py-1 rounded-full text-[10px] font-black flex items-center gap-1" style={{ background: 'var(--accent-15)', border: '1px solid var(--accent-30)', color: 'var(--accent-color)' }}>
-                                                    ðŸ”¥ {streak}-DAY STREAK
+                                                    ðŸ"¥ {streak}-DAY STREAK
                                                 </div>
                                             )}
                                         </div>
@@ -2035,7 +2050,7 @@ export function DailyPracticeCard({ onStartPractice, onViewCurriculum, onNavigat
                                             letterSpacing: '0.02em'
                                         }}
                                     >
-                                        Completed today's sessions â€” see you tomorrow!
+                                        Completed today's sessions â€" see you tomorrow!
                                     </div>
                                 )}
 
@@ -2074,33 +2089,35 @@ export function DailyPracticeCard({ onStartPractice, onViewCurriculum, onNavigat
                                         return (
                                             <div
                                                 key={`${dayNumber}-${leg.legNumber}`}
-                                                className="rounded border p-4 flex items-center gap-3 transition-all"
+                                                className="rounded border p-4 flex items-center gap-2 transition-all"
                                                 style={getSessionRowStyle(isLockedLeg ? 0.5 : ((expired || tooEarly) ? 0.75 : 1))}
                                             >
                                                 {renderSessionRowWallpaper(legWallpaperDecision)}
-                                                {/* Leg Number / Status */}
+                                                {/* Leg Number / Status — overlaid on image bottom-left */}
                                                 <div
-                                                    className="relative z-10 w-10 h-10 rounded-xl flex items-center justify-center text-sm font-black shrink-0 transition-all"
+                                                    className="z-20 w-6 h-6 rounded-lg flex items-center justify-center text-[10px] font-black transition-all"
                                                     style={{
+                                                        position: 'absolute',
+                                                        left: 6,
+                                                        bottom: 6,
                                                         background: leg.completed
                                                             ? 'linear-gradient(135deg, var(--accent-color), var(--accent-60))'
-                                                            : (isLight ? 'rgba(160, 120, 60, 0.1)' : 'rgba(255, 255, 255, 0.08)'),
-                                                        color: leg.completed ? '#fff' : (isLight ? '#3c3020' : 'var(--accent-60)'),
-                                                        boxShadow: leg.completed ? '0 6px 20px var(--accent-25)' : 'none',
-                                                        transform: isActionable ? 'scale(1.05)' : 'scale(1)',
+                                                            : 'rgba(0,0,0,0.55)',
+                                                        color: leg.completed ? '#fff' : 'var(--accent-60)',
+                                                        boxShadow: leg.completed ? '0 4px 12px var(--accent-25)' : 'none',
                                                     }}
                                                 >
-                                                    {leg.completed && showPerLegCompletion ? 'âœ“' : leg.legNumber}
+                                                    {leg.completed && showPerLegCompletion ? '✓' : leg.legNumber}
                                                 </div>
 
                                                 {/* Leg Details */}
                                                 <div className="relative z-10 flex-1 min-w-0">
                                                     <div className="flex items-center justify-between gap-3">
-                                                        <div className="text-sm font-bold leading-tight" style={{ color: isLight ? '#3c3020' : '#fdfbf5', fontFamily: 'var(--font-ui)' }}>
+                                                        <div className="text-[12px] font-bold leading-tight" style={{ color: isLight ? '#3c3020' : '#fdfbf5', fontFamily: 'var(--font-ui)' }}>
                                                             {leg.label || leg.practiceType}
                                                         </div>
                                                     </div>
-                                                    <div className="text-[11px] leading-snug mt-1" style={{ color: isLight ? 'rgba(60, 50, 35, 0.7)' : 'rgba(253,251,245,0.55)' }}>
+                                                    <div className="text-[10px] leading-snug mt-1" style={{ color: isLight ? 'rgba(60, 50, 35, 0.7)' : 'rgba(253,251,245,0.55)' }}>
                                                         {leg.description || 'Guided practice'}
                                                     </div>
                                                     {leg.practiceConfig?.duration && (
@@ -2156,7 +2173,7 @@ export function DailyPracticeCard({ onStartPractice, onViewCurriculum, onNavigat
                                                                 data-ui-role-group="dailyPractice"
                                                                 data-ui-id="dailyPractice:legStatusPill"
                                                                 data-ui-fx-surface="true"
-                                                                className="px-4 py-2 rounded-sm text-[10px] font-black uppercase tracking-wider transition-all hover:scale-105 disabled:opacity-60 disabled:cursor-not-allowed"
+                                                                className="px-3 py-1.5 rounded-sm text-[9px] font-black uppercase tracking-wider transition-all hover:scale-105 disabled:opacity-60 disabled:cursor-not-allowed"
                                                                 style={{
                                                                     background: (isLockedLeg || isSoftLocked)
                                                                         ? (isLight ? 'rgba(60,50,35,0.06)' : 'rgba(255,255,255,0.08)')
