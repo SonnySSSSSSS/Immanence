@@ -103,7 +103,7 @@ const sanitizeModeTileBackgroundImage = (bgUrl) => {
   return `url("${raw}")`;
 };
 
-function HomeHub({ onSelectSection, activeSection = null, currentStage, previewPath, isPracticing = false, lockToHub = false, debugShadowScan = false }) {
+function HomeHub({ onSelectSection, activeSection = null, currentStage, previewPath, isPracticing = false, lockToHub = false, debugShadowScan = false, avatarRetreating = false }) {
   // Real data from stores
   const { getStreakInfo, getDomainStats, getWeeklyPattern } = useProgressStore();
   const { getCurrentStage, getDaysUntilNextStage, getEffectiveDays, getDaysUntilNextStageEffective, getDecayInfo } = useLunarStore();
@@ -753,6 +753,7 @@ function HomeHub({ onSelectSection, activeSection = null, currentStage, previewP
         stageProgressPct={stageProgressPct}
         decayInfo={decayInfo}
         onOpenReport={() => openArchive(ARCHIVE_TABS.REPORTS)}
+        avatarRetreating={avatarRetreating}
       />
 
       {activeLauncher?.id === 'thought-detachment-onboarding' && launcherContext && (

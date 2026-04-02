@@ -1,3 +1,4 @@
+import { useState, useEffect } from "react";
 import { AvatarV3 } from "./avatarV3/AvatarV3.jsx";
 
 function HomeHubAvatarRail({
@@ -50,7 +51,16 @@ function HomeHubAvatarRail({
   stageProgressPct,
   decayInfo,
   onOpenReport,
+  avatarRetreating = false,
 }) {
+  // Mount animation: start invisible/small, animate to full on arrival
+  const [isVisible, setIsVisible] = useState(false);
+  useEffect(() => {
+    const id = requestAnimationFrame(() => {
+      requestAnimationFrame(() => setIsVisible(true));
+    });
+    return () => cancelAnimationFrame(id);
+  }, []);
   return (
     <div
       className="w-full flex flex-col items-center gap-0 pb-0 transition-colors duration-500 overflow-visible"
@@ -174,16 +184,25 @@ function HomeHubAvatarRail({
             className="relative z-10 flex items-center justify-center"
             style={{ transform: `translate(${avatarParallax.x}px, ${avatarParallax.y}px)`, transition: 'transform 400ms cubic-bezier(0.2, 0.9, 0.2, 1)' }}
           >
-            <AvatarV3
-              stage={normalizedStage}
-              modeWeights={modeWeights}
-              isPracticing={isPracticing}
-              lastStageChange={lastStageChange}
-              lastModeChange={lastModeChange}
-              lastSessionComplete={lastSessionComplete}
-              path={avatarPath}
-              size="hearth"
-            />
+            <div
+              style={{
+                transform: (isVisible && !avatarRetreating) ? 'scale(1)' : 'scale(0.14)',
+                filter: (isVisible && !avatarRetreating) ? 'brightness(1)' : 'brightness(0.05)',
+                opacity: (isVisible && !avatarRetreating) ? 1 : 0,
+                transition: 'transform 580ms cubic-bezier(0.2, 0.9, 0.2, 1), filter 560ms ease, opacity 500ms ease',
+              }}
+            >
+              <AvatarV3
+                stage={normalizedStage}
+                modeWeights={modeWeights}
+                isPracticing={isPracticing}
+                lastStageChange={lastStageChange}
+                lastModeChange={lastModeChange}
+                lastSessionComplete={lastSessionComplete}
+                path={avatarPath}
+                size="hearth"
+              />
+            </div>
           </div>
         </div>
 
