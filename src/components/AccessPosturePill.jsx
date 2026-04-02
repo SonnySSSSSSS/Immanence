@@ -33,7 +33,7 @@ export function AccessPosturePill({ accessPosture, setAccessPosture, isLight }) 
           bottom: '2px',
           borderRadius: '999px',
           width: '50%',
-          left: accessPosture === 'guided' ? '2px' : 'calc(50% - 2px)',
+          left: accessPosture === 'guided' ? '2px' : '50%',
           transition: 'left 200ms cubic-bezier(0.4,0,0.2,1)',
           background: isLight ? 'var(--accent-40)' : 'var(--accent-50)',
           boxShadow: '0 1px 4px var(--accent-20)',

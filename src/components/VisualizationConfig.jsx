@@ -3,6 +3,7 @@
 
 import React, { useState } from 'react';
 import { CycleRingControl } from './CycleRingControl.jsx';
+import { getSvgVisibilityFilter } from '../styles/svgHelpers.js';
 
 export function VisualizationConfig({
     geometry,
@@ -103,7 +104,13 @@ export function VisualizationConfig({
                             src={RELIGIOUS_SVG_BY_KEY[geometry]}
                             alt={geometry}
                             className="max-w-[220px] max-h-[96px]"
-                            style={{ width: '100%', height: '100%', objectFit: 'contain', display: 'block' }}
+                            style={{
+                                width: '100%',
+                                height: '100%',
+                                objectFit: 'contain',
+                                display: 'block',
+                                filter: getSvgVisibilityFilter({ isLight }),
+                            }}
                             draggable={false}
                         />
                     ) : (
