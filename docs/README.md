@@ -12,7 +12,7 @@
 
 - Development guide: [docs/DEVELOPMENT.md](DEVELOPMENT.md)
 - Dev server management: [docs/DEV_SERVER_GUIDE.md](DEV_SERVER_GUIDE.md)
-- Agent rules: [docs/AGENTS.md](AGENTS.md)
+- Agent rules: [AGENTS.md](../AGENTS.md)
 
 ### Asset Generation
 

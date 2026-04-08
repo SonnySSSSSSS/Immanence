@@ -182,7 +182,7 @@ If any adjustments are needed to the completed phases, let me know before I proc
 - `src/assets/icons/practice/*.svg` - 8 new icons
 - `src/assets/icons/moon.svg` - Moon thumb icon
 - `src/assets/icons/star.svg` - Star decoration
-- `Deprecated / Historical` - Updated task status
+- `docs/WORKLOG.md` - Updated task status
 
 ---
 

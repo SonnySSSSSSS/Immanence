@@ -75,7 +75,7 @@
 Tier 1: Entry Points (Agents read first)
   ├─ .github/copilot-instructions.md (30–50 lines, patterns + examples)
   ├─ CLAUDE.md (philosophy + rules)
-  ├─ docs/AGENTS.md (task specs, authority)
+  ├─ AGENTS.md (task specs, authority)
   └─ README.md (overview)
 
 Tier 2: Architecture & Reference (Deep dive)
@@ -92,7 +92,7 @@ Tier 3: Feature Specifics (Narrowly scoped)
   └─ docs/4 Modes User Manual.md (User guide)
 
 Tier 4: Task Logs & Changelogs (Historical)
-  ├─ Deprecated / Historical (recent work)
+  ├─ WORKLOG.md (recent work)
   ├─ PROJECT_STATUS.md (current phase)
   ├─ CHANGELOG.md (version history)
   └─ TASK-{DATE}-{ID}.md (specific task logs)
@@ -110,8 +110,8 @@ Tier 5: Scratch / Experimental (Transient)
 ### Scenario 1: New Agent Joins Project
 
 1. Read `.github/copilot-instructions.md` (5 min)
-2. Skim `docs/AGENTS.md` (5 min)
-3. Check `Deprecated / Historical` for recent context (5 min)
+2. Skim `AGENTS.md` (5 min)
+3. Check `docs/WORKLOG.md` for recent context (5 min)
 4. Reference `docs/DOC_ORGANIZATION_STANDARD.md` when creating docs
 
 **Total onboarding time**: ~15 minutes
@@ -124,7 +124,7 @@ Tier 5: Scratch / Experimental (Transient)
 2. Deep dive into `docs/ARCHITECTURE.md` (understand wiring)
 3. Reference specific Tier 3 docs (AVATAR_SYSTEM.md, CYCLE_SYSTEM.md, etc.)
 4. File a TASK log with Allowlist/Denylist/Constraints
-5. Update Deprecated / Historical with progress
+5. Update WORKLOG.md with progress
 
 ---
 
@@ -164,7 +164,7 @@ Tier 5: Scratch / Experimental (Transient)
    ```
 
 3. **Clean up transient docs**
-   - Delete or repurpose `FOR_Deprecated / Historical.md`
+   - Delete or repurpose legacy scratch status-note docs
    - Archive `DOCUMENTATION_AUDIT.md`
    - Review `SESSION_SUMMARY_FIX.md` for historical value
 
@@ -224,7 +224,7 @@ If you want to expand or customize this, edit the "Photic Circles System" sectio
 - **Start here**: `.github/copilot-instructions.md`
 - **Full standard**: `docs/DOC_ORGANIZATION_STANDARD.md`
 - **Current status**: `docs/DOC_INVENTORY.md`
-- **Implementation rules**: `docs/AGENTS.md`
+- **Implementation rules**: `AGENTS.md`
 
 ---
 

@@ -112,7 +112,7 @@
 | `.github/copilot-instructions.md` | Quick-start + patterns | ✅ Enhanced |
 | `docs/ARCHITECTURE.md` | Component wiring | ✅ Exists |
 | `docs/DEVELOPMENT.md` | Setup + troubleshooting | ✅ Exists |
-| `docs/AGENTS.md` | Task specs + authority | ✅ Exists |
+| `AGENTS.md` (root) | Task specs + authority | ✅ Exists |
 | `CLAUDE.md` | Philosophy + rules | ✅ Exists |
 
 ### Standard & Templates
@@ -171,7 +171,7 @@
 ### Short Term (1 week)
 
 - [ ] Archive transient docs
-  - [ ] Delete `FOR_Deprecated / Historical.md`
+  - [ ] Delete legacy scratch status-note docs
   - [ ] Delete/archive `DOCUMENTATION_AUDIT.md`
   - [ ] Move PHASE_2_*.md to `docs/archive/PHASES/`
   
@@ -198,7 +198,7 @@
 - [ ] Monthly doc cleanup (prune transient)
 - [ ] Quarterly Tier 1–2 doc review
 - [ ] Quarterly archive old task logs
-- [ ] Per-change Deprecated / Historical + CHANGELOG.md updates
+- [ ] Per-change WORKLOG.md + CHANGELOG.md updates
 
 ---
 

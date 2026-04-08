@@ -355,12 +355,12 @@ Currently works because the modal renders circuit data differently, but schema c
 - `docs/ARCHITECTURE.md` - Overall system architecture
 - `docs/CYCLE_SYSTEM.md` - Curriculum and cycle details
 - `CLAUDE.md` - Development rules and protected files
-- `docs/MULTI_AI_WORKFLOW.md` - Multi-AI collaboration protocol
-- `Deprecated / Historical` - Active development log
+- `docs/INTEGRATION.md` - Multi-AI collaboration protocol
+- `docs/WORKLOG.md` - Active development log
 
 ## AI Collaboration Notes
 
-**For Deprecated / Historical**:
+**For WORKLOG.md updates**:
 
 ⚠️ **DO NOT MODIFY** these lines without coordination:
 
@@ -368,7 +368,7 @@ Currently works because the modal renders circuit data differently, but schema c
 - `PracticeSection.jsx` lines 476-485 (handleStop circuit detection)
 - `PracticeSection.jsx` lines 573-575 (instrumentation duration)
 
-✅ **Safe to modify** (with Deprecated / Historical entry):
+✅ **Safe to modify** (with WORKLOG.md entry):
 
 - Summary modal styling/layout
 - Circuit completion message text
@@ -377,9 +377,9 @@ Currently works because the modal renders circuit data differently, but schema c
 
 📋 **Before touching PracticeSection.jsx**:
 
-1. Read `Deprecated / Historical`
+1. Read `docs/WORKLOG.md`
 2. Check if Claude has it marked IN-PROGRESS
-3. Add your own Deprecated / Historical entry
+3. Add your own WORKLOG.md entry
 4. Increment version number
 
 ---

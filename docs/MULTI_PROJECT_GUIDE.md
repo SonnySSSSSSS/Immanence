@@ -26,7 +26,7 @@ PROJECT_ROOT/
 │   ├── [FEATURE]_SYSTEM.md               [Tier 3: Feature-specific]
 │   ├── [FEATURE]_SYSTEM.md               [Tier 3: Feature-specific]
 │   │
-│   ├── Deprecated / Historical                        [Tier 4: Recent work]
+│   ├── WORKLOG.md                                     [Tier 4: Recent work]
 │   ├── PROJECT_STATUS.md                 [Tier 4: Current phase]
 │   ├── CHANGELOG.md                      [Tier 4: Version history]
 │   ├── TASK-{DATE}-{ID}.md               [Tier 4: Task logs]
@@ -55,7 +55,7 @@ Each project fills in these blanks:
 **Owner**: [PROJECT_LEAD]  
 **Primary Language**: [e.g., Python, JavaScript, Go]  
 **Tech Stack**: [e.g., React + Zustand + Vite]  
-**Agent Support**: [e.g., Claude Code, Deprecated / Historical, Codex CLI]  
+**Agent Support**: [e.g., Claude Code, Copilot, Codex CLI]  
 
 ## Quick Commands
 
@@ -225,7 +225,7 @@ AI agents use this to be immediately productive in [PROJECT_NAME].
 
 ---
 
-### Template 2: `docs/AGENTS.md`
+### Template 2: `AGENTS.md`
 
 ```markdown
 # [PROJECT_NAME] — Agent Authority & Task Specs
@@ -361,7 +361,7 @@ ORGANIZATION_DOCS/
 │
 ├── AGENT_PROFILES/
 │   ├── claude-code.md
-│   ├── Deprecated / Historical-pro.md
+│   ├── worklog-pro.md
 │   └── codex-cli.md
 │
 └── PROJECTS/
@@ -391,7 +391,7 @@ Each `.github/copilot-instructions.md` references:
 
 | Task | Frequency | Owner |
 |------|-----------|-------|
-| Update per-project Deprecated / Historical | Per work session | Current agent |
+| Update per-project WORKLOG.md | Per work session | Current agent |
 | Update per-project PROJECT_STATUS.md | Weekly | Project lead |
 | Prune transient docs per project | Monthly | Project lead |
 | Review organization standards | Quarterly | Org lead |
@@ -409,7 +409,7 @@ mkdir -p docs/archive/{TASKS,PHASES,SPECS}
 # Create Tier 1 files
 touch .github/copilot-instructions.md
 touch CLAUDE.md
-touch docs/AGENTS.md
+touch AGENTS.md
 touch README.md
 
 # Create Tier 2 files
@@ -418,7 +418,7 @@ touch docs/DEVELOPMENT.md
 touch docs/PHILOSOPHY.md
 
 # Create Tier 4 files
-touch Deprecated / Historical
+touch WORKLOG.md
 touch PROJECT_STATUS.md
 touch CHANGELOG.md
 
@@ -456,7 +456,7 @@ git commit -m "setup: initialize documentation structure per DOC_ORGANIZATION_ST
 
 **Solution**:
 
-- Enforce TASK template (docs/AGENTS.md) for all work
+- Enforce TASK template (AGENTS.md) for all work
 - Link all work to existing docs (no orphan docs)
 - Review doc naming during code review
 

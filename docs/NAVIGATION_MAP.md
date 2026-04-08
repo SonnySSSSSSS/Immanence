@@ -28,7 +28,7 @@ START HERE: docs/DOC_INVENTORY.md
          ↓           ↓
     Code changes  Doc updates
          ↓           ↓
-    Update Deprecated / Historical + CHANGELOG.md
+    Update WORKLOG.md + CHANGELOG.md
 ```
 
 ### 🏢 If you're an organization
@@ -51,7 +51,7 @@ START HERE: docs/DOC_ORGANIZATION_STANDARD.md
 ```
 .github/copilot-instructions.md    [Agents: Quick-start + examples]
 CLAUDE.md                          [Everyone: Philosophy + rules]
-docs/AGENTS.md                     [Everyone: Task specs + authority]
+AGENTS.md                          [Everyone: Task specs + authority]
 README.md                          [Public: Overview + features]
 ```
 
@@ -81,7 +81,7 @@ docs/INTEGRATION.md                [Multi-AI workflow]
 ### Tier 4: Task Logs & Status
 
 ```
-Deprecated / Historical                         [Recent work]
+WORKLOG.md                                     [Recent work]
 PROJECT_STATUS.md                  [Current phase]
 CHANGELOG.md                       [Version history]
 TASK-{DATE}-{ID}.md                [Specific task logs]
@@ -113,7 +113,7 @@ DOCUMENTATION_COMPLETE.md          [This summary]
 | Create new docs | `docs/DOC_ORGANIZATION_STANDARD.md` (template) | 10 min |
 | Set up new project | `docs/MULTI_PROJECT_GUIDE.md` | 20 min |
 | Find a specific feature | `docs/DOC_INVENTORY.md` (lookup table) | 2 min |
-| Understand task format | `docs/AGENTS.md` | 5 min |
+| Understand task format | `AGENTS.md` | 5 min |
 
 ---
 
@@ -171,7 +171,7 @@ Agent starts here:
     ↓
     References DOC_ORGANIZATION_STANDARD.md when creating docs
     ↓
-    Updates Deprecated / Historical with progress
+    Updates WORKLOG.md with progress
     ↓
     Project lead reviews PROJECT_STATUS.md
     ↓
@@ -209,7 +209,7 @@ ls -la docs/{AGENTS,ARCHITECTURE,DEVELOPMENT,DOC_ORGANIZATION_STANDARD,DOC_INVEN
 
 | Frequency | Task | Owner |
 |-----------|------|-------|
-| Per work session | Update Deprecated / Historical | Current agent |
+| Per work session | Update WORKLOG.md | Current agent |
 | Weekly | Update PROJECT_STATUS.md | Project lead |
 | Per change | Update CHANGELOG.md | Current agent |
 | Monthly | Prune transient docs | Project lead |

@@ -1,10 +1,10 @@
-# Immanence OS Development Workflow
+# Immanence OS Workflow
 
-STATUS: Likely outdated / historic. Deprecated / Historical deprecated/removed.
-Use `docs/DOCS_INDEX.md` for the current doc map.
-Historical content moved to `docs/_archive/WORKFLOW_OLD.md`.
+Current workflow guidance for this repo:
 
-## Current guidance
+- Agent policy and task gates: `AGENTS.md` (repo root)
+- Documentation map: `docs/DOCS_INDEX.md`
+- Multi-agent coordination notes: `docs/INTEGRATION.md`
+- Ongoing implementation log: `docs/WORKLOG.md`
 
-- Rules and roles: `docs/AGENTS.md`
-- Coordination: `docs/MULTI_AI_WORKFLOW.md`
+Use this file as a pointer only. Do not treat it as a task log or status board.

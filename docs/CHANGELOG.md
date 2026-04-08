@@ -275,7 +275,7 @@
 - **npm** - Package management
 - **Git** - Version control
 - **MCP Server** - File system access for AI development
-- **Google Deprecated / Historical** - Visual IDE
+- **GitHub Copilot** - Visual IDE
 - **Claude.ai** - AI-assisted development
 
 ### Data & Integration
@@ -364,7 +364,7 @@
 ## TEAM & CONTRIBUTION
 
 **Primary Developer:** Sonny (project owner, philosophy architect)
-**Development Assistants:** Claude (backend/logic), Deprecated / Historical (frontend/UI)
+**Development Assistants:** Claude (backend/logic), GitHub Copilot (frontend/UI)
 **Collaborator:** Mychelle (user testing, feedback, curriculum participant)
 
 ---

@@ -1,6 +1,6 @@
 # Documentation Index
 
-Canonical doc map for `immanence-os`, refreshed on 2026-03-22.
+Canonical doc map for `immanence-os`, refreshed on 2026-04-08.
 
 ## Canonical Entry Points
 
@@ -30,10 +30,9 @@ Canonical doc map for `immanence-os`, refreshed on 2026-03-22.
 - [PARTICLE_SYSTEM_PROTECTION.md](PARTICLE_SYSTEM_PROTECTION.md) - guard rails for `IndrasNet`
 - [CRITICAL_FLOWS.md](CRITICAL_FLOWS.md) - important user and system flows
 
-## Active Task Specs
+## Current Task Specs
 
-- [TASK-2026-03-17-A.md](TASK-2026-03-17-A.md) - fix onboarding tutorial image paths for GitHub Pages (URL construction + missing assets + localStorage guard)
-- [TASK-2026-04-02-A.md](TASK-2026-04-02-A.md) - convert the existing header control into a Home-only button and remove extra navigation semantics
+- No active task spec files in `docs/` at this time.
 
 ## Operational And Historical Docs
 
