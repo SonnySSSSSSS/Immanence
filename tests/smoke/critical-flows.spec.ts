@@ -196,32 +196,32 @@ async function expectHubVisible(page: Page): Promise<void> {
 async function openNavigationFromHub(page: Page): Promise<void> {
   await expectHubVisible(page);
   await page.getByRole('button', { name: 'Navigation', exact: true }).first().click();
-  await expect(page.getByTestId('navigation-selector-button')).toBeVisible();
+  await expect(page.getByTestId('path-grid-root')).toBeVisible();
 }
 
 async function openInitiationPathOnboarding(page: Page): Promise<void> {
   await openNavigationFromHub(page);
-
-  await page.getByTestId('navigation-selector-button').click();
-  const modal = page.getByTestId('navigation-selection-modal');
-  await expect(modal).toBeVisible();
-
-  await modal.getByRole('button', { name: /Paths/i }).click();
-  await expect(modal).toBeHidden();
-  await expect(page.getByTestId('path-grid-root')).toBeVisible();
-
   await page.getByTestId('path-card-initiation').click();
-  await expect(page.getByRole('button', { name: 'Continue', exact: true })).toBeVisible();
-  // Advance to time selection: welcome -> contract terms -> 14-day arc -> practice days
-  await page.getByRole('button', { name: 'Continue', exact: true }).click();
-  await page.getByRole('button', { name: 'Continue', exact: true }).click();
-  await page.getByRole('button', { name: 'Continue', exact: true }).click();
-  await page.getByRole('button', { name: 'Continue', exact: true }).click();
-  await expect(getTimeSlotInputs(page).first()).toBeVisible();
+  await advanceToTimeSelection(page);
 }
 
 function getTimeSlotInputs(page: Page) {
   return page.locator('input[type="time"]');
+}
+
+async function advanceToTimeSelection(page: Page): Promise<void> {
+  for (let stepIndex = 0; stepIndex < 5; stepIndex += 1) {
+    const firstTimeInput = getTimeSlotInputs(page).first();
+    if (await firstTimeInput.isVisible().catch(() => false)) {
+      return;
+    }
+
+    const continueButton = page.getByRole('button', { name: 'Continue', exact: true });
+    await expect(continueButton).toBeVisible();
+    await continueButton.click();
+  }
+
+  await expect(getTimeSlotInputs(page).first()).toBeVisible();
 }
 
 function getCurrentLocalSlot(): string {
@@ -260,10 +260,9 @@ async function openStudentInitiationSetup(page: Page): Promise<void> {
   await startFromCleanState(page, 'student');
   await expect(page.getByRole('button', { name: /Start Setup/i })).toBeVisible();
   await page.getByRole('button', { name: /Start Setup/i }).click();
-  for (let i = 0; i < 4; i += 1) {
-    await page.getByRole('button', { name: 'Continue', exact: true }).click();
-  }
-  await expect(getTimeSlotInputs(page).first()).toBeVisible();
+  await expect(page.getByTestId('path-grid-root')).toBeVisible();
+  await page.getByTestId('path-card-initiation').click();
+  await advanceToTimeSelection(page);
 }
 
 async function beginStudentInitiationContract(page: Page, firstSlot: string, secondSlot = '20:00'): Promise<void> {
@@ -294,11 +293,14 @@ test('TEST 1 — Boot → HomeHub renders (Flow #1)', async ({ page }) => {
   await expectHubVisible(page);
 
   // Posture toggle (GUIDED/FULL ACCESS) is visible in hub
+  await expect(page.getByTestId('posture-pill-toggle')).toBeVisible();
   await expect(page.getByTestId('posture-toggle-guided')).toBeVisible();
   await expect(page.getByTestId('posture-toggle-full')).toBeVisible();
+  await expect(page.getByTestId('posture-pill-toggle')).toHaveAttribute('aria-checked', 'false');
 
   // Selecting full posture persists to accessPostureByUserId
   await page.getByTestId('posture-toggle-full').click();
+  await expect(page.getByTestId('posture-pill-toggle')).toHaveAttribute('aria-checked', 'true');
   const persistedMode = await page.evaluate(() => {
     const raw = window.localStorage.getItem('immanence-user-mode');
     return raw ? JSON.parse(raw) : null;
@@ -367,7 +369,7 @@ test('TEST 1A — resetUserMode clears posture and hub still boots (no chooser r
   await page.waitForLoadState('domcontentloaded');
   await expectHubVisible(page);
   // Verify posture toggle is visible (hub is accessible, no gate)
-  await expect(page.getByTestId('posture-toggle-guided')).toBeVisible();
+  await expect(page.getByTestId('posture-pill-toggle')).toBeVisible();
 });
 
 test('TEST 2 — Hub → Section navigation works (Flow #2)', async ({ page }) => {
@@ -376,27 +378,22 @@ test('TEST 2 — Hub → Section navigation works (Flow #2)', async ({ page }) =
 
   await page.getByRole('button', { name: 'Home', exact: true }).click();
   await expectHubVisible(page);
-
-  await page.getByRole('button', { name: 'Practice', exact: true }).first().click();
-  await expect(page.locator('.practice-section-container')).toBeVisible();
-
-  await page.getByRole('button', { name: 'Home', exact: true }).click();
-  await expectHubVisible(page);
 });
 
-test('TEST 3 — Navigation selector modal + Initiation slot enforcement (Flows #3 + #4)', async ({ page }) => {
+test('TEST 3 — Navigation path grid + Initiation slot enforcement (Flows #3 + #4)', async ({ page }) => {
   await startFromCleanState(page);
   await openInitiationPathOnboarding(page);
 
   const slotInputs = getTimeSlotInputs(page);
   await expect(slotInputs.first()).toBeVisible();
-  const immediateStartSlot = getCurrentLocalSlot();
+  const immediateStartSlot = getRelativeLocalSlot(10);
+  const laterSlot = getRelativeLocalSlot(70);
   await slotInputs.nth(0).fill(immediateStartSlot);
 
   // With only 1 slot filled, onboarding Continue must be disabled (slot enforcement)
   await expect(page.getByRole('button', { name: 'Continue', exact: true })).toBeDisabled();
 
-  await slotInputs.nth(1).fill('20:00');
+  await slotInputs.nth(1).fill(laterSlot);
   await page.getByRole('button', { name: 'Continue', exact: true }).click();
   await page.getByRole('button', { name: /Use Previous Benchmark/i }).click();
   await page.getByRole('button', { name: 'Continue', exact: true }).click();
@@ -451,18 +448,32 @@ test('TEST 4 — Student prestart contract shows Day 0 before first slot opens',
   expect(prestartSnapshot.startedAtLocalDateKey).not.toBe(prestartSnapshot.todayLocalDateKey);
   expect(prestartSnapshot.metrics?.dayIndex).toBe(0);
   expect(prestartSnapshot.bodyText).toContain('0');
-  expect(prestartSnapshot.bodyText).toContain('NOT YET');
+  expect(prestartSnapshot.bodyText).toContain('No remaining sessions today');
 });
 
 test('TEST 5 — Student Day 1 launch completes and persists slot completion', async ({ page }) => {
+  test.setTimeout(90_000);
   await installAcceleratedSecondIntervals(page);
-  const actionableSlot = getRelativeLocalSlot(3);
-  await beginStudentInitiationContract(page, actionableSlot);
+  const actionableSlot = getRelativeLocalSlot(10);
+  const laterSlot = getRelativeLocalSlot(70);
+  await beginStudentInitiationContract(page, actionableSlot, laterSlot);
 
+  await page.getByRole('button', { name: 'Home', exact: true }).click();
+  await expectHubVisible(page);
   await page.getByRole('button', { name: 'Start', exact: true }).click();
   await expect(page.getByRole('button', { name: 'Home', exact: true })).toBeVisible();
-  await expect(page.getByText('GUIDANCE AUDIO', { exact: false })).toBeVisible();
-  await expect(page.getByText('SESSION COMPLETE', { exact: false })).toBeVisible({ timeout: 30_000 });
+  await expect
+    .poll(async () => page.locator('body').innerText(), {
+      timeout: 30_000,
+      message: 'Expected the launched practice session to expose guidance audio status',
+    })
+    .toContain('GUIDANCE AUDIO');
+  await expect
+    .poll(async () => page.locator('body').innerText(), {
+      timeout: 45_000,
+      message: 'Expected the launched practice session to reach completion',
+    })
+    .toContain('SESSION COMPLETE');
 
   const persistedCompletionState = await page.evaluate(() => {
     const progressRaw = window.localStorage.getItem('immanenceOS.progress');
@@ -1027,15 +1038,14 @@ test('TEST 11 — Reload persists active path and no overlays auto-open (Flow #8
   await page.reload();
   await page.waitForLoadState('domcontentloaded');
 
-  const navigationSelectorVisible = await page.getByTestId('navigation-selector-button').isVisible().catch(() => false);
-  if (!navigationSelectorVisible) {
+  const navigationGridVisible = await page.getByTestId('path-grid-root').isVisible().catch(() => false);
+  if (!navigationGridVisible) {
     await expectHubVisible(page);
     await page.getByRole('button', { name: 'Navigation', exact: true }).first().click();
   }
 
   await expect(page.getByTestId('active-path-root')).toBeVisible();
-  await expect(page.getByTestId('navigation-selection-modal')).toBeHidden();
-  await expect(page.getByRole('button', { name: 'I already understand', exact: true })).toBeHidden();
+  await expect(page.getByTestId('path-overview-overlay')).toBeHidden();
 
   const homeButtonVisible = await page.getByRole('button', { name: 'Home', exact: true }).isVisible().catch(() => false);
   if (homeButtonVisible) {

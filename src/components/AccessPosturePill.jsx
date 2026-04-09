@@ -6,6 +6,7 @@ export function AccessPosturePill({ accessPosture, setAccessPosture, isLight }) 
     <button
       type="button"
       role="switch"
+      aria-label="Access posture"
       aria-checked={accessPosture === 'full'}
       data-testid="posture-pill-toggle"
       onClick={() => setAccessPosture(accessPosture === 'guided' ? 'full' : 'guided')}
@@ -39,18 +40,22 @@ export function AccessPosturePill({ accessPosture, setAccessPosture, isLight }) 
           boxShadow: '0 1px 4px var(--accent-20)',
         }}
       />
-      <AccessPostureOptionButton
-        label="GUIDED"
-        value="guided"
-        accessPosture={accessPosture}
-        isLight={isLight}
-      />
-      <AccessPostureOptionButton
-        label="FULL"
-        value="full"
-        accessPosture={accessPosture}
-        isLight={isLight}
-      />
+      <span data-testid="posture-toggle-guided">
+        <AccessPostureOptionButton
+          label="GUIDED"
+          value="guided"
+          accessPosture={accessPosture}
+          isLight={isLight}
+        />
+      </span>
+      <span data-testid="posture-toggle-full">
+        <AccessPostureOptionButton
+          label="FULL"
+          value="full"
+          accessPosture={accessPosture}
+          isLight={isLight}
+        />
+      </span>
     </button>
   );
 }
