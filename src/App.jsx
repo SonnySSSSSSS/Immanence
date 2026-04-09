@@ -70,7 +70,7 @@ function markViteImportRecoveryAttempted(modulePath) {
   try {
     window.sessionStorage.setItem(getViteImportRecoveryKey(modulePath), "1");
   } catch {
-    return;
+    // Ignore sessionStorage write failures.
   }
 }
 
@@ -79,7 +79,7 @@ function clearViteImportRecoveryAttempt(modulePath) {
   try {
     window.sessionStorage.removeItem(getViteImportRecoveryKey(modulePath));
   } catch {
-    return;
+    // Ignore sessionStorage delete failures.
   }
 }
 
@@ -337,8 +337,6 @@ function App({ playgroundMode = false, playgroundBottomLayer = true }) {
   const previousSectionRef = useRef(activeSection);
   const appProbeIdRef = useRef(null);
   const [contentTransitionClass, setContentTransitionClass] = useState("app-content-enter-neutral");
-  const [avatarRetreating, setAvatarRetreating] = useState(false);
-  const avatarRetreatTimerRef = useRef(null);
 
   if (appProbeIdRef.current == null) {
     appProbeIdRef.current = "host-probe-pending";
@@ -623,19 +621,8 @@ function App({ playgroundMode = false, playgroundBottomLayer = true }) {
     });
 
     if (!decision.shouldUpdate) return;
-
-    // Animate avatar retreating into space before leaving the hub
-    if (activeSection === null && decision.nextSection !== null) {
-      if (avatarRetreatTimerRef.current) clearTimeout(avatarRetreatTimerRef.current);
-      setAvatarRetreating(true);
-      avatarRetreatTimerRef.current = setTimeout(() => {
-        setActiveSection(decision.nextSection);
-        setAvatarRetreating(false);
-      }, 520);
-    } else {
-      setActiveSection(decision.nextSection);
-    }
-  }, [accessPosture, activePath, activeSection, needsSetup, playgroundMode, practiceLaunchContext]);
+    setActiveSection(decision.nextSection);
+  }, [accessPosture, activePath, needsSetup, playgroundMode, practiceLaunchContext]);
 
   // Sync avatarStage with previewStage so theme colors update
   useEffect(() => {
@@ -659,8 +646,6 @@ function App({ playgroundMode = false, playgroundBottomLayer = true }) {
   // }, [curriculumOnboardingComplete, isCurriculumComplete]);
 
 
-  // v3.27.302 - fix(reporting): route synthetic honor logs through the same selector filters and restore lint baseline
-    // v3.27.303 - feat(curriculum): add banked honor activation for missed legs (student mode only)
   // v3.27.301 - refactor(eigengrau-ui): center-align button groups and text for visual symmetry
   // v3.27.300 - refactor(eigengrau-ui): remove redundant section labels and compress description — less busy, better hierarchy
   // v3.27.292 - refactor(app): extract Navigation/Practice/Wisdom/Application skeleton fallbacks into dedicated component files
@@ -1257,7 +1242,7 @@ function App({ playgroundMode = false, playgroundBottomLayer = true }) {
                   </div>
                 </div>
 
-                {/* Right: Controls */}
+                {/* Right: Controls & Home Button */}
                 <div className="flex-1 flex items-center justify-end gap-3">
                   <div className={`flex items-center gap-3 app-header-control-cluster ${isHub ? 'app-header-control-cluster--hub' : 'app-header-control-cluster--section'}`}>
                     <DisplayModeToggle />
@@ -1278,6 +1263,17 @@ function App({ playgroundMode = false, playgroundBottomLayer = true }) {
                         return 'Account';
                       })()}
                     </button>
+                    {devPanelGateEnabled && (
+                      <button
+                        type="button"
+                        onClick={() => setShowDevPanel(v => !v)}
+                        className="text-lg opacity-60 hover:opacity-100 active:scale-95 transition-all"
+                        title="Dev Panel (Ctrl+Shift+D)"
+                        style={{ color: showDevPanel ? 'var(--accent-color)' : undefined }}
+                      >
+                        🎨
+                      </button>
+                    )}
                     <button
                       type="button"
                       data-tutorial="global-tutorial-button"
@@ -1290,26 +1286,12 @@ function App({ playgroundMode = false, playgroundBottomLayer = true }) {
                     >
                       ?
                     </button>
-                    {!playgroundMode && (
-                      <button
-                        type="button"
-                        onClick={() => setActiveSection(null)}
-                        className={`type-label font-medium px-2 py-1 rounded-lg transition-colors app-header-home ${isLight ? 'text-[#5A4D3C]/70 hover:text-[#3D3425] hover:bg-black/5' : 'text-white/70 hover:text-white hover:bg-white/5'}`}
-                        title="Home Hub"
-                        aria-label="Return to Home Hub"
-                      >
-                        *
-                      </button>
-                    )}
                     <div className={`type-caption uppercase tracking-wide app-header-version ${isLight ? 'text-[#5A4D3C]/50' : 'text-white/40'}`}>
                       <button
                         type="button"
                         className="cursor-default app-header-version-button"
-                        title="Click to open Dev Panel. Debug: Alt+Shift+Click toggles buildProbe. Alt+Ctrl+Click toggles disableDailyCard."
+                        title="Debug: Alt+Shift+Click toggles buildProbe. Alt+Ctrl+Click toggles disableDailyCard."
                         onClick={(e) => {
-                          if (devPanelGateEnabled) {
-                            setShowDevPanel(v => !v);
-                          }
                           if (e.altKey && e.shiftKey) toggleBuildProbe();
                           if (e.altKey && (e.ctrlKey || e.metaKey)) toggleDebugFlag('disableDailyCard');
                           if (!hasDevtoolsQueryFlag()) return;
@@ -1336,6 +1318,19 @@ function App({ playgroundMode = false, playgroundBottomLayer = true }) {
                       </button>
                     </div>
                   </div>
+
+                  {!playgroundMode && (
+                    <button
+                      type="button"
+                      onClick={() => setActiveSection(null)}
+                      aria-hidden={isHub}
+                      tabIndex={isHub ? -1 : 0}
+                      className={`type-label font-medium px-2 py-1 rounded-lg transition-colors app-header-home app-header-home-choreo ${isHub ? 'app-header-home-choreo--hidden' : 'app-header-home-choreo--visible'} ${isLight ? 'text-[#5A4D3C]/70 hover:text-[#3D3425] hover:bg-black/5' : 'text-white/70 hover:text-white hover:bg-white/5'}`}
+                      style={{ pointerEvents: isHub ? 'none' : 'auto' }}
+                    >
+                      Home
+                    </button>
+                  )}
                 </div>
               </div>
             </header>
@@ -1481,7 +1476,6 @@ function App({ playgroundMode = false, playgroundBottomLayer = true }) {
                         <HomeHub
                           onSelectSection={handleSectionSelect}
                           activeSection={activeSection}
-                          avatarRetreating={avatarRetreating}
                           onStageChange={(hsl, stageName) => handleAvatarStageSelection(stageName)}
                           isPracticing={isPracticing}
                           currentStage={effectivePreviewStage}

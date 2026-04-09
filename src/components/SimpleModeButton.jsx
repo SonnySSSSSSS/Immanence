@@ -224,12 +224,9 @@ export function SimpleModeButton({
                 }}
             >
                 <span
-                    className="font-medium"
+                    className="type-label font-medium tracking-[0.04em]"
                     style={{
-                        fontFamily: 'var(--font-ui)',
                         fontSize: 'var(--type-label-size)',
-                        textTransform: 'uppercase',
-                        letterSpacing: '0.04em',
                         color: 'rgb(248, 247, 244)',
                         textShadow: 'none',
                         lineHeight: 1,

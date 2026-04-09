@@ -519,8 +519,6 @@ function HomeHub({ onSelectSection, activeSection = null, currentStage, previewP
   };
   const sidePanelMetricValueBaseStyle = {
     color: isLight ? 'rgba(45, 35, 25, 0.95)' : 'rgba(255, 255, 255, 0.95)',
-    fontWeight: '600',
-    letterSpacing: '0.01em',
     lineHeight: 0.94,
   };
   const sidePanelHeadlineValueStyle = {
@@ -531,15 +529,11 @@ function HomeHub({ onSelectSection, activeSection = null, currentStage, previewP
     color: isLight ? 'rgba(100, 80, 60, 0.52)' : 'rgba(255, 255, 255, 0.40)',
     fontSize: '10px',
     lineHeight: 1.08,
-    letterSpacing: '0.07em',
-    fontWeight: '400',
   };
   const sidePanelMetricSubLabelStyle = {
     color: isLight ? 'rgba(100, 80, 60, 0.4)' : 'rgba(255, 255, 255, 0.30)',
     fontSize: '9px',
     lineHeight: 1,
-    letterSpacing: '0.07em',
-    fontWeight: '400',
   };
   const sidePanelTileWrapStyle = {
     position: 'absolute',
@@ -583,13 +577,11 @@ function HomeHub({ onSelectSection, activeSection = null, currentStage, previewP
     ...sidePanelMetricLabelStyle,
     fontSize: '9px',
     lineHeight: 1,
-    letterSpacing: '0.06em',
   };
   const sidePanelTileSubLabelStyle = {
     ...sidePanelMetricSubLabelStyle,
     fontSize: '9px',
     lineHeight: 1,
-    letterSpacing: '0.06em',
   };
   const sidePanelLeftTileStatsColStyle = {
     width: '100%',
@@ -663,7 +655,6 @@ function HomeHub({ onSelectSection, activeSection = null, currentStage, previewP
     width: '100%',
     fontSize: '9px',
     lineHeight: 1,
-    letterSpacing: '0.06em',
     border: 'none',
     cursor: 'pointer',
     padding: '3px 0',
@@ -676,7 +667,6 @@ function HomeHub({ onSelectSection, activeSection = null, currentStage, previewP
       <style>{`
         .hub-root .hub-report-btn {
           font-size: 8px;
-          letter-spacing: 0.15em;
           padding: 2px 8px;
           opacity: 0.55;
           border-color: rgba(255,255,255,0.1);
@@ -694,7 +684,6 @@ function HomeHub({ onSelectSection, activeSection = null, currentStage, previewP
         .hub-root .hub-penalty-label {
           font-size: 10px;
           opacity: 0.7;
-          letter-spacing: 0.1em;
           color: var(--text-dim);
         }
       `}</style>

@@ -103,14 +103,12 @@ const DevCompleteNowOverlay =
             <button
               type="button"
               onClick={onCompleteNow}
+              className="type-label font-extrabold tracking-[0.08em]"
               style={{
                 pointerEvents: 'auto',
                 padding: '8px 10px',
                 borderRadius: 10,
                 fontSize: 11,
-                fontWeight: 800,
-                letterSpacing: '0.08em',
-                textTransform: 'uppercase',
                 border: '1px solid rgba(255,255,255,0.18)',
                 background: 'rgba(0,0,0,0.65)',
                 color: 'rgba(255,255,255,0.92)',

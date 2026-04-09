@@ -93,11 +93,9 @@ export function NavigationSection({ currentStage, onNavigate, isPracticing = fal
           }}
         >
           <div
-            className="type-caption uppercase"
+            className="type-caption uppercase font-bold tracking-[0.1em]"
             style={{
               fontSize: '9px',
-              letterSpacing: '0.1em',
-              fontWeight: 700,
               color: isLight ? 'rgba(90, 77, 60, 0.9)' : '#ffffff',
               textShadow: !isLight ? '0 1px 2px rgba(0,0,0,0.8)' : undefined,
             }}

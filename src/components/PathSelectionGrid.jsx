@@ -61,9 +61,7 @@ const PSG_STYLES = `
 }
 .psg-card-title {
   /* FIX 4: override inherited serif — match geometric sans used on chooser */
-  font-family: 'Rajdhani', sans-serif;
   font-style: normal;
-  font-weight: 700;
 }
 .psg-card::before {
   content: '';
@@ -261,7 +259,7 @@ export function PathSelectionGrid({ onPathSelected }) {
                             <span key={i} style={{ display: 'inline-block', width: '1px', height: i === 2 ? '6px' : '3px', background: isLight ? 'rgba(59,144,156,0.8)' : 'rgba(117,231,240,0.8)' }} />
                         ))}
                     </div>
-                    <span style={{ fontSize: '7px', fontFamily: 'monospace', letterSpacing: '0.18em', color: isLight ? 'rgba(59,144,156,0.7)' : 'rgba(117,231,240,0.7)' }}>◆</span>
+                    <span className="type-data tracking-[0.18em]" style={{ fontSize: '7px', color: isLight ? 'rgba(59,144,156,0.7)' : 'rgba(117,231,240,0.7)' }}>◆</span>
                     <div className="flex items-center gap-[3px]">
                         {[0,1,2,3,4].map(i => (
                             <span key={i} style={{ display: 'inline-block', width: '1px', height: i === 2 ? '6px' : '3px', background: isLight ? 'rgba(59,144,156,0.8)' : 'rgba(117,231,240,0.8)' }} />
@@ -396,7 +394,7 @@ export function PathSelectionGrid({ onPathSelected }) {
                                     {/* Active indicator */}
                                     {isActive && (
                                         <div className="absolute top-2 right-2 z-10 flex items-center gap-1">
-                                            <span style={{ fontFamily: 'var(--font-display)', fontSize: '7px', fontWeight: 600, letterSpacing: '0.1em', color: entry.isProgram ? 'rgba(253,251,245,0.4)' : stageAccent, textTransform: 'uppercase' }}>
+                                            <span className="type-label text-[7px] font-semibold tracking-[0.1em]" style={{ color: entry.isProgram ? 'rgba(253,251,245,0.4)' : stageAccent }}>
                                                 {entry.isProgram ? 'Ongoing' : 'Active'}
                                             </span>
                                             <div className="w-2.5 h-2.5 rounded-full" style={{ background: entry.isProgram ? 'rgba(253,251,245,0.25)' : stageAccent }} />
@@ -408,7 +406,7 @@ export function PathSelectionGrid({ onPathSelected }) {
                                             <div className="type-h1 transition-colors" style={{ color: stageAccent, lineHeight: 1 }}>{entry.glyph}</div>
                                         </div>
                                         <h3 className="psg-card-title mb-2 leading-tight transition-colors"
-                                            style={{ fontFamily: "'Rajdhani', sans-serif", fontStyle: 'normal', fontSize: '13px', fontWeight: 700, letterSpacing: 'var(--tracking-normal)', color: isLight ? 'rgba(60, 52, 37, 0.92)' : 'rgba(253,251,245,0.94)', overflowWrap: 'break-word' }}
+                                            style={{ fontStyle: 'normal', fontSize: '13px', color: isLight ? 'rgba(60, 52, 37, 0.92)' : 'rgba(253,251,245,0.94)', overflowWrap: 'break-word' }}
                                         >
                                             {entry.title}
                                         </h3>

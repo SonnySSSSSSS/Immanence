@@ -52,7 +52,7 @@ export function SessionControls({
 
       <button
         onClick={onStop}
-        className="type-label rounded-full px-7 py-2.5 transition-all duration-200 min-w-[200px] relative"
+        className="type-label font-medium tracking-[0.08em] rounded-full px-7 py-2.5 transition-all duration-200 min-w-[200px] relative"
         style={{
           background: buttonBg,
           color: "rgba(10, 12, 16, 0.92)",
@@ -60,8 +60,6 @@ export function SessionControls({
           boxShadow: "0 8px 22px rgba(0,0,0,0.32), inset 0 1px 0 rgba(255,255,255,0.16)",
           borderRadius: "999px",
           filter: "saturate(0.68) brightness(0.9)",
-          fontWeight: 500,
-          letterSpacing: "0.08em",
           backdropFilter: "blur(12px)",
           WebkitBackdropFilter: "blur(12px)",
         }}
