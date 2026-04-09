@@ -71,6 +71,12 @@ Run this checklist before any production deployment.
   - `src/state/offlineFirstUserStateSync.js`: 8 state keys stored in plain localStorage
   - Low risk for personal use; medium risk if device is shared
 
+- [ ] **Offline-first cloud sync payload encryption**
+  - Current sync path uploads plaintext bundle data to `user_documents` (`progress_bundle_v1`)
+  - Implement encrypted envelope path (`progress_bundle_v2_enc`) per `docs/ENCRYPTED_USER_STATE_SYNC_SPEC.md`
+  - Verify migration behavior: dual-read during rollout, encrypted-write default before plaintext sunset
+  - Verify diagnostics/probes do not emit plaintext bundle content
+
 ---
 
 ## 5. Input Handling
@@ -186,7 +192,8 @@ Run this checklist before any production deployment.
 2. Add input length cap on LLM prompt inputs
 3. Confirm worker origin allowlist matches the deployed GitHub Pages origin exactly
 4. Verify RLS is enabled on all Supabase tables
-5. Extend production log gating beyond bootstrap/auth/runtime files if more client surfaces become sensitive
+5. Implement encrypted sync payload path for `user_documents` and validate migration from plaintext bundle docs
+6. Extend production log gating beyond bootstrap/auth/runtime files if more client surfaces become sensitive
 
 ### Do when scaling
 

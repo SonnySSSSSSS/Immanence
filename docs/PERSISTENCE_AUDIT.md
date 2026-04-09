@@ -17,11 +17,11 @@ Any future ownership change must update both linked sections and this audit in t
 
 | Metric | Count |
 |---|---:|
-| Persisted Zustand keys (`persist` middleware) | 27 |
-| Persisted Zustand keys with explicit `version` | 22 |
+| Persisted Zustand keys (`persist` middleware) | 29 |
+| Persisted Zustand keys with explicit `version` | 23 |
 | Persisted Zustand keys with explicit `migrate` | 10 |
 | Direct/local key literals or key families | 30 |
-| Total tracked persistence entries in this audit | 57 |
+| Total tracked persistence entries in this audit | 59 |
 | Offline-first allowlist keys (`OFFLINE_FIRST_USER_STATE_KEYS`) | 9 |
 
 ## Key Inventory
@@ -32,10 +32,12 @@ Any future ownership change must update both linked sections and this audit in t
 |---|---|---|---:|---|---|
 | `immanenceOS.applicationState` | `src/state/applicationStore.js` | Application logs/intention | 2 | Yes | Application section + reports |
 | `immanence-avatar-presets` | `src/state/avatarPresetStore.js` | Avatar preset transforms | 1 | No | Avatar V3 + DevPanel avatar tuner |
+| `immanence-avatar-stage-defaults-v1` | `src/state/avatarV3Store.js` | Avatar stage default transforms | 6 | Yes | Avatar V3 stage-default derivation + dev calibration |
 | `immanenceOS.attention` | `src/state/attentionStore.js` | Attention aggregates | 1 | No | Home/reporting selectors |
 | `immanence-breath-benchmark` | `src/state/breathBenchmarkStore.js` | Benchmark gate/results | 3 | Yes | Path activation + practice launch gating |
 | `immanence-awareness-scene` | `src/state/awarenessSceneStore.js` | Awareness scene mode | - | No | Awareness practice renderer |
 | `immanence-dev-panel` | `src/state/devPanelStore.js` | Dev-only tuning state | 2 | Yes | DevPanel |
+| `immanence.dev.eigengrau.tuning.v1` | `src/state/eigengrauDevTuningStore.js` | Eigengrau dev tuning controls | - | No | Dev visuals tuning panel |
 | `immanenceOS.cycles` | `src/state/cycleStore.js` | Cycle progression/checkpoints | 1 | No | Cycle UI + projections |
 | `immanenceOS.curriculum` | `src/state/curriculumStore.js` | Program/day/leg state | 4 | Yes | Home hub daily card + practice completion |
 | `circuit-manager` | `src/state/circuitManager.js` | Circuit definitions/runtime config | 1 | No | Circuit configuration/run |

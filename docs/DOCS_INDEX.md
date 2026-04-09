@@ -27,12 +27,13 @@ Canonical doc map for `immanence-os`, refreshed on 2026-04-08.
 - [TUTORIAL_SYSTEM.md](TUTORIAL_SYSTEM.md) - tutorial runtime architecture, ownership split, and storage
 - [TUTORIAL_AUTHORING.md](TUTORIAL_AUTHORING.md) - how to author, anchor, and test tutorials
 - [TRACKING_SPECIFICATION.md](TRACKING_SPECIFICATION.md) - tracking model details
+- [ENCRYPTED_USER_STATE_SYNC_SPEC.md](ENCRYPTED_USER_STATE_SYNC_SPEC.md) - draft, critique, and revised implementation spec for encrypted remote user-state sync
 - [PARTICLE_SYSTEM_PROTECTION.md](PARTICLE_SYSTEM_PROTECTION.md) - guard rails for `IndrasNet`
 - [CRITICAL_FLOWS.md](CRITICAL_FLOWS.md) - important user and system flows
 
 ## Current Task Specs
 
-- No active task spec files in `docs/` at this time.
+- [ENCRYPTED_USER_STATE_SYNC_SPEC.md](ENCRYPTED_USER_STATE_SYNC_SPEC.md) - active security architecture spec for encrypted sync rollout
 
 ## Operational And Historical Docs
 

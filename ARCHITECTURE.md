@@ -9,7 +9,7 @@ This is the canonical top-level system map. Use [docs/DOCS_INDEX.md](docs/DOCS_I
 - Shell and routing: boot is path-based in [src/main.jsx](src/main.jsx), then the app switches through internal section state in [src/App.jsx](src/App.jsx) rather than React Router.
 - Rendering: standard React UI plus React Three Fiber scenes.
 - State: Zustand stores across [src/state](src/state), with a mix of persisted and transient state. `userModeStore`, `curriculumStore`, and `navigationStore` now all enforce per-user ownership boundaries through `ownerUserId` and `activeUserId`.
-- Auth and sync: Supabase browser auth in [src/lib/supabaseClient.js](src/lib/supabaseClient.js) and offline-first sync helpers in [src/state/offlineFirstUserStateSync.js](src/state/offlineFirstUserStateSync.js).
+- Auth and sync: Supabase browser auth in [src/lib/supabaseClient.js](src/lib/supabaseClient.js) and offline-first sync helpers in [src/state/offlineFirstUserStateSync.js](src/state/offlineFirstUserStateSync.js). Current remote sync payloads are plaintext bundle documents; encrypted sync envelope is planned in [docs/ENCRYPTED_USER_STATE_SYNC_SPEC.md](docs/ENCRYPTED_USER_STATE_SYNC_SPEC.md).
 - Shared shell chrome: practice housing primitives in [src/components/practice/practiceHousing.jsx](src/components/practice/practiceHousing.jsx) are now reused by practice cards directly and by wisdom through [src/components/wisdom/WisdomCardHousing.jsx](src/components/wisdom/WisdomCardHousing.jsx). Navigation and application now mirror the same Arwes-style shell pattern in-place.
 - Tutorials: app-owned tutorial IDs, schema, and progress state now feed a Driver.js presentation runtime through [src/components/tutorial/TutorialOverlay.jsx](src/components/tutorial/TutorialOverlay.jsx) and [src/tutorials/driverAdapter.js](src/tutorials/driverAdapter.js).
 - LLM integration: Four Modes validation requests are sent through the configured proxy URL in [src/services/llmService.js](src/services/llmService.js).
@@ -141,6 +141,21 @@ Do not collapse these into one gate by accident.
 - `immanenceOS.path`
 - `immanenceOS.curriculum`
 
+### Remote Sync Security Boundary (Current And Planned)
+
+Current behavior:
+
+- `offlineFirstUserStateSnapshot` captures allowlisted keys as raw localStorage JSON values.
+- `offlineFirstUserStateSync` upserts that bundle to `user_documents` as document payload content.
+- RLS controls access by `user_id`, but payload confidentiality currently relies on Supabase-side controls only.
+
+Planned behavior:
+
+- Adopt encrypted remote envelope `progress_bundle_v2_enc` as specified in [docs/ENCRYPTED_USER_STATE_SYNC_SPEC.md](docs/ENCRYPTED_USER_STATE_SYNC_SPEC.md).
+- Encrypt before remote upsert and decrypt only after pull on the client.
+- Keep local-first continuity and existing ownership boundaries unchanged.
+- Maintain migration fallback from plaintext `progress_bundle_v1` during rollout, then sunset fallback per release gate in the spec.
+
 ### Important Persisted Stores
 
 - progress and session history: [src/state/progressStore.js](src/state/progressStore.js)
@@ -265,5 +280,6 @@ Treat avatar stage as session-derived unless a component explicitly reads anothe
 - LLM integration: [docs/LLM_INTEGRATION.md](docs/LLM_INTEGRATION.md)
 - Avatar specifics: [docs/AVATAR_SYSTEM.md](docs/AVATAR_SYSTEM.md)
 - Persistence audit: [docs/PERSISTENCE_AUDIT.md](docs/PERSISTENCE_AUDIT.md)
+- Encrypted sync spec: [docs/ENCRYPTED_USER_STATE_SYNC_SPEC.md](docs/ENCRYPTED_USER_STATE_SYNC_SPEC.md)
 - Tutorial architecture: [docs/TUTORIAL_SYSTEM.md](docs/TUTORIAL_SYSTEM.md)
 - Tutorial authoring: [docs/TUTORIAL_AUTHORING.md](docs/TUTORIAL_AUTHORING.md)
