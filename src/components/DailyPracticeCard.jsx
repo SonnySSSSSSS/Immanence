@@ -18,8 +18,10 @@ import { markFirstLoginAudit } from '../utils/firstLoginAudit.js';
 import {
     computeCurriculumCompletionState,
     isScheduleActiveDay,
+    resolveProgramCompletionDisplayState,
     resolveDailyPracticeScheduleState,
     resolveDailyPracticeSlotContent,
+    resolveScheduledPathSlotGateState,
 } from './dailyPracticeCardLogic.js';
 
 /**
@@ -291,7 +293,6 @@ export function DailyPracticeCard({ onStartPractice, onViewCurriculum, onNavigat
         getDayLegsWithStatus,
         curriculumStartDate,
         setActivePracticeSession,
-        _devReset,
         practiceTimeSlots: storePracticeTimeSlots,
         lastSessionFailed,
         clearLastSessionFailed,
@@ -1342,13 +1343,17 @@ export function DailyPracticeCard({ onStartPractice, onViewCurriculum, onNavigat
                                                 const slotDateKey = slotDates[idx] || todayKey;
                                                 const scheduledAt = localDateTimeFromDateKeyAndTime(slotDateKey, time);
                                                 const { tooEarly, expired } = scheduledAt ? getStartWindowState({ now: new Date(), scheduledAt }) : { tooEarly: false, expired: false };
-                                                const shouldBypassWindow = shouldBypassScheduleGateForExplorerBreath({
+                                                const {
+                                                    effectiveTooEarly,
+                                                    effectiveExpired,
+                                                    isOutsideWindow,
+                                                    isActionable,
+                                                } = resolveScheduledPathSlotGateState({
+                                                    isDone,
+                                                    tooEarly,
+                                                    expired,
                                                     practiceId: slotLaunches[idx]?.practiceId,
                                                 });
-                                                const effectiveTooEarly = shouldBypassWindow ? false : tooEarly;
-                                                const effectiveExpired = shouldBypassWindow ? false : expired;
-                                                const isOutsideWindow = effectiveTooEarly || effectiveExpired;
-                                                const isActionable = !isDone && !isOutsideWindow && slotLaunches[idx]?.practiceId;
                                                 const dateStr = formatPracticeDateLabel(slotDateKey);
 
                                                 return {
@@ -1602,6 +1607,13 @@ export function DailyPracticeCard({ onStartPractice, onViewCurriculum, onNavigat
         if (!Number.isFinite(n) || !Number.isFinite(d) || d <= 0) return 0;
         return Math.max(0, Math.min(1, n / d));
     })();
+    const completedProgramState = resolveProgramCompletionDisplayState({
+        isCurriculumActive,
+        isCurriculumComplete,
+        contractComplete: Boolean(metrics?.contractComplete),
+        dayNumber,
+        totalDays: totalDaysDisplay,
+    });
 
     const practiceDayKey = addDaysToDateKey(curriculumStartKey, Math.max(0, (dayNumber || 1) - 1)) || getLocalDateKey();
 
@@ -1636,7 +1648,11 @@ export function DailyPracticeCard({ onStartPractice, onViewCurriculum, onNavigat
     // Update DEV shortcut deps (used by the effect registered before the early returns)
     _devDepsRef.current = { legs, dayNumber, isLegTooEarly, isLegExpired };
 
-    if ((isCurriculumActive && dayNumber > 14) || isCurriculumComplete) {
+    if (completedProgramState.completed) {
+        const missingObligations = Math.max(0, (metrics?.expectedSessionsSoFar || 0) - (metrics?.completedSessionsSoFar || 0));
+        const completionReasonLabel = completedProgramState.byContract
+            ? 'Contract obligations satisfied'
+            : (completedProgramState.byCurriculum ? 'Curriculum completed' : 'Program window complete');
         return (
             <div
                 className="w-full"
@@ -1664,13 +1680,68 @@ export function DailyPracticeCard({ onStartPractice, onViewCurriculum, onNavigat
                 </div>
 
                 <div className="glassCardContent relative z-10 p-8 text-center">
-                    <div className="text-4xl mb-4">ðŸ†</div>
+                    <div
+                        className="inline-flex items-center justify-center px-4 py-1.5 rounded-full mb-4 text-[11px] font-bold uppercase tracking-[0.18em]"
+                        style={{
+                            background: isLight ? 'rgba(165, 120, 58, 0.14)' : 'rgba(225, 187, 120, 0.14)',
+                            border: isLight ? '1px solid rgba(165, 120, 58, 0.34)' : '1px solid rgba(225, 187, 120, 0.34)',
+                            color: isLight ? 'rgba(120, 74, 22, 0.9)' : 'rgba(247, 230, 196, 0.92)',
+                        }}
+                    >
+                        PROGRAM COMPLETE
+                    </div>
                     <h3 className="text-xl font-bold mb-2" style={{ color: config.textMain, fontFamily: 'var(--font-ui)' }}>
-                        Curriculum Complete!
+                        Program Closed Out
                     </h3>
-                    <p className="mb-6 opacity-70" style={{ color: config.textSub }}>
-                        You completed {curriculumCompletedCount} of {curriculumTotalCount} practices
+                    <p className="mb-3 opacity-75" style={{ color: config.textSub }}>
+                        {completionReasonLabel}
                     </p>
+                    <p className="mb-6 opacity-70" style={{ color: config.textSub }}>
+                        {curriculumCompletedCount}/{curriculumTotalCount} practices recorded
+                    </p>
+
+                    <div className="grid grid-cols-2 gap-3 mb-6">
+                        <div
+                            className="rounded-xl p-3 text-left"
+                            style={{
+                                background: isLight ? 'rgba(165, 120, 58, 0.08)' : 'rgba(225, 187, 120, 0.08)',
+                                border: isLight ? '1px solid rgba(165, 120, 58, 0.2)' : '1px solid rgba(225, 187, 120, 0.18)',
+                            }}
+                        >
+                            <div className="text-[10px] uppercase tracking-[0.14em]" style={{ color: config.textSub }}>Required Sessions</div>
+                            <div className="text-lg font-bold" style={{ color: config.textMain }}>{metrics?.expectedSessionsSoFar || 0}</div>
+                        </div>
+                        <div
+                            className="rounded-xl p-3 text-left"
+                            style={{
+                                background: isLight ? 'rgba(165, 120, 58, 0.08)' : 'rgba(225, 187, 120, 0.08)',
+                                border: isLight ? '1px solid rgba(165, 120, 58, 0.2)' : '1px solid rgba(225, 187, 120, 0.18)',
+                            }}
+                        >
+                            <div className="text-[10px] uppercase tracking-[0.14em]" style={{ color: config.textSub }}>Completed Sessions</div>
+                            <div className="text-lg font-bold" style={{ color: config.textMain }}>{metrics?.completedSessionsSoFar || 0}</div>
+                        </div>
+                        <div
+                            className="rounded-xl p-3 text-left"
+                            style={{
+                                background: isLight ? 'rgba(165, 120, 58, 0.08)' : 'rgba(225, 187, 120, 0.08)',
+                                border: isLight ? '1px solid rgba(165, 120, 58, 0.2)' : '1px solid rgba(225, 187, 120, 0.18)',
+                            }}
+                        >
+                            <div className="text-[10px] uppercase tracking-[0.14em]" style={{ color: config.textSub }}>Missing Obligations</div>
+                            <div className="text-lg font-bold" style={{ color: config.textMain }}>{missingObligations}</div>
+                        </div>
+                        <div
+                            className="rounded-xl p-3 text-left"
+                            style={{
+                                background: isLight ? 'rgba(165, 120, 58, 0.08)' : 'rgba(225, 187, 120, 0.08)',
+                                border: isLight ? '1px solid rgba(165, 120, 58, 0.2)' : '1px solid rgba(225, 187, 120, 0.18)',
+                            }}
+                        >
+                            <div className="text-[10px] uppercase tracking-[0.14em]" style={{ color: config.textSub }}>Adherence</div>
+                            <div className="text-lg font-bold" style={{ color: config.textMain }}>{metrics?.adherencePct || 0}%</div>
+                        </div>
+                    </div>
 
                     {/* Action buttons */}
                     <div className="flex flex-col gap-3">
@@ -1687,37 +1758,18 @@ export function DailyPracticeCard({ onStartPractice, onViewCurriculum, onNavigat
                             View Report
                         </button>
 
-                        <div className="flex gap-3">
-                            <button
-                                onClick={() => {
-                                    if (window.confirm('Reset this curriculum? All progress will be cleared.')) {
-                                        _devReset();
-                                    }
-                                }}
-                                className="flex-1 px-4 py-2 rounded-full text-sm font-semibold transition-all hover:scale-105 active:scale-95"
-                                style={{
-                                    background: isLight ? 'rgba(60,50,35,0.08)' : 'rgba(255,255,255,0.08)',
-                                    border: isLight ? '1px solid rgba(60,50,35,0.15)' : '1px solid rgba(255,255,255,0.15)',
-                                    color: config.textMain,
-                                    fontFamily: 'var(--font-ui)',
-                                }}
-                            >
-                                Reset Program
-                            </button>
-
-                            <button
-                                onClick={() => onNavigate?.('navigation')}
-                                className="flex-1 px-4 py-2 rounded-full text-sm font-semibold transition-all hover:scale-105 active:scale-95"
-                                style={{
-                                    background: isLight ? 'rgba(60,50,35,0.08)' : 'rgba(255,255,255,0.08)',
-                                    border: isLight ? '1px solid rgba(60,50,35,0.15)' : '1px solid rgba(255,255,255,0.15)',
-                                    color: config.textMain,
-                                    fontFamily: 'var(--font-ui)',
-                                }}
-                            >
-                                New Curriculum
-                            </button>
-                        </div>
+                        <button
+                            onClick={() => onNavigate?.('navigation')}
+                            className="px-6 py-2.5 rounded-full font-semibold transition-all hover:scale-105 active:scale-95"
+                            style={{
+                                background: isLight ? 'rgba(60,50,35,0.08)' : 'rgba(255,255,255,0.08)',
+                                border: isLight ? '1px solid rgba(60,50,35,0.15)' : '1px solid rgba(255,255,255,0.15)',
+                                color: config.textMain,
+                                fontFamily: 'var(--font-ui)',
+                            }}
+                        >
+                            Choose Next Curriculum
+                        </button>
                     </div>
                 </div>
                 </div>

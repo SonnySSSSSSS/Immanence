@@ -976,23 +976,4 @@ export const TUTORIALS = {
     ],
   },
 
-  'practice:photic': {
-    title: 'Photonic Practice',
-    steps: [
-      {
-        id: 'photic-controls',
-        title: 'Light Frequency',
-        body: 'Use the photic controls to set rate and timing before the session begins.',
-        target: tutorialSelector(ANCHORS.PRACTICE_PHOTIC_CONTROLS),
-        placement: 'left',
-      },
-      {
-        id: 'photic-intensity-panel',
-        title: 'Intensity And Color',
-        body: 'Brightness and color live in this section of the photic controls.',
-        target: tutorialSelector(ANCHORS.PRACTICE_PHOTIC_INTENSITY),
-        placement: 'left',
-      },
-    ],
-  },
 };

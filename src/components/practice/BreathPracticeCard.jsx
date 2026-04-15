@@ -274,8 +274,6 @@ function BreathPracticeCard({
   const lockedColor = isLight ? 'rgba(60,40,0,0.60)' : 'rgba(255,255,255,0.6)';
   const stepperDisabledColor = isLight ? 'rgba(0,0,0,0.15)' : 'rgba(255,255,255,0.2)';
 
-  const tutorialId = breathSubmode === 'stillness' ? 'practice:stillness' : 'practice:breath';
-
   const handleStart = () => {
     setMode("focus");
     onStart?.();
@@ -290,8 +288,6 @@ function BreathPracticeCard({
     <div className="relative px-4 sm:px-8 animate-in fade-in duration-300" data-tutorial={ANCHORS.FOUNDATIONS_ROOT}>
       <PracticeMenuHeader
         title={practiceId === 'breath' ? undefined : label}
-        tutorialId={tutorialId}
-        showTutorial={true}
         marginBottom={practiceId === 'breath' ? '0px' : '24px'}
       >
       </PracticeMenuHeader>

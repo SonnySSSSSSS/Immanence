@@ -89,6 +89,7 @@ const PSG_STYLES = `
 export function PathSelectionGrid({ onPathSelected }) {
     const allPaths = getAllPaths();
     const activePath = useNavigationStore((state) => state.activePath);
+    const computeProgressMetrics = useNavigationStore((state) => state.computeProgressMetrics);
     const abandonPath = useNavigationStore((state) => state.abandonPath);
     const beginPathForCurriculum = useNavigationStore((state) => state.beginPathForCurriculum);
     const setSelectedPath = useNavigationStore((state) => state.setSelectedPath);
@@ -97,6 +98,7 @@ export function PathSelectionGrid({ onPathSelected }) {
     const resumablePathId = useCurriculumStore(getResumableNavigationPathId);
     const colorScheme = useDisplayModeStore(s => s.colorScheme);
     const isLight = colorScheme === 'light';
+    const progressMetrics = computeProgressMetrics();
 
     const [activeStageIndex, setActiveStageIndex] = useState(0);
     const [slideDir, setSlideDir] = useState('right'); // 'left' | 'right'
@@ -312,6 +314,12 @@ export function PathSelectionGrid({ onPathSelected }) {
                             const effectivePathId = activePath?.activePathId ?? resumablePathId;
                             const isActive = entry.isProgram ? entry.isActive : effectivePathId === entry.id;
                             const hasActivePathMatch = effectivePathId === entry.id;
+                            const isPathCompleted = !entry.isProgram
+                                && hasActivePathMatch
+                                && (activePath?.status === 'completed' || progressMetrics?.contractComplete === true);
+                            const cardAccent = isPathCompleted
+                                ? (isLight ? 'rgba(173, 126, 58, 0.86)' : 'rgba(232, 193, 126, 0.9)')
+                                : stageAccent;
                             const isPlaceholder = entry.placeholder;
                             const contract = getPathContract(entry);
                             const durationLabel = Number.isInteger(contract.totalDays)
@@ -343,19 +351,27 @@ export function PathSelectionGrid({ onPathSelected }) {
                                     className="psg-card relative border px-3 py-4 text-left overflow-hidden transition-all"
                                     style={{
                                         clipPath: PATH_CARD_CLIP,
-                                        background: isLight
-                                            ? 'linear-gradient(180deg, rgba(228, 244, 248, 0.86) 0%, rgba(210, 235, 240, 0.70) 100%)'
-                                            : 'linear-gradient(180deg, rgba(7, 16, 24, 0.97) 0%, rgba(4, 10, 18, 0.95) 100%)',
+                                        background: isPathCompleted
+                                            ? (isLight
+                                                ? 'linear-gradient(180deg, rgba(248, 238, 219, 0.92) 0%, rgba(239, 224, 197, 0.78) 100%)'
+                                                : 'linear-gradient(180deg, rgba(48, 36, 22, 0.9) 0%, rgba(33, 24, 15, 0.9) 100%)')
+                                            : (isLight
+                                                ? 'linear-gradient(180deg, rgba(228, 244, 248, 0.86) 0%, rgba(210, 235, 240, 0.70) 100%)'
+                                                : 'linear-gradient(180deg, rgba(7, 16, 24, 0.97) 0%, rgba(4, 10, 18, 0.95) 100%)'),
                                         borderColor: hasActivePathMatch
-                                            ? stageAccent.replace(/[\d.]+\)$/, '0.50)')
-                                            : stageAccent.replace(/[\d.]+\)$/, '0.22)'),
+                                            ? cardAccent.replace(/[\d.]+\)$/, '0.50)')
+                                            : cardAccent.replace(/[\d.]+\)$/, '0.22)'),
                                         borderWidth: '1px',
-                                        boxShadow: isLight
-                                            ? `0 8px 20px rgba(18, 40, 52, 0.10), inset 0 1px 0 rgba(255,255,255,0.60)`
-                                            : `0 12px 28px rgba(0,0,0,0.44), 0 0 ${hasActivePathMatch ? '18px' : '8px'} ${stageAccent.replace(/[\d.]+\)$/, hasActivePathMatch ? '0.16)' : '0.06)')}, inset 0 1px 0 rgba(168, 241, 248, 0.07)`,
+                                        boxShadow: isPathCompleted
+                                            ? (isLight
+                                                ? '0 10px 24px rgba(120, 84, 36, 0.14), inset 0 1px 0 rgba(255,255,255,0.62)'
+                                                : '0 14px 30px rgba(0,0,0,0.46), 0 0 14px rgba(232,193,126,0.18), inset 0 1px 0 rgba(255, 222, 175, 0.15)')
+                                            : (isLight
+                                                ? '0 8px 20px rgba(18, 40, 52, 0.10), inset 0 1px 0 rgba(255,255,255,0.60)'
+                                                : `0 12px 28px rgba(0,0,0,0.44), 0 0 ${hasActivePathMatch ? '18px' : '8px'} ${cardAccent.replace(/[\d.]+\)$/, hasActivePathMatch ? '0.16)' : '0.06)')}, inset 0 1px 0 rgba(168, 241, 248, 0.07)`),
                                         opacity: isPlaceholder ? 0.38 : 1,
                                         cursor: isPlaceholder ? 'not-allowed' : 'pointer',
-                                        '--psg-sweep': stageAccent.replace(/[\d.]+\)$/, '0.85)'),
+                                        '--psg-sweep': cardAccent.replace(/[\d.]+\)$/, '0.85)'),
                                         '--psg-sweep-delay': `${0.9 + entryIdx * 3.5}s`,
                                     }}
                                     onMouseEnter={(e) => {
@@ -392,7 +408,14 @@ export function PathSelectionGrid({ onPathSelected }) {
                                     <div aria-hidden="true" className="absolute bottom-[8px] left-[8px] h-[10px] w-[10px] pointer-events-none" style={{ borderBottom: '1px solid', borderLeft: '1px solid', borderColor: stageAccent.replace(/[\d.]+\)$/, '0.55)') }} />
                                     <div aria-hidden="true" className="absolute bottom-[8px] right-[8px] h-[10px] w-[10px] pointer-events-none" style={{ borderBottom: '1px solid', borderRight: '1px solid', borderColor: stageAccent.replace(/[\d.]+\)$/, '0.55)') }} />
                                     {/* Active indicator */}
-                                    {isActive && (
+                                    {isPathCompleted ? (
+                                        <div className="absolute top-2 right-2 z-10 flex items-center gap-1">
+                                            <span className="type-label text-[7px] font-semibold tracking-[0.1em]" style={{ color: isLight ? 'rgba(96, 62, 18, 0.92)' : 'rgba(247, 230, 196, 0.94)' }}>
+                                                Completed
+                                            </span>
+                                            <div className="w-2.5 h-2.5 rounded-full" style={{ background: isLight ? 'rgba(143, 102, 43, 0.9)' : 'rgba(247, 230, 196, 0.85)' }} />
+                                        </div>
+                                    ) : isActive && (
                                         <div className="absolute top-2 right-2 z-10 flex items-center gap-1">
                                             <span className="type-label text-[7px] font-semibold tracking-[0.1em]" style={{ color: entry.isProgram ? 'rgba(253,251,245,0.4)' : stageAccent }}>
                                                 {entry.isProgram ? 'Ongoing' : 'Active'}

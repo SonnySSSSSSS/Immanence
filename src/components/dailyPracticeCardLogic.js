@@ -20,6 +20,45 @@ export function computeCurriculumCompletionState({
     };
 }
 
+export function resolveProgramCompletionDisplayState({
+    isCurriculumActive = false,
+    isCurriculumComplete = false,
+    contractComplete = false,
+    dayNumber = 1,
+    totalDays = 14,
+} = {}) {
+    const safeDayNumber = Number.isFinite(Number(dayNumber)) ? Number(dayNumber) : 1;
+    const safeTotalDays = Number.isFinite(Number(totalDays)) ? Number(totalDays) : 14;
+    const byDayOverflow = Boolean(isCurriculumActive) && safeDayNumber > safeTotalDays;
+    const completed = Boolean(isCurriculumComplete || contractComplete || byDayOverflow);
+
+    return {
+        completed,
+        byCurriculum: Boolean(isCurriculumComplete),
+        byContract: Boolean(contractComplete),
+        byDayOverflow,
+    };
+}
+
+export function resolveScheduledPathSlotGateState({
+    isDone = false,
+    tooEarly = false,
+    expired = false,
+    practiceId = null,
+} = {}) {
+    const effectiveTooEarly = Boolean(tooEarly);
+    const effectiveExpired = Boolean(expired);
+    const isOutsideWindow = effectiveTooEarly || effectiveExpired;
+    const hasPractice = typeof practiceId === 'string' && practiceId.trim().length > 0;
+
+    return {
+        effectiveTooEarly,
+        effectiveExpired,
+        isOutsideWindow,
+        isActionable: !isDone && !isOutsideWindow && hasPractice,
+    };
+}
+
 /**
  * Canonicalize schedule day values to JS Date.getDay() integers (0=Sun..6=Sat).
  * Supports legacy inputs (1..7 with 7=Sun, and short/long weekday strings).

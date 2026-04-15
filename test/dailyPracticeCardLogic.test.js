@@ -4,6 +4,7 @@ import {
     computeCurriculumCompletionState,
     isScheduleActiveDay,
     normalizeScheduleActiveDays,
+    resolveScheduledPathSlotGateState,
 } from '../src/components/dailyPracticeCardLogic.js';
 
 test('0/0 with no active curriculum does not count as complete', () => {
@@ -37,4 +38,50 @@ test('rest-day gating is not bypassed by presence of time slots', () => {
 
     assert.equal(isActive, false);
     assert.equal(shouldRenderLegs, false);
+});
+
+test('scheduled active-path breath slots do not bypass noon window gating in full posture', () => {
+    const morningSlot = resolveScheduledPathSlotGateState({
+        isDone: false,
+        tooEarly: false,
+        expired: true,
+        practiceId: 'breath',
+        accessPosture: 'full',
+    });
+    const eveningSlot = resolveScheduledPathSlotGateState({
+        isDone: false,
+        tooEarly: true,
+        expired: false,
+        practiceId: 'breath',
+        accessPosture: 'full',
+    });
+
+    assert.deepEqual(morningSlot, {
+        effectiveTooEarly: false,
+        effectiveExpired: true,
+        isOutsideWindow: true,
+        isActionable: false,
+    });
+    assert.deepEqual(eveningSlot, {
+        effectiveTooEarly: true,
+        effectiveExpired: false,
+        isOutsideWindow: true,
+        isActionable: false,
+    });
+});
+
+test('scheduled active-path slot is actionable only inside its real window', () => {
+    const slot = resolveScheduledPathSlotGateState({
+        isDone: false,
+        tooEarly: false,
+        expired: false,
+        practiceId: 'resonance',
+    });
+
+    assert.deepEqual(slot, {
+        effectiveTooEarly: false,
+        effectiveExpired: false,
+        isOutsideWindow: false,
+        isActionable: true,
+    });
 });

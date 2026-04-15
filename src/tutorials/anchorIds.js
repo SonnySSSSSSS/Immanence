@@ -8,7 +8,6 @@ export const ANCHORS = {
   HOME_STAGE_PANEL: 'home-stage-panel',
 
   PRACTICE_SELECTOR: 'practice-selector',
-  PRACTICE_TUTORIAL_BUTTON: 'tutorial-button',
   PRACTICE_TEMPO_SYNC_PANEL: 'tempo-sync-panel',
   PRACTICE_CIRCUIT_DURATION: 'circuit-duration',
   PRACTICE_RITUAL_STEPS: 'ritual-steps',

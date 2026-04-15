@@ -86,8 +86,6 @@ function PracticeMenu({
     {/* HEADER - using shared component */}
     <PracticeMenuHeader
       title={undefined}
-      tutorialId={`practice:${practice?.id || 'breath'}`}
-      showTutorial={true}
       marginBottom={showRitualSubtitle ? '8px' : '0px'}
     >
       {/* Inline subtitle for ritual */}
