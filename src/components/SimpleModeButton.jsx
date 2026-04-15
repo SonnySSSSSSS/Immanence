@@ -24,6 +24,8 @@ export function SimpleModeButton({
     const theme = useTheme();
     const primaryHex = theme?.accent?.primary || '#4ade80';
     const isNavHeroActive = isActive && icon === 'navigation';
+    const navButtonSize = 51;
+    const navIconSize = 20;
 
     React.useEffect(() => {
         return () => {
@@ -44,7 +46,7 @@ export function SimpleModeButton({
         switch (icon) {
             case 'practice':
                 return (
-                    <svg width="28" height="28" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <svg width={navIconSize} height={navIconSize} viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                         <g transform="translate(0 1)">
                             <path d="M12 2L15.09 8.26L22 9.27L17 14.14L18.18 21.02L12 17.77L5.82 21.02L7 14.14L2 9.27L8.91 8.26L12 2Z" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" fill="none" opacity="0.9" />
                         </g>
@@ -52,7 +54,7 @@ export function SimpleModeButton({
                 );
             case 'wisdom':
                 return (
-                    <svg width="28" height="28" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <svg width={navIconSize} height={navIconSize} viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                         <g transform="translate(0 1)">
                             <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" opacity="0.9" />
                             <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" fill="none" opacity="0.9" />
@@ -61,7 +63,7 @@ export function SimpleModeButton({
                 );
             case 'application':
                 return (
-                    <svg width="28" height="28" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <svg width={navIconSize} height={navIconSize} viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                         <g transform="translate(0 1)">
                             <circle cx="12" cy="12" r="9" stroke="white" strokeWidth="2" fill="none" opacity="0.9" />
                             <path d="M12 3v18M19.59 7.17L4.41 16.83M19.59 16.83L4.41 7.17" stroke="white" strokeWidth="2" strokeLinecap="round" opacity="0.7" />
@@ -70,7 +72,7 @@ export function SimpleModeButton({
                 );
             case 'navigation':
                 return (
-                    <svg width="28" height="28" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <svg width={navIconSize} height={navIconSize} viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                         <g transform="translate(0 1)">
                             <circle cx="12" cy="12" r="9" stroke="white" strokeWidth="2" fill="none" opacity="0.9" />
                             <path d="M12 3L14 9H20L15 13L17 19L12 15L7 19L9 13L4 9H10L12 3Z" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" fill="none" opacity="0.7" />
@@ -151,8 +153,8 @@ export function SimpleModeButton({
                 className="relative flex items-center justify-center transition-all duration-300 overflow-hidden im-ripple-out"
                 {...controlTargetProps}
                 style={{
-                    width: '76px',
-                    height: '76px',
+                    width: `${navButtonSize}px`,
+                    height: `${navButtonSize}px`,
                     borderRadius: '50%',
                     backgroundImage: `url(${getBackgroundImage()})`,
                     backgroundSize: 'cover',
@@ -212,10 +214,10 @@ export function SimpleModeButton({
                 data-ui-role-group="homeHub"
                 data-ui-fx-surface="true"
                 style={{
-                    marginTop: '5px',
-                    marginLeft: '4px',
-                    marginRight: '4px',
-                    padding: '0 7px',
+                    marginTop: '4px',
+                    marginLeft: '2px',
+                    marginRight: '2px',
+                    padding: '0 6px',
                     borderRadius: '6px',
                     background: `rgba(0, 0, 0, ${labelOpacity})`,
                     transition: 'background-color 130ms ease',
@@ -226,7 +228,7 @@ export function SimpleModeButton({
                 <span
                     className="type-label font-medium tracking-[0.04em]"
                     style={{
-                        fontSize: 'var(--type-label-size)',
+                        fontSize: '11px',
                         color: 'rgb(248, 247, 244)',
                         textShadow: 'none',
                         lineHeight: 1,

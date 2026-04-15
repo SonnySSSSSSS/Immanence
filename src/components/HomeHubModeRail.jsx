@@ -26,8 +26,8 @@ function HomeHubModeRail({
           }}
         >
           <div
-            className="flex flex-row items-center w-full"
-            style={{ justifyContent: 'space-between', gap: '0' }}
+            className="flex flex-row items-start w-full"
+            style={{ justifyContent: 'center', gap: '14px' }}
           >
             <div className="relative flex flex-col items-center justify-start">
               <SimpleModeButton
@@ -96,8 +96,8 @@ function HomeHubModeRail({
           }}
         >
           <div
-            className="flex flex-row items-center w-full"
-            style={{ justifyContent: 'center', gap: '48px' }}
+            className="flex flex-row items-start w-full"
+            style={{ justifyContent: 'center', gap: '24px' }}
           >
             <SimpleModeButton
               title="Practice"
