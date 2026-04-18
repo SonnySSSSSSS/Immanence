@@ -2,7 +2,6 @@
 import { useState, useEffect, useCallback, useRef, lazy, Suspense } from "react";
 // Test CI lane enforcement - trivial comment
 import { StageTitle } from "./components/StageTitle.jsx";
-const PracticeSection = createNamedExportLazyWithViteRecovery("./components/PracticeSection.jsx", "PracticeSection");
 const loadHomeHubModule = () => import("./components/HomeHub.jsx");
 const HomeHub = lazy(() => loadHomeHubModule().then(m => ({ default: m.HomeHub })));
 
@@ -45,11 +44,17 @@ import "./App.css";
 import AuthGate from "./components/auth/AuthGate";
 
 const VITE_IMPORT_RECOVERY_PREFIX = "immanenceOS.viteImportRecovery";
+const PRACTICE_SECTION_MODULE_PATH = "./components/PracticeSection.jsx";
 
 function isDynamicImportRecoveryCandidate(error, modulePath) {
   const message = typeof error?.message === "string" ? error.message : "";
   if (!message) return false;
-  return message.includes("dynamically imported module") && message.includes(modulePath);
+  const isDynamicImportError =
+    message.includes("dynamically imported module") ||
+    message.includes("Importing a module script failed") ||
+    message.includes("Failed to fetch dynamically imported module");
+  if (!isDynamicImportError) return false;
+  return !modulePath || message.includes(modulePath);
 }
 
 function getViteImportRecoveryKey(modulePath) {
@@ -83,15 +88,21 @@ function clearViteImportRecoveryAttempt(modulePath) {
   }
 }
 
-function createNamedExportLazyWithViteRecovery(modulePath, exportName) {
+function createNamedExportLazyWithViteRecovery(moduleLoader, exportName, modulePath = "") {
   return lazy(() =>
-    import(modulePath)
+    moduleLoader()
       .then((module) => {
-        clearViteImportRecoveryAttempt(modulePath);
+        if (modulePath) {
+          clearViteImportRecoveryAttempt(modulePath);
+        }
         return { default: module[exportName] };
       })
       .catch((error) => {
-        if (isDynamicImportRecoveryCandidate(error, modulePath) && shouldAttemptViteImportRecovery(modulePath)) {
+        if (
+          modulePath &&
+          isDynamicImportRecoveryCandidate(error, modulePath) &&
+          shouldAttemptViteImportRecovery(modulePath)
+        ) {
           markViteImportRecoveryAttempted(modulePath);
           window.location.reload();
           return new Promise(() => {});
@@ -100,6 +111,12 @@ function createNamedExportLazyWithViteRecovery(modulePath, exportName) {
       })
   );
 }
+
+const PracticeSection = createNamedExportLazyWithViteRecovery(
+  () => import("./components/PracticeSection.jsx"),
+  "PracticeSection",
+  PRACTICE_SECTION_MODULE_PATH
+);
 
 const DISABLE_SELECTION = false;
 const USER_STATE_SYNC_DEBUG = false;
