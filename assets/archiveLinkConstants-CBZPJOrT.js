@@ -1,0 +1,1 @@
+const e={ALL:`all`,PRACTICE:`practice`,CIRCUITS:`circuits`,WISDOM:`wisdom`,NAVIGATION:`navigation`,APPLICATION:`application`,INSIGHTS:`insights`,REPORTS:`reports`},t={PRACTICE:`practice`,NAVIGATION:`navigation`,WISDOM:`wisdom`,APPLICATION:`application`};export{t as n,e as t};
